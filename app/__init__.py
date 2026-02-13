@@ -161,6 +161,8 @@ def create_app() -> Flask:
         raise FileNotFoundError(f"CRITICAL: Missing configuration file at: {cfg_path}")
 
     config_data = toml.load(str(cfg_path))
+    # Preserve the full nested structure in app.config
+    app.config.update(config_data)
 
     # ---------------------------------------------------------
     # 2. Database & Security Setup

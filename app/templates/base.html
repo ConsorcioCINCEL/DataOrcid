@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('locale') or 'es' }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}DataOrcid Chile{% endblock %}</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+  
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  
+  {% block extra_css %}{% endblock %}
+</head>
+
+{% set logged_in = session.get('logged_in') %}
+<body class="hold-transition {% if logged_in %}sidebar-mini layout-fixed{% else %}layout-top-nav{% endif %}">
+<div class="wrapper">
+
+  {% if logged_in %}
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="{{ url_for('main.index') }}" class="nav-link">{{ _('Home') }}</a>
+      </li>
+    </ul>
+
+    {# --- INSTITUTION CONTEXT & STATUS --- #}
+    <div class="d-flex align-items-center ml-3">
+        {% if session.get('is_admin') or session.get('is_manager') %}
+            {# Admin/Manager: Show Selector #}
+            <form method="post" id="formSelectROR" class="form-inline">
+              <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-light" title="{{ _('Switch Institution') }}">
+                        <i class="fas fa-university text-primary"></i>
+                    </span>
+                </div>
+                <select class="form-control" id="rorSelector" style="min-width: 200px; max-width: 300px;">
+                  {% if institutions %}
+                    {% for inst in institutions %}
+                      <option value="{{ inst.ror_id }}" {% if inst.ror_id == session.get('admin_selected_ror') %}selected{% endif %}>
+                        {{ inst.name }}
+                      </option>
+                    {% endfor %}
+                  {% else %}
+                    <option value="">{{ _('Loading...') }}</option>
+                  {% endif %}
+                </select>
+              </div>
+            </form>
+        {% else %}
+            {# Standard User: Show Static Name #}
+            <div class="d-flex align-items-center bg-light rounded px-3 py-1 border shadow-sm">
+                <i class="fas fa-university text-primary mr-2"></i>
+                <span class="font-weight-bold text-dark text-truncate" style="max-width: 350px;">
+                    {{ session.get('institution_name') or _('My Institution') }}
+                </span>
+            </div>
+        {% endif %}
+
+        {% if last_works_update %}
+            <span class="navbar-text ml-3 small text-muted d-none d-md-inline-block" title="{{ _('Last data synchronization') }}">
+                <i class="far fa-clock mr-1"></i> {{ _('Updated:') }} {{ last_works_update }}
+            </span>
+        {% endif %}
+    </div>
+
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#">
+          <i class="fas fa-globe text-primary"></i>
+          <span class="ml-1 text-uppercase font-weight-bold small">{{ session.get('locale') or 'es' }}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right p-0">
+          <a href="{{ url_for(request.endpoint, lang='es', **(request.view_args or {})) }}" 
+             class="dropdown-item {% if (session.get('locale') or 'es') == 'es' %}active{% endif %}">
+             🇪🇸 Español
+          </a>
+          <a href="{{ url_for(request.endpoint, lang='en', **(request.view_args or {})) }}" 
+             class="dropdown-item {% if session.get('locale') == 'en' %}active{% endif %}">
+             🇺🇸 English
+          </a>
+        </div>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}" title="{{ _('Logout') }}">
+          <i class="fas fa-sign-out-alt"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="{{ url_for('main.index') }}" class="brand-link text-center">
+      <span class="brand-text font-weight-light">DataOrcid-<strong>Chile</strong></span>
+    </a>
+
+    <div class="sidebar">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <div class="bg-primary img-circle elevation-2 d-flex align-items-center justify-content-center" style="width:34px; height:34px;">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+        <div class="info">
+          <a href="{{ url_for('auth.change_password') }}" class="d-block small">{{ session.get('username') }}</a>
+        </div>
+      </div>
+
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+            {% include "layout/sidebar.html" %}
+        </ul>
+      </nav>
+    </div>
+  </aside>
+  {% endif %}
+
+  <div class="content-wrapper">
+    {% if logged_in %}
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            {% block header_title %}{% endblock %}
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              {% block breadcrumb %}
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+              {% endblock %}
+            </ol>
+          </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category in ['error','danger'] else category }} alert-dismissible fade show shadow-sm" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+    {% endif %}
+
+    <section class="content">
+      <div class="{% if logged_in %}container-fluid{% else %}container py-5{% endif %}">
+        {% block content %}{% endblock %}
+      </div>
+    </section>
+  </div>
+
+  <footer class="main-footer text-sm">
+    <div class="float-right d-none d-sm-block">
+        <b>Version</b> 1.2.0
+    </div>
+    <strong>Copyright &copy; 2026 <a href="#">Data ORCID-Chile</a>.</strong>
+    
+    <span class="text-muted ml-md-4 pl-md-4 border-left d-block d-md-inline-block mt-2 mt-md-0">
+        <i class="fas fa-headset mr-1 text-secondary"></i>
+        {{ _('For questions, support, or to schedule online training, contact:') }} 
+        <a href="mailto:gastonolivares@gmail.com" class="font-weight-bold text-dark">Gastón Olivares</a>
+    </span>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+
+<script>
+  $(function () {
+    $('#rorSelector').on('change', function() {
+      const rorId = $(this).val();
+      if (!rorId) return;
+      
+      const actionUrl = "{{ url_for('admin.set_ror', ror_id='__DUMMY__') }}".replace('__DUMMY__', rorId);
+      
+      const $form = $('#formSelectROR');
+      $form.attr('action', actionUrl);
+      $form.submit();
+    });
+  });
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

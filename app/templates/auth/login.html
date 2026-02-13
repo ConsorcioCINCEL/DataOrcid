@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('locale', 'es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Login · Data ORCID-Chile') }}</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+
+  <style>
+    /* Security override in case custom.css is cached or blocked */
+    :root {
+      --cincel-primary: #EF5A2F;
+      --cincel-dark: #212127;
+      --cincel-light: #F5F5F5;
+      --cincel-secondary: #0077c8;
+    }
+  </style>
+</head>
+
+<body class="hold-transition login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <a href="{{ url_for('main.index') }}">
+        <img src="{{ url_for('static', filename='cincel.svg') }}" alt="CINCEL" style="max-width: 200px;">
+      </a>
+    </div>
+
+    <div class="card card-cincel">
+      <div class="card-body login-card-body">
+        <p class="login-box-msg font-weight-bold">{{ _('Sign in to access institutional data') }}</p>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category in ['error','danger'] else category }} alert-dismissible fade show small" role="alert">
+                <i class="fas fa-exclamation-circle mr-1"></i> {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('auth.login') }}" method="post" novalidate>
+          {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {% endif %}
+
+          <div class="form-group mb-3">
+            <label class="small font-weight-bold">{{ _('Username or Email') }}</label>
+            <div class="input-group">
+              <input type="text" name="username" class="form-control" placeholder="{{ _('Enter your username') }}" required autocomplete="username" autofocus>
+              <div class="input-group-append">
+                <div class="input-group-text bg-white border-left-0"><i class="fas fa-user text-muted"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="small font-weight-bold">{{ _('Password') }}</label>
+            <div class="input-group">
+              <input type="password" name="password" id="password" class="form-control border-right-0" placeholder="{{ _('Enter your password') }}" required autocomplete="current-password">
+              <div class="input-group-append">
+                <button class="btn btn-outline-default bg-white border-left-0 text-muted" type="button" id="togglePassword">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" class="custom-control-input" id="remember" name="remember">
+              <label class="custom-control-label small text-muted" for="remember">{{ _('Keep me logged in') }}</label>
+            </div>
+            <a href="{{ url_for('auth.forgot_password') }}" class="small text-primary font-weight-bold">{{ _('Forgot Password?') }}</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary-cincel btn-block font-weight-bold py-2 shadow-sm">
+            <i class="fas fa-sign-in-alt mr-2"></i> {{ _('Sign In') }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-center mt-3 pb-3">
+        <div class="btn-group btn-group-sm shadow-none">
+            <a href="?lang=es" class="btn btn-link text-muted {% if session.get('locale') == 'es' %}font-weight-bold text-primary{% endif %}">ES</a>
+            <span class="text-muted pt-1">|</span>
+            <a href="?lang=en" class="btn btn-link text-muted {% if session.get('locale') == 'en' %}font-weight-bold text-primary{% endif %}">EN</a>
+        </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+  
+  <script>
+    $(function () {
+      $('#togglePassword').on('click', function () {
+        const input = $('#password');
+        const icon = $(this).find('i');
+        if (input.attr('type') === 'password') {
+          input.attr('type', 'text');
+          icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+          input.attr('type', 'password');
+          icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

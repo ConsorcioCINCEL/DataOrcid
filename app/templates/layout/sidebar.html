@@ -1,0 +1,93 @@
+<li class="nav-item">
+    <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+        <i class="nav-icon fas fa-tachometer-alt"></i>
+        <p>{{ _('Dashboard') }}</p>
+    </a>
+</li>
+
+{% if session.get('is_admin') or session.get('is_manager') %}
+    <li class="nav-header text-uppercase small font-weight-bold" style="opacity: 0.7; color: #adb5bd;">
+        <i class="fas fa-shield-alt mr-1"></i> {{ _('Administration') }}
+    </li>
+
+    {% if session.get('is_admin') %}
+    <li class="nav-item">
+        <a href="{{ url_for('admin.users_list') }}" class="nav-link {% if 'users' in request.endpoint %}active{% endif %}">
+            <i class="nav-icon fas fa-users-cog"></i>
+            <p>{{ _('User Management') }}</p>
+        </a>
+    </li>
+    {% endif %}
+
+    <li class="nav-item">
+        <a href="{{ url_for('admin.statistics') }}" class="nav-link {% if 'statistics' in request.endpoint %}active{% endif %}">
+            <i class="nav-icon fas fa-chart-line"></i>
+            <p>{{ _('System Usage Logs') }}</p>
+        </a>
+    </li>
+{% endif %}
+
+<li class="nav-header text-uppercase small font-weight-bold" style="opacity: 0.8; color: var(--cincel-secondary);">
+    <i class="fas fa-database mr-1"></i> {{ _('Institutional Data') }}
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('main.metrics_panel') }}" class="nav-link {% if request.endpoint == 'main.metrics_panel' %}active{% endif %}">
+        <i class="nav-icon fas fa-chart-pie"></i>
+        <p>{{ _('ORCID Analytics') }}</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('works.cache_works_status') }}" class="nav-link {% if 'works' in request.endpoint %}active{% endif %}">
+        <i class="nav-icon fas fa-cloud-download-alt"></i>
+        <p>{{ _('Data Downloads') }}</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('main.researcher_list') }}" class="nav-link {% if request.endpoint == 'main.researcher_list' %}active{% endif %}">
+        <i class="nav-icon fas fa-user-graduate"></i>
+        <p>{{ _('Researchers List') }}</p>
+    </a>
+</li>
+
+<li class="nav-header text-uppercase small font-weight-bold" style="opacity: 0.8; color: var(--cincel-primary);">
+    <i class="fas fa-tools mr-1"></i> {{ _('Integration Tools') }}
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('main.integration_pull') }}" class="nav-link {% if request.endpoint == 'main.integration_pull' %}active{% endif %}">
+        <i class="nav-icon fas fa-code"></i>
+        <p>{{ _('API Read (Pull)') }}</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('main.integration_guide') }}" class="nav-link {% if request.endpoint == 'main.integration_guide' %}active{% endif %}">
+        <i class="nav-icon fas fa-terminal"></i>
+        <p>{{ _('API Write (Push)') }}</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('auth.am_settings') }}" class="nav-link {% if request.endpoint == 'auth.am_settings' %}active{% endif %}">
+        <i class="nav-icon fas fa-id-badge"></i>
+        <p>{{ _('AM Settings') }}</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('main.resources') }}" class="nav-link {% if request.endpoint == 'main.resources' %}active{% endif %}">
+        <i class="nav-icon fas fa-book"></i>
+        <p>{{ _('Knowledge Base') }}</p>
+    </a>
+</li>
+
+<li class="nav-header border-top mt-2 pt-2"></li>
+<li class="nav-item">
+    <a href="{{ url_for('auth.logout') }}" class="nav-link text-danger">
+        <i class="nav-icon fas fa-sign-out-alt"></i>
+        <p>{{ _('Sign Out') }}</p>
+    </a>
+</li>

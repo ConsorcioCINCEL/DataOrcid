@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Read (Pull) · ORCID Public API · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('ORCID Public API Guide') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('Public API (Pull)') }}</li>
+{% endblock %}
+
+{% block content %}
+
+{# 1. TECHNICAL OVERVIEW #}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card card-primary card-outline shadow-sm">
+          <div class="card-header border-0">
+            <h3 class="card-title font-weight-bold"><i class="fas fa-info-circle mr-2 text-primary"></i> {{ _('Introduction for Developers') }}</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-justify">
+              {{ _('The ORCID Public API allows any system to <strong>retrieve public researcher data</strong>. It works over HTTP using standard REST methods. You only need the <strong>ORCID iD</strong> to start pulling information.') }}
+            </p>
+            <div class="row bg-light p-3 rounded border mx-0">
+                <div class="col-sm-6 mb-2 mb-sm-0">
+                    <small class="text-muted text-uppercase d-block font-weight-bold">{{ _('Base URL') }}</small>
+                    <code class="text-primary">https://pub.orcid.org/v3.0/</code>
+                </div>
+                <div class="col-sm-6">
+                    <small class="text-muted text-uppercase d-block font-weight-bold">{{ _('Mandatory Header') }}</small>
+                    <code class="text-dark">Accept: application/json</code>
+                </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-gradient-success shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="font-weight-bold"><i class="fas fa-bolt mr-2"></i> {{ _('Quick Tip') }}</h5>
+                <p class="small">{{ _('Always include the Accept header to receive data in JSON format, which is easier to parse than the default XML.') }}</p>
+                <hr class="border-white opacity-25">
+                <p class="x-small mb-0">{{ _('Example ORCID used:') }} <strong>0000-0003-3655-7831</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 2. ADVANCED SEARCH EXAMPLES (CURL) #}
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-navy">
+        <h3 class="card-title font-weight-bold"><i class="fas fa-search mr-2"></i> {{ _('Step 1: Advanced Search Examples (cURL)') }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {# SEARCH BY INSTITUTION NAME (ANID) #}
+            <div class="col-md-6">
+                <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Search by Institution (ANID)') }}</h6>
+                <p class="x-small text-muted">{{ _('Search for researchers associated with ANID Chile.') }}</p>
+                <div class="bg-dark p-3 rounded mb-3 position-relative shadow-inner">
+                    <pre class="text-warning mb-0 small" id="code-anid"><code>curl -H "Accept: application/json" \
+"https://pub.orcid.org/v3.0/search/?q=affiliation-org-name:ANID"</code></pre>
+                    <button class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-anid')"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+            {# SEARCH BY ROR ID #}
+            <div class="col-md-6">
+                <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Search by ROR Identifier') }}</h6>
+                <p class="x-small text-muted">{{ _('Searching for the ROR string within the organization fields.') }}</p>
+                <div class="bg-dark p-3 rounded mb-3 position-relative shadow-inner">
+                    <pre class="text-warning mb-0 small" id="code-ror"><code>curl -H "Accept: application/json" \
+"https://pub.orcid.org/v3.0/search/?q=%22ror.org/02ap3w078%22"</code></pre>
+                    <button class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-ror')"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-2">
+             <div class="col-md-12">
+                <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Search by Name & Country') }}</h6>
+                <div class="bg-dark p-3 rounded mb-3 position-relative shadow-inner">
+                    <pre class="text-warning mb-0 small" id="code-name"><code>curl -H "Accept: application/json" \
+"https://pub.orcid.org/v3.0/search/?q=given-names:Gaston%20Olivares"</code></pre>
+                    <button class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-name')"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 3. COMPLETE ENDPOINTS REFERENCE #}
+<div class="card shadow-sm mt-4">
+  <div class="card-header bg-light">
+    <h3 class="card-title font-weight-bold text-dark"><i class="fas fa-list-ul mr-2 text-primary"></i> {{ _('Step 2: Complete API Endpoint Reference') }}</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="bg-light small text-uppercase">
+          <tr>
+            <th>{{ _('Endpoint Sub-path') }}</th>
+            <th>{{ _('Information Returned') }}</th>
+            <th class="text-right">{{ _('Live JSON Link') }}</th>
+          </tr>
+        </thead>
+        <tbody class="small">
+          {% set orcid_demo = '0000-0003-3655-7831' %}
+          {% set sections = [
+            { 'group': _('Global Records'), 'endpoints_list': [
+                ('record', _('Full public record (Person + Activities summary)')),
+                ('activities', _('Aggregated activities (Works, Funding, Affiliations)'))
+            ]},
+            { 'group': _('Personal Details'), 'endpoints_list': [
+                ('person', _('Complete personal data (Names, bio, emails, keywords)')),
+                ('personal-details', _('Basic names and credit names')),
+                ('email', _('Public email addresses (Returns empty if none)')),
+                ('external-identifiers', _('Other IDs: Scopus, ResearcherID, etc.')),
+                ('keywords', _('Public research keywords')),
+                ('addresses', _('Public country and location data')),
+                ('researcher-urls', _('Researcher profile or institutional websites'))
+            ]},
+            { 'group': _('Affiliations & History'), 'endpoints_list': [
+                ('employments', _('Public employment and job history')),
+                ('educations', _('Public education and degrees')),
+                ('invited-positions', _('Guest posts and invited roles')),
+                ('memberships', _('Institutional or society memberships')),
+                ('services', _('Public service or volunteer roles')),
+                ('distinctions', _('Prizes, awards, and distinctions')),
+                ('qualifications', _('Professional certifications or qualifications'))
+            ]},
+            { 'group': _('Scientific Output'), 'endpoints_list': [
+                ('works', _('Contributions: publications, datasets, etc.')),
+                ('fundings', _('Research grants and financial support')),
+                ('peer-reviews', _('Public peer review record (Summary)')),
+                ('research-resources', _('Access to laboratories or research equipment'))
+            ]}
+          ] %}
+
+          {% for section in sections %}
+            <tr class="bg-light">
+                <td colspan="3" class="font-weight-bold text-muted text-uppercase x-small py-2">{{ section.group }}</td>
+            </tr>
+            {% for ep, desc in section.endpoints_list %}
+            <tr>
+                <td class="align-middle"><code>/{{ orcid_demo }}/<strong>{{ ep }}</strong></code></td>
+                <td class="align-middle">{{ desc }}</td>
+                <td class="text-right align-middle">
+                    <a href="https://pub.orcid.org/v3.0/{{ orcid_demo }}/{{ ep }}" target="_blank" class="btn btn-xs btn-outline-primary px-3 shadow-sm">
+                        <i class="fas fa-external-link-alt mr-1"></i> JSON
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# 4. QUICK CURL EXAMPLES FOR ORCID #}
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card shadow-sm border-left-info">
+            <div class="card-header bg-white">
+                <h3 class="card-title font-weight-bold text-info"><i class="fas fa-terminal mr-2"></i> {{ _('Step 3: Direct ORCID Lookup (cURL)') }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Get Summary (Works & Education)') }}</h6>
+                        <div class="bg-dark p-2 rounded position-relative">
+                            <pre class="text-light mb-0 x-small" id="code-orcid-act"><code>curl -H "Accept: application/json" \
+"https://pub.orcid.org/v3.0/0000-0003-3655-7831/activities"</code></pre>
+                            <button class="btn btn-xs btn-outline-light position-absolute" style="top:5px; right:5px;" onclick="copyCode('code-orcid-act')"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Get Bio & Identity') }}</h6>
+                        <div class="bg-dark p-2 rounded position-relative">
+                            <pre class="text-light mb-0 x-small" id="code-orcid-person"><code>curl -H "Accept: application/json" \
+"https://pub.orcid.org/v3.0/0000-0003-3655-7831/person"</code></pre>
+                            <button class="btn btn-xs btn-outline-light position-absolute" style="top:5px; right:5px;" onclick="copyCode('code-orcid-person')"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 5. PRIVACY & LIMITATIONS #}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-left-warning">
+            <div class="card-header bg-white border-0">
+                <h3 class="card-title font-weight-bold text-warning"><i class="fas fa-exclamation-triangle mr-2"></i> {{ _('Privacy & API Limitations') }}</h3>
+            </div>
+            <div class="card-body pt-0">
+                <ul class="small text-muted">
+                    <li class="mb-2"><strong>{{ _('Visibility:') }}</strong> {{ _('The Public API only returns data set to "Everyone" by the researcher. Data marked as "Trusted Parties" or "Private" is invisible.') }}</li>
+                    <li class="mb-2"><strong>{{ _('404 Errors:') }}</strong> {{ _('Usually means the record is private or the ID does not exist.') }}</li>
+                    <li class="mb-2"><strong>{{ _('Rate Limits:') }}</strong> {{ _('The Public API is limited to <strong>24 requests per second</strong>. For batch processing, we recommend a small delay (sleep) between requests to avoid being temporarily blocked.') }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 6. RECOMMENDED TOOLS #}
+<div class="row mt-4 mb-5">
+    <div class="col-12 text-center">
+        <h6 class="text-muted font-weight-bold mb-4 text-uppercase small">{{ _('Recommended Testing Tools') }}</h6>
+        <div class="row justify-content-center">
+            <div class="col-md-2 col-4 mx-2">
+                <a href="https://www.postman.com/" target="_blank" class="text-dark text-decoration-none">
+                    <i class="fas fa-space-shuttle fa-2x d-block mb-2 text-orange"></i>
+                    <span class="small font-weight-bold d-block">Postman</span>
+                    <span class="x-small text-muted">{{ _('(API Testing)') }}</span>
+                </a>
+            </div>
+            <div class="col-md-2 col-4 mx-2">
+                <a href="https://insomnia.rest/" target="_blank" class="text-dark text-decoration-none">
+                    <i class="fas fa-moon fa-2x d-block mb-2 text-purple"></i>
+                    <span class="small font-weight-bold d-block">Insomnia</span>
+                    <span class="x-small text-muted">{{ _('(HTTP Client)') }}</span>
+                </a>
+            </div>
+            <div class="col-md-2 col-4 mx-2">
+                <a href="https://jsonview.com/" target="_blank" class="text-dark text-decoration-none">
+                    <i class="fas fa-eye fa-2x d-block mb-2 text-info"></i>
+                    <span class="small font-weight-bold d-block">JSON Viewer</span>
+                    <span class="x-small text-muted">{{ _('(Browser Extension)') }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  function copyCode(id) {
+    const el = document.getElementById(id);
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+    sel.removeAllRanges();
+    
+    $(document).Toasts('create', {
+        class: 'bg-success',
+        title: '{{ _("Copied!") }}',
+        autohide: true,
+        delay: 2000,
+        body: '{{ _("Command copied to clipboard.") }}'
+    });
+  }
+</script>
+{% endblock %}

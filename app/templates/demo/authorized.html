@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Authorized Researchers · ORCID Demo') }}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header border-0 d-flex align-items-center">
+        <h3 class="card-title font-weight-bold"><i class="fas fa-user-check mr-2"></i>{{ _('Researcher Authorization Status') }}</h3>
+        <a href="{{ url_for('admin_panel') }}" class="btn btn-xs btn-outline-primary ml-auto">{{ _('Upload More') }}</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>ORCID iD</th>
+                    <th>{{ _('Email') }}</th>
+                    <th class="text-center">{{ _('Status') }}</th>
+                    <th class="text-center">{{ _('Projects') }}</th>
+                    <th class="text-right">{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="align-middle font-weight-bold text-primary">{{ u.orcid_id }}</td>
+                    <td class="align-middle small text-muted">{{ u.email }}</td>
+                    <td class="text-center align-middle">
+                        {% if u.is_authorized %}
+                            <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i>{{ _('Authorized') }}</span>
+                        {% else %}
+                            <span class="badge badge-warning text-white"><i class="fas fa-clock mr-1"></i>{{ _('Pending') }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center align-middle">
+                        <span class="badge badge-light border">{{ u.pushed_count }} / {{ u.total_projects }}</span>
+                    </td>
+                    <td class="text-right align-middle">
+                        <a href="{{ url_for('authorized_projects', orcid_id=u.orcid_id) }}" class="btn btn-sm btn-default border">
+                            {{ _('Manage Projects') }} <i class="fas fa-chevron-right ml-1"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

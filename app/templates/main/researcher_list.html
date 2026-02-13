@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Researcher Directory · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('Researcher Directory') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('Researchers') }}</li>
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+  <style>
+    .table thead th { border-bottom: 0; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; color: #6c757d; }
+    .truncate { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .badge-am { background-color: #28a74515; color: #28a745; border: 1px solid #28a74530; font-weight: 800; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="card card-outline card-primary shadow-sm">
+  <div class="card-header border-0 d-flex align-items-center">
+    <h3 class="card-title font-weight-bold">
+      <i class="fas fa-user-graduate mr-2 text-primary"></i> {{ _('Affiliated Researchers') }}
+    </h3>
+    <div class="card-tools ml-auto">
+      <button onclick="window.location.reload()" class="btn btn-tool" title="{{ _('Refresh') }}">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <table id="researchersTable" class="table table-hover w-100">
+      <thead class="bg-light">
+        <tr>
+          <th class="text-center" style="width: 50px;">{{ _('AM') }}</th>
+          <th>ORCID iD</th>
+          <th>{{ _('First Names') }}</th>
+          <th>{{ _('Last Names') }}</th>
+          <th>{{ _('Email') }}</th>
+          <th>{{ _('Institutions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in researchers %}
+          {% set orcid_id = r.get('orcid-id') %}
+          <tr>
+            <td class="text-center align-middle">
+              {% if r.is_managed %}
+                  <span class="badge-am" title="{{ _('Managed via Affiliation Manager') }}">AM</span>
+              {% else %}
+                  <span class="text-muted opacity-25 small">—</span>
+              {% endif %}
+            </td>
+            <td class="align-middle">
+              <a href="{{ url_for('main.orcid_profile', orcid_id=orcid_id) }}" class="text-primary font-weight-bold">
+                <i class="fab fa-orcid text-success mr-1"></i> {{ orcid_id }}
+              </a>
+            </td>
+            <td class="align-middle truncate">{{ r.get('given-names') or '—' }}</td>
+            <td class="align-middle truncate">{{ r.get('family-names') or '—' }}</td>
+            <td class="align-middle truncate small">
+              {% set email = r.get('email') %}
+              {% if email %}{{ email if email is string else email|join(', ') }}{% else %}<i class="text-muted">{{ _('Not public') }}</i>{% endif %}
+            </td>
+            <td class="align-middle truncate small">
+              {% set inst = r.get('institution-name') %}
+              {% if inst %}{{ inst if inst is string else inst|join(' / ') }}{% else %}—{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $('#researchersTable').DataTable({
+    responsive: true, pageLength: 25, order: [[3, 'asc']],
+    language: { url: '{{ "https://cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json" if session.get("locale") == "es" else "" }}' },
+    dom: "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'f>>t<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+    buttons: [{ extend: 'excelHtml5', text: '<i class="fas fa-file-download mr-1"></i> {{ _("Export Excel") }}', className: 'btn btn-success btn-sm' }]
+  });
+});
+</script>
+{% endblock %}

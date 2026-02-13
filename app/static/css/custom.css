@@ -1,0 +1,209 @@
+/* ==========================================================================
+   CINCEL BRAND IDENTITY OVERRIDES
+   Module: custom.css
+   Author: Gastón Olivares
+   Project: DataOrcid-Chile
+   Description: 
+       This stylesheet overrides AdminLTE 3 and Bootstrap 4 defaults to 
+       implement the Cincel corporate identity. It uses CSS Variables for 
+       centralized color management and targets specific component classes 
+       (Sidebar, Cards, Buttons, and Login).
+   ========================================================================== */
+
+:root {
+    /* CINCEL Official Palette - Centralized Theme Variables */
+    --cincel-primary:   #EF5A2F;   /* Main Brand Orange */
+    --cincel-dark:      #212127;   /* Corporate Dark Grey/Black */
+    --cincel-light:     #F5F5F5;   /* Neutral Light Grey */
+    --cincel-secondary: #0077c8;   /* Institutional Blue */
+    --cincel-accent:    #00a1de;   /* Cyan / Accent Blue */
+    --cincel-bg:        #f5f7fa;   /* General App Background */
+    --cincel-success:   #28a745;   /* Success Feedback Green */
+}
+
+/* 1. GENERAL LAYOUT
+   ----------------------------------------------------------------------- */
+body, .content-wrapper {
+    background-color: var(--cincel-bg) !important;
+}
+
+/* 2. PRIMARY COLOR REPLACEMENT (Brand Orange)
+   Overrides standard Bootstrap 'primary' class utilities.
+   ----------------------------------------------------------------------- */
+.bg-primary, 
+.bg-gradient-primary,
+.badge-primary {
+    background-color: var(--cincel-primary) !important;
+    color: #fff !important;
+}
+
+.text-primary {
+    color: var(--cincel-primary) !important;
+}
+
+/* Button Overrides */
+.btn-primary {
+    background-color: var(--cincel-primary) !important;
+    border-color: var(--cincel-primary) !important;
+}
+
+.btn-primary:hover, 
+.btn-primary:focus, 
+.btn-primary:active {
+    background-color: #d94e27 !important; /* Visual feedback: 10% darker orange */
+    border-color: #cf4620 !important;
+}
+
+.btn-outline-primary {
+    color: var(--cincel-primary) !important;
+    border-color: var(--cincel-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--cincel-primary) !important;
+    color: #fff !important;
+}
+
+/* AdminLTE Card Customization */
+.card-primary.card-outline {
+    border-top: 3px solid var(--cincel-primary) !important;
+}
+
+.card-primary:not(.card-outline) > .card-header {
+    background-color: var(--cincel-primary) !important;
+}
+
+/* 3. SIDEBAR STYLES (Corporate Dark)
+   Implements the dark grey brand tone for the main navigation.
+   ----------------------------------------------------------------------- */
+.main-sidebar, 
+.main-sidebar.sidebar-dark-primary {
+    background-color: var(--cincel-dark) !important;
+}
+
+/* Brand logo top container divider */
+.brand-link {
+    background-color: var(--cincel-dark) !important;
+    border-bottom: 1px solid #4b545c;
+}
+
+/* Active Menu Item (Highlighted in Orange) */
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active,
+.sidebar-light-primary .nav-sidebar > .nav-item > .nav-link.active {
+    background-color: var(--cincel-primary) !important;
+    color: #fff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.nav-sidebar .nav-item > .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Subtle white overlay */
+}
+
+/* 4. INSTITUTIONAL INFO COLORS (Cincel Blue)
+   Maps the brand blue to 'info' utilities for systematic feedback.
+   ----------------------------------------------------------------------- */
+.bg-info, .badge-info {
+    background-color: var(--cincel-secondary) !important;
+}
+
+.text-info {
+    color: var(--cincel-secondary) !important;
+}
+
+.btn-info {
+    background-color: var(--cincel-secondary) !important;
+    border-color: var(--cincel-secondary) !important;
+}
+
+.btn-info:hover {
+    background-color: #0062a3 !important;
+    border-color: #005a96 !important;
+}
+
+/* 5. GLOBAL LINKS & TYPOGRAPHY
+   ----------------------------------------------------------------------- */
+a {
+    color: var(--cincel-secondary);
+}
+
+a:hover {
+    color: var(--cincel-primary);
+    text-decoration: none;
+}
+
+/* 6. MISC COMPONENT ADJUSTMENTS
+   ----------------------------------------------------------------------- */
+/* Dashboard Info Box Icons */
+.info-box-icon.bg-primary { background-color: var(--cincel-primary) !important; }
+.info-box-icon.bg-info    { background-color: var(--cincel-secondary) !important; }
+
+/* Pagination active state */
+.page-item.active .page-link {
+    background-color: var(--cincel-primary) !important;
+    border-color: var(--cincel-primary) !important;
+}
+
+/* Input Focus Glow (Orange halo) */
+.form-control:focus {
+    border-color: #ef5a2f80;
+    box-shadow: 0 0 0 0.2rem rgba(239, 90, 47, 0.25);
+}
+
+/* ==========================================================================
+   LOGIN PAGE SPECIFIC STYLES
+   Customized "Split-box" design for the entry gateway.
+   ========================================================================== */
+
+/* Main Login Container */
+.login-page .login-box {
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    width: 400px;
+}
+
+/* Header Section: Logo placement on brand light background */
+.login-page .login-logo {
+    background-color: var(--cincel-light);
+    margin-bottom: 0 !important;
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-page .login-logo img {
+    display: block;
+    height: auto;
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+/* Login Card Content */
+.login-page .card-cincel {
+    border: none !important;
+    border-top: 5px solid var(--cincel-primary) !important; /* Institutional Orange accent */
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin-top: 0 !important;
+}
+
+.login-page .login-card-body {
+    border-radius: 0 !important;
+    padding: 30px;
+}
+
+/* Cincel Blue Login Button */
+.btn-primary-cincel {
+    background-color: var(--cincel-secondary) !important;
+    border-color: var(--cincel-secondary) !important;
+    color: #fff !important;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary-cincel:hover {
+    background-color: #0062a3 !important;
+    border-color: #005a96 !important;
+}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Upload Projects · ORCID Demo') }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card card-outline card-primary shadow-sm">
+            <div class="card-header">
+                <h3 class="card-title font-weight-bold"><i class="fas fa-file-upload mr-2"></i>{{ _('Upload Projects CSV') }}</h3>
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                <div class="card-body">
+                    <p class="text-muted small">
+                        {{ _('Select a CSV file containing researcher IDs and project data to initiate the integration flow.') }}
+                    </p>
+                    <div class="form-group">
+                        <div class="custom-file">
+                            <input type="file" name="file" class="custom-file-input" id="customFile" accept=".csv" required>
+                            <label class="custom-file-label" for="customFile">{{ _('Choose CSV file') }}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-right">
+                    <button type="submit" class="btn btn-primary px-4 font-weight-bold">{{ _('Process & Send Invites') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{# --- UI Macros --- #}
+{% macro safe_val(v) -%}{{ v if v not in [None, 'None', ''] else '—' }}{%- endmacro %}
+{% macro safe_date(ts) -%}{% if ts %}{{ (ts | int) | timestamp_to_date }}{% else %}—{% endif %}{%- endmacro %}
+
+{# --- Data Extraction --- #}
+{% set orcid_id = (data.get('orcid-identifier', {}) or {}).get('path') or data.get('orcid-id') %}
+{% set person   = (data.get('person') or {}) %}
+{% set name     = (person.get('name') or {}) %}
+{% set act      = (data.get('activities') or {}) %}
+
+{# Calculate DOI Coverage (Robust Logic) #}
+{% set all_works = [] %}
+{% for group in (act.get('works', {}).get('group') | default([], true)) %}
+    {% for w in group.get('work-summary') or [] %}{% set _ = all_works.append(w) %}{% endfor %}
+{% endfor %}
+{% set total_works = all_works | length %}
+{% set works_with_doi = [] %}
+{% for w in all_works %}
+    {% set has_doi = [] %}
+    {% for eid in (w.get('external-ids', {}).get('external-id') or []) if eid.get('external-id-type') == 'doi' %}
+        {% set _ = has_doi.append(1) %}
+    {% endfor %}
+    {% if has_doi %}{% set _ = works_with_doi.append(1) %}{% endif %}
+{% endfor %}
+{% set doi_percent = (works_with_doi|length / total_works * 100)|round(1) if total_works > 0 else 0 %}
+
+{% block title %}{{ _('Researcher Profile') }} · {{ safe_val(orcid_id) }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('Researcher Portfolio') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('main.researcher_list') }}">{{ _('Researchers') }}</a></li>
+  <li class="breadcrumb-item active">{{ orcid_id }}</li>
+{% endblock %}
+
+{% block content %}
+<style>
+  .chart-container { position: relative; height: 240px; width: 100%; }
+  .activity-scroll { max-height: 750px; overflow-y: auto; padding-right: 10px; scrollbar-width: thin; }
+  .activity-card { border-left: 3px solid #dee2e6; transition: all 0.2s ease; margin-bottom: 1rem; border-radius: 0 4px 4px 0; }
+  .activity-card:hover { border-left-color: #2a69b8; background-color: #f8f9fa; transform: translateX(2px); }
+  .card-header-clean { background: #fff; border-bottom: 1px solid rgba(0,0,0,.05); }
+  .btn-orcid-brand { color: #A6CE39 !important; border-color: #A6CE39; font-weight: 600; }
+  .btn-orcid-brand:hover { background: #A6CE39; color: #fff !important; }
+  .doi-badge { background: rgba(42, 105, 184, 0.1); color: #2a69b8; font-weight: bold; border: 1px solid rgba(42, 105, 184, 0.2); }
+</style>
+
+{# ======= TOP HEADER CARD ======= #}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-3">
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary elevation-2 rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-user-graduate fa-2x text-white"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 font-weight-bold text-dark">
+                        {{ safe_val(name.get('given-names', {}).get('value')) }}
+                        {{ safe_val(name.get('family-name', {}).get('value')) }}
+                    </h3>
+                    <div class="text-muted">
+                        <i class="fab fa-orcid text-success mr-1"></i> 
+                        <a href="https://orcid.org/{{ orcid_id }}" target="_blank" class="text-muted">orcid.org/{{ orcid_id }}</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 mt-md-0 d-flex">
+                <a href="{{ url_for('export.download_excel', orcid_id=orcid_id) }}" class="btn btn-success font-weight-bold shadow-sm mr-2">
+                    <i class="fas fa-file-excel mr-1"></i> {{ _('Download Full Report') }}
+                </a>
+                <a href="https://orcid.org/{{ orcid_id }}" target="_blank" class="btn btn-outline-dark btn-orcid-brand shadow-sm">
+                    <img src="https://orcid.org/assets/vectors/orcid.logo.icon.svg" width="16" class="mr-1"> ORCID.org
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {# ======= SIDEBAR: IDENTITY & DOI KPI ======= #}
+    <div class="col-lg-4">
+        {# DOI Coverage KPI #}
+        <div class="info-box shadow-sm mb-4">
+            <span class="info-box-icon bg-primary"><i class="fas fa-fingerprint"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('DOI Coverage') }}</span>
+                <span class="info-box-number" style="font-size: 1.5rem;">{{ doi_percent }}%</span>
+                <div class="progress"><div class="progress-bar bg-primary" style="width: {{ doi_percent }}%"></div></div>
+                <span class="progress-description small text-muted">{{ works_with_doi|length }} / {{ total_works }} {{ _('items') }}</span>
+            </div>
+        </div>
+
+        {# Registry Metadata #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header card-header-clean py-2">
+                <h3 class="card-title font-weight-bold small text-uppercase text-muted"><i class="fas fa-id-card mr-2"></i> {{ _('Registry Data') }}</h3>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody class="small">
+                        <tr><td class="pl-3 text-muted">{{ _('Created') }}</td><td class="pr-3 text-right font-weight-bold">{{ safe_date(name.get('created-date', {}).get('value')) }}</td></tr>
+                        <tr><td class="pl-3 text-muted">{{ _('Updated') }}</td><td class="pr-3 text-right font-weight-bold">{{ safe_date(name.get('last-modified-date', {}).get('value')) }}</td></tr>
+                        <tr><td class="pl-3 text-muted">{{ _('Visibility') }}</td><td class="pr-3 text-right"><span class="badge badge-light border text-uppercase">{{ safe_val(name.get('visibility')) }}</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# Biography #}
+        {% if bio_text %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header card-header-clean py-2">
+                <h3 class="card-title font-weight-bold small text-uppercase text-muted"><i class="fas fa-book-open mr-2"></i> {{ _('Biography') }}</h3>
+            </div>
+            <div class="card-body small text-justify text-muted" style="max-height: 250px; overflow-y: auto;">
+                {{ bio_text | safe }}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Other Identifiers #}
+        {% set other_n    = (person.get('other-names') or {}).get('other-name') | default([], true) %}
+        {% set external_i = (person.get('external-identifiers') or {}).get('external-identifier') | default([], true) %}
+        {% if external_i or other_n %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header card-header-clean py-2">
+                <h3 class="card-title font-weight-bold small text-uppercase text-muted"><i class="fas fa-link mr-2"></i> {{ _('Other Identifiers') }}</h3>
+            </div>
+            <div class="card-body pt-3">
+                {% for x in external_i %}
+                <div class="mb-2 border-bottom pb-1">
+                    <span class="text-muted d-block" style="font-size: 10px; font-weight: 800; text-uppercase;">{{ x.get('external-id-type') }}</span>
+                    <span class="font-weight-bold small">{{ x.get('external-id-value') }}</span>
+                </div>
+                {% endfor %}
+                {% if other_n %}
+                    <div class="mt-3">
+                        <span class="text-muted d-block mb-1" style="font-size: 10px; font-weight: 800; text-uppercase;">{{ _('Also known as') }}</span>
+                        {% for on in other_n %}<span class="badge badge-light border mr-1 mb-1">{{ on.get('content') }}</span>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ======= MAIN CONTENT: METRICS & TIMELINE ======= #}
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header p-2 bg-white">
+                <ul class="nav nav-pills small font-weight-bold" id="profileTabs">
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#analytics"><i class="fas fa-chart-bar mr-1"></i> {{ _('Visual Summary') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#timeline"><i class="fas fa-stream mr-1"></i> {{ _('Full Timeline') }}</a></li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    {# TAB: ANALYTICS #}
+                    <div class="tab-pane fade show active" id="analytics">
+                        <div class="row">
+                            {% if total_works > 0 %}
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-center font-weight-bold text-muted small mb-3 text-uppercase">{{ _('Works by Type') }}</h6>
+                                <div class="chart-container"><canvas id="chartWorksByType"></canvas></div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-center font-weight-bold text-muted small mb-3 text-uppercase">{{ _('Production Timeline') }}</h6>
+                                <div class="chart-container"><canvas id="chartWorksByYear"></canvas></div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-12 mt-4"><hr></div>
+                            <div class="col-md-6 offset-md-3 mb-4 text-center">
+                                <h6 class="font-weight-bold text-muted small mb-3 text-uppercase">{{ _('Funding Distribution') }}</h6>
+                                <div class="chart-container" id="fundingContainer">
+                                    <canvas id="chartFundingsByType"></canvas>
+                                </div>
+                            </div>
+
+                            {% if total_works == 0 %}
+                                <div id="emptyMsg" class="col-12 text-center py-5 d-none">
+                                    <i class="fas fa-chart-area fa-4x text-light mb-3"></i>
+                                    <p class="text-muted">{{ _('No quantitative data available for visualization.') }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# TAB: TIMELINE #}
+                    <div class="tab-pane fade" id="timeline">
+                        <div class="activity-scroll">
+                            {% for s_key, s_label, s_icon, s_color in [
+                                ('employments', _('Employment'), 'briefcase', 'primary'),
+                                ('educations', _('Education'), 'graduation-cap', 'info'),
+                                ('fundings', _('Grants & Funding'), 'hand-holding-usd', 'success'),
+                                ('works', _('Publications'), 'book', 'blue')
+                            ] %}
+                                
+                                {% set items = [] %}
+                                {% if s_key in ['fundings', 'works'] %}
+                                    {% for g in (act.get(s_key) or {}).get('group') | default([], true) %}
+                                        {% set sub_items = g.get('work-summary' if s_key == 'works' else 'funding-summary') | default([], true) %}
+                                        {% for si in sub_items if si %}{% set _ = items.append(si) %}{% endfor %}
+                                    {% endfor %}
+                                {% else %}
+                                    {% set items = (act.get(s_key) or {}).get(s_key[:-1] + '-summary') | default([], true) %}
+                                {% endif %}
+
+                                {% if items %}
+                                <div class="mb-5">
+                                    <div class="d-flex align-items-center border-bottom pb-2 mb-3">
+                                        <h6 class="font-weight-bold mb-0 text-{{ s_color }}"><i class="fas fa-{{ s_icon }} mr-2"></i> {{ s_label }}</h6>
+                                        <div class="dropdown ml-auto">
+                                            <button class="btn btn-xs btn-light dropdown-toggle border" data-toggle="dropdown"><i class="fas fa-download mr-1"></i> {{ _('Export') }}</button>
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                                <a class="dropdown-item small" href="{{ url_for('export.download_section_excel', orcid_id=orcid_id, section=s_key) }}"><i class="far fa-file-excel mr-2 text-success"></i>Excel (.xlsx)</a>
+                                                <a class="dropdown-item small" href="{{ url_for('export.download_section_excel', orcid_id=orcid_id, section=s_key, format='csv') }}"><i class="fas fa-file-csv mr-2 text-info"></i>CSV (.csv)</a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {% for item in items %}
+                                    <div class="card activity-card border-top-0 border-right-0 border-bottom-0 shadow-none">
+                                        <div class="card-body py-2 px-3">
+                                            <div class="font-weight-bold text-dark small">
+                                                {{ safe_val((item.get('title') or {}).get('title', {}).get('value') or item.get('role-title')) }}
+                                            </div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">
+                                                <i class="fas fa-university mr-1"></i> {{ safe_val((item.get('organization') or {}).get('name')) }}
+                                                {% set start = (item.get('start-date') or {}).get('year', {}).get('value') %}
+                                                {% if start %}
+                                                    | <i class="far fa-calendar-alt ml-1"></i> {{ start }} 
+                                                    {% set end = (item.get('end-date') or {}).get('year', {}).get('value') %}
+                                                    {% if end %}- {{ end }}{% else %} - {{ _('Present') }}{% endif %}
+                                                {% endif %}
+                                            </div>
+                                            {% if s_key == 'works' %}
+                                                {% for eid in ((item.get('external-ids') or {}).get('external-id') | default([], true)) if eid.get('external-id-type') == 'doi' %}
+                                                    <a href="https://doi.org/{{ eid.get('external-id-value') }}" target="_blank" class="badge doi-badge mt-1" style="font-size: 10px;">DOI: {{ eid.get('external-id-value') }}</a>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    $(function() {
+      const COLORS = ['#2a69b8', '#EF5A2F', '#17a2b8', '#ffc107', '#28a745', '#6c757d', '#e83e8c'];
+      const rawData = {{ data.get('activities', {}) | tojson | safe }};
+      const safeGet = (obj, path) => path.split('.').reduce((acc, part) => acc && acc[part], obj);
+
+      // --- Logic for Works ---
+      const worksByType = {};
+      const worksByYear = {};
+      const worksGroups = rawData.works?.group || [];
+      
+      if (worksGroups.length > 0) {
+          worksGroups.forEach(g => {
+              (g['work-summary'] || []).forEach(w => {
+                  const type = (w.type || '{{ _("Other") }}').toLowerCase().replace(/_/g, ' ');
+                  worksByType[type] = (worksByType[type] || 0) + 1;
+                  const year = safeGet(w, 'publication-date.year.value');
+                  if (year && /^\d+$/.test(year)) worksByYear[year] = (worksByYear[year] || 0) + 1;
+              });
+          });
+
+          new Chart(document.getElementById('chartWorksByType'), {
+              type: 'doughnut',
+              data: { labels: Object.keys(worksByType), datasets: [{ data: Object.values(worksByType), backgroundColor: COLORS, borderWidth: 0 }] },
+              options: { maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+          });
+
+          const years = Object.keys(worksByYear).sort();
+          new Chart(document.getElementById('chartWorksByYear'), {
+              type: 'line',
+              data: { labels: years, datasets: [{ label: '{{ _("Items") }}', data: years.map(y => worksByYear[y]), borderColor: '#2a69b8', backgroundColor: 'rgba(42,105,184,0.1)', fill: true, tension: 0.4 }] },
+              options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+          });
+      }
+
+      // --- Logic for Fundings ---
+      const fundsByType = {};
+      const fundGroups = rawData.fundings?.group || [];
+      
+      fundGroups.forEach(g => {
+          (g['funding-summary'] || []).forEach(f => {
+              let type = (f.type || '{{ _("Other") }}').toLowerCase().replace(/_/g, ' ');
+              fundsByType[type] = (fundsByType[type] || 0) + 1;
+          });
+      });
+
+      const fundLabels = Object.keys(fundsByType);
+      if (fundLabels.length > 0) {
+          new Chart(document.getElementById('chartFundingsByType'), {
+              type: 'bar',
+              data: { 
+                  labels: fundLabels, 
+                  datasets: [{ 
+                      data: Object.values(fundsByType), 
+                      backgroundColor: '#28a745', 
+                      borderRadius: 4 
+                  }] 
+              },
+              options: { 
+                  maintainAspectRatio: false, 
+                  plugins: { legend: { display: false } }, 
+                  scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } 
+              }
+          });
+      } else {
+          $('#fundingContainer').html('<div class="text-center py-4 text-muted small"><i class="fas fa-info-circle mr-1"></i> {{ _("No detailed funding categories available") }}</div>');
+          // If neither works nor fundings exist, show global empty message
+          if (worksGroups.length === 0) $('#emptyMsg').removeClass('d-none');
+      }
+    });
+  </script>
+{% endblock %}

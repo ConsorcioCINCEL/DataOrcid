@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Metrics Dashboard · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<h1 class="m-0 text-dark">{{ _('ORCID Metrics Dashboard') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Dashboard') }}</li>
+{% endblock %}
+
+{% block content %}
+{# ======= Summary Widgets ======= #}
+<div class="row">
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-primary"><i class="fas fa-book"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">{{ _('Total Works') }}</span>
+                <span class="info-box-number" id="widget-total-works">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-success"><i class="fas fa-hand-holding-usd"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">{{ _('Total Fundings') }}</span>
+                <span class="info-box-number" id="widget-total-fund">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-info"><i class="fas fa-user-graduate"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">{{ _('Active Researchers') }}</span>
+                <span class="info-box-number">{{ researcher_count or 0 }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-warning"><i class="fas fa-calendar-check"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">{{ _('Last Update') }}</span>
+                <span class="info-box-number small">{{ last_works_update|datetimeformat if last_works_update else '—' }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ======= Charts Row 1: Production Trends ======= #}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card card-outline card-primary shadow-sm">
+            <div class="card-header border-0">
+                <h3 class="card-title font-weight-bold">
+                    <i class="fas fa-chart-line mr-2"></i> {{ _('Institutional Production Trend') }}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="chartProductionYear"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-outline card-primary shadow-sm">
+            <div class="card-header border-0">
+                <h3 class="card-title font-weight-bold">
+                    <i class="fas fa-chart-pie mr-2"></i> {{ _('Work Types') }}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="chartWorkTypes"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ======= Charts Row 2: Funding & Top Authors ======= #}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h3 class="card-title font-weight-bold">
+                    <i class="fas fa-donate mr-2"></i> {{ _('Funding by Year') }}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div style="height: 250px;">
+                    <canvas id="chartFundingYear"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h3 class="card-title font-weight-bold">
+                    <i class="fas fa-medal mr-2"></i> {{ _('Top 10 Contributors') }}
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>{{ _('Researcher') }}</th>
+                            <th class="text-center">{{ _('Works') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-authors-table">
+                        <tr><td colspan="2" class="text-center text-muted py-4 small">{{ _('Loading data...') }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+$(function() {
+    const CIN_ORANGE = '#EF5A2F';
+    const CIN_BLUE   = '#2a69b8';
+    const palette    = [CIN_ORANGE, CIN_BLUE, '#17a2b8', '#6610f2', '#e83e8c', '#fd7e14', '#20c997', '#ffc107'];
+
+
+    const data = {{ dashboard_data | tojson | safe if dashboard_data else '{}' }};
+
+    if (Object.keys(data).length === 0) {
+        $('.card-body').html('<div class="text-center py-5"><i class="fas fa-database fa-3x mb-3 text-muted"></i><p>{{ _("No cached data available for this institution. Please run a Cache Rebuild first.") }}</p></div>');
+        return;
+    }
+
+    $('#widget-total-works').text(data.total_works || 0);
+    $('#widget-total-fund').text(data.total_fundings || 0);
+
+    new Chart($('#chartProductionYear')[0].getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: data.works_by_year.labels,
+            datasets: [{
+                label: '{{ _("Publications") }}',
+                data: data.works_by_year.values,
+                borderColor: CIN_BLUE,
+                backgroundColor: 'rgba(42, 105, 184, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    new Chart($('#chartWorkTypes')[0].getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: data.work_types.labels,
+            datasets: [{
+                data: data.work_types.values,
+                backgroundColor: palette
+            }]
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+    });
+
+    new Chart($('#chartFundingYear')[0].getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: data.fundings_by_year.labels,
+            datasets: [{
+                label: '{{ _("Grants") }}',
+                data: data.fundings_by_year.values,
+                backgroundColor: CIN_ORANGE,
+                borderRadius: 5
+            }]
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    const $table = $('#top-authors-table');
+    $table.empty();
+    data.top_researchers.forEach(r => {
+        $table.append(`<tr>
+            <td><a href="/researcher/${r.orcid}" class="text-dark"><i class="fas fa-user-circle mr-2 text-muted"></i>${r.name}</a></td>
+            <td class="text-center"><span class="badge badge-pill badge-light border">${r.count}</span></td>
+        </tr>`);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Institutional Metrics · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('ORCID Analytics Panel') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('Metrics') }}</li>
+{% endblock %}
+
+{% block content %}
+{# --- Summary Cards --- #}
+<div class="row">
+    {% for label, val, icon, color in [
+        (_('Total Works'), stats.total_works, 'fas fa-book', 'bg-primary'),
+        (_('Total Fundings'), stats.total_fundings, 'fas fa-hand-holding-usd', 'bg-success'),
+        (_('Active Researchers'), stats.active_researchers, 'fas fa-user-graduate', 'bg-info'),
+        (_('Last Update'), stats.last_update, 'fas fa-clock', 'bg-warning')
+    ] %}
+    <div class="col-md-3">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon {{ color }}"><i class="{{ icon }}"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text font-weight-bold">{{ label }}</span>
+                <span class="info-box-number">{{ val }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# --- ROW 1: WORKS ANALYSIS --- #}
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card card-outline card-primary shadow-sm h-100">
+            <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Works Production Trend') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='trend_works', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='trend_works', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height:320px; width:100%"><canvas id="trendChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-outline card-primary shadow-sm h-100">
+            <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Work Types') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='types_works', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='types_works', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height:320px;"><canvas id="typesChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# --- ROW 2: FUNDINGS ANALYSIS --- #}
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card card-outline card-success shadow-sm h-100">
+            <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Funding Timeline') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='trend_fundings', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='trend_fundings', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height:320px; width:100%"><canvas id="fundingTrendChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-outline card-success shadow-sm h-100">
+            <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Funding Types') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='types_fundings', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='types_fundings', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height:320px;"><canvas id="fundingTypesChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# --- ROW 3: LISTS & RANKINGS --- #}
+<div class="row mt-4">
+    {# --- Top Contributors WORKS --- #}
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Top Contributors (Works)') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='top_researchers_works', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='top_researchers_works', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0 table-responsive" style="max_height: 400px; overflow-y: auto;">
+                <ul class="list-group list-group-flush">
+                    {% for res in stats.top_researchers_works %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge badge-primary">{{ res[1] }}</span>
+                            <small class="text-right ml-2">
+                                <strong>{{ res[2] }}</strong><br>
+                                <a href="{{ url_for('main.orcid_profile', orcid_id=res[0]) }}" target="_blank" class="text-muted"><i class="fab fa-orcid mr-1"></i>{{ res[0] }}</a>
+                            </small>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted small text-center">{{ _('No data') }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {# --- Top Contributors FUNDINGS --- #}
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Top Contributors (Funding)') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='top_researchers_fundings', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='top_researchers_fundings', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0 table-responsive" style="max_height: 400px; overflow-y: auto;">
+                <ul class="list-group list-group-flush">
+                    {% for res in stats.top_researchers_fundings %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge badge-success">{{ res[1] }}</span>
+                            <small class="text-right ml-2">
+                                <strong>{{ res[2] }}</strong><br>
+                                <a href="{{ url_for('main.orcid_profile', orcid_id=res[0]) }}" target="_blank" class="text-muted"><i class="fab fa-orcid mr-1"></i>{{ res[0] }}</a>
+                            </small>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted small text-center">{{ _('No data') }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {# --- Funding Sources --- #}
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Top Funding Orgs') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='funding_orgs', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='funding_orgs', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height:350px;"><canvas id="fundingOrgsChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title text-bold">{{ _('Top Journals & Venues') }}</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-toggle="dropdown"><i class="fas fa-download"></i></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='journals', format='csv') }}" class="dropdown-item">Download CSV</a>
+                        <a href="{{ url_for('main.download_metrics_data', chart_type='journals', format='excel') }}" class="dropdown-item">Download Excel</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height:300px;"><canvas id="journalsChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+$(function() {
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.responsive = true;
+    const COLORS = ['#2a69b8', '#EF5A2F', '#17a2b8', '#ffc107', '#28a745', '#6c757d', '#e83e8c'];
+
+    // 1. Works Trend
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: {{ stats.chart_years | tojson }},
+            datasets: [{ label: 'Works', data: {{ stats.chart_counts | tojson }}, borderColor: '#2a69b8', backgroundColor: 'rgba(42, 105, 184, 0.1)', fill: true, tension: 0.3 }]
+        }
+    });
+
+    // 2. Works Types
+    new Chart(document.getElementById('typesChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ stats.chart_types_labels | tojson }},
+            datasets: [{ data: {{ stats.chart_types_values | tojson }}, backgroundColor: COLORS }]
+        },
+        options: { plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } } }
+    });
+
+    // 3. Funding Trend
+    new Chart(document.getElementById('fundingTrendChart'), {
+        type: 'line',
+        data: {
+            labels: {{ stats.chart_funding_years | tojson }},
+            datasets: [{ label: 'Fundings', data: {{ stats.chart_funding_counts | tojson }}, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.1)', fill: true, tension: 0.3 }]
+        }
+    });
+
+    // 4. Funding Types
+    new Chart(document.getElementById('fundingTypesChart'), {
+        type: 'pie',
+        data: {
+            labels: {{ stats.chart_funding_types_labels | tojson }},
+            datasets: [{ data: {{ stats.chart_funding_types_values | tojson }}, backgroundColor: COLORS }]
+        },
+        options: { plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } } }
+    });
+
+    // 5. Funding Orgs
+    new Chart(document.getElementById('fundingOrgsChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ stats.chart_funding_orgs_labels | tojson }},
+            datasets: [{ label: 'Grants', data: {{ stats.chart_funding_orgs_values | tojson }}, backgroundColor: '#28a745' }]
+        },
+        options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+    });
+
+    // 6. Top Journals
+    new Chart(document.getElementById('journalsChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ stats.chart_journals_labels | tojson }},
+            datasets: [{ label: 'Publications', data: {{ stats.chart_journals_values | tojson }}, backgroundColor: '#17a2b8' }]
+        },
+        options: { plugins: { legend: { display: false } } }
+    });
+});
+</script>
+{% endblock %}

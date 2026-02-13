@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Usage Statistics · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<h1 class="m-0 text-dark">{{ _('System Activity Logs') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Statistics') }}</li>
+{% endblock %}
+
+{% block content %}
+
+{# ======= Filter Section ======= #}
+<div class="card shadow-sm mb-4">
+    <div class="card-body bg-light">
+        <form method="get" action="">
+            <div class="row align-items-end">
+                <div class="col-md-3 mb-2">
+                    <label class="small font-weight-bold text-muted">{{ _('Search Keyword') }}</label>
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                        </div>
+                        <input type="text" name="q" value="{{ q }}" class="form-control"
+                               placeholder="{{ _('User, path, or IP...') }}">
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-2">
+                    <label class="small font-weight-bold text-muted">{{ _('Filter by User') }}</label>
+                    <select name="user" id="user-select" class="form-control form-control-sm select2">
+                        <option value="">{{ _('All Users') }}</option>
+                        {% for u in users %}
+                            <option value="{{ u }}" {% if u == selected_user %}selected{% endif %}>
+                                {{ u }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-2">
+                    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success pt-2">
+                        <input type="checkbox" class="custom-control-input" name="show_anonymous" value="1" id="show_anonymous" {% if show_anonymous %}checked{% endif %}>
+                        <label class="custom-control-label small" for="show_anonymous">
+                            {{ _('Include anonymous (guest) access') }}
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-2 mb-2">
+                    <button class="btn btn-primary btn-sm btn-block shadow-sm" type="submit">
+                        <i class="fas fa-filter mr-1"></i> {{ _('Apply') }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# ======= Logs Table ======= #}
+<div class="card card-outline card-primary shadow-sm">
+    <div class="card-header border-0">
+        <h3 class="card-title font-weight-bold"><i class="fas fa-history mr-2"></i> {{ _('Recent Requests') }}</h3>
+        <div class="card-tools">
+            <span class="badge badge-light border">{{ _('Page') }} {{ pagination.page }} {{ _('of') }} {{ pagination.pages }}</span>
+        </div>
+    </div>
+
+    {% if logs %}
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0 small">
+                <thead class="bg-light text-muted">
+                    <tr>
+                        <th>{{ _('Timestamp') }}</th>
+                        <th>{{ _('User') }}</th>
+                        <th>{{ _('Request Path') }}</th>
+                        <th class="text-center">{{ _('Method') }}</th>
+                        <th class="text-center">{{ _('Status') }}</th>
+                        <th class="text-right">{{ _('Latency') }}</th>
+                        <th class="text-right">IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="text-nowrap align-middle">{{ log.timestamp }}</td>
+                        <td class="align-middle">
+                            {% if log.username %}
+                                <span class="badge badge-info"><i class="fas fa-user mr-1"></i> {{ log.username }}</span>
+                            {% else %}
+                                <span class="text-muted small"><i>anonymous</i></span>
+                            {% endif %}
+                        </td>
+                        <td class="align-middle"><code>{{ log.path }}</code></td>
+                        <td class="text-center align-middle">
+                            <span class="badge {% if log.method == 'GET' %}badge-light border{% else %}badge-dark{% endif %}">
+                                {{ log.method }}
+                            </span>
+                        </td>
+                        <td class="text-center align-middle">
+                            {% set s = log.status_code|int %}
+                            <span class="badge {% if s < 300 %}badge-success{% elif s < 400 %}badge-info{% else %}badge-danger{% endif %}">
+                                {{ s }}
+                            </span>
+                        </td>
+                        <td class="text-right align-middle font-weight-bold">
+                            {{ "%.0f"|format(log.duration_ms or 0) }}<span class="text-muted small">ms</span>
+                        </td>
+                        <td class="text-right align-middle text-muted small">{{ log.ip }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <p class="text-muted mb-0">{{ _('No activity logs found for the selected filters.') }}</p>
+    </div>
+    {% endif %}
+
+    {# ======= Pagination ======= #}
+    <div class="card-footer bg-white">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.prev_num, q=q, user=selected_user, show_anonymous=1 if show_anonymous else 0) if pagination.has_prev else '#' }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if p %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.statistics', page=p, q=q, user=selected_user, show_anonymous=1 if show_anonymous else 0) }}">{{ p }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.next_num, q=q, user=selected_user, show_anonymous=1 if show_anonymous else 0) if pagination.has_next else '#' }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single { height: 31px; border: 1px solid #ced4da; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px; font-size: 0.875rem; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 30px; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(function () {
+    $('.select2').select2({
+        theme: 'default',
+        placeholder: '{{ _("Select a user") }}',
+        allowClear: true
+    });
+});
+</script>
+{% endblock %}

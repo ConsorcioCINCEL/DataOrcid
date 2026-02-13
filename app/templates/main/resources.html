@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Resources and Integrations · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<h1 class="m-0 text-dark">{{ _('Resources & Knowledge Base') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Resources') }}</li>
+{% endblock %}
+
+{% block content %}
+
+{# ======= Strategic Benefits (For Non-Technical Users) ======= #}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card bg-gradient-primary shadow-sm">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h4 class="font-weight-bold"><i class="fas fa-rocket mr-2"></i> {{ _('Why be an ORCID Consortium Member?') }}</h4>
+            <p class="mb-0 text-white-50">
+              {{ _('Membership is not just about a technical ID; it is about institutional visibility and data control in the global research ecosystem.') }}
+            </p>
+          </div>
+          <div class="col-md-4 text-right d-none d-md-block">
+             <i class="fas fa-chart-line fa-3x opacity-2"></i>
+          </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-4 mb-2">
+                <div class="p-3 bg-white-10 rounded">
+                    <h6 class="font-weight-bold"><i class="fas fa-shield-alt mr-2"></i> {{ _('Data Integrity') }}</h6>
+                    <p class="small mb-0">{{ _('Assert your institution name on researcher records to prevent name ambiguity and fragmentation.') }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="p-3 bg-white-10 rounded">
+                    <h6 class="font-weight-bold"><i class="fas fa-bolt mr-2"></i> {{ _('Automatic Updates') }}</h6>
+                    <p class="small mb-0">{{ _('Automatically push information to profiles, saving researchers time in manual reporting.') }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="p-3 bg-white-10 rounded">
+                    <h6 class="font-weight-bold"><i class="fas fa-eye mr-2"></i> {{ _('Institutional Insight') }}</h6>
+                    <p class="small mb-0">{{ _('Access the Member Portal to get advanced statistics and manage institutional affiliations.') }}</p>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ======= Member Portal Roles (Full Matrix) ======= #}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white d-flex align-items-center">
+        <h3 class="card-title font-weight-bold">
+          <i class="fas fa-users-cog mr-2 text-primary"></i> {{ _('ORCID Member Portal Roles') }}
+        </h3>
+        <a href="https://member-portal.orcid.org/" target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary ml-auto shadow-none">
+          <i class="fas fa-external-link-alt mr-1"></i> {{ _('Access Portal') }}
+        </a>
+      </div>
+
+      <div class="card-body">
+        <p class="small text-muted mb-4">
+          {{ _('The Member Portal is your administrative hub. Designating these roles ensures smooth communication with ORCID and CINCEL.') }}
+        </p>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover border">
+            <thead class="bg-light x-small text-uppercase">
+              <tr>
+                <th style="width: 25%">{{ _('Role') }}</th>
+                <th>{{ _('Description & Responsibilities') }}</th>
+                <th class="text-center">{{ _('Status') }}</th>
+              </tr>
+            </thead>
+            <tbody class="small">
+              <tr>
+                <td><strong>Agreement Signatory</strong></td>
+                <td>{{ _('The legal authority authorized to sign formal agreements on behalf of the institution.') }}</td>
+                <td class="text-center"><span class="badge badge-primary">OFFICIAL</span></td>
+              </tr>
+              <tr>
+                <td><strong>Main Relationship Contact</strong></td>
+                <td>{{ _('Primary institutional contact for general notifications and consortium coordination.') }}</td>
+                <td class="text-center"><span class="badge badge-primary">OFFICIAL</span></td>
+              </tr>
+              <tr>
+                <td><strong>Voting Contact</strong></td>
+                <td>{{ _('Authorized to cast institutional ballots in ORCID board elections and policy decisions.') }}</td>
+                <td class="text-center"><span class="badge badge-info">REQUIRED</span></td>
+              </tr>
+              <tr>
+                <td><strong>Technical Contact</strong></td>
+                <td>{{ _('Primary contact for API implementation, client credentials, and technical alerts.') }}</td>
+                <td class="text-center"><span class="badge badge-info">REQUIRED</span></td>
+              </tr>
+              <tr>
+                <td><strong>Invoice Contact</strong></td>
+                <td>{{ _('Person or department responsible for receiving and processing membership billing.') }}</td>
+                <td class="text-center"><span class="badge badge-light border">FINANCE</span></td>
+              </tr>
+              <tr>
+                <td><strong>Comms Contact</strong></td>
+                <td>{{ _('Receives community newsletters, outreach materials, and marketing updates.') }}</td>
+                <td class="text-center"></td>
+              </tr>
+              <tr>
+                <td><strong>Product Contact</strong></td>
+                <td>{{ _('Receives information about new ORCID features and beta testing opportunities.') }}</td>
+                <td class="text-center"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ======= API & Affiliation Manager Section ======= #}
+<div class="row">
+  <div class="col-lg-6 mb-4">
+    <div class="card card-outline card-info shadow-sm h-100">
+      <div class="card-header bg-white">
+        <h3 class="card-title font-weight-bold"><i class="fas fa-key mr-2 text-info"></i> {{ _('API Credential Management') }}</h3>
+      </div>
+      <div class="card-body">
+        <p class="small">
+          {{ _('Consortium members are entitled to <strong>5 production API Keys</strong>. These can be used across multiple institutional platforms.') }}
+        </p>
+        <div class="bg-light p-2 rounded mb-3 small border-left border-info">
+            <i class="fas fa-exclamation-circle mr-1 text-info"></i>
+            {{ _('Note: Activating the Affiliation Manager consumes <strong>one</strong> of your 5 available API slots.') }}
+        </div>
+        <div class="list-group list-group-flush mb-3">
+            <a href="https://info.orcid.org/documentation/api-tutorials/api-tutorial-get-and-authenticated-orcid-id/" target="_blank" class="list-group-item list-group-item-action py-2">
+                <i class="fas fa-graduation-cap mr-2 text-primary"></i> {{ _('API Tutorial: Get & Authenticate') }}
+            </a>
+            <a href="https://info.orcid.org/register-a-client-application-sandbox-member-api/" target="_blank" class="list-group-item list-group-item-action py-2">
+                <i class="fas fa-vial mr-2 text-warning"></i> {{ _('Request Sandbox Credentials (Testing)') }}
+            </a>
+            <a href="https://info.orcid.org/register-a-client-application-production-member-api/" target="_blank" class="list-group-item list-group-item-action py-2">
+                <i class="fas fa-rocket mr-2 text-success"></i> {{ _('Request Production Credentials (Go-live)') }}
+            </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 mb-4">
+    <div class="card card-outline card-success shadow-sm h-100">
+      <div class="card-header bg-white">
+        <h3 class="card-title font-weight-bold"><i class="fas fa-id-badge mr-2 text-success"></i> {{ _('Affiliation Manager (AM)') }}</h3>
+      </div>
+      <div class="card-body">
+        <p class="small">
+          {{ _('A "No-Code" solution to write verified institutional affiliations directly into researcher records via CSV upload. Researchers must accept the invitation sent via email.') }}
+        </p>
+        <div class="alert alert-warning p-2 mb-3 x-small">
+            <i class="fas fa-toggle-on mr-1"></i>
+            {{ _('Activation is managed directly through the <strong>ORCID Member Portal</strong>. Please note this tool uses one of your institutional API credentials.') }}
+        </div>
+        <div class="bg-light p-3 rounded mb-3">
+            <h6 class="font-weight-bold x-small text-uppercase mb-2 border-bottom pb-1">{{ _('CSV Field Specifications') }}</h6>
+            <ul class="x-small mb-0 pl-3">
+                <li><strong>email:</strong> {{ _('Valid researcher email (Required).') }}</li>
+                <li><strong>affiliation-section:</strong> {{ _('Type (Employment, Education, Qualification, etc).') }}</li>
+                <li><strong>org-name / org-city / org-country:</strong> {{ _('Organization details (Required).') }}</li>
+                <li><strong>start-date / end-date:</strong> {{ _('Dates in YYYY-MM-DD format (Optional).') }}</li>
+                <li><strong>disambiguated-organization-identifier:</strong> {{ _('The ROR or Ringgold ID.') }}</li>
+                <li><strong>disambiguation-source:</strong> {{ _('Source of the ID (ROR or RINGGOLD).') }}</li>
+            </ul>
+        </div>
+        <div class="text-center">
+            <a href="https://docs.google.com/spreadsheets/d/1S5gfaF-Y5ydBA4u2D0Q1i4NkikbY8223ovt2wd1dcx0/edit#gid=153969246" target="_blank" class="btn btn-sm btn-outline-success">
+                <i class="fas fa-file-csv mr-1"></i> {{ _('Download CSV Template') }}
+            </a>
+            <a href="https://info.orcid.org/documentation/member-portal/member-portal-affiliation-manager-guide/" target="_blank" class="btn btn-sm btn-link ml-2">
+                {{ _('Official AM Guide') }}
+            </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ======= Platform Integration (The "How-to") ======= #}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-gradient-navy">
+        <h3 class="card-title"><i class="fas fa-project-diagram mr-2"></i> {{ _('Standard Platform Integrations') }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 text-center border-right">
+              <i class="fas fa-journal-whills fa-2x mb-2 text-primary"></i>
+              <h6>OJS</h6>
+              <p class="x-small text-muted">{{ _('Sync journals with ORCID reviewers and authors.') }}</p>
+              <a href="https://docs.pkp.sfu.ca/orcid/en/" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('Plugin Docs') }}</a>
+          </div>
+          <div class="col-md-3 text-center border-right">
+              <i class="fas fa-archive fa-2x mb-2 text-info"></i>
+              <h6>DSpace-CRIS</h6>
+              <p class="x-small text-muted">{{ _('Link repository files with validated ORCID IDs.') }}</p>
+              <a href="https://wiki.lyrasis.org/display/DSPACECRIS/ORCID+Integration" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('Wiki Guide') }}</a>
+          </div>
+          <div class="col-md-3 text-center border-right">
+              <i class="fas fa-microscope fa-2x mb-2 text-purple"></i>
+              <h6>VIVO</h6>
+              <p class="x-small text-muted">{{ _('Enrich researcher profiles with linked data.') }}</p>
+              <a href="https://wiki.lyrasis.org/display/VTDA/Activating+the+ORCID+integration" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('Setup Guide') }}</a>
+          </div>
+          <div class="col-md-3 text-center">
+              <i class="fas fa-server fa-2x mb-2 text-secondary"></i>
+              <h6>Dataverse</h6>
+              <p class="x-small text-muted">{{ _('Authenticate depositors using ORCID OAuth2.') }}</p>
+              <a href="https://guides.dataverse.org/en/latest/installation/oauth2.html" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('OAuth2 Docs') }}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ======= Technical Callout ======= #}
+<div class="row">
+  <div class="col-12">
+    <div class="callout callout-warning shadow-sm">
+      <h5 class="font-weight-bold"><i class="fas fa-exclamation-triangle mr-2 text-warning"></i> {{ _('Critical Pre-Integration Checklist') }}</h5>
+      <ul class="mb-0 small">
+        <li>{{ _('Confirm your institution ROR (Research Organization Registry) ID. ROR is the global standard for identifying institutions in ORCID.') }}</li>
+        <li>{{ _('Ensure your technical environment supports <strong>HTTPS callbacks</strong>. ORCID requires secure redirects for data security.') }}</li>
+        <li>{{ _('Use the Sandbox environment first. It is a mirrored copy of ORCID where you can test without affecting real records.') }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

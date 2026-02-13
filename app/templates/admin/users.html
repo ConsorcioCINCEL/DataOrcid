@@ -1,0 +1,176 @@
+{% extends 'base.html' %} 
+
+{% block title %}{{ _('User Administration') }}{% endblock %} 
+
+{% block header_title %}
+<h1 class="m-0 text-dark">{{ _('User Administration') }}</h1>
+{% endblock %} 
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Users') }}</li>
+{% endblock %} 
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col-md-8">
+    <form class="form-inline" method="get">
+      <div class="input-group">
+        <input type="text" class="form-control" name="q" value="{{ q or '' }}" placeholder="{{ _('Search by username, institution, ROR or email') }}" style="min-width: 300px;">
+        <div class="input-group-append">
+          <button class="btn btn-primary" type="submit">
+            <i class="fas fa-search mr-1"></i> {{ _('Search') }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="col-md-4 text-right">
+    {% if session.get('is_admin') %}
+    <button class="btn btn-success shadow-sm" data-toggle="modal" data-target="#modalNewUser">
+      <i class="fas fa-user-plus mr-1"></i> {{ _('Create User') }}
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card card-outline card-primary shadow-sm">
+  <div class="card-header border-0">
+    <h3 class="card-title"><i class="fas fa-users-cog mr-2"></i> {{ _('System Users') }}</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="thead-light">
+          <tr>
+            <th>{{ _('Username') }}</th>
+            <th>{{ _('Contact Info') }}</th>
+            <th>{{ _('Full Name') }}</th>
+            <th>{{ _('Institution / ROR') }}</th>
+            <th class="text-center">{{ _('Roles') }}</th>
+            <th class="text-center">{{ _('Created') }}</th>
+            <th class="text-right">{{ _('Actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="align-middle"><strong>{{ u.username }}</strong></td>
+            <td class="align-middle">
+                <small class="d-block text-muted"><i class="fas fa-envelope mr-1"></i> {{ u.email or u.username }}</small>
+                {% if u.position %}<small class="badge badge-light border">{{ u.position }}</small>{% endif %}
+            </td>
+            <td class="align-middle">{{ u.first_name or '—' }} {{ u.last_name or '' }}</td>
+            <td class="align-middle">
+              <span class="d-block">{{ u.institution_name or '—' }}</span>
+              {% if u.ror_id %}<code class="small text-primary">ROR: {{ u.ror_id }}</code>{% endif %}
+            </td>
+            <td class="align-middle text-center">
+              {% if u.is_admin %}<span class="badge badge-primary">{{ _('Admin') }}</span>{% endif %}
+              {% if u.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
+              {% if not u.is_admin and not u.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
+            </td>
+            <td class="align-middle text-center small text-muted">
+                {{ u.created_at|datetimeformat if u.created_at else '—' }}
+            </td>
+            <td class="text-right align-middle">
+              {% if session.get('is_admin') %}
+              <div class="btn-group">
+                <button class="btn btn-sm btn-default btn-edit-user" data-toggle="modal" data-target="#modalEditUser" title="{{ _('Edit') }}"
+                  data-id="{{ u.id }}" data-username="{{ u.username }}" data-email="{{ u.email or '' }}" data-first_name="{{ u.first_name or '' }}"
+                  data-last_name="{{ u.last_name or '' }}" data-position="{{ u.position or '' }}" data-institution_name="{{ u.institution_name or '' }}"
+                  data-ror_id="{{ u.ror_id or '' }}" data-grid_id="{{ u.grid_id or '' }}" data-am_client_id="{{ u.am_client_id or '' }}"
+                  data-is_admin="{{ 1 if u.is_admin else 0 }}" data-is_manager="{{ 1 if u.is_manager else 0 }}" data-locale="{{ u.locale or 'es' }}">
+                  <i class="fas fa-edit text-primary"></i>
+                </button>
+                
+                <form action="{{ url_for('admin.users_reset_password', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Reset password for') }} {{ u.username }}?');">
+                  <button class="btn btn-sm btn-default" type="submit" title="{{ _('Reset Password') }}"><i class="fas fa-key text-warning"></i></button>
+                </form>
+
+                <form action="{{ url_for('admin.users_send_creds', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Temporary credentials will be sent to') }} {{ u.email or u.username }}.');">
+                  <button class="btn btn-sm btn-default" type="submit" title="{{ _('Send Credentials') }}"><i class="fas fa-paper-plane text-info"></i></button>
+                </form>
+
+                <form action="{{ url_for('admin.users_delete', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Delete user') }} {{ u.username }}?');">
+                  <button class="btn btn-sm btn-default" type="submit" title="{{ _('Delete') }}"><i class="fas fa-trash text-danger"></i></button>
+                </form>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %} 
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">{{ _('No users found.') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% include 'admin/_user_modals.html' %}
+
+{% endblock %}
+
+{% block styles %} 
+{{ super() }}
+<style>
+  /* Fix for modal z-index in AdminLTE */
+  .modal { z-index: 1065 !important; }
+  .modal-backdrop { z-index: 1060 !important; }
+  
+  /* Theming for custom switches */
+  .custom-switch-on-orange .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #EF5A2F !important;
+    border-color: #EF5A2F !important;
+  }
+  .custom-switch .custom-control-label { cursor: pointer; font-weight: 500; }
+  .btn-group .btn { border-color: #ddd; }
+</style>
+{% endblock %} 
+
+{% block scripts %} 
+{{ super() }}
+<script>
+  $(function () {
+    // Append modals to body for proper display
+    $("#modalEditUser, #modalNewUser").on("show.bs.modal", function () { $(this).appendTo("body"); });
+
+    // Handle Edit User Modal population
+    $(".btn-edit-user").on("click", function () {
+      const btn = $(this);
+      const modal = $("#modalEditUser");
+      const form = modal.find("form");
+      
+      // Dynamic Action URL
+      form.attr("action", "{{ url_for('admin.users_update', user_id=0) }}".replace('0', btn.data("id")));
+      
+      // Mapping values
+      form.find("[name='username']").val(btn.data("username"));
+      form.find("[name='email']").val(btn.data("email"));
+      form.find("[name='first_name']").val(btn.data("first_name"));
+      form.find("[name='last_name']").val(btn.data("last_name"));
+      form.find("[name='position']").val(btn.data("position"));
+      form.find("[name='institution_name']").val(btn.data("institution_name"));
+      form.find("[name='ror_id']").val(btn.data("ror_id"));
+      form.find("[name='grid_id']").val(btn.data("grid_id"));
+      form.find("[name='am_client_id']").val(btn.data("am_client_id"));
+      form.find("[name='locale']").val(btn.data("locale") || "es");
+      
+      // Boolean switches
+      $("#is_admin_edit").prop("checked", btn.data("is_admin") == 1);
+      $("#is_manager_edit").prop("checked", btn.data("is_manager") == 1);
+    });
+
+    // UX: Auto-copy username to email if looks like email
+    const $newUser = $("#new_username"), $newEmail = $("#new_email");
+    $newUser.on("blur", function() { 
+      if ($newEmail.val().trim() === "" && $newUser.val().includes('@')) {
+        $newEmail.val($newUser.val().trim()); 
+      }
+    });
+  });
+</script>
+{% endblock %}

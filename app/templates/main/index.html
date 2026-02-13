@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Home · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<h1 class="m-0 text-dark">{{ _('Institutional Dashboard') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">{{ _('Home') }}</li>
+{% endblock %}
+
+{% block content %}
+
+{# --- WELCOME & INSTITUTIONAL CONTEXT --- #}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card card-outline card-primary shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+            <div class="bg-primary-light p-2 rounded-circle mr-3">
+                <i class="fas fa-user-circle text-primary fa-2x"></i>
+            </div>
+            <div>
+                <h4 class="font-weight-bold mb-0">
+                    {{ _('Hello,') }} {{ session.get('first_name') }}
+                </h4>
+                <p class="text-muted mb-0 small">{{ _('Institutional Management Portal · ORCID-Chile Consortium') }}</p>
+            </div>
+        </div>
+        <hr class="mt-0">
+        <div class="row">
+            <div class="col-md-8">
+                <p class="text-justify text-muted">
+                    {{ _('This platform enables member institutions to access, consult, and export public data registered by their affiliated researchers. All information is retrieved directly via the official ORCID API, ensuring that the data reflects exactly what researchers have published on their profiles.') }}
+                </p>
+            </div>
+            <div class="col-md-4 border-left">
+                <ul class="list-unstyled mb-0">
+                    <li class="small mb-2">
+                        <i class="fas fa-sync text-success mr-2"></i>
+                        <strong>{{ _('Auto-update:') }}</strong> {{ _('Every weekend.') }}
+                    </li>
+                    <li class="small mb-2">
+                        <i class="fas fa-database text-info mr-2"></i>
+                        <strong>{{ _('Data Source:') }}</strong> {{ _('ORCID Public V3.0.') }}
+                    </li>
+                    <li class="small">
+                        <i class="fas fa-shield-alt text-warning mr-2"></i>
+                        <strong>{{ _('Integrity:') }}</strong> {{ _('Unmodified original records.') }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# --- KPI CARDS (Snapshot) --- #}
+<div class="row">
+    <div class="col-md-4 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-info"><i class="fas fa-user-graduate"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('Affiliated Researchers') }}</span>
+                <span class="info-box-number">{{ researcher_count }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-primary"><i class="fas fa-book-open"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('Cached Works') }}</span>
+                <span class="info-box-number">{{ works_count }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-success"><i class="fas fa-hand-holding-usd"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('Cached Grants') }}</span>
+                <span class="info-box-number">{{ fundings_count }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# --- VISUALIZATIONS ROW --- #}
+<div class="row mt-2">
+  {# Chart 1: Data Composition #}
+  <div class="col-lg-5 mb-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header bg-white border-0">
+        <h3 class="card-title font-weight-bold text-muted small text-uppercase">
+          <i class="fas fa-chart-pie mr-2"></i> {{ _('Data Composition') }}
+        </h3>
+      </div>
+      <div class="card-body">
+        {% if works_count > 0 or fundings_count > 0 %}
+            <div style="height: 220px;">
+                <canvas id="chartComposition"></canvas>
+            </div>
+            <div class="text-center mt-3 small text-muted">
+                {{ _('Ratio of Publications vs. Research Grants in local cache.') }}
+            </div>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-sync-alt fa-2x mb-2"></i>
+                <p>{{ _('No data cached. Please run a sync.') }}</p>
+            </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# NEW Chart 2: Top Contributors Preview (Summary) #}
+  <div class="col-lg-7 mb-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header bg-white border-0 d-flex align-items-center">
+        <h3 class="card-title font-weight-bold text-muted small text-uppercase">
+          <i class="fas fa-medal mr-2 text-warning"></i> {{ _('Institutional Activity Level') }}
+        </h3>
+        <a href="{{ url_for('main.metrics_panel') }}" class="btn btn-xs btn-link ml-auto text-primary">{{ _('Full Rankings') }}</a>
+      </div>
+      <div class="card-body">
+        <p class="small text-muted">{{ _('Comparison of data volume across primary research categories.') }}</p>
+        <div style="height: 220px;">
+            <canvas id="chartActivityPreview"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# --- QUICK ACCESS MODULES --- #}
+<h5 class="mb-3 mt-2 text-uppercase small font-weight-bold text-muted">{{ _('System Modules') }}</h5>
+<div class="row">
+  {% set modules = [
+    {
+        'title': _('ORCID Analytics'),
+        'desc': _('Analyze publication trends, journals, and top researchers.'),
+        'icon': 'fa-chart-bar',
+        'url': url_for('main.metrics_panel') if has_any_cache else '#',
+        'color': 'info',
+        'disabled': not has_any_cache
+    },
+    {
+        'title': _('Data Downloads'),
+        'desc': _('Access the repository to export Works and Fundings to Excel/CSV.'),
+        'icon': 'fa-cloud-download-alt',
+        'url': url_for('works.cache_works_status'),
+        'color': 'primary',
+        'disabled': false
+    },
+    {
+        'title': _('Researchers List'),
+        'desc': _('Direct access to the profile directory and management tools.'),
+        'icon': 'fa-user-friends',
+        'url': url_for('main.researcher_list'),
+        'color': 'purple',
+        'disabled': false
+    }
+  ] %}
+
+  {% for module in modules %}
+  <div class="col-md-4 mb-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="font-weight-bold text-{{ module.color }}">{{ module.title }}</h5>
+            <span class="text-{{ module.color }} opacity-50"><i class="fas {{ module.icon }} fa-lg"></i></span>
+        </div>
+        <p class="text-muted small">{{ module.desc }}</p>
+        
+        <div class="mt-auto">
+            {% if module.disabled %}
+                <button class="btn btn-sm btn-light btn-block text-muted disabled" style="cursor: not-allowed;">{{ _('Sync Required') }}</button>
+            {% else %}
+                <a href="{{ module.url }}" class="btn btn-sm btn-outline-{{ module.color }} btn-block shadow-none">
+                    {{ _('Open Module') }} <i class="fas fa-chevron-right ml-1 small"></i>
+                </a>
+            {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+  $(function() {
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.responsive = true;
+    
+    const ctxComp = document.getElementById('chartComposition')?.getContext('2d');
+    if (ctxComp) {
+        new Chart(ctxComp, {
+            type: 'doughnut',
+            data: { 
+                labels: ['{{ _("Works") }}', '{{ _("Fundings") }}'], 
+                datasets: [{ 
+                    data: [{{ works_count }}, {{ fundings_count }}], 
+                    backgroundColor: ['#007bff', '#28a745'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }] 
+            },
+            options: {
+                plugins: { 
+                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    const ctxAct = document.getElementById('chartActivityPreview')?.getContext('2d');
+    if (ctxAct) {
+        new Chart(ctxAct, {
+            type: 'bar',
+            data: {
+                labels: ['{{ _("Volume Comparison") }}'],
+                datasets: [
+                    {
+                        label: '{{ _("Works") }}',
+                        data: [{{ works_count }}],
+                        backgroundColor: '#007bff',
+                        borderRadius: 5
+                    },
+                    {
+                        label: '{{ _("Fundings") }}',
+                        data: [{{ fundings_count }}],
+                        backgroundColor: '#28a745',
+                        borderRadius: 5
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, grid: { display: false } },
+                    y: { grid: { display: false } }
+                },
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+  });
+  </script>
+{% endblock %}

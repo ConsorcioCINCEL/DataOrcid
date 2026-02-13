@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Data Synchronization · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('Institutional Data Management') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('Bulk Download') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {# --- LEFT COLUMN: STATUS TABLE --- #}
+    <div class="col-lg-8">
+        <div class="card card-outline card-primary shadow-sm">
+            <div class="card-header border-0 d-flex align-items-center">
+                <h3 class="card-title font-weight-bold">
+                    <i class="fas fa-database mr-2 text-primary"></i> {{ _('Cache Status') }}
+                </h3>
+                
+                {# Only Admins and Managers can trigger the Sync #}
+                {% if session.get('is_admin') or session.get('is_manager') %}
+                <div class="ml-auto">
+                    <form id="formMasterSync" method="post" action="{{ url_for('works.cache_full_build') }}">
+                        <button type="submit" class="btn btn-warning font-weight-bold shadow-sm">
+                            <i class="fas fa-sync-alt mr-1"></i> {{ _('Sync Everything') }}
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card-body p-0">
+                <div class="overlay d-none" id="overlaySync">
+                    <div class="text-center">
+                        <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+                        <p class="mt-2 font-weight-bold">{{ _('Synchronizing Works, Fundings & Profiles...') }}<br><small>{{ _('This may take several minutes.') }}</small></p>
+                    </div>
+                </div>
+
+                <table class="table table-striped table-valign-middle">
+                    <thead>
+                    <tr>
+                        <th>{{ _('Data Type') }}</th>
+                        <th class="text-center">{{ _('Records Cached') }}</th>
+                        <th>{{ _('Last Update') }}</th>
+                        <th class="text-right">{{ _('Export Data') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    
+                    {# --- ROW 1: WORKS --- #}
+                    <tr>
+                        <td>
+                            <i class="fas fa-book-open text-blue mr-2"></i> <strong>{{ _('Scholarly Works') }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if has_cache_works %}
+                                <span class="badge badge-success" style="font-size: 1em;">{{ count_works }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">
+                            {% if last_run_works %}
+                                <i class="far fa-clock mr-1"></i> {{ last_run_works.finished_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            {% if has_cache_works %}
+                            <div class="btn-group">
+                                <a href="{{ url_for('works.download_all_works_cache') }}" class="btn btn-default btn-sm" title="CSV">
+                                    <i class="fas fa-file-csv text-success"></i>
+                                </a>
+                                <a href="{{ url_for('works.download_all_works_cache', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
+                                    <i class="fas fa-file-excel text-success"></i>
+                                </a>
+                            </div>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {# --- ROW 2: FUNDINGS --- #}
+                    <tr>
+                        <td>
+                            <i class="fas fa-hand-holding-usd text-orange mr-2"></i> <strong>{{ _('Fundings & Grants') }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if has_cache_fundings %}
+                                <span class="badge badge-success" style="font-size: 1em;">{{ count_fundings }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">
+                            {% if last_run_fundings %}
+                                <i class="far fa-clock mr-1"></i> {{ last_run_fundings.finished_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            {% if has_cache_fundings %}
+                            <div class="btn-group">
+                                <a href="{{ url_for('works.download_all_fundings_cache') }}" class="btn btn-default btn-sm" title="CSV">
+                                    <i class="fas fa-file-csv text-success"></i>
+                                </a>
+                                <a href="{{ url_for('works.download_all_fundings_cache', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
+                                    <i class="fas fa-file-excel text-success"></i>
+                                </a>
+                            </div>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {# --- ROW 3: PROFILES (Only relevant for display context) --- #}
+                    <tr>
+                        <td>
+                            <i class="fas fa-id-card text-purple mr-2"></i> <strong>{{ _('Researcher Names') }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if count_profiles > 0 %}
+                                <span class="badge badge-info" style="font-size: 1em;">{{ count_profiles }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">
+                            {{ _('Auto-updated with Sync') }}
+                        </td>
+                        <td class="text-right">
+                            <span class="text-muted small text-italic">{{ _('Internal Use') }}</span>
+                        </td>
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# --- RIGHT COLUMN: CONTEXTUAL HELP --- #}
+    <div class="col-lg-4">
+        <div class="card card-outline card-info shadow-sm h-100">
+            <div class="card-header">
+                {% if session.get('is_admin') or session.get('is_manager') %}
+                    <h3 class="card-title text-bold">{{ _('Management Actions') }}</h3>
+                {% else %}
+                    <h3 class="card-title text-bold">{{ _('Data Access') }}</h3>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                
+                {# Context 1: Synchronization (Admin/Manager Only) #}
+                {% if session.get('is_admin') or session.get('is_manager') %}
+                <div class="d-flex mb-3">
+                    <div class="mr-3"><i class="fas fa-sync-alt fa-2x text-warning"></i></div>
+                    <div>
+                        <h6 class="font-weight-bold">{{ _('Full Sync') }}</h6>
+                        <p class="small text-muted mb-0">
+                            {{ _('The "Sync Everything" button triggers a sequential update of Publications, Funding, and Profile names. This ensures reports reflect the latest data from ORCID.') }}
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                {# Context 1: Data Availability (Regular User) #}
+                <div class="d-flex mb-3">
+                    <div class="mr-3"><i class="fas fa-database fa-2x text-secondary"></i></div>
+                    <div>
+                        <h6 class="font-weight-bold">{{ _('Data Availability') }}</h6>
+                        <p class="small text-muted mb-0">
+                            {{ _('This data is centrally synchronized by the institutional administrators. You can download the latest available datasets in CSV or Excel format.') }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                {# Context 2: Analytics (Everyone) #}
+                <div class="d-flex">
+                    <div class="mr-3"><i class="fas fa-chart-pie fa-2x text-primary"></i></div>
+                    <div>
+                        <h6 class="font-weight-bold">{{ _('Analytics') }}</h6>
+                        <p class="small text-muted mb-0">
+                            {{ _('Visualize trends, funding sources, and top journals in the Metrics Panel.') }}
+                        </p>
+                        <a href="{{ url_for('main.metrics_panel') }}" class="btn btn-xs btn-primary mt-2">{{ _('Go to Metrics') }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% if session.get('is_admin') or session.get('is_manager') %}
+  <script>
+  $(function() {
+    $('#formMasterSync').on('submit', function(e) {
+        if (!confirm('{{ _("Start full synchronization? This process downloads Works, Fundings, and updates Profile Names.") }}')) {
+            e.preventDefault();
+            return;
+        }
+        $(this).find('button').attr('disabled', true).addClass('disabled');
+        $('#overlaySync').removeClass('d-none');
+    });
+  });
+  </script>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,2435 @@
+# Spanish translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# Gastón Olivares <gastonolivares@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-02-12 20:46-0300\n"
+"PO-Revision-Date: 2026-02-12 20:30-0300\n"
+"Last-Translator: Gastón Olivares <gastonolivares@gmail.com>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: app/decorators.py:51 app/decorators.py:66
+msgid "You must log in to access this page."
+msgstr "Debes iniciar sesión para acceder a esta página."
+
+#: app/decorators.py:69
+msgid "Access restricted to administrators."
+msgstr "Acceso restringido a administradores."
+
+#: app/decorators.py:85
+msgid "Your session has expired or you are not logged in."
+msgstr "Tu sesión ha expirado o no has iniciado sesión."
+
+#: app/decorators.py:88
+msgid "You do not have the required permissions to access this section."
+msgstr "No tienes los permisos necesarios para acceder a esta sección."
+
+#: app/decorators.py:103
+msgid "This action requires administrator or manager permissions."
+msgstr "Esta acción requiere permisos de administrador o gestor."
+
+#: app/blueprints/export.py:133 app/blueprints/export.py:135 app/helpers.py:104
+#: app/templates/main/orcid_profile.html:119
+msgid "Biography"
+msgstr "Biografía"
+
+#: app/helpers.py:105
+msgid "Created Date"
+msgstr "Fecha de Creación"
+
+#: app/helpers.py:106
+msgid "Last Modified"
+msgstr "Última Modificación"
+
+#: app/blueprints/export.py:126 app/blueprints/export.py:134 app/helpers.py:107
+#: app/helpers.py:115 app/helpers.py:116 app/helpers.py:128 app/helpers.py:136
+#: app/helpers.py:143 app/helpers.py:156
+#: app/templates/main/orcid_profile.html:109
+msgid "Visibility"
+msgstr "Visibilidad"
+
+#: app/helpers.py:115 app/helpers.py:116
+msgid "Name"
+msgstr "Nombre"
+
+#: app/helpers.py:125 app/helpers.py:130
+#: app/templates/admin/_user_modals.html:19
+#: app/templates/admin/_user_modals.html:111
+#: app/templates/demo/authorized.html:15
+#: app/templates/main/researcher_list.html:45
+msgid "Email"
+msgstr "Email"
+
+#: app/helpers.py:126 app/helpers.py:130
+msgid "Verified"
+msgstr "Verificado"
+
+#: app/helpers.py:127
+msgid "Primary"
+msgstr "Principal"
+
+#: app/helpers.py:136 app/helpers.py:137
+msgid "Country"
+msgstr "País"
+
+#: app/helpers.py:143 app/helpers.py:144
+msgid "Keyword"
+msgstr "Palabras clave"
+
+#: app/blueprints/export.py:140 app/blueprints/export.py:157
+#: app/blueprints/export.py:173 app/helpers.py:153 app/helpers.py:230
+#: app/helpers.py:269
+msgid "Type"
+msgstr "Tipo"
+
+#: app/blueprints/export.py:140 app/helpers.py:154
+msgid "Value"
+msgstr "Valor"
+
+#: app/helpers.py:155
+msgid "URL"
+msgstr "URL"
+
+#: app/blueprints/export.py:155 app/blueprints/export.py:172 app/helpers.py:177
+#: app/helpers.py:227 app/helpers.py:268
+msgid "Title"
+msgstr "Título"
+
+#: app/helpers.py:178 app/helpers.py:210 app/helpers.py:246
+msgid "Organization"
+msgstr "Organización"
+
+#: app/blueprints/export.py:158 app/helpers.py:179 app/helpers.py:195
+#: app/helpers.py:211
+msgid "Start Year"
+msgstr "Año de Inicio"
+
+#: app/helpers.py:180 app/helpers.py:196 app/helpers.py:212
+msgid "End Year"
+msgstr "Año de Término"
+
+#: app/blueprints/export.py:159 app/blueprints/export.py:177 app/helpers.py:181
+#: app/helpers.py:197 app/helpers.py:213 app/helpers.py:232 app/helpers.py:249
+msgid "Source"
+msgstr "Fuente"
+
+#: app/helpers.py:193
+msgid "Degree/Title"
+msgstr "Grado/Título"
+
+#: app/helpers.py:194 app/templates/admin/_user_modals.html:37
+#: app/templates/admin/_user_modals.html:129
+msgid "Institution"
+msgstr "Institución"
+
+#: app/helpers.py:209 app/templates/admin/_user_modals.html:23
+#: app/templates/admin/_user_modals.html:115
+msgid "Position"
+msgstr "Cargo"
+
+#: app/helpers.py:228
+msgid "Funder"
+msgstr "Financiador"
+
+#: app/helpers.py:229
+msgid "Grant ID"
+msgstr "ID de Financiamiento"
+
+#: app/blueprints/export.py:174 app/helpers.py:231 app/helpers.py:270
+msgid "Year"
+msgstr "Año"
+
+#: app/helpers.py:247 app/templates/main/resources.html:78
+msgid "Role"
+msgstr "Rol"
+
+#: app/helpers.py:248
+msgid "Completion Year"
+msgstr "Año de Finalización"
+
+#: app/blueprints/export.py:175 app/helpers.py:271
+msgid "DOI"
+msgstr "DOI"
+
+#: app/helpers.py:272
+msgid "ISSN"
+msgstr "ISSN"
+
+#: app/helpers.py:312
+msgid "No data available"
+msgstr "No hay datos disponibles"
+
+#: app/helpers.py:341
+msgid "ORCID service communication error."
+msgstr "Error de comunicación con el servicio ORCID."
+
+#: app/helpers.py:355
+msgid "Connection timed out. Please try again."
+msgstr "La conexión expiró. Por favor intenta nuevamente."
+
+#: app/blueprints/admin.py:48
+msgid "You need admin or manager role to access this section."
+msgstr "Necesitas rol de administrador o gestor para acceder a esta sección."
+
+#: app/blueprints/admin.py:114
+msgid "The \"Username\" field is required."
+msgstr "El campo \"Usuario\" es obligatorio."
+
+#: app/blueprints/admin.py:136
+#, python-format
+msgid "GRID ID '%(g)s' automatically found for ROR %(r)s."
+msgstr "ID GRID '%(g)s' encontrado automáticamente para ROR %(r)s."
+
+#: app/blueprints/admin.py:140
+#, python-format
+msgid "A user with username \"%(u)s\" already exists."
+msgstr "Ya existe un usuario con nombre \"%(u)s\"."
+
+#: app/blueprints/admin.py:166
+#, python-format
+msgid "User \"%(u)s\" created%(r)s. Password: %(p)s"
+msgstr "Usuario \"%(u)s\" creado%(r)s. Contraseña: %(p)s"
+
+#: app/blueprints/admin.py:171
+msgid "Could not create user. Check logs."
+msgstr "No se pudo crear el usuario. Revisa los logs."
+
+#: app/blueprints/admin.py:192
+#, python-format
+msgid "Password reset for %(u)s. New temporary: %(p)s"
+msgstr "Contraseña reseteada para %(u)s. Nueva temporal: %(p)s"
+
+#: app/blueprints/admin.py:196
+msgid "Could not reset password."
+msgstr "No se pudo resetear la contraseña."
+
+#: app/blueprints/admin.py:215
+msgid "User does not have a valid email."
+msgstr "El usuario no tiene un correo válido."
+
+#: app/blueprints/admin.py:239
+msgid "Access to Data ORCID-Chile (credentials)"
+msgstr "Acceso a Data ORCID-Chile (credenciales)"
+
+#: app/blueprints/admin.py:245
+#, python-format
+msgid "Credentials sent to %(r)s."
+msgstr "Credenciales enviadas a %(r)s."
+
+#: app/blueprints/admin.py:248
+msgid "Could not send email."
+msgstr "No se pudo enviar el correo."
+
+#: app/blueprints/admin.py:281
+msgid "You cannot remove admin role from your own account."
+msgstr "No puedes quitar el rol de administrador a tu propia cuenta."
+
+#: app/blueprints/admin.py:289
+#, python-format
+msgid "GRID ID '%(g)s' automatically found."
+msgstr "ID GRID '%(g)s' encontrado automáticamente."
+
+#: app/blueprints/admin.py:301
+#, python-format
+msgid "User \"%(u)s\" updated successfully."
+msgstr "Usuario \"%(u)s\" actualizado correctamente."
+
+#: app/blueprints/admin.py:305
+msgid "Could not update user."
+msgstr "No se pudo actualizar el usuario."
+
+#: app/blueprints/admin.py:320
+msgid "You cannot delete the main admin account."
+msgstr "No puedes eliminar la cuenta admin principal."
+
+#: app/blueprints/admin.py:326
+msgid "User deleted successfully."
+msgstr "Usuario eliminado correctamente."
+
+#: app/blueprints/admin.py:330
+msgid "Could not delete user."
+msgstr "No se pudo eliminar el usuario."
+
+#: app/blueprints/admin.py:343
+msgid "Action not allowed"
+msgstr "Acción no permitida"
+
+#: app/blueprints/admin.py:352
+#, python-format
+msgid "Active institution changed to: %(r)s"
+msgstr "Institución activa cambiada a: %(r)s"
+
+#: app/blueprints/api_misc.py:47
+msgid "Parameter 'year' must be specified."
+msgstr "Debe especificarse el parámetro 'year'."
+
+#: app/blueprints/api_misc.py:50
+msgid "Invalid mode. Use 'cache' or 'fresh'."
+msgstr "Modo inválido. Use 'cache' o 'fresh'."
+
+#: app/blueprints/api_misc.py:65
+#, python-format
+msgid "No cache available for year %(y)s."
+msgstr "No hay caché disponible para el año %(y)s."
+
+#: app/blueprints/api_misc.py:75
+msgid "Could not fetch data from ORCID."
+msgstr "No se pudo obtener datos desde ORCID."
+
+#: app/blueprints/api_misc.py:89
+msgid "Internal server error."
+msgstr "Error interno del servidor."
+
+#: app/blueprints/auth.py:102
+msgid "Recover your password — Data ORCID-Chile"
+msgstr "Recupera tu contraseña — Data ORCID-Chile"
+
+#: app/blueprints/auth.py:109
+msgid "Could not send recovery email."
+msgstr "No fue posible enviar el correo de recuperación."
+
+#: app/blueprints/auth.py:114
+msgid "If the account exists, we will send instructions."
+msgstr "Si la cuenta existe, enviaremos las instrucciones."
+
+#: app/blueprints/auth.py:134
+msgid "Invalid or non-existent user."
+msgstr "Usuario inválido o inexistente."
+
+#: app/blueprints/auth.py:138
+msgid "Token expired."
+msgstr "Token expirado."
+
+#: app/blueprints/auth.py:138
+msgid "Invalid token."
+msgstr "Token inválido."
+
+#: app/blueprints/auth.py:147
+msgid "Password must be at least 6 characters."
+msgstr "La contraseña debe tener al menos 6 caracteres."
+
+#: app/blueprints/auth.py:149
+msgid "Passwords do not match."
+msgstr "Las contraseñas no coinciden."
+
+#: app/blueprints/auth.py:153
+msgid "Password updated successfully. Please log in."
+msgstr "Contraseña actualizada exitosamente. Por favor, inicia sesión."
+
+#: app/blueprints/auth.py:199
+msgid "Invalid username or password."
+msgstr "Usuario o contraseña inválido."
+
+#: app/blueprints/auth.py:210
+msgid "Session closed successfully."
+msgstr "Sesión cerrada correctamente."
+
+#: app/blueprints/auth.py:234
+msgid "Current password is incorrect."
+msgstr "La contraseña actual es incorrecta."
+
+#: app/blueprints/auth.py:236
+msgid "New passwords do not match."
+msgstr "Las nuevas contraseñas no coinciden."
+
+#: app/blueprints/auth.py:238
+msgid "New password too short (min 6 chars)."
+msgstr "La nueva contraseña es muy corta (mínimo 6 caracteres)."
+
+#: app/blueprints/auth.py:242
+msgid "Password updated successfully."
+msgstr "Contraseña actualizada correctamente."
+
+#: app/blueprints/auth.py:262
+msgid "The Affiliation Manager ID must start with 'APP-'."
+msgstr "El ID del Affiliation Manager debe comenzar con 'APP-'."
+
+#: app/blueprints/auth.py:267
+msgid "Affiliation Manager settings updated."
+msgstr "Configuración del Affiliation Manager actualizada."
+
+#: app/blueprints/auth.py:271
+msgid "Internal database error while saving settings."
+msgstr "Error interno de base de datos al guardar la configuración."
+
+#: app/blueprints/cache_control.py:102
+msgid "You do not have sufficient permissions to perform this action."
+msgstr "No tienes permisos suficientes para realizar esta acción."
+
+#: app/blueprints/cache_control.py:108
+msgid "No active institution (ROR ID) selected. Please select one first."
+msgstr "No hay institución activa (ROR ID) seleccionada. Selecciona una primero."
+
+#: app/blueprints/cache_control.py:119
+msgid "Authentication failed: Could not obtain a valid ORCID Member Token."
+msgstr ""
+"Fallo de autenticación: No se pudo obtener un Token de Miembro ORCID "
+"válido."
+
+#: app/blueprints/cache_control.py:127
+#, python-format
+msgid "Works cache successfully rebuilt: %(count)s records updated."
+msgstr ""
+"Caché de contribuciones (works) reconstruida: %(count)s registros "
+"actualizados."
+
+#: app/blueprints/cache_control.py:132
+#, python-format
+msgid "Funding cache successfully rebuilt: %(count)s records updated."
+msgstr "Caché de financiamiento reconstruida: %(count)s registros actualizados."
+
+#: app/blueprints/cache_control.py:135
+#, python-format
+msgid "Invalid cache target specified: '%(target)s'."
+msgstr "Objetivo de caché especificado inválido: '%(target)s'."
+
+#: app/blueprints/cache_control.py:142
+#, python-format
+msgid "Critical error during cache rebuild: %(error)s"
+msgstr "Error crítico durante la reconstrucción de caché: %(error)s"
+
+#: app/blueprints/dashboard.py:36
+msgid "No active ROR. Please select one first."
+msgstr "No hay ROR activo. Selecciona uno primero."
+
+#: app/blueprints/dashboard.py:51
+msgid "With DOI"
+msgstr "Con DOI"
+
+#: app/blueprints/dashboard.py:51
+msgid "Without DOI"
+msgstr "Sin DOI"
+
+#: app/blueprints/dashboard.py:100
+msgid "An error occurred while generating publications statistics."
+msgstr "Ocurrió un error al generar las estadísticas de publicaciones."
+
+#: app/blueprints/export.py:50
+msgid "ORCID_Full_Report"
+msgstr "Reporte_Completo_ORCID"
+
+#: app/blueprints/export.py:61
+msgid "Could not generate the requested Excel file."
+msgstr "No se pudo generar el archivo Excel solicitado."
+
+#: app/blueprints/export.py:109
+msgid "Could not generate the requested file."
+msgstr "No se pudo generar el archivo solicitado."
+
+#: app/blueprints/export.py:122
+msgid "Given Names"
+msgstr "Nombres"
+
+#: app/blueprints/export.py:123
+msgid "Family Names"
+msgstr "Apellidos"
+
+#: app/blueprints/export.py:124
+msgid "Credit Name"
+msgstr "Nombre de crédito"
+
+#: app/blueprints/export.py:125 app/templates/admin/users.html:51
+#: app/templates/main/orcid_profile.html:107
+msgid "Created"
+msgstr "Creado"
+
+#: app/blueprints/export.py:128
+msgid "Identity"
+msgstr "Identidad"
+
+#: app/blueprints/export.py:141
+msgid "ExternalIDs"
+msgstr "Identificadores Externos"
+
+#: app/blueprints/export.py:156
+msgid "Agency"
+msgstr "Agencia"
+
+#: app/blueprints/export.py:162 app/templates/main/index.html:206
+#: app/templates/main/index.html:237
+msgid "Fundings"
+msgstr "Financiamientos"
+
+#: app/blueprints/export.py:176
+msgid "Journal/Publisher"
+msgstr "Revista/Editorial"
+
+#: app/blueprints/export.py:180 app/templates/dashboard/index.html:115
+#: app/templates/main/index.html:206 app/templates/main/index.html:231
+msgid "Works"
+msgstr "Contribuciones (works)"
+
+#: app/blueprints/fundings.py:62 app/blueprints/fundings.py:106
+msgid "No ROR ID found in session."
+msgstr "No se encontró ROR ID en la sesión."
+
+#: app/blueprints/fundings.py:79
+#, python-format
+msgid "Funding cache created successfully: %(count)s records."
+msgstr "Caché de financiamiento creada exitosamente: %(count)s registros."
+
+#: app/blueprints/fundings.py:85
+msgid "Error building funding cache. Check logs."
+msgstr "Error construyendo caché de financiamiento. Revisa los logs."
+
+#: app/blueprints/fundings.py:111
+msgid "No funding cache available. Please run \"Download from scratch\"."
+msgstr ""
+"No hay caché de financiamiento disponible. Por favor ejecuta \"Descargar "
+"desde cero\"."
+
+#: app/blueprints/fundings.py:116
+msgid "Funding cache is empty."
+msgstr "La caché de financiamiento está vacía."
+
+#: app/blueprints/fundings.py:170
+msgid "An error occurred generating the export file."
+msgstr "Ocurrió un error al generar el archivo de exportación."
+
+#: app/blueprints/main.py:127
+msgid "No active ROR ID found."
+msgstr "No se encontró un ROR ID activo."
+
+#: app/blueprints/main.py:148
+msgid "Could not communicate with ORCID services."
+msgstr "No fue posible comunicarse con los servicios de ORCID."
+
+#: app/blueprints/main.py:169 app/blueprints/main.py:171
+#: app/blueprints/main.py:177 app/blueprints/main.py:179
+#: app/blueprints/main.py:277 app/blueprints/main.py:300
+msgid "Unknown Researcher"
+msgstr "Investigador Desconocido"
+
+#: app/blueprints/main.py:393
+msgid "No data available to download for this chart."
+msgstr "No hay datos disponibles para descargar en este gráfico."
+
+#: app/blueprints/main.py:411
+msgid "An error occurred while exporting data."
+msgstr "Ocurrió un error al exportar los datos."
+
+#: app/blueprints/main.py:430
+msgid "The requested ORCID profile could not be loaded."
+msgstr "No se pudo cargar el perfil ORCID solicitado."
+
+#: app/blueprints/main.py:445
+msgid "The requested file was not found on the server."
+msgstr "El archivo solicitado no se encontró en el servidor."
+
+#: app/blueprints/main.py:457
+msgid "Could not retrieve the list of available files."
+msgstr "No fue posible recuperar la lista de archivos disponibles."
+
+#: app/blueprints/works.py:81 app/blueprints/works.py:199
+msgid "No active institution context found."
+msgstr "No se encontró un contexto de institución activa."
+
+#: app/blueprints/works.py:132
+#, python-format
+msgid ""
+"Full synchronization complete: %(w)s works, %(f)s grants, and %(p)s "
+"profiles updated."
+msgstr ""
+"Sincronización completa finalizada: %(w)s contribuciones, %(f)s proyectos"
+" y %(p)s perfiles actualizados."
+
+#: app/blueprints/works.py:135
+#, python-format
+msgid "Sync completed with errors in: %(err)s. Check logs."
+msgstr "Sincronización completada con errores en: %(err)s. Revisa los logs."
+
+#: app/blueprints/works.py:165
+msgid "Funding cache updated."
+msgstr "Caché de financiamiento actualizada."
+
+#: app/blueprints/works.py:169
+msgid "Error updating fundings."
+msgstr "Error actualizando financiamientos."
+
+#: app/blueprints/works.py:182
+#, python-format
+msgid "Profiles updated: %s"
+msgstr "Perfiles actualizados: %s"
+
+#: app/blueprints/works.py:184
+msgid "Error updating profiles"
+msgstr "Error actualizando perfiles"
+
+#: app/blueprints/works.py:234
+msgid "The publication cache is currently empty."
+msgstr "La caché de publicaciones está vacía actualmente."
+
+#: app/blueprints/works.py:269
+msgid "The funding cache is empty."
+msgstr "La caché de financiamiento está vacía."
+
+#: app/templates/admin/statistics.html:10 app/templates/admin/users.html:10
+#: app/templates/auth/am_settings.html:10
+#: app/templates/auth/change_password.html:10 app/templates/base.html:29
+#: app/templates/base.html:137 app/templates/dashboard/index.html:10
+#: app/templates/main/index.html:9 app/templates/main/integration_guide.html:9
+#: app/templates/main/integration_pull.html:9 app/templates/main/metrics.html:9
+#: app/templates/main/orcid_profile.html:36
+#: app/templates/main/researcher_list.html:9
+#: app/templates/main/resources.html:9 app/templates/works/cache_status.html:9
+msgid "Home"
+msgstr "Inicio"
+
+#: app/templates/base.html:40
+msgid "Switch Institution"
+msgstr "Cambiar Institución"
+
+#: app/templates/base.html:52
+msgid "Loading..."
+msgstr "Cargando..."
+
+#: app/templates/base.html:62
+msgid "My Institution"
+msgstr "Mi Institución"
+
+#: app/templates/base.html:68
+msgid "Last data synchronization"
+msgstr "Última sincronización de datos"
+
+#: app/templates/base.html:69
+msgid "Updated:"
+msgstr "Actualizado:"
+
+#: app/templates/base.html:93
+msgid "Logout"
+msgstr "Cerrar sesión"
+
+#: app/templates/base.html:174
+msgid "For questions, support, or to schedule online training, contact:"
+msgstr ""
+"Para dudas, soporte o agendar una <strong>capacitación online</strong>, "
+"contactar a <strong>Gastón Olivares</strong> —"
+
+#: app/templates/admin/_user_modals.html:6
+msgid "Edit User Details"
+msgstr "Editar detalles del usuario"
+
+#: app/templates/admin/_user_modals.html:15
+#: app/templates/admin/_user_modals.html:107 app/templates/admin/users.html:46
+msgid "Username"
+msgstr "Usuario"
+
+#: app/templates/admin/_user_modals.html:29
+#: app/templates/admin/_user_modals.html:121
+msgid "First Name"
+msgstr "Nombre"
+
+#: app/templates/admin/_user_modals.html:33
+#: app/templates/admin/_user_modals.html:125
+msgid "Last Name"
+msgstr "Apellido"
+
+#: app/templates/admin/_user_modals.html:52
+#: app/templates/admin/_user_modals.html:144
+#: app/templates/auth/am_settings.html:41
+msgid "Affiliation Manager Client ID"
+msgstr "Client ID del Affiliation Manager"
+
+#: app/templates/admin/_user_modals.html:54
+msgid "Optional. Used to identify Managed Records (AM Badge)."
+msgstr "Opcional. Usado para identificar Registros Gestionados (Sello AM)."
+
+#: app/templates/admin/_user_modals.html:58
+msgid "Preferred Language"
+msgstr "Idioma Preferido"
+
+#: app/templates/admin/_user_modals.html:65
+msgid "Assign Roles"
+msgstr "Asignar Roles"
+
+#: app/templates/admin/_user_modals.html:70
+#: app/templates/admin/_user_modals.html:161 app/templates/admin/users.html:69
+msgid "Admin"
+msgstr "Admin"
+
+#: app/templates/admin/_user_modals.html:76
+#: app/templates/admin/_user_modals.html:167 app/templates/admin/users.html:70
+msgid "Manager"
+msgstr "Gestor"
+
+#: app/templates/admin/_user_modals.html:84
+#: app/templates/admin/_user_modals.html:175
+#: app/templates/auth/am_settings.html:60
+#: app/templates/auth/change_password.html:57
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: app/templates/admin/_user_modals.html:86
+msgid "Update User"
+msgstr "Actualizar Usuario"
+
+#: app/templates/admin/_user_modals.html:98
+msgid "Create New User"
+msgstr "Crear nuevo usuario"
+
+#: app/templates/admin/_user_modals.html:149
+msgid "Default Language"
+msgstr "Idioma predeterminado"
+
+#: app/templates/admin/_user_modals.html:156
+msgid "Initial Roles"
+msgstr "Roles Iniciales"
+
+#: app/templates/admin/_user_modals.html:177 app/templates/admin/users.html:31
+msgid "Create User"
+msgstr "Crear usuario"
+
+#: app/templates/admin/statistics.html:3
+msgid "Usage Statistics · Data ORCID-Chile"
+msgstr "Estadísticas de Uso · Data ORCID-Chile"
+
+#: app/templates/admin/statistics.html:6
+msgid "System Activity Logs"
+msgstr "Logs de Actividad del Sistema"
+
+#: app/templates/admin/statistics.html:11
+msgid "Statistics"
+msgstr "Estadísticas"
+
+#: app/templates/admin/statistics.html:22
+msgid "Search Keyword"
+msgstr "Palabra clave de búsqueda"
+
+#: app/templates/admin/statistics.html:28
+msgid "User, path, or IP..."
+msgstr "Usuario, ruta o IP..."
+
+#: app/templates/admin/statistics.html:33
+msgid "Filter by User"
+msgstr "Filtrar por usuario"
+
+#: app/templates/admin/statistics.html:35
+msgid "All Users"
+msgstr "Todos los usuarios"
+
+#: app/templates/admin/statistics.html:48
+msgid "Include anonymous (guest) access"
+msgstr "Incluir acceso anónimo (invitado)"
+
+#: app/templates/admin/statistics.html:55
+msgid "Apply"
+msgstr "Aplicar"
+
+#: app/templates/admin/statistics.html:66
+msgid "Recent Requests"
+msgstr "Solicitudes Recientes"
+
+#: app/templates/admin/statistics.html:68
+msgid "Page"
+msgstr "Página"
+
+#: app/templates/admin/statistics.html:68
+msgid "of"
+msgstr "de"
+
+#: app/templates/admin/statistics.html:78
+msgid "Timestamp"
+msgstr "Marca de tiempo"
+
+#: app/templates/admin/statistics.html:79 app/templates/admin/users.html:71
+msgid "User"
+msgstr "Usuario"
+
+#: app/templates/admin/statistics.html:80
+msgid "Request Path"
+msgstr "Ruta de Solicitud"
+
+#: app/templates/admin/statistics.html:81
+msgid "Method"
+msgstr "Método"
+
+#: app/templates/admin/statistics.html:82 app/templates/demo/authorized.html:16
+#: app/templates/demo/projects.html:28 app/templates/main/resources.html:80
+msgid "Status"
+msgstr "Estado"
+
+#: app/templates/admin/statistics.html:83
+msgid "Latency"
+msgstr "Latencia"
+
+#: app/templates/admin/statistics.html:123
+msgid "No activity logs found for the selected filters."
+msgstr "No hay registros de actividad para los filtros seleccionados."
+
+#: app/templates/admin/statistics.html:176
+msgid "Select a user"
+msgstr "Seleccionar un usuario"
+
+#: app/templates/admin/users.html:3 app/templates/admin/users.html:6
+msgid "User Administration"
+msgstr "Administración de usuarios"
+
+#: app/templates/admin/users.html:11
+msgid "Users"
+msgstr "Usuarios"
+
+#: app/templates/admin/users.html:19
+msgid "Search by username, institution, ROR or email"
+msgstr "Buscar por usuario, institución, ROR o email"
+
+#: app/templates/admin/users.html:22
+msgid "Search"
+msgstr "Buscar"
+
+#: app/templates/admin/users.html:39
+msgid "System Users"
+msgstr "Usuarios del Sistema"
+
+#: app/templates/admin/users.html:47
+msgid "Contact Info"
+msgstr "Info de Contacto"
+
+#: app/templates/admin/users.html:48
+msgid "Full Name"
+msgstr "Nombre Completo"
+
+#: app/templates/admin/users.html:49
+msgid "Institution / ROR"
+msgstr "Institución / ROR"
+
+#: app/templates/admin/users.html:50
+msgid "Roles"
+msgstr "Roles"
+
+#: app/templates/admin/users.html:52 app/templates/demo/authorized.html:18
+msgid "Actions"
+msgstr "Acciones"
+
+#: app/templates/admin/users.html:79
+msgid "Edit"
+msgstr "Editar"
+
+#: app/templates/admin/users.html:87
+msgid "Reset password for"
+msgstr "Resetear contraseña para"
+
+#: app/templates/admin/users.html:88 app/templates/auth/reset_password.html:11
+msgid "Reset Password"
+msgstr "Resetear contraseña"
+
+#: app/templates/admin/users.html:91
+msgid "Temporary credentials will be sent to"
+msgstr "Se enviará un correo con credenciales temporales a"
+
+#: app/templates/admin/users.html:92
+msgid "Send Credentials"
+msgstr "Enviar Credenciales"
+
+#: app/templates/admin/users.html:95
+msgid "Delete user"
+msgstr "Eliminar usuario"
+
+#: app/templates/admin/users.html:96
+msgid "Delete"
+msgstr "Eliminar"
+
+#: app/templates/admin/users.html:104
+msgid "No users found."
+msgstr "No se encontraron usuarios."
+
+#: app/templates/auth/am_settings.html:3 app/templates/auth/am_settings.html:6
+msgid "Affiliation Manager Settings"
+msgstr "Configuración del Affiliation Manager"
+
+#: app/templates/auth/am_settings.html:11
+msgid "Affiliation Manager Key"
+msgstr "Clave de Affiliation Manager"
+
+#: app/templates/auth/am_settings.html:21
+msgid "Institutional Manager Identifier"
+msgstr "Identificador de Gestor Institucional"
+
+#: app/templates/auth/am_settings.html:28
+msgid ""
+"To correctly identify and highlight records managed by your institution, "
+"please provide your integration credentials."
+msgstr ""
+"Para identificar correctamente y destacar los registros gestionados por "
+"tu institución, por favor proporciona tus credenciales de integración."
+
+#: app/templates/auth/am_settings.html:35
+msgid ""
+"Enter the <strong>Client ID</strong> used by your <em>Affiliation "
+"Manager</em> tool to write to ORCID. The system will use this ID to "
+"identify which records were managed by your institution (AM Badge)."
+msgstr ""
+"Ingresa el <strong>Client ID</strong> utilizado por tu herramienta de "
+"<em>Affiliation Manager</em> para escribir en ORCID. El sistema usará "
+"este ID para identificar qué registros fueron gestionados por tu "
+"institución (Sello AM)."
+
+#: app/templates/auth/am_settings.html:48
+msgid "Ex: APP-4B3XYWJHXCC1VLVV"
+msgstr "Ej: APP-4B3XYWJHXCC1VLVV"
+
+#: app/templates/auth/am_settings.html:54
+msgid ""
+"Note: This is different from your Public or Member API Key. It usually "
+"starts with the prefix"
+msgstr ""
+"Nota: Esto es diferente a tu API Key Pública o de Miembro. Usualmente "
+"comienza con el prefijo"
+
+#: app/templates/auth/am_settings.html:62
+msgid "Save Configuration"
+msgstr "Guardar Configuración"
+
+#: app/templates/auth/am_settings.html:70
+msgid "Don't have an Affiliation Manager ID yet?"
+msgstr "¿Aún no tienes un ID de Affiliation Manager?"
+
+#: app/templates/auth/am_settings.html:72
+msgid "Learn more about ORCID AM"
+msgstr "Conoce más sobre ORCID AM"
+
+#: app/templates/auth/change_password.html:3
+msgid "Change Password · Data ORCID-Chile"
+msgstr "Cambiar Contraseña · Data ORCID-Chile"
+
+#: app/templates/auth/change_password.html:6
+msgid "Security Settings"
+msgstr "Configuración de Seguridad"
+
+#: app/templates/auth/change_password.html:11
+msgid "Change Password"
+msgstr "Cambiar contraseña"
+
+#: app/templates/auth/change_password.html:20
+#: app/templates/auth/change_password.html:59
+msgid "Update Password"
+msgstr "Actualizar Contraseña"
+
+#: app/templates/auth/change_password.html:27
+msgid ""
+"For your security, please do not share your credentials. Use a strong "
+"password with at least 8 characters."
+msgstr ""
+"Por tu seguridad, no compartas tus credenciales. Usa una contraseña "
+"fuerte con al menos 8 caracteres."
+
+#: app/templates/auth/change_password.html:31
+msgid "Current Password"
+msgstr "Contraseña actual"
+
+#: app/templates/auth/change_password.html:43
+#: app/templates/auth/reset_password.html:31
+msgid "New Password"
+msgstr "Nueva contraseña"
+
+#: app/templates/auth/change_password.html:46
+#: app/templates/auth/reset_password.html:39
+msgid "Minimum 8 characters."
+msgstr "Mínimo 8 caracteres."
+
+#: app/templates/auth/change_password.html:50
+#: app/templates/auth/reset_password.html:43
+msgid "Confirm New Password"
+msgstr "Confirmar nueva contraseña"
+
+#: app/templates/auth/change_password.html:67
+msgid ""
+"If you have forgotten your password, please contact your institutional "
+"administrator."
+msgstr ""
+"Si has olvidado tu contraseña, por favor contacta a tu administrador "
+"institucional."
+
+#: app/templates/auth/change_password.html:95
+msgid "New password and confirmation do not match."
+msgstr "La nueva contraseña y la confirmación no coinciden."
+
+#: app/templates/auth/forgot_password.html:6
+msgid "Recover Password · Data ORCID-Chile"
+msgstr "Recuperar contraseña · Data ORCID-Chile"
+
+#: app/templates/auth/forgot_password.html:26
+msgid "Recover Password"
+msgstr "Recuperar contraseña"
+
+#: app/templates/auth/forgot_password.html:28
+msgid ""
+"Enter your email address and we will send you instructions to reset your "
+"password."
+msgstr ""
+"Ingresa tu dirección de correo y te enviaremos instrucciones para "
+"restablecer tu contraseña."
+
+#: app/templates/auth/forgot_password.html:50
+msgid "Institutional Email"
+msgstr "Email Institucional"
+
+#: app/templates/auth/forgot_password.html:53
+msgid "example@institution.cl"
+msgstr "ejemplo@institucion.cl"
+
+#: app/templates/auth/forgot_password.html:63
+msgid "Send Reset Link"
+msgstr "Enviar Enlace de Reseteo"
+
+#: app/templates/auth/forgot_password.html:71
+msgid "Back to Sign In"
+msgstr "Volver al Inicio de Sesión"
+
+#: app/templates/auth/forgot_password.html:78
+msgid "Having trouble?"
+msgstr "¿Tienes problemas?"
+
+#: app/templates/auth/forgot_password.html:78
+msgid "Contact Support"
+msgstr "Contactar Soporte"
+
+#: app/templates/auth/forgot_password.html:91
+msgid "Processing..."
+msgstr "Procesando..."
+
+#: app/templates/auth/login.html:6
+msgid "Login · Data ORCID-Chile"
+msgstr "Iniciar sesión · Data ORCID-Chile"
+
+#: app/templates/auth/login.html:26
+msgid "Sign in to access institutional data"
+msgstr "Inicia sesión para acceder a datos institucionales"
+
+#: app/templates/auth/login.html:47
+msgid "Username or Email"
+msgstr "Usuario o Email"
+
+#: app/templates/auth/login.html:49
+msgid "Enter your username"
+msgstr "Ingresa tu usuario"
+
+#: app/templates/auth/login.html:57
+msgid "Password"
+msgstr "Contraseña"
+
+#: app/templates/auth/login.html:59
+msgid "Enter your password"
+msgstr "Ingresa tu contraseña"
+
+#: app/templates/auth/login.html:71
+msgid "Keep me logged in"
+msgstr "Mantener sesión iniciada"
+
+#: app/templates/auth/login.html:73
+msgid "Forgot Password?"
+msgstr "¿Olvidaste tu contraseña?"
+
+#: app/templates/auth/login.html:77
+msgid "Sign In"
+msgstr "Iniciar Sesión"
+
+#: app/templates/auth/reset_password.html:3
+msgid "Reset Password · Data ORCID-Chile"
+msgstr "Resetear Contraseña · Data ORCID-Chile"
+
+#: app/templates/auth/reset_password.html:6
+msgid "Password Recovery"
+msgstr "Recuperación de Contraseña"
+
+#: app/templates/auth/reset_password.html:10
+msgid "Login"
+msgstr "Iniciar sesión"
+
+#: app/templates/auth/reset_password.html:20
+msgid "Create New Password"
+msgstr "Crear Nueva Contraseña"
+
+#: app/templates/auth/reset_password.html:27
+msgid ""
+"Please enter and confirm your new password below. Ensure it is secure and"
+" easy for you to remember."
+msgstr ""
+"Por favor ingresa y confirma tu nueva contraseña abajo. Asegúrate de que "
+"sea segura y fácil de recordar para ti."
+
+#: app/templates/auth/reset_password.html:56
+msgid "Reset & Login"
+msgstr "Resetear e Iniciar Sesión"
+
+#: app/templates/auth/reset_password.html:76
+msgid "The passwords entered do not match. Please try again."
+msgstr "Las contraseñas ingresadas no coinciden. Por favor intenta nuevamente."
+
+#: app/templates/dashboard/index.html:3
+msgid "Metrics Dashboard · Data ORCID-Chile"
+msgstr "Panel de Métricas · Data ORCID-Chile"
+
+#: app/templates/dashboard/index.html:6
+msgid "ORCID Metrics Dashboard"
+msgstr "Panel de Métricas ORCID"
+
+#: app/templates/dashboard/index.html:11 app/templates/layout/sidebar.html:4
+msgid "Dashboard"
+msgstr "Panel de Control"
+
+#: app/templates/dashboard/index.html:21 app/templates/main/metrics.html:17
+msgid "Total Works"
+msgstr "Total Contribuciones"
+
+#: app/templates/dashboard/index.html:30 app/templates/main/metrics.html:18
+msgid "Total Fundings"
+msgstr "Total Financiamientos"
+
+#: app/templates/dashboard/index.html:39 app/templates/main/metrics.html:19
+msgid "Active Researchers"
+msgstr "Investigadores Activos"
+
+#: app/templates/dashboard/index.html:48 app/templates/main/metrics.html:20
+#: app/templates/works/cache_status.html:48
+msgid "Last Update"
+msgstr "Última Actualización"
+
+#: app/templates/dashboard/index.html:61
+msgid "Institutional Production Trend"
+msgstr "Tendencia de Producción Institucional"
+
+#: app/templates/dashboard/index.html:75 app/templates/main/metrics.html:56
+msgid "Work Types"
+msgstr "Tipos de Contribución"
+
+#: app/templates/dashboard/index.html:93
+msgid "Funding by Year"
+msgstr "Financiamiento por Año"
+
+#: app/templates/dashboard/index.html:107
+msgid "Top 10 Contributors"
+msgstr "Top 10 Colaboradores"
+
+#: app/templates/dashboard/index.html:114
+msgid "Researcher"
+msgstr "Investigador"
+
+#: app/templates/dashboard/index.html:119
+msgid "Loading data..."
+msgstr "Cargando datos..."
+
+#: app/templates/dashboard/index.html:144
+msgid ""
+"No cached data available for this institution. Please run a Cache Rebuild"
+" first."
+msgstr ""
+"No hay datos en caché para esta institución. Por favor ejecuta una "
+"Reconstrucción de Caché primero."
+
+#: app/templates/dashboard/index.html:158
+#: app/templates/main/orcid_profile.html:202
+msgid "Publications"
+msgstr "Publicaciones"
+
+#: app/templates/dashboard/index.html:188
+msgid "Grants"
+msgstr "Proyectos/Subvenciones"
+
+#: app/templates/demo/authorized.html:2
+msgid "Authorized Researchers · ORCID Demo"
+msgstr "Investigadores Autorizados · Demo ORCID"
+
+#: app/templates/demo/authorized.html:7
+msgid "Researcher Authorization Status"
+msgstr "Estado de Autorización del Investigador"
+
+#: app/templates/demo/authorized.html:8
+msgid "Upload More"
+msgstr "Cargar Más"
+
+#: app/templates/demo/authorized.html:17
+msgid "Projects"
+msgstr "Proyectos"
+
+#: app/templates/demo/authorized.html:28
+msgid "Authorized"
+msgstr "Autorizado"
+
+#: app/templates/demo/authorized.html:30
+msgid "Pending"
+msgstr "Pendiente"
+
+#: app/templates/demo/authorized.html:38
+msgid "Manage Projects"
+msgstr "Gestionar Proyectos"
+
+#: app/templates/demo/projects.html:2
+msgid "Project Management"
+msgstr "Gestión de Proyectos"
+
+#: app/templates/demo/projects.html:6
+msgid "Back to list"
+msgstr "Volver a la lista"
+
+#: app/templates/demo/projects.html:12
+msgid "Projects for"
+msgstr "Proyectos para"
+
+#: app/templates/demo/projects.html:19
+msgid ""
+"Permissions not granted yet. The researcher must authorize via the link "
+"sent to their email before pushing data."
+msgstr ""
+"Permisos no otorgados aún. El investigador debe autorizar mediante el "
+"enlace enviado a su correo antes de enviar datos."
+
+#: app/templates/demo/projects.html:26
+msgid "Project Title"
+msgstr "Título del Proyecto"
+
+#: app/templates/demo/projects.html:27
+msgid "Grant Number"
+msgstr "Número de Proyecto"
+
+#: app/templates/demo/projects.html:29
+msgid "Action"
+msgstr "Acción"
+
+#: app/templates/demo/projects.html:42
+msgid "Pushed"
+msgstr "Enviado (Pushed)"
+
+#: app/templates/demo/projects.html:44
+msgid "Ready"
+msgstr "Listo"
+
+#: app/templates/demo/projects.html:53
+msgid "Push to ORCID"
+msgstr "Enviar a ORCID"
+
+#: app/templates/demo/projects.html:59
+msgid "Waiting for authorization"
+msgstr "Esperando autorización"
+
+#: app/templates/demo/upload.html:2
+msgid "Upload Projects · ORCID Demo"
+msgstr "Cargar Proyectos · Demo ORCID"
+
+#: app/templates/demo/upload.html:9
+msgid "Upload Projects CSV"
+msgstr "Cargar CSV de Proyectos"
+
+#: app/templates/demo/upload.html:14
+msgid ""
+"Select a CSV file containing researcher IDs and project data to initiate "
+"the integration flow."
+msgstr ""
+"Selecciona un archivo CSV que contenga los IDs de los investigadores y "
+"datos de proyectos para iniciar el flujo de integración."
+
+#: app/templates/demo/upload.html:19
+msgid "Choose CSV file"
+msgstr "Elegir archivo CSV"
+
+#: app/templates/demo/upload.html:24
+msgid "Process & Send Invites"
+msgstr "Procesar y Enviar Invitaciones"
+
+#: app/templates/layout/sidebar.html:10
+msgid "Administration"
+msgstr "Administración"
+
+#: app/templates/layout/sidebar.html:18
+msgid "User Management"
+msgstr "Gestión de Usuarios"
+
+#: app/templates/layout/sidebar.html:27
+msgid "System Usage Logs"
+msgstr "Logs de Uso del Sistema"
+
+#: app/templates/layout/sidebar.html:33
+msgid "Institutional Data"
+msgstr "Datos Institucionales"
+
+#: app/templates/layout/sidebar.html:39 app/templates/main/index.html:142
+msgid "ORCID Analytics"
+msgstr "Analítica ORCID"
+
+#: app/templates/layout/sidebar.html:46 app/templates/main/index.html:150
+msgid "Data Downloads"
+msgstr "Descarga de Datos"
+
+#: app/templates/layout/sidebar.html:53 app/templates/main/index.html:158
+msgid "Researchers List"
+msgstr "Lista de Investigadores"
+
+#: app/templates/layout/sidebar.html:58
+msgid "Integration Tools"
+msgstr "Herramientas de Integración"
+
+#: app/templates/layout/sidebar.html:64
+msgid "API Read (Pull)"
+msgstr "API Lectura (Pull)"
+
+#: app/templates/layout/sidebar.html:71
+msgid "API Write (Push)"
+msgstr "API Escritura (Push)"
+
+#: app/templates/layout/sidebar.html:78
+msgid "AM Settings"
+msgstr "Configuración AM"
+
+#: app/templates/layout/sidebar.html:85
+msgid "Knowledge Base"
+msgstr "Base de Conocimiento"
+
+#: app/templates/layout/sidebar.html:93
+msgid "Sign Out"
+msgstr "Cerrar Sesión"
+
+#: app/templates/main/index.html:2
+msgid "Home · Data ORCID-Chile"
+msgstr "Inicio · Data ORCID-Chile"
+
+#: app/templates/main/index.html:5
+msgid "Institutional Dashboard"
+msgstr "Panel Institucional"
+
+#: app/templates/main/index.html:25
+msgid "Hello,"
+msgstr "Hola,"
+
+#: app/templates/main/index.html:27
+msgid "Institutional Management Portal · ORCID-Chile Consortium"
+msgstr "Portal de Gestión Institucional · Consorcio ORCID-Chile"
+
+#: app/templates/main/index.html:34
+msgid ""
+"This platform enables member institutions to access, consult, and export "
+"public data registered by their affiliated researchers. All information "
+"is retrieved directly via the official ORCID API, ensuring that the data "
+"reflects exactly what researchers have published on their profiles."
+msgstr ""
+"Esta plataforma permite a las instituciones miembros acceder, consultar y"
+" exportar datos públicos registrados por sus investigadores afiliados. "
+"Toda la información se recupera directamente a través de la API oficial "
+"de ORCID, asegurando que los datos reflejen exactamente lo que los "
+"investigadores han publicado en sus perfiles."
+
+#: app/templates/main/index.html:41
+msgid "Auto-update:"
+msgstr "Auto-actualización:"
+
+#: app/templates/main/index.html:41
+msgid "Every weekend."
+msgstr "Cada fin de semana."
+
+#: app/templates/main/index.html:45
+msgid "Data Source:"
+msgstr "Fuente de Datos:"
+
+#: app/templates/main/index.html:45
+msgid "ORCID Public V3.0."
+msgstr "ORCID Público V3.0."
+
+#: app/templates/main/index.html:49
+msgid "Integrity:"
+msgstr "Integridad:"
+
+#: app/templates/main/index.html:49
+msgid "Unmodified original records."
+msgstr "Registros originales sin modificaciones."
+
+#: app/templates/main/index.html:65 app/templates/main/researcher_list.html:28
+msgid "Affiliated Researchers"
+msgstr "Investigadores Afiliados"
+
+#: app/templates/main/index.html:74
+msgid "Cached Works"
+msgstr "Contribuciones en Caché"
+
+#: app/templates/main/index.html:83
+msgid "Cached Grants"
+msgstr "Proyectos en Caché"
+
+#: app/templates/main/index.html:97
+msgid "Data Composition"
+msgstr "Composición de Datos"
+
+#: app/templates/main/index.html:106
+msgid "Ratio of Publications vs. Research Grants in local cache."
+msgstr "Proporción de Publicaciones vs. Fondos de Investigación en caché local."
+
+#: app/templates/main/index.html:111
+msgid "No data cached. Please run a sync."
+msgstr "No hay datos en caché. Por favor, ejecuta una sincronización."
+
+#: app/templates/main/index.html:123
+msgid "Institutional Activity Level"
+msgstr "Nivel de Actividad Institucional"
+
+#: app/templates/main/index.html:125
+msgid "Full Rankings"
+msgstr "Rankings Completos"
+
+#: app/templates/main/index.html:128
+msgid "Comparison of data volume across primary research categories."
+msgstr ""
+"Comparación del volumen de datos a través de las principales categorías "
+"de investigación."
+
+#: app/templates/main/index.html:138
+msgid "System Modules"
+msgstr "Módulos del Sistema"
+
+#: app/templates/main/index.html:143
+msgid "Analyze publication trends, journals, and top researchers."
+msgstr "Analiza tendencias de publicación, revistas e investigadores destacados."
+
+#: app/templates/main/index.html:151
+msgid "Access the repository to export Works and Fundings to Excel/CSV."
+msgstr ""
+"Accede al repositorio para exportar Contribuciones y Financiamientos a "
+"Excel/CSV."
+
+#: app/templates/main/index.html:159
+msgid "Direct access to the profile directory and management tools."
+msgstr "Acceso directo al directorio de perfiles y herramientas de gestión."
+
+#: app/templates/main/index.html:179
+msgid "Sync Required"
+msgstr "Sincronización Requerida"
+
+#: app/templates/main/index.html:182
+msgid "Open Module"
+msgstr "Abrir Módulo"
+
+#: app/templates/main/index.html:228
+msgid "Volume Comparison"
+msgstr "Comparación de Volumen"
+
+#: app/templates/main/integration_guide.html:2
+msgid "Write (Push) Integration Guide · Data ORCID-Chile"
+msgstr "Guía de Integración de Escritura (Push) · Data ORCID-Chile"
+
+#: app/templates/main/integration_guide.html:5
+msgid "ORCID Push Integration Guide"
+msgstr "Guía de Integración Push de ORCID"
+
+#: app/templates/main/integration_guide.html:10
+msgid "Implementation Guide"
+msgstr "Guía de Implementación"
+
+#: app/templates/main/integration_guide.html:20
+msgid "Introduction"
+msgstr "Introducción"
+
+#: app/templates/main/integration_guide.html:24
+msgid ""
+"This guide provides a functional boilerplate to implement the "
+"<strong>OAuth2 3-legged flow</strong>. This process is essential for "
+"obtaining persistent permissions from researchers, allowing your "
+"institution to push <strong>funding (grants)</strong> records directly to"
+" their ORCID profiles."
+msgstr ""
+"Esta guía proporciona un modelo funcional para implementar el "
+"<strong>flujo OAuth2 de 3 pasos</strong>. Este proceso es esencial para "
+"obtener permisos persistentes de los investigadores, permitiendo que su "
+"institución envíe registros de <strong>financiamiento "
+"(subvenciones)</strong> directamente a sus perfiles de ORCID."
+
+#: app/templates/main/integration_guide.html:31
+msgid "Ready-to-use Project"
+msgstr "Proyecto Listo para Usar"
+
+#: app/templates/main/integration_guide.html:32
+msgid ""
+"The ZIP includes the Flask application, database models, "
+"requirements.txt, and a template .env file."
+msgstr ""
+"El ZIP incluye la aplicación Flask, modelos de base de datos, "
+"requirements.txt y una plantilla del archivo .env."
+
+#: app/templates/main/integration_guide.html:34
+msgid "Download project.zip"
+msgstr "Descargar proyecto.zip"
+
+#: app/templates/main/integration_guide.html:46
+msgid "Prerequisites"
+msgstr "Requisitos Previos"
+
+#: app/templates/main/integration_guide.html:57
+msgid ""
+"This guide is designed for local testing using the ORCID Sandbox "
+"environment."
+msgstr ""
+"Esta guía está diseñada para pruebas locales utilizando el entorno "
+"Sandbox de ORCID."
+
+#: app/templates/main/integration_guide.html:69
+msgid "Safe Email Testing with Ethereal"
+msgstr "Pruebas de Correo Seguras con Ethereal"
+
+#: app/templates/main/integration_guide.html:75
+msgid ""
+"To send authorization invites without using a real institutional mail "
+"server, we use <strong>Ethereal Mail</strong>. It is a fake SMTP service "
+"where messages are \"caught\" and displayed in a web dashboard instead of"
+" being sent to real inboxes."
+msgstr ""
+"Para enviar invitaciones de autorización sin utilizar un servidor de "
+"correo institucional real, usamos <strong>Ethereal Mail</strong>. Es un "
+"servicio SMTP falso donde los mensajes son \"atrapados\" y mostrados en "
+"un panel web en lugar de ser enviados a bandejas de entrada reales."
+
+#: app/templates/main/integration_guide.html:78
+msgid "Go to"
+msgstr "Ve a"
+
+#: app/templates/main/integration_guide.html:78
+msgid "and click on"
+msgstr "y haz clic en"
+
+#: app/templates/main/integration_guide.html:79
+msgid "Copy the generated <strong>User</strong> and <strong>Password</strong>."
+msgstr ""
+"Copia el <strong>Usuario</strong> y la <strong>Contraseña</strong> "
+"generados."
+
+#: app/templates/main/integration_guide.html:80
+msgid "Paste them into your <code>.env</code> file (see Step 3 below)."
+msgstr "Pégalos en tu archivo <code>.env</code> (ver Paso 3 abajo)."
+
+#: app/templates/main/integration_guide.html:86
+msgid "No real spam"
+msgstr "Sin spam real"
+
+#: app/templates/main/integration_guide.html:87
+msgid "Safe for development"
+msgstr "Seguro para desarrollo"
+
+#: app/templates/main/integration_guide.html:99
+msgid "Installation & Execution"
+msgstr "Instalación y Ejecución"
+
+#: app/templates/main/integration_guide.html:104
+msgid "Environment Setup"
+msgstr "Configuración del Entorno"
+
+#: app/templates/main/integration_guide.html:113
+msgid "Configuration (.env)"
+msgstr "Configuración (.env)"
+
+#: app/templates/main/integration_guide.html:115
+msgid "ORCID Sandbox Credentials"
+msgstr "Credenciales de Sandbox de ORCID"
+
+#: app/templates/main/integration_guide.html:119
+msgid "Ethereal SMTP Settings"
+msgstr "Configuración SMTP de Ethereal"
+
+#: app/templates/main/integration_guide.html:128
+msgid "Start the local server:"
+msgstr "Iniciar el servidor local:"
+
+#: app/templates/main/integration_guide.html:139
+msgid "Source CSV Structure"
+msgstr "Estructura del CSV de Origen"
+
+#: app/templates/main/integration_guide.html:140
+msgid "Header"
+msgstr "Encabezado"
+
+#: app/templates/main/integration_guide.html:157
+msgid "Authorization Workflow"
+msgstr "Flujo de Trabajo de Autorización"
+
+#: app/templates/main/integration_guide.html:164
+msgid "Upload CSV"
+msgstr "Cargar CSV"
+
+#: app/templates/main/integration_guide.html:168
+msgid "Researcher Link"
+msgstr "Enlace del Investigador"
+
+#: app/templates/main/integration_guide.html:172
+msgid "Grant Permission"
+msgstr "Otorgar Permiso"
+
+#: app/templates/main/integration_guide.html:176
+msgid "Sync to ORCID"
+msgstr "Sincronizar a ORCID"
+
+#: app/templates/main/integration_guide.html:201
+#: app/templates/main/integration_pull.html:258
+msgid "Copied!"
+msgstr "¡Copiado!"
+
+#: app/templates/main/integration_guide.html:204
+msgid "Content copied to clipboard."
+msgstr "Contenido copiado al portapapeles."
+
+#: app/templates/main/integration_pull.html:2
+msgid "Read (Pull) · ORCID Public API · Data ORCID-Chile"
+msgstr "Lectura (Pull) · API pública ORCID · Data ORCID-Chile"
+
+#: app/templates/main/integration_pull.html:5
+msgid "ORCID Public API Guide"
+msgstr "Guía de API Pública ORCID"
+
+#: app/templates/main/integration_pull.html:10
+msgid "Public API (Pull)"
+msgstr "API Pública (Pull)"
+
+#: app/templates/main/integration_pull.html:20
+msgid "Introduction for Developers"
+msgstr "Introducción para Desarrolladores"
+
+#: app/templates/main/integration_pull.html:24
+msgid ""
+"The ORCID Public API allows any system to <strong>retrieve public "
+"researcher data</strong>. It works over HTTP using standard REST methods."
+" You only need the <strong>ORCID iD</strong> to start pulling "
+"information."
+msgstr ""
+"La API pública de ORCID permite a cualquier sistema <strong>recuperar "
+"datos públicos de investigadores</strong>. Funciona a través de HTTP "
+"utilizando métodos REST estándar. Solo necesitas el <strong>iD de "
+"ORCID</strong> para comenzar a obtener información."
+
+#: app/templates/main/integration_pull.html:28
+msgid "Base URL"
+msgstr "URL Base"
+
+#: app/templates/main/integration_pull.html:32
+msgid "Mandatory Header"
+msgstr "Cabecera Obligatoria"
+
+#: app/templates/main/integration_pull.html:42
+msgid "Quick Tip"
+msgstr "Consejo Rápido"
+
+#: app/templates/main/integration_pull.html:43
+msgid ""
+"Always include the Accept header to receive data in JSON format, which is"
+" easier to parse than the default XML."
+msgstr ""
+"Incluye siempre la cabecera Accept para recibir datos en formato JSON, el"
+" cual es más fácil de procesar que el XML por defecto."
+
+#: app/templates/main/integration_pull.html:45
+msgid "Example ORCID used:"
+msgstr "ORCID de ejemplo utilizado:"
+
+#: app/templates/main/integration_pull.html:54
+msgid "Step 1: Advanced Search Examples (cURL)"
+msgstr "Paso 1: Ejemplos de Búsqueda Avanzada (cURL)"
+
+#: app/templates/main/integration_pull.html:60
+msgid "Search by Institution (ANID)"
+msgstr "Buscar por Institución (ANID)"
+
+#: app/templates/main/integration_pull.html:61
+msgid "Search for researchers associated with ANID Chile."
+msgstr "Buscar investigadores asociados a ANID Chile."
+
+#: app/templates/main/integration_pull.html:70
+msgid "Search by ROR Identifier"
+msgstr "Buscar por Identificador ROR"
+
+#: app/templates/main/integration_pull.html:71
+msgid "Searching for the ROR string within the organization fields."
+msgstr "Búsqueda de la cadena ROR dentro de los campos de organización."
+
+#: app/templates/main/integration_pull.html:81
+msgid "Search by Name & Country"
+msgstr "Buscar por Nombre y País"
+
+#: app/templates/main/integration_pull.html:95
+msgid "Step 2: Complete API Endpoint Reference"
+msgstr "Paso 2: Referencia Completa de Endpoints de la API"
+
+#: app/templates/main/integration_pull.html:102
+msgid "Endpoint Sub-path"
+msgstr "Sub-ruta del Endpoint"
+
+#: app/templates/main/integration_pull.html:103
+msgid "Information Returned"
+msgstr "Información Devuelta"
+
+#: app/templates/main/integration_pull.html:104
+msgid "Live JSON Link"
+msgstr "Enlace JSON en Vivo"
+
+#: app/templates/main/integration_pull.html:110
+msgid "Global Records"
+msgstr "Registros Globales"
+
+#: app/templates/main/integration_pull.html:111
+msgid "Full public record (Person + Activities summary)"
+msgstr "Registro público completo (Persona + Resumen de actividades)"
+
+#: app/templates/main/integration_pull.html:112
+msgid "Aggregated activities (Works, Funding, Affiliations)"
+msgstr "Actividades agregadas (Contribuciones, Financiamiento, Afiliaciones)"
+
+#: app/templates/main/integration_pull.html:114
+msgid "Personal Details"
+msgstr "Detalles Personales"
+
+#: app/templates/main/integration_pull.html:115
+msgid "Complete personal data (Names, bio, emails, keywords)"
+msgstr "Datos personales completos (Nombres, biografía, correos, palabras clave)"
+
+#: app/templates/main/integration_pull.html:116
+msgid "Basic names and credit names"
+msgstr "Nombres básicos y nombres de crédito"
+
+#: app/templates/main/integration_pull.html:117
+msgid "Public email addresses (Returns empty if none)"
+msgstr "Direcciones de correo públicas (Retorna vacío si no hay)"
+
+#: app/templates/main/integration_pull.html:118
+msgid "Other IDs: Scopus, ResearcherID, etc."
+msgstr "Otros IDs: Scopus, ResearcherID, etc."
+
+#: app/templates/main/integration_pull.html:119
+msgid "Public research keywords"
+msgstr "Palabras clave de investigación públicas"
+
+#: app/templates/main/integration_pull.html:120
+msgid "Public country and location data"
+msgstr "Datos públicos de país y ubicación"
+
+#: app/templates/main/integration_pull.html:121
+msgid "Researcher profile or institutional websites"
+msgstr "Perfil del investigador o sitios web institucionales"
+
+#: app/templates/main/integration_pull.html:123
+msgid "Affiliations & History"
+msgstr "Afiliaciones e Historial"
+
+#: app/templates/main/integration_pull.html:124
+msgid "Public employment and job history"
+msgstr "Empleo público e historial laboral"
+
+#: app/templates/main/integration_pull.html:125
+msgid "Public education and degrees"
+msgstr "Educación pública y títulos"
+
+#: app/templates/main/integration_pull.html:126
+msgid "Guest posts and invited roles"
+msgstr "Cargos de invitado y roles invitados"
+
+#: app/templates/main/integration_pull.html:127
+msgid "Institutional or society memberships"
+msgstr "Membresías institucionales o de sociedades"
+
+#: app/templates/main/integration_pull.html:128
+msgid "Public service or volunteer roles"
+msgstr "Servicio público o roles voluntarios"
+
+#: app/templates/main/integration_pull.html:129
+msgid "Prizes, awards, and distinctions"
+msgstr "Premios, galardones y distinciones"
+
+#: app/templates/main/integration_pull.html:130
+msgid "Professional certifications or qualifications"
+msgstr "Certificaciones profesionales o calificaciones"
+
+#: app/templates/main/integration_pull.html:132
+msgid "Scientific Output"
+msgstr "Producción Científica"
+
+#: app/templates/main/integration_pull.html:133
+msgid "Contributions: publications, datasets, etc."
+msgstr "Contribuciones: publicaciones, conjuntos de datos, etc."
+
+#: app/templates/main/integration_pull.html:134
+msgid "Research grants and financial support"
+msgstr "Subvenciones de investigación y apoyo financiero"
+
+#: app/templates/main/integration_pull.html:135
+msgid "Public peer review record (Summary)"
+msgstr "Registro público de revisión por pares (Resumen)"
+
+#: app/templates/main/integration_pull.html:136
+msgid "Access to laboratories or research equipment"
+msgstr "Acceso a laboratorios o equipos de investigación"
+
+#: app/templates/main/integration_pull.html:167
+msgid "Step 3: Direct ORCID Lookup (cURL)"
+msgstr "Paso 3: Búsqueda Directa en ORCID (cURL)"
+
+#: app/templates/main/integration_pull.html:172
+msgid "Get Summary (Works & Education)"
+msgstr "Obtener Resumen (Contribuciones y Educación)"
+
+#: app/templates/main/integration_pull.html:180
+msgid "Get Bio & Identity"
+msgstr "Obtener Bio e Identidad"
+
+#: app/templates/main/integration_pull.html:198
+msgid "Privacy & API Limitations"
+msgstr "Privacidad y Limitaciones de la API"
+
+#: app/templates/main/integration_pull.html:202
+msgid "Visibility:"
+msgstr "Visibilidad:"
+
+#: app/templates/main/integration_pull.html:202
+msgid ""
+"The Public API only returns data set to \"Everyone\" by the researcher. "
+"Data marked as \"Trusted Parties\" or \"Private\" is invisible."
+msgstr ""
+"La API pública solo devuelve datos configurados como \"Para Todos\" por "
+"el investigador. Los datos marcados como \"Partes de Confianza\" o "
+"\"Privado\" son invisibles."
+
+#: app/templates/main/integration_pull.html:203
+msgid "404 Errors:"
+msgstr "Errores 404:"
+
+#: app/templates/main/integration_pull.html:203
+msgid "Usually means the record is private or the ID does not exist."
+msgstr "Usualmente significa que el registro es privado o que el iD no existe."
+
+#: app/templates/main/integration_pull.html:204
+msgid "Rate Limits:"
+msgstr "Límites de Tasa:"
+
+#: app/templates/main/integration_pull.html:204
+msgid ""
+"The Public API is limited to <strong>24 requests per second</strong>. For"
+" batch processing, we recommend a small delay (sleep) between requests to"
+" avoid being temporarily blocked."
+msgstr ""
+"La API Pública está limitada a <strong>24 solicitudes por "
+"segundo</strong>. Para procesamiento por lotes, recomendamos un pequeño "
+"retraso (sleep) entre solicitudes para evitar ser bloqueado "
+"temporalmente."
+
+#: app/templates/main/integration_pull.html:214
+msgid "Recommended Testing Tools"
+msgstr "Herramientas de Prueba Recomendadas"
+
+#: app/templates/main/integration_pull.html:220
+msgid "(API Testing)"
+msgstr "(Pruebas de API)"
+
+#: app/templates/main/integration_pull.html:227
+msgid "(HTTP Client)"
+msgstr "(Cliente HTTP)"
+
+#: app/templates/main/integration_pull.html:234
+msgid "(Browser Extension)"
+msgstr "(Extensión de Navegador)"
+
+#: app/templates/main/integration_pull.html:261
+msgid "Command copied to clipboard."
+msgstr "Comando copiado al portapapeles."
+
+#: app/templates/main/metrics.html:2
+msgid "Institutional Metrics · Data ORCID-Chile"
+msgstr "Métricas Institucionales · Data ORCID-Chile"
+
+#: app/templates/main/metrics.html:5
+msgid "ORCID Analytics Panel"
+msgstr "Panel de Analítica ORCID"
+
+#: app/templates/main/metrics.html:10
+msgid "Metrics"
+msgstr "Métricas"
+
+#: app/templates/main/metrics.html:39
+msgid "Works Production Trend"
+msgstr "Tendencia de Producción de Contribuciones"
+
+#: app/templates/main/metrics.html:77
+msgid "Funding Timeline"
+msgstr "Línea de Tiempo de Financiamiento"
+
+#: app/templates/main/metrics.html:94
+msgid "Funding Types"
+msgstr "Tipos de Financiamiento"
+
+#: app/templates/main/metrics.html:116
+msgid "Top Contributors (Works)"
+msgstr "Principales Contribuyentes (Trabajos)"
+
+#: app/templates/main/metrics.html:138 app/templates/main/metrics.html:171
+msgid "No data"
+msgstr "Sin datos"
+
+#: app/templates/main/metrics.html:149
+msgid "Top Contributors (Funding)"
+msgstr "Principales Contribuyentes (Financiamiento)"
+
+#: app/templates/main/metrics.html:182
+msgid "Top Funding Orgs"
+msgstr "Principales Organizaciones Financiadoras"
+
+#: app/templates/main/metrics.html:202
+msgid "Top Journals & Venues"
+msgstr "Principales Revistas y Medios"
+
+#: app/templates/main/orcid_profile.html:29
+msgid "Researcher Profile"
+msgstr "Perfil de Investigador"
+
+#: app/templates/main/orcid_profile.html:32
+msgid "Researcher Portfolio"
+msgstr "Portafolio del Investigador"
+
+#: app/templates/main/orcid_profile.html:37
+#: app/templates/main/researcher_list.html:10
+msgid "Researchers"
+msgstr "Investigadores"
+
+#: app/templates/main/orcid_profile.html:75
+msgid "Download Full Report"
+msgstr "Descargar Reporte Completo"
+
+#: app/templates/main/orcid_profile.html:92
+msgid "DOI Coverage"
+msgstr "Cobertura de DOI"
+
+#: app/templates/main/orcid_profile.html:95
+msgid "items"
+msgstr "ítems"
+
+#: app/templates/main/orcid_profile.html:102
+msgid "Registry Data"
+msgstr "Datos del Registro"
+
+#: app/templates/main/orcid_profile.html:108
+msgid "Updated"
+msgstr "Actualizado"
+
+#: app/templates/main/orcid_profile.html:133
+msgid "Other Identifiers"
+msgstr "Otros Identificadores"
+
+#: app/templates/main/orcid_profile.html:144
+msgid "Also known as"
+msgstr "También conocido como"
+
+#: app/templates/main/orcid_profile.html:158
+msgid "Visual Summary"
+msgstr "Resumen Visual"
+
+#: app/templates/main/orcid_profile.html:159
+msgid "Full Timeline"
+msgstr "Línea de Tiempo Completa"
+
+#: app/templates/main/orcid_profile.html:169
+msgid "Works by Type"
+msgstr "Contribuciones por Tipo"
+
+#: app/templates/main/orcid_profile.html:173
+msgid "Production Timeline"
+msgstr "Línea de Tiempo de Producción"
+
+#: app/templates/main/orcid_profile.html:180
+msgid "Funding Distribution"
+msgstr "Distribución de Financiamiento"
+
+#: app/templates/main/orcid_profile.html:189
+msgid "No quantitative data available for visualization."
+msgstr "No hay datos cuantitativos disponibles para visualización."
+
+#: app/templates/main/orcid_profile.html:199
+msgid "Employment"
+msgstr "Empleos"
+
+#: app/templates/main/orcid_profile.html:200
+msgid "Education"
+msgstr "Educación"
+
+#: app/templates/main/orcid_profile.html:201
+msgid "Grants & Funding"
+msgstr "Proyectos y Financiamiento"
+
+#: app/templates/main/orcid_profile.html:220
+msgid "Export"
+msgstr "Exportar"
+
+#: app/templates/main/orcid_profile.html:240
+msgid "Present"
+msgstr "Actualidad"
+
+#: app/templates/main/orcid_profile.html:280
+#: app/templates/main/orcid_profile.html:307
+msgid "Other"
+msgstr "Otro"
+
+#: app/templates/main/orcid_profile.html:296
+msgid "Items"
+msgstr "Ítems"
+
+#: app/templates/main/orcid_profile.html:331
+msgid "No detailed funding categories available"
+msgstr "No hay categorías de financiamiento detalladas disponibles"
+
+#: app/templates/main/researcher_list.html:2
+msgid "Researcher Directory · Data ORCID-Chile"
+msgstr "Directorio de Investigadores · Data ORCID-Chile"
+
+#: app/templates/main/researcher_list.html:5
+msgid "Researcher Directory"
+msgstr "Directorio de Investigadores"
+
+#: app/templates/main/researcher_list.html:31
+msgid "Refresh"
+msgstr "Actualizar"
+
+#: app/templates/main/researcher_list.html:41
+msgid "AM"
+msgstr "AM"
+
+#: app/templates/main/researcher_list.html:43
+msgid "First Names"
+msgstr "Nombres"
+
+#: app/templates/main/researcher_list.html:44
+msgid "Last Names"
+msgstr "Apellidos"
+
+#: app/templates/main/researcher_list.html:46
+msgid "Institutions"
+msgstr "Instituciones"
+
+#: app/templates/main/researcher_list.html:55
+msgid "Managed via Affiliation Manager"
+msgstr "Gestionado vía Affiliation Manager"
+
+#: app/templates/main/researcher_list.html:69
+msgid "Not public"
+msgstr "No público"
+
+#: app/templates/main/researcher_list.html:98
+msgid "Export Excel"
+msgstr "Exportar Excel"
+
+#: app/templates/main/resources.html:2
+msgid "Resources and Integrations · Data ORCID-Chile"
+msgstr "Recursos e integraciones · Data ORCID-Chile"
+
+#: app/templates/main/resources.html:5
+msgid "Resources & Knowledge Base"
+msgstr "Recursos y Base de Conocimiento"
+
+#: app/templates/main/resources.html:10
+msgid "Resources"
+msgstr "Recursos"
+
+#: app/templates/main/resources.html:22
+msgid "Why be an ORCID Consortium Member?"
+msgstr "¿Por qué ser miembro del Consorcio ORCID?"
+
+#: app/templates/main/resources.html:24
+msgid ""
+"Membership is not just about a technical ID; it is about institutional "
+"visibility and data control in the global research ecosystem."
+msgstr ""
+"La membresía no se trata solo de un iD técnico; se trata de visibilidad "
+"institucional y control de datos en el ecosistema global de "
+"investigación."
+
+#: app/templates/main/resources.html:34
+msgid "Data Integrity"
+msgstr "Integridad de Datos"
+
+#: app/templates/main/resources.html:35
+msgid ""
+"Assert your institution name on researcher records to prevent name "
+"ambiguity and fragmentation."
+msgstr ""
+"Reivindica el nombre de tu institución en los registros de los "
+"investigadores para evitar la ambigüedad y fragmentación de nombres."
+
+#: app/templates/main/resources.html:40
+msgid "Automatic Updates"
+msgstr "Actualizaciones Automáticas"
+
+#: app/templates/main/resources.html:41
+msgid ""
+"Automatically push information to profiles, saving researchers time in "
+"manual reporting."
+msgstr ""
+"Envía información automáticamente a los perfiles, ahorrando tiempo a los "
+"investigadores en reportes manuales."
+
+#: app/templates/main/resources.html:46
+msgid "Institutional Insight"
+msgstr "Conocimiento Institucional"
+
+#: app/templates/main/resources.html:47
+msgid ""
+"Access the Member Portal to get advanced statistics and manage "
+"institutional affiliations."
+msgstr ""
+"Accede al Portal de Miembros para obtener estadísticas avanzadas y "
+"gestionar las afiliaciones institucionales."
+
+#: app/templates/main/resources.html:62
+msgid "ORCID Member Portal Roles"
+msgstr "Roles del Portal de Miembros ORCID"
+
+#: app/templates/main/resources.html:65
+msgid "Access Portal"
+msgstr "Acceder al Portal"
+
+#: app/templates/main/resources.html:71
+msgid ""
+"The Member Portal is your administrative hub. Designating these roles "
+"ensures smooth communication with ORCID and CINCEL."
+msgstr ""
+"El Portal de Miembros es su centro administrativo. Designar estos roles "
+"asegura una comunicación fluida con ORCID y CINCEL."
+
+#: app/templates/main/resources.html:79
+msgid "Description & Responsibilities"
+msgstr "Descripción y Responsabilidades"
+
+#: app/templates/main/resources.html:86
+msgid ""
+"The legal authority authorized to sign formal agreements on behalf of the"
+" institution."
+msgstr ""
+"La autoridad legal autorizada para firmar acuerdos formales en nombre de "
+"la institución."
+
+#: app/templates/main/resources.html:91
+msgid ""
+"Primary institutional contact for general notifications and consortium "
+"coordination."
+msgstr ""
+"Contacto institucional principal para notificaciones generales y "
+"coordinación del consorcio."
+
+#: app/templates/main/resources.html:96
+msgid ""
+"Authorized to cast institutional ballots in ORCID board elections and "
+"policy decisions."
+msgstr ""
+"Autorizado para emitir votos institucionales en las elecciones de la "
+"junta de ORCID y decisiones de políticas."
+
+#: app/templates/main/resources.html:101
+msgid ""
+"Primary contact for API implementation, client credentials, and technical"
+" alerts."
+msgstr ""
+"Contacto principal para la implementación de la API, credenciales de "
+"cliente y alertas técnicas."
+
+#: app/templates/main/resources.html:106
+msgid ""
+"Person or department responsible for receiving and processing membership "
+"billing."
+msgstr ""
+"Persona o departamento responsable de recibir y procesar la facturación "
+"de la membresía."
+
+#: app/templates/main/resources.html:111
+msgid "Receives community newsletters, outreach materials, and marketing updates."
+msgstr ""
+"Recibe boletines de la comunidad, materiales de divulgación y "
+"actualizaciones de marketing."
+
+#: app/templates/main/resources.html:116
+msgid ""
+"Receives information about new ORCID features and beta testing "
+"opportunities."
+msgstr ""
+"Recibe información sobre las nuevas funciones de ORCID y oportunidades de"
+" pruebas beta."
+
+#: app/templates/main/resources.html:132
+msgid "API Credential Management"
+msgstr "Gestión de Credenciales de API"
+
+#: app/templates/main/resources.html:136
+msgid ""
+"Consortium members are entitled to <strong>5 production API "
+"Keys</strong>. These can be used across multiple institutional platforms."
+msgstr ""
+"Los miembros del consorcio tienen derecho a <strong>5 llaves de API de "
+"producción</strong>. Estas pueden utilizarse en múltiples plataformas "
+"institucionales."
+
+#: app/templates/main/resources.html:140
+msgid ""
+"Note: Activating the Affiliation Manager consumes <strong>one</strong> of"
+" your 5 available API slots."
+msgstr ""
+"Nota: Activar el Affiliation Manager consume <strong>uno</strong> de sus "
+"5 cupos de API disponibles."
+
+#: app/templates/main/resources.html:144
+msgid "API Tutorial: Get & Authenticate"
+msgstr "Tutorial de API: Obtener y Autenticar"
+
+#: app/templates/main/resources.html:147
+msgid "Request Sandbox Credentials (Testing)"
+msgstr "Solicita primero credenciales de Sandbox para pruebas."
+
+#: app/templates/main/resources.html:150
+msgid "Request Production Credentials (Go-live)"
+msgstr "Solicita credenciales de Producción (Go-live)"
+
+#: app/templates/main/resources.html:160
+msgid "Affiliation Manager (AM)"
+msgstr "Affiliation Manager (AM)"
+
+#: app/templates/main/resources.html:164
+msgid ""
+"A \"No-Code\" solution to write verified institutional affiliations "
+"directly into researcher records via CSV upload. Researchers must accept "
+"the invitation sent via email."
+msgstr ""
+"Una solución \"No-Code\" para escribir afiliaciones institucionales "
+"verificadas directamente en los registros de investigadores vía carga de "
+"CSV. Los investigadores deben aceptar la invitación enviada por correo."
+
+#: app/templates/main/resources.html:168
+msgid ""
+"Activation is managed directly through the <strong>ORCID Member "
+"Portal</strong>. Please note this tool uses one of your institutional API"
+" credentials."
+msgstr ""
+"La activación se gestiona directamente a través del <strong>Portal de "
+"Miembros de ORCID</strong>. Tenga en cuenta que esta herramienta utiliza "
+"una de sus credenciales de API institucionales."
+
+#: app/templates/main/resources.html:171
+msgid "CSV Field Specifications"
+msgstr "Especificaciones de los Campos CSV"
+
+#: app/templates/main/resources.html:173
+msgid "Valid researcher email (Required)."
+msgstr "Correo electrónico válido del investigador (Obligatorio)."
+
+#: app/templates/main/resources.html:174
+msgid "Type (Employment, Education, Qualification, etc)."
+msgstr "Tipo (Empleo, Educación, Calificación, etc)."
+
+#: app/templates/main/resources.html:175
+msgid "Organization details (Required)."
+msgstr "Detalles de la organización (Obligatorio)."
+
+#: app/templates/main/resources.html:176
+msgid "Dates in YYYY-MM-DD format (Optional)."
+msgstr "Fechas en formato AAAA-MM-DD (Opcional)."
+
+#: app/templates/main/resources.html:177
+msgid "The ROR or Ringgold ID."
+msgstr "El ID de ROR o Ringgold."
+
+#: app/templates/main/resources.html:178
+msgid "Source of the ID (ROR or RINGGOLD)."
+msgstr "Fuente del ID (ROR o RINGGOLD)."
+
+#: app/templates/main/resources.html:183
+msgid "Download CSV Template"
+msgstr "Descargar Plantilla CSV"
+
+#: app/templates/main/resources.html:186
+msgid "Official AM Guide"
+msgstr "Guía Oficial del AM"
+
+#: app/templates/main/resources.html:199
+msgid "Standard Platform Integrations"
+msgstr "Integraciones Estándar de Plataformas"
+
+#: app/templates/main/resources.html:206
+msgid "Sync journals with ORCID reviewers and authors."
+msgstr "Sincroniza revistas con revisores y autores de ORCID."
+
+#: app/templates/main/resources.html:207
+msgid "Plugin Docs"
+msgstr "Docs del Plugin"
+
+#: app/templates/main/resources.html:212
+msgid "Link repository files with validated ORCID IDs."
+msgstr "Vincula archivos del repositorio con iDs de ORCID validados."
+
+#: app/templates/main/resources.html:213
+msgid "Wiki Guide"
+msgstr "Guía Wiki"
+
+#: app/templates/main/resources.html:218
+msgid "Enrich researcher profiles with linked data."
+msgstr "Enriquece los perfiles de investigadores con datos vinculados."
+
+#: app/templates/main/resources.html:219
+msgid "Setup Guide"
+msgstr "Guía de Configuración"
+
+#: app/templates/main/resources.html:224
+msgid "Authenticate depositors using ORCID OAuth2."
+msgstr "Autentica a los depositantes utilizando ORCID OAuth2."
+
+#: app/templates/main/resources.html:225
+msgid "OAuth2 Docs"
+msgstr "Documentación OAuth2"
+
+#: app/templates/main/resources.html:237
+msgid "Critical Pre-Integration Checklist"
+msgstr "Lista Crítica de Verificación Pre-Integración"
+
+#: app/templates/main/resources.html:239
+msgid ""
+"Confirm your institution ROR (Research Organization Registry) ID. ROR is "
+"the global standard for identifying institutions in ORCID."
+msgstr ""
+"Confirme el ID de ROR (Research Organization Registry) de su institución."
+" ROR es el estándar global para identificar instituciones en ORCID."
+
+#: app/templates/main/resources.html:240
+msgid ""
+"Ensure your technical environment supports <strong>HTTPS "
+"callbacks</strong>. ORCID requires secure redirects for data security."
+msgstr ""
+"Asegúrese de que su entorno técnico soporte <strong>retornos de llamada "
+"HTTPS</strong>. ORCID requiere redireccionamientos seguros para la "
+"seguridad de los datos."
+
+#: app/templates/main/resources.html:241
+msgid ""
+"Use the Sandbox environment first. It is a mirrored copy of ORCID where "
+"you can test without affecting real records."
+msgstr ""
+"Utilice primero el entorno Sandbox. Es una copia exacta de ORCID donde "
+"puede realizar pruebas sin afectar los registros reales."
+
+#: app/templates/works/cache_status.html:2
+msgid "Data Synchronization · Data ORCID-Chile"
+msgstr "Sincronización de Datos · Data ORCID-Chile"
+
+#: app/templates/works/cache_status.html:5
+msgid "Institutional Data Management"
+msgstr "Gestión de Datos Institucionales"
+
+#: app/templates/works/cache_status.html:10
+msgid "Bulk Download"
+msgstr "Descarga Masiva"
+
+#: app/templates/works/cache_status.html:20
+msgid "Cache Status"
+msgstr "Estado de la Caché"
+
+#: app/templates/works/cache_status.html:28
+msgid "Sync Everything"
+msgstr "Sincronizar Todo"
+
+#: app/templates/works/cache_status.html:39
+msgid "Synchronizing Works, Fundings & Profiles..."
+msgstr "Sincronizando Contribuciones, Financiamientos y Perfiles..."
+
+#: app/templates/works/cache_status.html:39
+msgid "This may take several minutes."
+msgstr "Esto puede tomar varios minutos."
+
+#: app/templates/works/cache_status.html:46
+msgid "Data Type"
+msgstr "Tipo de Dato"
+
+#: app/templates/works/cache_status.html:47
+msgid "Records Cached"
+msgstr "Registros en Caché"
+
+#: app/templates/works/cache_status.html:49
+msgid "Export Data"
+msgstr "Exportar Datos"
+
+#: app/templates/works/cache_status.html:57
+msgid "Scholarly Works"
+msgstr "Trabajos Académicos"
+
+#: app/templates/works/cache_status.html:63
+#: app/templates/works/cache_status.html:98
+#: app/templates/works/cache_status.html:133
+msgid "Empty"
+msgstr "Vacío"
+
+#: app/templates/works/cache_status.html:92
+msgid "Fundings & Grants"
+msgstr "Financiamientos y Subvenciones"
+
+#: app/templates/works/cache_status.html:127
+msgid "Researcher Names"
+msgstr "Nombres de Investigadores"
+
+#: app/templates/works/cache_status.html:137
+msgid "Auto-updated with Sync"
+msgstr "Auto-actualizado con Sincronización"
+
+#: app/templates/works/cache_status.html:140
+msgid "Internal Use"
+msgstr "Uso Interno"
+
+#: app/templates/works/cache_status.html:155
+msgid "Management Actions"
+msgstr "Acciones de Gestión"
+
+#: app/templates/works/cache_status.html:157
+msgid "Data Access"
+msgstr "Acceso a Datos"
+
+#: app/templates/works/cache_status.html:167
+msgid "Full Sync"
+msgstr "Sincronización Completa"
+
+#: app/templates/works/cache_status.html:169
+msgid ""
+"The \"Sync Everything\" button triggers a sequential update of "
+"Publications, Funding, and Profile names. This ensures reports reflect "
+"the latest data from ORCID."
+msgstr ""
+"El botón \"Sincronizar Todo\" activa una actualización secuencial de "
+"Publicaciones, Financiamiento y Nombres de perfil. Esto asegura que los "
+"reportes reflejen los datos más recientes de ORCID."
+
+#: app/templates/works/cache_status.html:178
+msgid "Data Availability"
+msgstr "Disponibilidad de Datos"
+
+#: app/templates/works/cache_status.html:180
+msgid ""
+"This data is centrally synchronized by the institutional administrators. "
+"You can download the latest available datasets in CSV or Excel format."
+msgstr ""
+"Estos datos son sincronizados centralmente por los administradores "
+"institucionales. Puedes descargar los últimos conjuntos de datos "
+"disponibles en formato CSV o Excel."
+
+#: app/templates/works/cache_status.html:192
+msgid "Analytics"
+msgstr "Analítica"
+
+#: app/templates/works/cache_status.html:194
+msgid "Visualize trends, funding sources, and top journals in the Metrics Panel."
+msgstr ""
+"Visualiza tendencias, fuentes de financiamiento y principales revistas en"
+" el Panel de Métricas."
+
+#: app/templates/works/cache_status.html:196
+msgid "Go to Metrics"
+msgstr "Ir a Métricas"
+
+#: app/templates/works/cache_status.html:211
+msgid ""
+"Start full synchronization? This process downloads Works, Fundings, and "
+"updates Profile Names."
+msgstr ""
+"¿Iniciar sincronización completa? Este proceso descarga Contribuciones, "
+"Financiamientos y actualiza Nombres de Perfil."
+
+#~ msgid "Welcome,"
+#~ msgstr "Bienvenido/a,"
+
+#~ msgid "Consortium Member"
+#~ msgstr "Miembro del Consorcio"
+

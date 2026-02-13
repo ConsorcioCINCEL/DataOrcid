@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Write (Push) Integration Guide · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('ORCID Push Integration Guide') }}</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('Implementation Guide') }}</li>
+{% endblock %}
+
+{% block content %}
+
+{# 1. INTRO & DOWNLOAD #}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card card-primary card-outline shadow-sm">
+          <div class="card-header border-0">
+            <h3 class="card-title font-weight-bold"><i class="fas fa-rocket mr-2 text-primary"></i> {{ _('Introduction') }}</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-justify">
+              {{ _('This guide provides a functional boilerplate to implement the <strong>OAuth2 3-legged flow</strong>. This process is essential for obtaining persistent permissions from researchers, allowing your institution to push <strong>funding (grants)</strong> records directly to their ORCID profiles.') }}
+            </p>
+            
+            <div class="alert alert-info border-0 mt-4 shadow-sm">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-file-archive fa-3x mr-3 opacity-5"></i>
+                    <div>
+                        <h5 class="font-weight-bold mb-1">{{ _('Ready-to-use Project') }}</h5>
+                        <p class="small mb-2">{{ _('The ZIP includes the Flask application, database models, requirements.txt, and a template .env file.') }}</p>
+                        <a href="{{ url_for('main.integration_guide', filename='project.zip') }}" class="btn btn-primary btn-sm px-4 font-weight-bold shadow-sm">
+                            <i class="fas fa-download mr-2"></i> {{ _('Download project.zip') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100 border-left-warning">
+            <div class="card-header bg-white">
+                <h3 class="card-title font-weight-bold"><i class="fas fa-tools mr-2"></i> {{ _('Prerequisites') }}</h3>
+            </div>
+            <div class="card-body pt-0">
+                <ul class="list-unstyled small text-muted">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> Python 3.10+</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> ORCID Member API Keys</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> Sandbox Account</li>
+                    <li><i class="fas fa-check-circle text-success mr-2"></i> Ethereal Mail (for testing)</li>
+                </ul>
+                <hr>
+                <p class="x-small text-muted mb-0">
+                    <i class="fas fa-info-circle mr-1"></i> {{ _('This guide is designed for local testing using the ORCID Sandbox environment.') }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 2. TESTING EMAILS WITH ETHEREAL #}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card card-outline card-info shadow-sm">
+            <div class="card-header">
+                <h3 class="card-title font-weight-bold"><i class="fas fa-envelope-open-text mr-2 text-info"></i> {{ _('Safe Email Testing with Ethereal') }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <p class="small text-justify">
+                            {{ _('To send authorization invites without using a real institutional mail server, we use <strong>Ethereal Mail</strong>. It is a fake SMTP service where messages are "caught" and displayed in a web dashboard instead of being sent to real inboxes.') }}
+                        </p>
+                        <ol class="small text-muted pl-3">
+                            <li>{{ _('Go to') }} <a href="https://ethereal.email/" target="_blank">ethereal.email</a> {{ _('and click on') }} <strong>"Create Ethereal Account"</strong>.</li>
+                            <li>{{ _('Copy the generated <strong>User</strong> and <strong>Password</strong>.') }}</li>
+                            <li>{{ _('Paste them into your <code>.env</code> file (see Step 3 below).') }}</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 bg-light rounded border">
+                            <i class="fas fa-shield-virus fa-3x text-info mb-2 opacity-5"></i>
+                            <p class="x-small font-weight-bold mb-0 text-uppercase">{{ _('No real spam') }}</p>
+                            <p class="x-small text-muted mb-0">{{ _('Safe for development') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 3. STEP-BY-STEP INSTALLATION #}
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-dark">
+        <h3 class="card-title font-weight-bold"><i class="fas fa-terminal mr-2 text-warning"></i> {{ _('Installation & Execution') }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <h6 class="font-weight-bold small text-muted text-uppercase">1. {{ _('Environment Setup') }}</h6>
+                <div class="bg-light p-2 border rounded position-relative">
+                    <pre class="mb-0 x-small" id="cmd-venv"><code>python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt</code></pre>
+                    <button class="btn btn-xs btn-outline-secondary position-absolute" style="top:5px; right:5px;" onclick="copyCode('cmd-venv')"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <h6 class="font-weight-bold small text-muted text-uppercase">2. {{ _('Configuration (.env)') }}</h6>
+                <div class="bg-light p-2 border rounded position-relative">
+                    <pre class="mb-0 x-small" id="cmd-env"><code># {{ _('ORCID Sandbox Credentials') }}
+ORCID_CLIENT_ID=APP-XXXX
+ORCID_CLIENT_SECRET=YYYY-ZZZZ
+
+# {{ _('Ethereal SMTP Settings') }}
+SMTP_SERVER=smtp.ethereal.email
+SMTP_USER=your_ethereal_user
+SMTP_PASS=your_ethereal_pass</code></pre>
+                    <button class="btn btn-xs btn-outline-secondary position-absolute" style="top:5px; right:5px;" onclick="copyCode('cmd-env')"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-2">
+            <p class="small text-muted mb-2">{{ _('Start the local server:') }}</p>
+            <code class="bg-dark p-2 rounded text-warning">python app.py</code>
+        </div>
+    </div>
+</div>
+
+{# 4. CSV STRUCTURE #}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-left-success">
+            <div class="card-header bg-white d-flex align-items-center">
+                <h3 class="card-title font-weight-bold text-success"><i class="fas fa-file-csv mr-2"></i> {{ _('Source CSV Structure') }}</h3>
+                <button class="btn btn-xs btn-outline-success ml-auto" onclick="copyCode('csv-format')"><i class="fas fa-copy mr-1"></i> {{ _('Header') }}</button>
+            </div>
+            <div class="card-body">
+                <div class="bg-dark p-3 rounded shadow-inner">
+                    <pre class="text-success mb-0 small" id="csv-format"><code>orcid_id,email,title,org_name,city,country,funding_type,amount,currency,grant_number,ror_id
+0000-0001-2345-6789,researcher@example.com,Project Title,Institution,City,CL,grant,5000,USD,GR-101,https://ror.org/XXXX</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 5. WORKFLOW DIAGRAM #}
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-top border-navy">
+            <div class="card-header bg-white">
+                <h3 class="card-title font-weight-bold text-navy"><i class="fas fa-project-diagram mr-2"></i> {{ _('Authorization Workflow') }}</h3>
+            </div>
+            <div class="card-body">
+                
+                <div class="row text-center mt-3">
+                    <div class="col-md-3">
+                        <i class="fas fa-upload text-primary mb-2"></i>
+                        <p class="x-small font-weight-bold mb-0">1. {{ _('Upload CSV') }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-envelope text-info mb-2"></i>
+                        <p class="x-small font-weight-bold mb-0">2. {{ _('Researcher Link') }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-user-check text-warning mb-2"></i>
+                        <p class="x-small font-weight-bold mb-0">3. {{ _('Grant Permission') }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-cloud-upload-alt text-success mb-2"></i>
+                        <p class="x-small font-weight-bold mb-0">4. {{ _('Sync to ORCID') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  function copyCode(id) {
+    const el = document.getElementById(id);
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+    sel.removeAllRanges();
+    
+    $(document).Toasts('create', {
+        class: 'bg-success',
+        title: '{{ _("Copied!") }}',
+        autohide: true,
+        delay: 2000,
+        body: '{{ _("Content copied to clipboard.") }}'
+    });
+  }
+</script>
+{% endblock %}

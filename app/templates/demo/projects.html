@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Project Management') }} · {{ orcid_id }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('list_authorized') }}" class="btn btn-sm btn-link text-muted"><i class="fas fa-arrow-left mr-1"></i> {{ _('Back to list') }}</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h3 class="card-title font-weight-bold">
+            <i class="fas fa-folder-open mr-2"></i>{{ _('Projects for') }} {{ orcid_id }}
+        </h3>
+    </div>
+    <div class="card-body p-0">
+        {% if not is_authorized %}
+        <div class="alert alert-warning m-3 border-0">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            {{ _('Permissions not granted yet. The researcher must authorize via the link sent to their email before pushing data.') }}
+        </div>
+        {% endif %}
+
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>{{ _('Project Title') }}</th>
+                    <th>{{ _('Grant Number') }}</th>
+                    <th class="text-center">{{ _('Status') }}</th>
+                    <th class="text-right">{{ _('Action') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in projects %}
+                <tr>
+                    <td class="align-middle">
+                        <div class="font-weight-bold">{{ p.title }}</div>
+                        <small class="text-muted">{{ p.org_name }} ({{ p.funding_type }})</small>
+                    </td>
+                    <td class="align-middle"><code>{{ p.grant_number }}</code></td>
+                    <td class="text-center align-middle">
+                        {% if p.status == 'pushed' %}
+                            <span class="badge badge-success">{{ _('Pushed') }}</span>
+                        {% elif p.status == 'ready' %}
+                            <span class="badge badge-primary">{{ _('Ready') }}</span>
+                        {% else %}
+                            <span class="badge badge-light border">{{ p.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right align-middle">
+                        {% if p.status == 'ready' and is_authorized %}
+                        <form action="{{ url_for('push_project', project_id=p.id) }}" method="post">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="fas fa-cloud-upload-alt mr-1"></i> {{ _('Push to ORCID') }}
+                            </button>
+                        </form>
+                        {% elif p.status == 'pushed' %}
+                        <button class="btn btn-sm btn-outline-secondary" disabled><i class="fas fa-check"></i></button>
+                        {% else %}
+                        <button class="btn btn-sm btn-default" disabled title="{{ _('Waiting for authorization') }}">
+                            <i class="fas fa-lock"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

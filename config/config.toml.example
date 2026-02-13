@@ -1,0 +1,113 @@
+# ============================================================
+# DataOrcid-Chile — Configuration Example File
+# Author: Gastón Olivares
+# License: MIT
+# ============================================================
+# This file is a configuration template.
+# Copy it to `config/config.toml` and adjust values for your environment.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 🔹 DATABASE
+# ------------------------------------------------------------
+[database]
+# Format: dialect+driver://user:password@host/dbname
+# Example for MySQL:
+uri = "mysql+pymysql://USER:PASS@localhost/dataorcid_chile"
+# For SQLite (development mode):
+# uri = "sqlite:///dataorcid_chile.db"
+
+
+# ------------------------------------------------------------
+# 🔹 FLASK CONFIGURATION
+# ------------------------------------------------------------
+[flask]
+# Flask secret key (replace with a long random string in production)
+secret_key = "CHANGEME_IN_RUNTIME"
+
+# Salt for signing recovery or authentication tokens
+password_salt = "CHANGE_ME_SALT"
+
+# Cookie security (recommended 'true' if using HTTPS)
+session_cookie_secure = true
+session_cookie_httponly = true
+session_cookie_samesite = "Lax"
+
+
+# ------------------------------------------------------------
+# 🔹 LANGUAGES (i18n)
+# ------------------------------------------------------------
+[languages]
+# Languages supported by the application
+supported = ["es", "en"]
+
+# Default language (locale) if the user's browser preference
+# cannot be detected or is not supported.
+# Options: "es" (Spanish), "en" (English)
+default = "es"
+
+
+# ------------------------------------------------------------
+# 🔹 INTERNAL PATHS
+# ------------------------------------------------------------
+[paths]
+# Directory where datasets for local download are stored
+# Can be a relative path (from project root) or absolute
+datasets_dir = "app/datasets"
+
+
+# ------------------------------------------------------------
+# 🔹 GENERAL APP CONFIGURATION
+# ------------------------------------------------------------
+[app]
+# System public base URL (used in emails and absolute links)
+# In development:
+# base_url = "http://localhost:5000"
+# In production (example):
+# base_url = "https://dataorcid.cl"
+base_url = "http://localhost:5000"
+
+
+# ------------------------------------------------------------
+# 🔹 ORCID CONFIGURATION
+# ------------------------------------------------------------
+[orcid]
+# Public API (For searches/listings)
+# Production: https://pub.orcid.org/v3.0/
+# Sandbox:    https://pub.sandbox.orcid.org/v3.0/
+base_url_public  = "https://pub.orcid.org/v3.0/"
+
+# Member API (For fetching metadata/caching)
+# Production: https://api.orcid.org/v3.0/
+# Sandbox:    https://api.sandbox.orcid.org/v3.0/
+base_url_member  = "https://api.orcid.org/v3.0/"
+
+token_url     = "https://orcid.org/oauth/token"
+
+# Client credentials (use environment variables if possible in production)
+client_id     = "APP-XXXXXX"
+client_secret = "REPLACE_OR_USE_ENV"
+
+
+# ------------------------------------------------------------
+# 🔹 EMAIL CONFIGURATION (SMTP)
+# ------------------------------------------------------------
+[mail]
+# Enable or disable real sending (false for dev without internet)
+enabled      = true
+
+# Mail server (use Ethereal, Gmail, or institutional SMTP)
+smtp_host    = "smtp.ethereal.email"
+smtp_port    = 587
+use_tls      = true
+use_ssl      = false
+
+# SMTP Credentials
+smtp_user    = "SMTP_USER"
+smtp_pass    = "SMTP_PASSWORD"
+
+# Sender details
+from_name    = "Data ORCID-Chile"
+from_email   = "no-reply@your-domain.cl"
+reply_to     = "support@your-domain.cl"

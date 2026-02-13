@@ -55,24 +55,24 @@ def send_email(
     """
     try:
         # 1. Feature Flag Check
-        if not current_app.config.get("MAIL_ENABLED", False):
+        mail_conf = current_app.config.get("mail", {})
+        if not mail_conf.get("enabled", False):
             msg = "Email service is disabled in configuration (MAIL_ENABLED=False)."
             logger.info(msg)
             return False, msg
 
         # 2. Configuration Extraction
-        conf = current_app.config
-        host = conf.get("MAIL_HOST")
-        port = conf.get("MAIL_PORT")
-        user = conf.get("MAIL_USERNAME")
-        pwd = conf.get("MAIL_PASSWORD")
+        host = mail_conf.get("smtp_host")
+        port = mail_conf.get("smtp_port")
+        user = mail_conf.get("smtp_user")
+        pwd = mail_conf.get("smtp_pass")
         
         # Security defaults: TLS is preferred for modern SMTP (port 587)
-        use_tls = conf.get("MAIL_USE_TLS", True)
-        use_ssl = conf.get("MAIL_USE_SSL", False)
+        use_tls = mail_conf.get("use_tls", True)
+        use_ssl = mail_conf.get("use_ssl", False)
         
-        from_name = conf.get("MAIL_FROM_NAME", "Data ORCID-Chile")
-        from_email = conf.get("MAIL_FROM_EMAIL", "no-reply@example.com")
+        from_name = mail_conf.get("from_name", "Data ORCID-Chile")
+        from_email = mail_conf.get("from_email", "no-reply@example.com")
 
         # 3. Validation
         if not all([host, port, user, pwd]):

@@ -225,10 +225,7 @@ def users_reset_password(user_id: int):
 def users_send_creds(user_id: int):
     """
     Resets user password and sends the new credentials via email.
-    Uses the configured SMTP server to dispatch the notification.
-    
-    Returns:
-        Redirect: Back to the users list.
+    The email content is automatically translated based on the current locale.
     """
     user = User.query.get_or_404(user_id)
     recipient = (user.email or user.username)
@@ -237,33 +234,43 @@ def users_send_creds(user_id: int):
         flash_err(_("User does not have a valid email."))
         return redirect(url_for('admin.users_list'))
 
-    # Generate new temporary password
     temp_pwd = generate_temp_password()
     user.set_password(temp_pwd)
     db.session.commit()
 
-    # Build absolute login URL based on configuration
     base_url = current_app.config.get('APP_BASE_URL', '').rstrip('/')
     login_url = f"{base_url}{url_for('auth.login')}" if base_url else url_for('auth.login', _external=True)
 
-    # Email Template Construction
-    email_body = f"""
-    <p>Hello {user.first_name or user.username},</p>
-    <p>Your access credentials for <strong>Data ORCID-Chile</strong> have been updated:</p>
+    # Email Subject (Translated)
+    subject = _("Access to Data ORCID-Chile (credentials)")
+
+    # Email Body (Multi-language construction)
+    # Using _() allows Babel to pick the translation from your .po files
+    greeting = _("Hello")
+    intro_text = _("Your access credentials for <strong>Data ORCID-Chile</strong> have been updated:")
+    label_url = _("URL")
+    label_user = _("Username")
+    label_pass = _("Temporary Password")
+    security_note = _("For security reasons, please change your password upon login.")
+
+    email_html = f"""
+    <p>{greeting} {user.first_name or user.username},</p>
+    <p>{intro_text}</p>
     <ul>
-      <li><b>URL:</b> <a href="{login_url}">{login_url}</a></li>
-      <li><b>Username:</b> {user.username}</li>
-      <li><b>Temporary Password:</b> {temp_pwd}</li>
+      <li><b>{label_url}:</b> <a href="{login_url}">{login_url}</a></li>
+      <li><b>{label_user}:</b> {user.username}</li>
+      <li><b>{label_pass}:</b> {temp_pwd}</li>
     </ul>
-    <p>For security reasons, please change your password upon login.</p>
+    <p>{security_note}</p>
     """
 
-    # Dispatch Email
+    email_text = f"{greeting} {user.username}\n{label_url}: {login_url}\n{label_user}: {user.username}\n{label_pass}: {temp_pwd}"
+
     success, error = send_email(
         to_email=recipient,
-        subject=_("Access to Data ORCID-Chile (credentials)"),
-        html=email_body,
-        text=f"URL: {login_url}\nUsername: {user.username}\nTemp Password: {temp_pwd}",
+        subject=subject,
+        html=email_html,
+        text=email_text,
     )
 
     if success:

@@ -207,3 +207,41 @@ a:hover {
     background-color: #0062a3 !important;
     border-color: #005a96 !important;
 }
+
+/* 7. INSTITUTIONAL PURPLE (Directory & Management)
+   Specifically added for the Researchers List and Profile tools.
+   ----------------------------------------------------------------------- */
+:root {
+    --cincel-purple:    #6f42c1;   /* Institutional Purple */
+}
+
+.text-purple {
+    color: var(--cincel-purple) !important;
+}
+
+.bg-purple {
+    background-color: var(--cincel-purple) !important;
+    color: #fff !important;
+}
+
+.btn-outline-purple {
+    color: var(--cincel-purple) !important;
+    border-color: var(--cincel-purple) !important;
+}
+
+.btn-outline-purple:hover {
+    background-color: var(--cincel-purple) !important;
+    color: #fff !important;
+}
+
+.btn-purple {
+    background-color: var(--cincel-purple) !important;
+    border-color: var(--cincel-purple) !important;
+    color: #fff !important;
+}
+
+.btn-purple:hover {
+    background-color: #59359a !important; /* 10% darker */
+    border-color: #51308d !important;
+}
+

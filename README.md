@@ -16,7 +16,7 @@ The platform allows institutions to synchronize, cache, and export data (Works, 
 ### 2. Clone and Prepare Environment
 
 # Clone the repository
-git clone https://github.com/your-user/dataorcid-chile.git
+git clone [https://github.com/your-user/dataorcid-chile.git](https://github.com/ConsorcioCINCEL/DataOrcid.git)
 cd dataorcid-chile
 
 # Create virtual environment

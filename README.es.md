@@ -116,8 +116,8 @@ from_email= "no-reply@midominio.cl"
 ## 🚀 Puesta en marcha (dev)
 
 ```bash
-git clone <repo>
-cd <repo>
+git clone [<repo>](https://github.com/ConsorcioCINCEL/DataOrcid.git)
+cd DataOrcid
 
 # 1️⃣ Entorno virtual
 python3 -m venv .venv

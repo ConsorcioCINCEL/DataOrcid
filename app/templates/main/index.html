@@ -92,10 +92,11 @@
   {# Chart 1: Data Composition #}
   <div class="col-lg-5 mb-4">
     <div class="card h-100 shadow-sm border-0">
-      <div class="card-header bg-white border-0">
+      <div class="card-header bg-white border-0 d-flex align-items-center">
         <h3 class="card-title font-weight-bold text-muted small text-uppercase">
           <i class="fas fa-chart-pie mr-2"></i> {{ _('Data Composition') }}
         </h3>
+        <a href="{{ url_for('main.metrics_panel') }}" class="btn btn-xs btn-link ml-auto text-primary">{{ _('Full Rankings') }}</a>
       </div>
       <div class="card-body">
         {% if works_count > 0 or fundings_count > 0 %}
@@ -103,7 +104,7 @@
                 <canvas id="chartComposition"></canvas>
             </div>
             <div class="text-center mt-3 small text-muted">
-                {{ _('Ratio of Publications vs. Research Grants in local cache.') }}
+                {{ _('Comparison of data volume of contributions (Works) vs. fundings in local cache.') }}
             </div>
         {% else %}
             <div class="text-center py-5 text-muted">
@@ -115,19 +116,18 @@
     </div>
   </div>
 
-  {# NEW Chart 2: Top Contributors Preview (Summary) #}
+  {# Chart 2: 5-Year Trend #}
   <div class="col-lg-7 mb-4">
     <div class="card h-100 shadow-sm border-0">
       <div class="card-header bg-white border-0 d-flex align-items-center">
         <h3 class="card-title font-weight-bold text-muted small text-uppercase">
-          <i class="fas fa-medal mr-2 text-warning"></i> {{ _('Institutional Activity Level') }}
+          <i class="fas fa-chart-line mr-2 text-primary"></i> {{ _('Works Production Trend') }}
         </h3>
-        <a href="{{ url_for('main.metrics_panel') }}" class="btn btn-xs btn-link ml-auto text-primary">{{ _('Full Rankings') }}</a>
       </div>
       <div class="card-body">
-        <p class="small text-muted">{{ _('Comparison of data volume across primary research categories.') }}</p>
+        <p class="small text-muted">{{ _('Evolution of contributions (Works) over the last 5 years.') }}</p>
         <div style="height: 220px;">
-            <canvas id="chartActivityPreview"></canvas>
+            <canvas id="chartWorksTrend"></canvas>
         </div>
       </div>
     </div>
@@ -198,6 +198,7 @@
     Chart.defaults.maintainAspectRatio = false;
     Chart.defaults.responsive = true;
     
+    // Doughnut Chart (Data Composition)
     const ctxComp = document.getElementById('chartComposition')?.getContext('2d');
     if (ctxComp) {
         new Chart(ctxComp, {
@@ -220,35 +221,33 @@
         });
     }
 
-    const ctxAct = document.getElementById('chartActivityPreview')?.getContext('2d');
-    if (ctxAct) {
-        new Chart(ctxAct, {
-            type: 'bar',
+    // Line Chart (5-Year Trend)
+    const ctxTrend = document.getElementById('chartWorksTrend')?.getContext('2d');
+    if (ctxTrend) {
+        const trendLabels = {{ trend_years | tojson | safe }};
+        const trendData = {{ trend_counts | tojson | safe }};
+        
+        new Chart(ctxTrend, {
+            type: 'line',
             data: {
-                labels: ['{{ _("Volume Comparison") }}'],
-                datasets: [
-                    {
-                        label: '{{ _("Works") }}',
-                        data: [{{ works_count }}],
-                        backgroundColor: '#007bff',
-                        borderRadius: 5
-                    },
-                    {
-                        label: '{{ _("Fundings") }}',
-                        data: [{{ fundings_count }}],
-                        backgroundColor: '#28a745',
-                        borderRadius: 5
-                    }
-                ]
+                labels: trendLabels,
+                datasets: [{
+                    label: '{{ _("Works") }}',
+                    data: trendData,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: '#007bff',
+                    pointRadius: 4
+                }]
             },
             options: {
-                indexAxis: 'y',
-                scales: {
-                    x: { beginAtZero: true, grid: { display: false } },
-                    y: { grid: { display: false } }
-                },
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
                 }
             }
         });

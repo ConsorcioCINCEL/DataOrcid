@@ -8,7 +8,7 @@ Description:
     
     This module manages the primary user interface and dashboard logic.
     It handles:
-    1. The landing page (Index) with high-level stats.
+    1. The landing page (Index) with high-level stats and trends.
     2. The Researcher Directory (fetching live data from ORCID).
     3. The Analytics Panel (charts, trends, and top performers).
     4. Integration guides and static resource serving.
@@ -91,16 +91,19 @@ def index():
     Logic:
     1. Determines the active ROR context.
     2. Checks the local database for cached records (Works/Fundings).
-    3. If no local cache exists, attempts to fetch a *live count* of researchers
+    3. Calculates a 5-year production trend for the dashboard chart.
+    4. If no local cache exists, attempts to fetch a *live count* of researchers
        from ORCID to show the user what *could* be imported.
     """
     ror_id = get_active_ror_id()
     researcher_count = None
     affiliation_hist = None
     
-    # Initialize counters
+    # Initialize counters and trend data
     works_count = 0
     fundings_count = 0
+    trend_years = []
+    trend_counts = []
 
     if ror_id:
         # Fetch local DB stats
@@ -111,6 +114,27 @@ def index():
         rc = db.session.query(WorkCache.orcid).filter_by(ror_id=ror_id).distinct().count()
         if rc == 0:
             rc = db.session.query(FundingCache.orcid).filter_by(ror_id=ror_id).distinct().count()
+
+        # Calculate 5-year trend for works if cache exists
+        if works_count > 0:
+            try:
+                year_stats = db.session.query(
+                    WorkCache.pub_year, func.count(WorkCache.id)
+                ).filter_by(ror_id=ror_id).group_by(WorkCache.pub_year).all()
+
+                # Filter valid years, sort descending, get top 5
+                valid_years = sorted(
+                    [(str(row[0]), row[1]) for row in year_stats if row[0] and str(row[0]).isdigit()],
+                    key=lambda x: int(x[0]),
+                    reverse=True
+                )[:5]
+                
+                # Reverse back to chronological order for the chart
+                valid_years.reverse() 
+                if valid_years:
+                    trend_years, trend_counts = zip(*valid_years)
+            except Exception as e:
+                logger.error(f"Error fetching 5-year trend for index: {e}")
 
         # If local cache is empty, query the ORCID Search API for a live estimate
         if rc == 0:
@@ -145,7 +169,9 @@ def index():
         affiliation_hist=affiliation_hist,
         works_count=works_count,
         fundings_count=fundings_count,
-        has_any_cache=has_any_cache
+        has_any_cache=has_any_cache,
+        trend_years=list(trend_years),
+        trend_counts=list(trend_counts)
     )
 
 
@@ -306,7 +332,6 @@ def metrics_panel():
 
     # 6. Chart: Top Funding Organizations
     try:
-        # Dynamic column check for compatibility
         columns = [c.key for c in inspect(FundingCache).mapper.column_attrs]
         org_col = FundingCache.org_name if 'org_name' in columns else (FundingCache.organization_name if 'organization_name' in columns else FundingCache.title)
         
@@ -323,7 +348,6 @@ def metrics_panel():
     except Exception as e: logger.error(f"Error in Top Journals: {e}")
 
     # 8. Table: Top Contributors (Works)
-    # Join WorkCache with ResearcherCache to display names efficiently
     try:
         raw_works = db.session.query(
             WorkCache.orcid, 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DataOrcid-Chile 1.0\n"
 "Report-Msgid-Bugs-To: gastonolivares@gmail.com\n"
-"POT-Creation-Date: 2026-02-12 20:46-0300\n"
+"POT-Creation-Date: 2026-03-12 20:07-0300\n"
 "PO-Revision-Date: 2026-02-04 21:05-0300\n"
 "Last-Translator: Gastón Olivares <gastonolivares@gmail.com>\n"
 "Language: en\n"
@@ -19,51 +19,51 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: app/decorators.py:51 app/decorators.py:66
+#: app/decorators.py:69 app/decorators.py:90
 msgid "You must log in to access this page."
 msgstr ""
 
-#: app/decorators.py:69
+#: app/decorators.py:94
 msgid "Access restricted to administrators."
 msgstr ""
 
-#: app/decorators.py:85
+#: app/decorators.py:112
 msgid "Your session has expired or you are not logged in."
 msgstr ""
 
-#: app/decorators.py:88
+#: app/decorators.py:117
 msgid "You do not have the required permissions to access this section."
 msgstr ""
 
-#: app/decorators.py:103
+#: app/decorators.py:134
 msgid "This action requires administrator or manager permissions."
 msgstr ""
 
-#: app/blueprints/export.py:133 app/blueprints/export.py:135 app/helpers.py:104
+#: app/blueprints/export.py:173 app/blueprints/export.py:175 app/helpers.py:116
 #: app/templates/main/orcid_profile.html:119
 msgid "Biography"
 msgstr ""
 
-#: app/helpers.py:105
+#: app/helpers.py:117
 msgid "Created Date"
 msgstr ""
 
-#: app/helpers.py:106
+#: app/helpers.py:118
 msgid "Last Modified"
 msgstr ""
 
-#: app/blueprints/export.py:126 app/blueprints/export.py:134 app/helpers.py:107
-#: app/helpers.py:115 app/helpers.py:116 app/helpers.py:128 app/helpers.py:136
-#: app/helpers.py:143 app/helpers.py:156
+#: app/blueprints/export.py:165 app/blueprints/export.py:174 app/helpers.py:119
+#: app/helpers.py:127 app/helpers.py:128 app/helpers.py:140 app/helpers.py:148
+#: app/helpers.py:155 app/helpers.py:168
 #: app/templates/main/orcid_profile.html:109
 msgid "Visibility"
 msgstr ""
 
-#: app/helpers.py:115 app/helpers.py:116
+#: app/helpers.py:127 app/helpers.py:128
 msgid "Name"
 msgstr ""
 
-#: app/helpers.py:125 app/helpers.py:130
+#: app/helpers.py:137 app/helpers.py:142
 #: app/templates/admin/_user_modals.html:19
 #: app/templates/admin/_user_modals.html:111
 #: app/templates/demo/authorized.html:15
@@ -71,498 +71,520 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: app/helpers.py:126 app/helpers.py:130
+#: app/helpers.py:138 app/helpers.py:142
 msgid "Verified"
 msgstr ""
 
-#: app/helpers.py:127
+#: app/helpers.py:139
 msgid "Primary"
 msgstr ""
 
-#: app/helpers.py:136 app/helpers.py:137
+#: app/helpers.py:148 app/helpers.py:149
 msgid "Country"
 msgstr ""
 
-#: app/helpers.py:143 app/helpers.py:144
+#: app/helpers.py:155 app/helpers.py:156
 msgid "Keyword"
 msgstr ""
 
-#: app/blueprints/export.py:140 app/blueprints/export.py:157
-#: app/blueprints/export.py:173 app/helpers.py:153 app/helpers.py:230
-#: app/helpers.py:269
+#: app/blueprints/export.py:181 app/blueprints/export.py:202
+#: app/blueprints/export.py:221 app/helpers.py:165 app/helpers.py:243
+#: app/helpers.py:285
 msgid "Type"
 msgstr ""
 
-#: app/blueprints/export.py:140 app/helpers.py:154
+#: app/blueprints/export.py:181 app/helpers.py:166
 msgid "Value"
 msgstr ""
 
-#: app/helpers.py:155
+#: app/blueprints/admin.py:251 app/helpers.py:167
 msgid "URL"
 msgstr ""
 
-#: app/blueprints/export.py:155 app/blueprints/export.py:172 app/helpers.py:177
-#: app/helpers.py:227 app/helpers.py:268
+#: app/blueprints/export.py:200 app/blueprints/export.py:220 app/helpers.py:190
+#: app/helpers.py:240 app/helpers.py:284
 msgid "Title"
 msgstr ""
 
-#: app/helpers.py:178 app/helpers.py:210 app/helpers.py:246
+#: app/helpers.py:191 app/helpers.py:223 app/helpers.py:259
 msgid "Organization"
 msgstr ""
 
-#: app/blueprints/export.py:158 app/helpers.py:179 app/helpers.py:195
-#: app/helpers.py:211
+#: app/blueprints/export.py:203 app/helpers.py:192 app/helpers.py:208
+#: app/helpers.py:224
 msgid "Start Year"
 msgstr ""
 
-#: app/helpers.py:180 app/helpers.py:196 app/helpers.py:212
+#: app/helpers.py:193 app/helpers.py:209 app/helpers.py:225
 msgid "End Year"
 msgstr ""
 
-#: app/blueprints/export.py:159 app/blueprints/export.py:177 app/helpers.py:181
-#: app/helpers.py:197 app/helpers.py:213 app/helpers.py:232 app/helpers.py:249
+#: app/blueprints/export.py:204 app/blueprints/export.py:225 app/helpers.py:194
+#: app/helpers.py:210 app/helpers.py:226 app/helpers.py:245 app/helpers.py:262
 msgid "Source"
 msgstr ""
 
-#: app/helpers.py:193
+#: app/helpers.py:206
 msgid "Degree/Title"
 msgstr ""
 
-#: app/helpers.py:194 app/templates/admin/_user_modals.html:37
+#: app/helpers.py:207 app/templates/admin/_user_modals.html:37
 #: app/templates/admin/_user_modals.html:129
 msgid "Institution"
 msgstr ""
 
-#: app/helpers.py:209 app/templates/admin/_user_modals.html:23
+#: app/helpers.py:222 app/templates/admin/_user_modals.html:23
 #: app/templates/admin/_user_modals.html:115
 msgid "Position"
 msgstr ""
 
-#: app/helpers.py:228
+#: app/helpers.py:241
 msgid "Funder"
 msgstr ""
 
-#: app/helpers.py:229
+#: app/helpers.py:242
 msgid "Grant ID"
 msgstr ""
 
-#: app/blueprints/export.py:174 app/helpers.py:231 app/helpers.py:270
+#: app/blueprints/export.py:222 app/helpers.py:244 app/helpers.py:286
 msgid "Year"
 msgstr ""
 
-#: app/helpers.py:247 app/templates/main/resources.html:78
+#: app/helpers.py:260 app/templates/main/resources.html:78
 msgid "Role"
 msgstr ""
 
-#: app/helpers.py:248
+#: app/helpers.py:261
 msgid "Completion Year"
 msgstr ""
 
-#: app/blueprints/export.py:175 app/helpers.py:271
+#: app/blueprints/export.py:223 app/helpers.py:287
 msgid "DOI"
 msgstr ""
 
-#: app/helpers.py:272
+#: app/helpers.py:288
 msgid "ISSN"
 msgstr ""
 
-#: app/helpers.py:312
+#: app/helpers.py:342
 msgid "No data available"
 msgstr ""
 
-#: app/helpers.py:341
+#: app/helpers.py:380
 msgid "ORCID service communication error."
 msgstr ""
 
-#: app/helpers.py:355
+#: app/helpers.py:395
 msgid "Connection timed out. Please try again."
 msgstr ""
 
-#: app/blueprints/admin.py:48
+#: app/blueprints/admin.py:55
 msgid "You need admin or manager role to access this section."
 msgstr ""
 
-#: app/blueprints/admin.py:114
+#: app/blueprints/admin.py:130
 msgid "The \"Username\" field is required."
 msgstr ""
 
-#: app/blueprints/admin.py:136
+#: app/blueprints/admin.py:155
 #, python-format
 msgid "GRID ID '%(g)s' automatically found for ROR %(r)s."
 msgstr ""
 
-#: app/blueprints/admin.py:140
+#: app/blueprints/admin.py:159
 #, python-format
 msgid "A user with username \"%(u)s\" already exists."
 msgstr ""
 
-#: app/blueprints/admin.py:166
+#: app/blueprints/admin.py:186
 #, python-format
 msgid "User \"%(u)s\" created%(r)s. Password: %(p)s"
 msgstr ""
 
-#: app/blueprints/admin.py:171
+#: app/blueprints/admin.py:191
 msgid "Could not create user. Check logs."
 msgstr ""
 
-#: app/blueprints/admin.py:192
+#: app/blueprints/admin.py:213
 #, python-format
 msgid "Password reset for %(u)s. New temporary: %(p)s"
 msgstr ""
 
-#: app/blueprints/admin.py:196
+#: app/blueprints/admin.py:217
 msgid "Could not reset password."
 msgstr ""
 
-#: app/blueprints/admin.py:215
+#: app/blueprints/admin.py:234
 msgid "User does not have a valid email."
 msgstr ""
 
-#: app/blueprints/admin.py:239
+#: app/blueprints/admin.py:245
 msgid "Access to Data ORCID-Chile (credentials)"
 msgstr ""
 
-#: app/blueprints/admin.py:245
+#: app/blueprints/admin.py:249
+msgid "Hello"
+msgstr ""
+
+#: app/blueprints/admin.py:250
+msgid ""
+"Your access credentials for <strong>Data ORCID-Chile</strong> have been "
+"updated:"
+msgstr ""
+
+#: app/blueprints/admin.py:252 app/templates/admin/_user_modals.html:15
+#: app/templates/admin/_user_modals.html:107 app/templates/admin/users.html:46
+msgid "Username"
+msgstr ""
+
+#: app/blueprints/admin.py:253
+msgid "Temporary Password"
+msgstr ""
+
+#: app/blueprints/admin.py:254
+msgid "For security reasons, please change your password upon login."
+msgstr ""
+
+#: app/blueprints/admin.py:277
 #, python-format
 msgid "Credentials sent to %(r)s."
 msgstr ""
 
-#: app/blueprints/admin.py:248
+#: app/blueprints/admin.py:280
 msgid "Could not send email."
 msgstr ""
 
-#: app/blueprints/admin.py:281
+#: app/blueprints/admin.py:314
 msgid "You cannot remove admin role from your own account."
 msgstr ""
 
-#: app/blueprints/admin.py:289
+#: app/blueprints/admin.py:322
 #, python-format
 msgid "GRID ID '%(g)s' automatically found."
 msgstr ""
 
-#: app/blueprints/admin.py:301
+#: app/blueprints/admin.py:335
 #, python-format
 msgid "User \"%(u)s\" updated successfully."
 msgstr ""
 
-#: app/blueprints/admin.py:305
+#: app/blueprints/admin.py:339
 msgid "Could not update user."
 msgstr ""
 
-#: app/blueprints/admin.py:320
+#: app/blueprints/admin.py:356
 msgid "You cannot delete the main admin account."
 msgstr ""
 
-#: app/blueprints/admin.py:326
+#: app/blueprints/admin.py:362
 msgid "User deleted successfully."
 msgstr ""
 
-#: app/blueprints/admin.py:330
+#: app/blueprints/admin.py:366
 msgid "Could not delete user."
 msgstr ""
 
-#: app/blueprints/admin.py:343
+#: app/blueprints/admin.py:382
 msgid "Action not allowed"
 msgstr ""
 
-#: app/blueprints/admin.py:352
+#: app/blueprints/admin.py:391
 #, python-format
 msgid "Active institution changed to: %(r)s"
 msgstr ""
 
-#: app/blueprints/api_misc.py:47
+#: app/blueprints/api_misc.py:59
 msgid "Parameter 'year' must be specified."
 msgstr ""
 
-#: app/blueprints/api_misc.py:50
+#: app/blueprints/api_misc.py:63
 msgid "Invalid mode. Use 'cache' or 'fresh'."
 msgstr ""
 
-#: app/blueprints/api_misc.py:65
+#: app/blueprints/api_misc.py:83
 #, python-format
 msgid "No cache available for year %(y)s."
 msgstr ""
 
-#: app/blueprints/api_misc.py:75
+#: app/blueprints/api_misc.py:99
 msgid "Could not fetch data from ORCID."
 msgstr ""
 
-#: app/blueprints/api_misc.py:89
+#: app/blueprints/api_misc.py:118
 msgid "Internal server error."
 msgstr ""
 
-#: app/blueprints/auth.py:102
+#: app/blueprints/auth.py:120
 msgid "Recover your password — Data ORCID-Chile"
 msgstr ""
 
-#: app/blueprints/auth.py:109
+#: app/blueprints/auth.py:127
 msgid "Could not send recovery email."
 msgstr ""
 
-#: app/blueprints/auth.py:114
+#: app/blueprints/auth.py:132
 msgid "If the account exists, we will send instructions."
 msgstr ""
 
-#: app/blueprints/auth.py:134
+#: app/blueprints/auth.py:155
 msgid "Invalid or non-existent user."
 msgstr ""
 
-#: app/blueprints/auth.py:138
+#: app/blueprints/auth.py:159
 msgid "Token expired."
 msgstr ""
 
-#: app/blueprints/auth.py:138
+#: app/blueprints/auth.py:159
 msgid "Invalid token."
 msgstr ""
 
-#: app/blueprints/auth.py:147
+#: app/blueprints/auth.py:168
 msgid "Password must be at least 6 characters."
 msgstr ""
 
-#: app/blueprints/auth.py:149
+#: app/blueprints/auth.py:170
 msgid "Passwords do not match."
 msgstr ""
 
-#: app/blueprints/auth.py:153
+#: app/blueprints/auth.py:174
 msgid "Password updated successfully. Please log in."
 msgstr ""
 
-#: app/blueprints/auth.py:199
+#: app/blueprints/auth.py:221
 msgid "Invalid username or password."
 msgstr ""
 
-#: app/blueprints/auth.py:210
+#: app/blueprints/auth.py:232
 msgid "Session closed successfully."
 msgstr ""
 
-#: app/blueprints/auth.py:234
+#: app/blueprints/auth.py:257
 msgid "Current password is incorrect."
 msgstr ""
 
-#: app/blueprints/auth.py:236
+#: app/blueprints/auth.py:259
 msgid "New passwords do not match."
 msgstr ""
 
-#: app/blueprints/auth.py:238
+#: app/blueprints/auth.py:261
 msgid "New password too short (min 6 chars)."
 msgstr ""
 
-#: app/blueprints/auth.py:242
+#: app/blueprints/auth.py:265
 msgid "Password updated successfully."
 msgstr ""
 
-#: app/blueprints/auth.py:262
+#: app/blueprints/auth.py:287
 msgid "The Affiliation Manager ID must start with 'APP-'."
 msgstr ""
 
-#: app/blueprints/auth.py:267
+#: app/blueprints/auth.py:292
 msgid "Affiliation Manager settings updated."
 msgstr ""
 
-#: app/blueprints/auth.py:271
+#: app/blueprints/auth.py:296
 msgid "Internal database error while saving settings."
 msgstr ""
 
-#: app/blueprints/cache_control.py:102
+#: app/blueprints/cache_control.py:117
 msgid "You do not have sufficient permissions to perform this action."
 msgstr ""
 
-#: app/blueprints/cache_control.py:108
+#: app/blueprints/cache_control.py:125
 msgid "No active institution (ROR ID) selected. Please select one first."
 msgstr ""
 
-#: app/blueprints/cache_control.py:119
+#: app/blueprints/cache_control.py:135
 msgid "Authentication failed: Could not obtain a valid ORCID Member Token."
 msgstr ""
 
-#: app/blueprints/cache_control.py:127
+#: app/blueprints/cache_control.py:145
 #, python-format
 msgid "Works cache successfully rebuilt: %(count)s records updated."
 msgstr ""
 
-#: app/blueprints/cache_control.py:132
+#: app/blueprints/cache_control.py:151
 #, python-format
 msgid "Funding cache successfully rebuilt: %(count)s records updated."
 msgstr ""
 
-#: app/blueprints/cache_control.py:135
+#: app/blueprints/cache_control.py:154
 #, python-format
 msgid "Invalid cache target specified: '%(target)s'."
 msgstr ""
 
-#: app/blueprints/cache_control.py:142
+#: app/blueprints/cache_control.py:161
 #, python-format
 msgid "Critical error during cache rebuild: %(error)s"
 msgstr ""
 
-#: app/blueprints/dashboard.py:36
-msgid "No active ROR. Please select one first."
+#: app/blueprints/dashboard.py:73
+msgid "No active ROR context found. Please log in again or select an institution."
 msgstr ""
 
-#: app/blueprints/dashboard.py:51
+#: app/blueprints/dashboard.py:89
 msgid "With DOI"
 msgstr ""
 
-#: app/blueprints/dashboard.py:51
+#: app/blueprints/dashboard.py:89
 msgid "Without DOI"
 msgstr ""
 
-#: app/blueprints/dashboard.py:100
-msgid "An error occurred while generating publications statistics."
+#: app/blueprints/dashboard.py:142
+msgid "An error occurred while generating publication statistics."
 msgstr ""
 
-#: app/blueprints/export.py:50
+#: app/blueprints/export.py:73
 msgid "ORCID_Full_Report"
 msgstr ""
 
-#: app/blueprints/export.py:61
+#: app/blueprints/export.py:84
 msgid "Could not generate the requested Excel file."
 msgstr ""
 
-#: app/blueprints/export.py:109
+#: app/blueprints/export.py:144
 msgid "Could not generate the requested file."
 msgstr ""
 
-#: app/blueprints/export.py:122
+#: app/blueprints/export.py:161
 msgid "Given Names"
 msgstr ""
 
-#: app/blueprints/export.py:123
+#: app/blueprints/export.py:162
 msgid "Family Names"
 msgstr ""
 
-#: app/blueprints/export.py:124
+#: app/blueprints/export.py:163
 msgid "Credit Name"
 msgstr ""
 
-#: app/blueprints/export.py:125 app/templates/admin/users.html:51
+#: app/blueprints/export.py:164 app/templates/admin/users.html:51
 #: app/templates/main/orcid_profile.html:107
 msgid "Created"
 msgstr ""
 
-#: app/blueprints/export.py:128
+#: app/blueprints/export.py:167
 msgid "Identity"
 msgstr ""
 
-#: app/blueprints/export.py:141
+#: app/blueprints/export.py:182
 msgid "ExternalIDs"
 msgstr ""
 
-#: app/blueprints/export.py:156
+#: app/blueprints/export.py:201
 msgid "Agency"
 msgstr ""
 
-#: app/blueprints/export.py:162 app/templates/main/index.html:206
-#: app/templates/main/index.html:237
+#: app/blueprints/export.py:208 app/templates/main/index.html:207
 msgid "Fundings"
 msgstr ""
 
-#: app/blueprints/export.py:176
+#: app/blueprints/export.py:224
 msgid "Journal/Publisher"
 msgstr ""
 
-#: app/blueprints/export.py:180 app/templates/dashboard/index.html:115
-#: app/templates/main/index.html:206 app/templates/main/index.html:231
+#: app/blueprints/export.py:229 app/templates/dashboard/index.html:115
+#: app/templates/main/index.html:207 app/templates/main/index.html:235
 msgid "Works"
 msgstr ""
 
-#: app/blueprints/fundings.py:62 app/blueprints/fundings.py:106
+#: app/blueprints/fundings.py:100 app/blueprints/fundings.py:159
 msgid "No ROR ID found in session."
 msgstr ""
 
-#: app/blueprints/fundings.py:79
+#: app/blueprints/fundings.py:120
 #, python-format
 msgid "Funding cache created successfully: %(count)s records."
 msgstr ""
 
-#: app/blueprints/fundings.py:85
+#: app/blueprints/fundings.py:127
 msgid "Error building funding cache. Check logs."
 msgstr ""
 
-#: app/blueprints/fundings.py:111
+#: app/blueprints/fundings.py:165
 msgid "No funding cache available. Please run \"Download from scratch\"."
 msgstr ""
 
-#: app/blueprints/fundings.py:116
+#: app/blueprints/fundings.py:170
 msgid "Funding cache is empty."
 msgstr ""
 
-#: app/blueprints/fundings.py:170
+#: app/blueprints/fundings.py:232
 msgid "An error occurred generating the export file."
 msgstr ""
 
-#: app/blueprints/main.py:127
+#: app/blueprints/main.py:190
 msgid "No active ROR ID found."
 msgstr ""
 
-#: app/blueprints/main.py:148
+#: app/blueprints/main.py:217
 msgid "Could not communicate with ORCID services."
 msgstr ""
 
-#: app/blueprints/main.py:169 app/blueprints/main.py:171
-#: app/blueprints/main.py:177 app/blueprints/main.py:179
-#: app/blueprints/main.py:277 app/blueprints/main.py:300
+#: app/blueprints/main.py:242 app/blueprints/main.py:244
+#: app/blueprints/main.py:253 app/blueprints/main.py:255
+#: app/blueprints/main.py:368 app/blueprints/main.py:391
 msgid "Unknown Researcher"
 msgstr ""
 
-#: app/blueprints/main.py:393
+#: app/blueprints/main.py:488
 msgid "No data available to download for this chart."
 msgstr ""
 
-#: app/blueprints/main.py:411
+#: app/blueprints/main.py:508
 msgid "An error occurred while exporting data."
 msgstr ""
 
-#: app/blueprints/main.py:430
+#: app/blueprints/main.py:539
 msgid "The requested ORCID profile could not be loaded."
 msgstr ""
 
-#: app/blueprints/main.py:445
+#: app/blueprints/main.py:561
 msgid "The requested file was not found on the server."
 msgstr ""
 
-#: app/blueprints/main.py:457
+#: app/blueprints/main.py:580
 msgid "Could not retrieve the list of available files."
 msgstr ""
 
-#: app/blueprints/works.py:81 app/blueprints/works.py:199
+#: app/blueprints/works.py:97 app/blueprints/works.py:236
 msgid "No active institution context found."
 msgstr ""
 
-#: app/blueprints/works.py:132
+#: app/blueprints/works.py:160
 #, python-format
 msgid ""
 "Full synchronization complete: %(w)s works, %(f)s grants, and %(p)s "
 "profiles updated."
 msgstr ""
 
-#: app/blueprints/works.py:135
+#: app/blueprints/works.py:163
 #, python-format
 msgid "Sync completed with errors in: %(err)s. Check logs."
 msgstr ""
 
-#: app/blueprints/works.py:165
+#: app/blueprints/works.py:197
 msgid "Funding cache updated."
 msgstr ""
 
-#: app/blueprints/works.py:169
+#: app/blueprints/works.py:201
 msgid "Error updating fundings."
 msgstr ""
 
-#: app/blueprints/works.py:182
+#: app/blueprints/works.py:215
 #, python-format
 msgid "Profiles updated: %s"
 msgstr ""
 
-#: app/blueprints/works.py:184
+#: app/blueprints/works.py:217
 msgid "Error updating profiles"
 msgstr ""
 
-#: app/blueprints/works.py:234
+#: app/blueprints/works.py:276
 msgid "The publication cache is currently empty."
 msgstr ""
 
-#: app/blueprints/works.py:269
+#: app/blueprints/works.py:318
 msgid "The funding cache is empty."
 msgstr ""
 
@@ -608,11 +630,6 @@ msgstr ""
 
 #: app/templates/admin/_user_modals.html:6
 msgid "Edit User Details"
-msgstr ""
-
-#: app/templates/admin/_user_modals.html:15
-#: app/templates/admin/_user_modals.html:107 app/templates/admin/users.html:46
-msgid "Username"
 msgstr ""
 
 #: app/templates/admin/_user_modals.html:29
@@ -978,35 +995,35 @@ msgstr ""
 msgid "Login · Data ORCID-Chile"
 msgstr ""
 
-#: app/templates/auth/login.html:26
+#: app/templates/auth/login.html:36
 msgid "Sign in to access institutional data"
 msgstr ""
 
-#: app/templates/auth/login.html:47
+#: app/templates/auth/login.html:57
 msgid "Username or Email"
 msgstr ""
 
-#: app/templates/auth/login.html:49
+#: app/templates/auth/login.html:59
 msgid "Enter your username"
 msgstr ""
 
-#: app/templates/auth/login.html:57
+#: app/templates/auth/login.html:67
 msgid "Password"
 msgstr ""
 
-#: app/templates/auth/login.html:59
+#: app/templates/auth/login.html:69
 msgid "Enter your password"
 msgstr ""
 
-#: app/templates/auth/login.html:71
+#: app/templates/auth/login.html:81
 msgid "Keep me logged in"
 msgstr ""
 
-#: app/templates/auth/login.html:73
+#: app/templates/auth/login.html:83
 msgid "Forgot Password?"
 msgstr ""
 
-#: app/templates/auth/login.html:77
+#: app/templates/auth/login.html:87
 msgid "Sign In"
 msgstr ""
 
@@ -1093,18 +1110,18 @@ msgstr ""
 msgid "Loading data..."
 msgstr ""
 
-#: app/templates/dashboard/index.html:144
+#: app/templates/dashboard/index.html:143
 msgid ""
 "No cached data available for this institution. Please run a Cache Rebuild"
 " first."
 msgstr ""
 
-#: app/templates/dashboard/index.html:158
+#: app/templates/dashboard/index.html:155
 #: app/templates/main/orcid_profile.html:202
 msgid "Publications"
 msgstr ""
 
-#: app/templates/dashboard/index.html:188
+#: app/templates/dashboard/index.html:183
 msgid "Grants"
 msgstr ""
 
@@ -1208,51 +1225,51 @@ msgstr ""
 msgid "Administration"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:18
+#: app/templates/layout/sidebar.html:17
 msgid "User Management"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:27
+#: app/templates/layout/sidebar.html:25
 msgid "System Usage Logs"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:33
+#: app/templates/layout/sidebar.html:31
 msgid "Institutional Data"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:39 app/templates/main/index.html:142
+#: app/templates/layout/sidebar.html:37 app/templates/main/index.html:142
 msgid "ORCID Analytics"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:46 app/templates/main/index.html:150
+#: app/templates/layout/sidebar.html:44 app/templates/main/index.html:150
 msgid "Data Downloads"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:53 app/templates/main/index.html:158
+#: app/templates/layout/sidebar.html:51 app/templates/main/index.html:158
 msgid "Researchers List"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:58
+#: app/templates/layout/sidebar.html:56
 msgid "Integration Tools"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:64
+#: app/templates/layout/sidebar.html:62
 msgid "API Read (Pull)"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:71
+#: app/templates/layout/sidebar.html:69
 msgid "API Write (Push)"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:78
+#: app/templates/layout/sidebar.html:76
 msgid "AM Settings"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:85
+#: app/templates/layout/sidebar.html:83
 msgid "Knowledge Base"
 msgstr ""
 
-#: app/templates/layout/sidebar.html:93
+#: app/templates/layout/sidebar.html:91
 msgid "Sign Out"
 msgstr ""
 
@@ -1320,24 +1337,26 @@ msgstr ""
 msgid "Data Composition"
 msgstr ""
 
-#: app/templates/main/index.html:106
-msgid "Ratio of Publications vs. Research Grants in local cache."
-msgstr ""
-
-#: app/templates/main/index.html:111
-msgid "No data cached. Please run a sync."
-msgstr ""
-
-#: app/templates/main/index.html:123
-msgid "Institutional Activity Level"
-msgstr ""
-
-#: app/templates/main/index.html:125
+#: app/templates/main/index.html:99
 msgid "Full Rankings"
 msgstr ""
 
+#: app/templates/main/index.html:107
+msgid ""
+"Comparison of data volume of contributions (Works) vs. fundings in local "
+"cache."
+msgstr ""
+
+#: app/templates/main/index.html:112
+msgid "No data cached. Please run a sync."
+msgstr ""
+
+#: app/templates/main/index.html:124 app/templates/main/metrics.html:39
+msgid "Works Production Trend"
+msgstr ""
+
 #: app/templates/main/index.html:128
-msgid "Comparison of data volume across primary research categories."
+msgid "Evolution of contributions (Works) over the last 5 years."
 msgstr ""
 
 #: app/templates/main/index.html:138
@@ -1362,10 +1381,6 @@ msgstr ""
 
 #: app/templates/main/index.html:182
 msgid "Open Module"
-msgstr ""
-
-#: app/templates/main/index.html:228
-msgid "Volume Comparison"
 msgstr ""
 
 #: app/templates/main/integration_guide.html:2
@@ -1773,10 +1788,6 @@ msgstr ""
 msgid "Metrics"
 msgstr ""
 
-#: app/templates/main/metrics.html:39
-msgid "Works Production Trend"
-msgstr ""
-
 #: app/templates/main/metrics.html:77
 msgid "Funding Timeline"
 msgstr ""
@@ -1786,7 +1797,7 @@ msgid "Funding Types"
 msgstr ""
 
 #: app/templates/main/metrics.html:116
-msgid "Top Contributors (Works)"
+msgid "Top Contributors (Number of Works)"
 msgstr ""
 
 #: app/templates/main/metrics.html:138 app/templates/main/metrics.html:171
@@ -1794,7 +1805,7 @@ msgid "No data"
 msgstr ""
 
 #: app/templates/main/metrics.html:149
-msgid "Top Contributors (Funding)"
+msgid "Top Contributors (Number of Fundings)"
 msgstr ""
 
 #: app/templates/main/metrics.html:182
@@ -3752,5 +3763,29 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Consortium Member"
+#~ msgstr ""
+
+#~ msgid "No active ROR. Please select one first."
+#~ msgstr ""
+
+#~ msgid "An error occurred while generating publications statistics."
+#~ msgstr ""
+
+#~ msgid "Ratio of Publications vs. Research Grants in local cache."
+#~ msgstr ""
+
+#~ msgid "Institutional Activity Level"
+#~ msgstr ""
+
+#~ msgid "Comparison of data volume across primary research categories."
+#~ msgstr ""
+
+#~ msgid "Volume Comparison"
+#~ msgstr ""
+
+#~ msgid "Top Contributors (Works)"
+#~ msgstr ""
+
+#~ msgid "Top Contributors (Funding)"
 #~ msgstr ""
 

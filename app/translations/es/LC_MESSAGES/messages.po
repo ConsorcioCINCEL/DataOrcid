@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-13 13:24-0300\n"
+"POT-Creation-Date: 2026-03-12 20:07-0300\n"
 "PO-Revision-Date: 2026-02-12 20:30-0300\n"
 "Last-Translator: Gastón Olivares <gastonolivares@gmail.com>\n"
 "Language: es\n"
@@ -229,7 +229,9 @@ msgstr "Hola"
 msgid ""
 "Your access credentials for <strong>Data ORCID-Chile</strong> have been "
 "updated:"
-msgstr "Tus credenciales de acceso para <strong>Data ORCID-Chile</strong> han sido actualizadas:"
+msgstr ""
+"Tus credenciales de acceso para <strong>Data ORCID-Chile</strong> han "
+"sido actualizadas:"
 
 #: app/blueprints/admin.py:252 app/templates/admin/_user_modals.html:15
 #: app/templates/admin/_user_modals.html:107 app/templates/admin/users.html:46
@@ -242,7 +244,9 @@ msgstr "Contraseña temporal"
 
 #: app/blueprints/admin.py:254
 msgid "For security reasons, please change your password upon login."
-msgstr "Por razones de seguridad, por favor cambie su contraseña al iniciar sesión."
+msgstr ""
+"Por razones de seguridad, por favor cambie su contraseña al iniciar "
+"sesión."
 
 #: app/blueprints/admin.py:277
 #, python-format
@@ -478,8 +482,7 @@ msgstr "Identificadores Externos"
 msgid "Agency"
 msgstr "Agencia"
 
-#: app/blueprints/export.py:208 app/templates/main/index.html:206
-#: app/templates/main/index.html:237
+#: app/blueprints/export.py:208 app/templates/main/index.html:207
 msgid "Fundings"
 msgstr "Financiamientos"
 
@@ -488,7 +491,7 @@ msgid "Journal/Publisher"
 msgstr "Revista/Editorial"
 
 #: app/blueprints/export.py:229 app/templates/dashboard/index.html:115
-#: app/templates/main/index.html:206 app/templates/main/index.html:231
+#: app/templates/main/index.html:207 app/templates/main/index.html:235
 msgid "Works"
 msgstr "Contribuciones (works)"
 
@@ -519,37 +522,37 @@ msgstr "La caché de financiamiento está vacía."
 msgid "An error occurred generating the export file."
 msgstr "Ocurrió un error al generar el archivo de exportación."
 
-#: app/blueprints/main.py:164
+#: app/blueprints/main.py:190
 msgid "No active ROR ID found."
 msgstr "No se encontró un ROR ID activo."
 
-#: app/blueprints/main.py:191
+#: app/blueprints/main.py:217
 msgid "Could not communicate with ORCID services."
 msgstr "No fue posible comunicarse con los servicios de ORCID."
 
-#: app/blueprints/main.py:216 app/blueprints/main.py:218
-#: app/blueprints/main.py:227 app/blueprints/main.py:229
-#: app/blueprints/main.py:344 app/blueprints/main.py:367
+#: app/blueprints/main.py:242 app/blueprints/main.py:244
+#: app/blueprints/main.py:253 app/blueprints/main.py:255
+#: app/blueprints/main.py:368 app/blueprints/main.py:391
 msgid "Unknown Researcher"
 msgstr "Investigador Desconocido"
 
-#: app/blueprints/main.py:464
+#: app/blueprints/main.py:488
 msgid "No data available to download for this chart."
 msgstr "No hay datos disponibles para descargar en este gráfico."
 
-#: app/blueprints/main.py:484
+#: app/blueprints/main.py:508
 msgid "An error occurred while exporting data."
 msgstr "Ocurrió un error al exportar los datos."
 
-#: app/blueprints/main.py:515
+#: app/blueprints/main.py:539
 msgid "The requested ORCID profile could not be loaded."
 msgstr "No se pudo cargar el perfil ORCID solicitado."
 
-#: app/blueprints/main.py:537
+#: app/blueprints/main.py:561
 msgid "The requested file was not found on the server."
 msgstr "El archivo solicitado no se encontró en el servidor."
 
-#: app/blueprints/main.py:556
+#: app/blueprints/main.py:580
 msgid "Could not retrieve the list of available files."
 msgstr "No fue posible recuperar la lista de archivos disponibles."
 
@@ -1374,27 +1377,28 @@ msgstr "Proyectos en Caché"
 msgid "Data Composition"
 msgstr "Composición de Datos"
 
-#: app/templates/main/index.html:106
-msgid "Ratio of Publications vs. Research Grants in local cache."
-msgstr "Proporción de Publicaciones vs. Fondos de Investigación en caché local."
-
-#: app/templates/main/index.html:111
-msgid "No data cached. Please run a sync."
-msgstr "No hay datos en caché. Por favor, ejecuta una sincronización."
-
-#: app/templates/main/index.html:123
-msgid "Institutional Activity Level"
-msgstr "Nivel de Actividad Institucional"
-
-#: app/templates/main/index.html:125
+#: app/templates/main/index.html:99
 msgid "Full Rankings"
 msgstr "Rankings Completos"
 
+#: app/templates/main/index.html:107
+msgid ""
+"Comparison of data volume of contributions (Works) vs. fundings in local "
+"cache."
+msgstr "Comparación del volumen de datos de contribuciones (Works) vs. financiamientos en caché local."
+
+#: app/templates/main/index.html:112
+msgid "No data cached. Please run a sync."
+msgstr "No hay datos en caché. Por favor, ejecuta una sincronización."
+
+#: app/templates/main/index.html:124 app/templates/main/metrics.html:39
+msgid "Works Production Trend"
+msgstr "Tendencia de Producción de Contribuciones"
+
 #: app/templates/main/index.html:128
-msgid "Comparison of data volume across primary research categories."
-msgstr ""
-"Comparación del volumen de datos a través de las principales categorías "
-"de investigación."
+msgid "Evolution of contributions (Works) over the last 5 years."
+msgstr "Evolución de contribuciones (Works) en los últimos 5 años."
+
 
 #: app/templates/main/index.html:138
 msgid "System Modules"
@@ -1421,10 +1425,6 @@ msgstr "Sincronización Requerida"
 #: app/templates/main/index.html:182
 msgid "Open Module"
 msgstr "Abrir Módulo"
-
-#: app/templates/main/index.html:228
-msgid "Volume Comparison"
-msgstr "Comparación de Volumen"
 
 #: app/templates/main/integration_guide.html:2
 msgid "Write (Push) Integration Guide · Data ORCID-Chile"
@@ -1859,10 +1859,6 @@ msgstr "Panel de Analítica ORCID"
 msgid "Metrics"
 msgstr "Métricas"
 
-#: app/templates/main/metrics.html:39
-msgid "Works Production Trend"
-msgstr "Tendencia de Producción de Contribuciones"
-
 #: app/templates/main/metrics.html:77
 msgid "Funding Timeline"
 msgstr "Línea de Tiempo de Financiamiento"
@@ -1872,16 +1868,16 @@ msgid "Funding Types"
 msgstr "Tipos de Financiamiento"
 
 #: app/templates/main/metrics.html:116
-msgid "Top Contributors (Works)"
-msgstr "Principales Contribuyentes (Trabajos)"
+msgid "Top Contributors (Number of Works)"
+msgstr "Principales Contribuyentes (n° de trabajos)"
 
 #: app/templates/main/metrics.html:138 app/templates/main/metrics.html:171
 msgid "No data"
 msgstr "Sin datos"
 
 #: app/templates/main/metrics.html:149
-msgid "Top Contributors (Funding)"
-msgstr "Principales Contribuyentes (Financiamiento)"
+msgid "Top Contributors (Number of Fundings)"
+msgstr "Principales Contribuyentes (n° de financiamientos)"
 
 #: app/templates/main/metrics.html:182
 msgid "Top Funding Orgs"
@@ -2328,7 +2324,7 @@ msgstr "Sincronización de Datos · Data ORCID-Chile"
 
 #: app/templates/works/cache_status.html:5
 msgid "Institutional Data Management"
-msgstr "Gestión de Datos Institucionales"
+msgstr "Descarga de datos institucionales"
 
 #: app/templates/works/cache_status.html:10
 msgid "Bulk Download"
@@ -2453,4 +2449,19 @@ msgstr ""
 
 #~ msgid "No active ROR. Please select one first."
 #~ msgstr "No hay ROR activo. Selecciona uno primero."
+
+#~ msgid "Ratio of Publications vs. Research Grants in local cache."
+#~ msgstr "Proporción de Publicaciones vs. Fondos de Investigación en caché local."
+
+#~ msgid "Institutional Activity Level"
+#~ msgstr "Nivel de Actividad Institucional"
+
+#~ msgid "Comparison of data volume across primary research categories."
+#~ msgstr ""
+#~ "Comparación del volumen de datos a "
+#~ "través de las principales categorías de"
+#~ " investigación."
+
+#~ msgid "Volume Comparison"
+#~ msgstr "Comparación de Volumen"
 

@@ -2354,9 +2354,31 @@ msgstr "Tipo de Dato"
 msgid "Records Cached"
 msgstr "Registros en Caché"
 
+#: app/templates/works/cache_status.html:162
+msgid "All Institutions Exports"
+msgstr "Exportaciones de todas las instituciones"
+
+#: app/templates/works/cache_status.html:169
+msgid "Dataset"
+msgstr "Conjunto de datos"
+
+#: app/templates/works/cache_status.html:170
+msgid "Records"
+msgstr "Registros"
+
 #: app/templates/works/cache_status.html:49
 msgid "Export Data"
 msgstr "Exportar Datos"
+
+#: app/templates/works/cache_status.html:178
+msgid "Associated Researchers"
+msgstr "Investigadores asociados"
+
+#: app/templates/works/cache_status.html:187
+#: app/templates/works/cache_status.html:214
+#: app/templates/works/cache_status.html:241
+msgid "All universities"
+msgstr "Todas las universidades"
 
 #: app/templates/works/cache_status.html:57
 msgid "Scholarly Works"

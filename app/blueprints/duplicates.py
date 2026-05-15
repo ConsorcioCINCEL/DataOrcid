@@ -83,8 +83,8 @@ def clear_cache():
 
 
 def _requested_scope() -> str:
-    if session.get("is_admin") and request.args.get("scope") == "all":
-        return "all"
+    if session.get("is_admin"):
+        return "current" if request.args.get("scope") == "current" else "all"
     return "current"
 
 

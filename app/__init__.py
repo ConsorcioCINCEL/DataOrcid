@@ -65,7 +65,7 @@ def datetimeformat(value, format: str = "%Y-%m-%d %H:%M") -> str:
         return value.strftime(format)
     
     s = str(value)
-    fmts = ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d")
+    fmts = ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d")
     for fmt in fmts:
         try:
             return dt.datetime.strptime(s, fmt).strftime(format)
@@ -155,9 +155,6 @@ def create_app() -> Flask:
         MAIL_DEFAULT_SENDER=(mail_cfg.get("from_name", "DataOrcid"), mail_cfg.get("from_email")),
     )
 
-    app.jinja_env.filters["datetimeformat"] = datetimeformat
-    app.jinja_env.filters["timestamp_to_date"] = timestamp_to_date
-
     @app.context_processor
     def inject_global_template_vars():
         """Expose global template data used by the layout."""
@@ -225,6 +222,8 @@ def create_app() -> Flask:
     migrate.init_app(app, db)
     babel.init_app(app, locale_selector=get_locale)
     csrf.init_app(app)
+    app.jinja_env.filters["datetimeformat"] = datetimeformat
+    app.jinja_env.filters["timestamp_to_date"] = timestamp_to_date
 
     with app.app_context():
         db.create_all()

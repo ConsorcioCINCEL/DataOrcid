@@ -234,3 +234,183 @@ a:hover {
     background-color: #59359a !important; /* 10% darker */
     border-color: #51308d !important;
 }
+
+/* 8. DUPLICATE PROFILE REVIEW
+   ----------------------------------------------------------------------- */
+.duplicate-review-header {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    justify-content: space-between;
+}
+
+.duplicate-review-header .card-title {
+    float: none;
+}
+
+.duplicate-cache-status {
+    align-items: center;
+    color: #495057;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    gap: 0.35rem;
+}
+
+.duplicate-filter-grid {
+    align-items: end;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(280px, 1fr) minmax(220px, 0.45fr) minmax(170px, 0.35fr);
+}
+
+.duplicate-filter-grid label,
+.duplicate-action-group .small {
+    letter-spacing: 0;
+}
+
+.duplicate-filter-reset {
+    align-self: end;
+}
+
+.duplicate-control-button {
+    align-items: center;
+    display: flex;
+    min-height: calc(2.25rem + 2px);
+    justify-content: center;
+}
+
+.duplicate-action-grid {
+    align-items: end;
+    border-top: 1px solid #e9ecef;
+    display: grid;
+    gap: 1rem 1.25rem;
+    grid-template-columns: minmax(180px, 0.8fr) minmax(360px, 1.2fr) auto;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+}
+
+.duplicate-action-group {
+    min-width: 0;
+}
+
+.duplicate-action-group-right {
+    justify-self: end;
+    text-align: right;
+}
+
+.duplicate-button-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.duplicate-action-group-right .duplicate-button-row {
+    justify-content: flex-end;
+}
+
+.duplicate-button-row form {
+    display: flex;
+    margin: 0;
+}
+
+.duplicate-button-row .btn {
+    align-items: center;
+    display: inline-flex;
+    font-size: 0.875rem;
+    justify-content: center;
+    min-height: 36px;
+    white-space: nowrap;
+}
+
+#institutionsSummaryTable thead th,
+#orcidActivityTable thead th,
+#candidateDetailsTable thead th {
+    white-space: nowrap;
+}
+
+#orcidActivityTable_wrapper > .row:first-child,
+#candidateDetailsTable_wrapper > .row:first-child {
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    margin: 0;
+    padding: 0.85rem 1rem;
+}
+
+#orcidActivityTable_wrapper > .row:last-child,
+#candidateDetailsTable_wrapper > .row:last-child {
+    align-items: center;
+    border-top: 1px solid #eef1f4;
+    margin: 0;
+    padding: 0.85rem 1rem;
+}
+
+#orcidActivityTable_wrapper .dataTables_length,
+#orcidActivityTable_wrapper .dataTables_filter,
+#candidateDetailsTable_wrapper .dataTables_length,
+#candidateDetailsTable_wrapper .dataTables_filter {
+    margin: 0;
+}
+
+#orcidActivityTable_wrapper .dataTables_filter label,
+#candidateDetailsTable_wrapper .dataTables_filter label {
+    margin-bottom: 0;
+}
+
+#orcidActivityTable_wrapper .dataTables_filter input,
+#candidateDetailsTable_wrapper .dataTables_filter input {
+    margin-left: 0.5rem;
+    max-width: 240px;
+    width: 42vw;
+}
+
+#institutionsSummaryTable_wrapper .dataTables_empty,
+#orcidActivityTable_wrapper .dataTables_empty,
+#candidateDetailsTable_wrapper .dataTables_empty {
+    color: #6c757d;
+    padding: 1.25rem;
+}
+
+@media (max-width: 1199.98px) {
+    .duplicate-action-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .duplicate-action-group-right {
+        justify-self: start;
+        text-align: left;
+    }
+
+    .duplicate-action-group-right .duplicate-button-row {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .duplicate-filter-grid,
+    .duplicate-action-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .duplicate-cache-status {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .duplicate-button-row .btn,
+    .duplicate-button-row form {
+        width: 100%;
+    }
+
+    .duplicate-button-row form .btn {
+        width: 100%;
+    }
+
+    #orcidActivityTable_wrapper .dataTables_filter input,
+    #candidateDetailsTable_wrapper .dataTables_filter input {
+        margin-left: 0;
+        width: 100%;
+    }
+}

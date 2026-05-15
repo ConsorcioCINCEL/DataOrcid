@@ -1,23 +1,4 @@
-"""
-Module: cache_service.py
-Author: Gastón Olivares
-Project: DataOrcid-Chile (Open Source)
-License: MIT
-Description: 
-    Core Cache Construction Service.
-    
-    This module contains the heavy-lifting logic for synchronizing local database tables
-    with the external ORCID API. It is optimized for high-volume data processing.
-    
-    Key Optimization Strategies:
-    1. **Concurrency**: Uses `concurrent.futures` to fetch thousands of ORCID profiles in parallel,
-       bypassing the latency of sequential HTTP requests.
-    2. **Bulk Persistence**: Uses SQLAlchemy's `bulk_save_objects` to insert records in batches,
-       significantly reducing database transaction overhead.
-    3. **In-Memory Transformation**: Parses large JSON blobs in memory to extract only relevant 
-       metadata (Works, Fundings) before touching the database.
-    4. **Data Healing**: Automatically resolves missing identifiers (GRID IDs) via ROR API lookup.
-"""
+"""Build and refresh local ORCID caches for works, fundings, and profiles."""
 
 import logging
 from flask import current_app
@@ -26,59 +7,36 @@ from .. import db
 from ..models import WorkCache, FundingCache, ResearcherStatus, User, ResearcherCache
 from .orcid_service import list_orcids_for_institution, get_all_profiles_concurrently, get_full_orcid_profile
 from .ror_service import fetch_grid_from_ror
+from .institution_registry_service import get_institution_by_ror
 
 logger = logging.getLogger(__name__)
 
-# ============================================================
-# DATA PERSISTENCE HELPERS
-# ============================================================
-
 def _flush_bulk(bulk: list, model_name: str) -> int:
-    """
-    Persists a batch of SQLAlchemy objects to the database in a single transaction.
-    
-    This function is critical for performance when processing thousands of records.
-    It clears the list after committing to free up memory.
-    
-    Args:
-        bulk (list): A list of model instances (e.g., [WorkCache(...), ...]).
-        model_name (str): The name of the model (for error logging context).
-        
-    Returns:
-        int: The number of records successfully saved.
-    """
+    """Flush a batch while keeping the caller's transaction open."""
     if not bulk:
         return 0
     try:
         db.session.bulk_save_objects(bulk)
-        db.session.commit()
+        db.session.flush()
         count = len(bulk)
-        bulk.clear() # Clear memory immediately after commit
+        bulk.clear()
         return count
     except Exception as exc:
         db.session.rollback()
         logger.exception("CRITICAL: Failed to save %s batch: %s", model_name, exc)
-        return 0
+        raise
 
 
 def ensure_and_heal_grid_for_ror(ror_id: str) -> str or None:
     """
-    Ensures that a ROR ID has an associated GRID ID in the local database.
-    
-    ORCID's API often relies on GRID IDs for affiliation searches. If our local 
-    user record has a ROR but no GRID, this function attempts to 'heal' the data 
-    by fetching the GRID ID from the external ROR API.
-    
-    Args:
-        ror_id (str): The ROR identifier to verify.
-        
-    Returns:
-        str or None: The resolved GRID ID or None if not found.
+    Resolve the GRID ID for a ROR and persist it to local user records.
+
+    ORCID searches still benefit from GRID identifiers, so the cache builders
+    use ROR as the canonical local ID and fill GRID as compatibility metadata.
     """
     if not ror_id:
         return None
         
-    # 1. Check local database for an existing mapping
     existing = User.query.filter(
         User.ror_id == ror_id, 
         User.grid_id.isnot(None), 
@@ -87,11 +45,13 @@ def ensure_and_heal_grid_for_ror(ror_id: str) -> str or None:
     
     grid_id = existing.grid_id if existing else None
 
-    # 2. If missing locally, fetch from external ROR API (Self-Healing)
+    if not grid_id:
+        institution = get_institution_by_ror(ror_id)
+        grid_id = institution.get("grid_id") if institution else None
+
     if not grid_id:
         grid_id = fetch_grid_from_ror(ror_id)
 
-    # 3. Propagate the resolved GRID ID to all users with this ROR
     if grid_id:
         users_to_update = User.query.filter(
             User.ror_id == ror_id, 
@@ -112,25 +72,12 @@ def ensure_and_heal_grid_for_ror(ror_id: str) -> str or None:
 
 def _extract_status_from_profile(profile_data: dict, ror_id: str, orcid: str, trusted_ids: list) -> ResearcherStatus:
     """
-    Analyzes a researcher's full ORCID profile to determine if their affiliation 
-    is 'Managed' by the institution.
-    
-    A profile is considered 'Managed' if it contains an affiliation entry (Employment, Education, etc.)
-    that was added or updated by a trusted API Client ID (Affiliation Manager).
-    
-    Args:
-        profile_data (dict): The full ORCID profile JSON.
-        ror_id (str): The institutional ROR ID context.
-        orcid (str): The researcher's ORCID iD.
-        trusted_ids (list): List of API Client IDs authorized by the institution.
-        
-    Returns:
-        ResearcherStatus: A model instance representing the management status.
+    Mark whether a profile has affiliation records written by trusted clients.
     """
     is_managed = False
     activities = profile_data.get('activities-summary') or {}
     
-    # ORCID sections where affiliation data can reside
+    # ORCID stores affiliation-like records under several activity sections.
     sections_to_check = [
         'employments', 'educations', 'qualifications', 
         'invited-positions', 'distinctions', 'memberships', 'services'
@@ -140,7 +87,7 @@ def _extract_status_from_profile(profile_data: dict, ror_id: str, orcid: str, tr
         section_data = activities.get(section) or {}
         for group in section_data.get('affiliation-group', []):
             for summary in group.get('summaries', []):
-                # Dynamically locate the summary item (keys vary by section, e.g., 'employment-summary')
+                # Section summary keys vary, e.g. "employment-summary".
                 item_data = next(
                     (val for val in summary.values() if isinstance(val, dict) and 'source' in val), 
                     None
@@ -152,7 +99,6 @@ def _extract_status_from_profile(profile_data: dict, ror_id: str, orcid: str, tr
                 source = item_data.get('source') or {}
                 source_client_path = (source.get('source-client-id') or {}).get('path')
 
-                # Verification: Does the record source match our institutional App Keys?
                 if source_client_path and source_client_path in trusted_ids:
                     is_managed = True
                     break
@@ -164,43 +110,24 @@ def _extract_status_from_profile(profile_data: dict, ror_id: str, orcid: str, tr
     return ResearcherStatus(ror_id=ror_id, orcid=orcid, is_managed_by_am=is_managed)
 
 
-# ============================================================
-# CACHE BUILDER: WORKS (PUBLICATIONS)
-# ============================================================
-
 def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
     """
-    Rebuilds the local cache of Publications (Works) for a specific institution.
-    
-    Process:
-    1. Resolves GRID ID for the ROR.
-    2. Searches ORCID for all researchers affiliated with the institution.
-    3. Fetches full profiles concurrently.
-    4. Extracts Works metadata and Affiliation Status.
-    5. Bulk inserts data into `work_cache` and `researcher_status` tables.
-    
-    Args:
-        ror_id (str): Target ROR ID.
-        base_url (str): ORCID API base URL.
-        headers (dict): Authorization headers.
-        
-    Returns:
-        int: Total number of publications cached.
+    Rebuild works and affiliation status caches for one institution.
+
+    Existing rows are replaced only after ORCID profiles have been fetched, so
+    network failures do not wipe the previous cache.
     """
     grid_id = ensure_and_heal_grid_for_ror(ror_id)
     
-    # 1. Discovery Phase
     researchers = list_orcids_for_institution(ror_id, grid_id, base_url, headers) or []
     logger.info("Works Cache: Processing %d researchers for %s", len(researchers), ror_id)
     
     if not researchers:
         return 0
 
-    # 2. Configuration Phase (Trusted Client IDs)
     system_client_id = current_app.config.get("ORCID_CLIENT_ID")
     trusted_ids = [system_client_id] if system_client_id else []
     
-    # Add institution-specific Affiliation Manager ID if configured
     manager_user = User.query.filter_by(ror_id=ror_id).filter(User.am_client_id.isnot(None)).first()
     if manager_user and manager_user.am_client_id:
         trusted_ids.append(manager_user.am_client_id)
@@ -208,27 +135,22 @@ def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
 
     orcid_ids = [r.get('orcid-id') for r in researchers if r.get('orcid-id')]
 
-    # 3. Cleanup Phase (Purge old cache)
+    profiles_map = get_all_profiles_concurrently(orcid_ids, max_workers=10)
+
+    # Replace rows in the same transaction as the inserts.
     WorkCache.query.filter_by(ror_id=ror_id).delete(synchronize_session=False)
     ResearcherStatus.query.filter_by(ror_id=ror_id).delete(synchronize_session=False)
-    db.session.commit()
-
-    # 4. Fetch Phase (Multithreaded)
-    profiles_map = get_all_profiles_concurrently(orcid_ids, max_workers=10)
 
     total_works_cached = 0
     works_buffer = []
     status_buffer = []
     
-    # 5. Processing Phase (In-Memory)
     for orcid_id, profile in profiles_map.items():
         if not profile:
             continue
 
-        # A. Determine Management Status (AM Badge)
         status_buffer.append(_extract_status_from_profile(profile, ror_id, orcid_id, trusted_ids))
 
-        # B. Parse Publication Metadata
         activities = profile.get('activities-summary') or {}
         works_container = activities.get('works') or {}
         
@@ -238,7 +160,6 @@ def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
                 pub_date = work.get('publication-date') or {}
                 external_ids = (work.get('external-ids') or {}).get('external-id') or []
                 
-                # Prioritize DOI and ISSN extraction
                 doi, issn, others = None, None, []
                 for eid in external_ids:
                     id_type = (eid.get('external-id-type') or '').lower()
@@ -267,31 +188,24 @@ def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
                 ))
                 total_works_cached += 1
 
-        # Memory Optimization: Periodic bulk flush prevents RAM exhaustion
         if len(works_buffer) >= 2000:
             _flush_bulk(works_buffer, "WorkCache")
         if len(status_buffer) >= 1000:
             _flush_bulk(status_buffer, "ResearcherStatus")
 
-    # Final database synchronization
     _flush_bulk(works_buffer, "WorkCache")
     _flush_bulk(status_buffer, "ResearcherStatus")
+    db.session.commit()
     
     logger.info("Finished Works Cache for %s. Total: %d", ror_id, total_works_cached)
     return total_works_cached
 
 
-# ============================================================
-# CACHE BUILDER: FUNDINGS (GRANTS)
-# ============================================================
-
 def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
     """
-    Rebuilds the local cache of Funding (Grants) for a specific institution.
-    Follows a similar logic to `build_works_cache_for_ror`.
-    
-    Returns:
-        int: Total number of funding records cached.
+    Rebuild funding cache rows for one institution.
+
+    Existing rows are replaced only after profile fetches have completed.
     """
     grid_id = ensure_and_heal_grid_for_ror(ror_id)
     researchers = list_orcids_for_institution(ror_id, grid_id, base_url, headers) or []
@@ -301,12 +215,10 @@ def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> i
 
     orcid_ids = [r.get('orcid-id') for r in researchers if r.get('orcid-id')]
     
-    # Purge existing cache
-    FundingCache.query.filter_by(ror_id=ror_id).delete(synchronize_session=False)
-    db.session.commit()
-
-    # Concurrent Fetch
     profiles_map = get_all_profiles_concurrently(orcid_ids, max_workers=10)
+
+    # Replace rows in the same transaction as the inserts.
+    FundingCache.query.filter_by(ror_id=ror_id).delete(synchronize_session=False)
     
     total_fundings_cached = 0
     funding_buffer = []
@@ -327,7 +239,6 @@ def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> i
                 amount_node = summary.get('amount') or {}
                 external_ids = (summary.get('external-ids') or {}).get('external-id') or []
                 
-                # Extract Grant Number
                 grant_id = next(
                     (eid.get('external-id-value') for eid in external_ids 
                      if 'grant' in (eid.get('external-id-type') or '').lower()), 
@@ -360,25 +271,15 @@ def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> i
             _flush_bulk(funding_buffer, "FundingCache")
 
     _flush_bulk(funding_buffer, "FundingCache")
+    db.session.commit()
     logger.info("Finished Funding Cache for %s. Total: %d", ror_id, total_fundings_cached)
     return total_fundings_cached
 
 
-# ============================================================
-# CACHE BUILDER: RESEARCHER PROFILES (NAMES)
-# ============================================================
-
 def build_researcher_names_cache(ror_id: str):
     """
-    Synchronizes researcher profile details (Names, Bio) into the ResearcherCache table.
-    
-    Optimization:
-    - Uses multithreading to fetch profiles concurrently.
-    - Pre-fetches existing records to perform upserts (Update if exists, Insert if new) efficiently.
-    - Commits in batches to avoid locking the database for too long.
+    Refresh display names for researchers already present in works/fundings caches.
     """
-    # 1. Identify Target ORCIDs
-    # Get all unique ORCIDs present in the Work and Funding caches for this ROR
     w_orcids = db.session.query(WorkCache.orcid).filter_by(ror_id=ror_id)
     f_orcids = db.session.query(FundingCache.orcid).filter_by(ror_id=ror_id)
     all_orcids = [r[0] for r in w_orcids.union(f_orcids).all()]
@@ -389,14 +290,11 @@ def build_researcher_names_cache(ror_id: str):
 
     logger.info("Profile Sync: Fetching %d profiles concurrently for ROR %s", total, ror_id)
 
-    # 2. Concurrent Fetch (Multithreaded)
     profiles_map = get_all_profiles_concurrently(all_orcids, max_workers=10)
 
-    # 3. Process and Buffer Updates
     updated_count = 0
-    
-    # Pre-fetch existing researcher records into a dictionary for O(1) lookup
-    # This avoids N+1 SELECT queries inside the loop
+
+    # Preload rows to avoid one SELECT per ORCID.
     existing_researchers = {r.orcid: r for r in ResearcherCache.query.filter(ResearcherCache.orcid.in_(all_orcids)).all()}
 
     for orcid, profile in profiles_map.items():
@@ -410,7 +308,6 @@ def build_researcher_names_cache(ror_id: str):
         family = (name.get('family-name') or {}).get('value')
         credit = (name.get('credit-name') or {}).get('value')
         
-        # Upsert Logic: Update if exists, else Create
         researcher = existing_researchers.get(orcid)
         if not researcher:
             researcher = ResearcherCache(orcid=orcid)
@@ -422,7 +319,6 @@ def build_researcher_names_cache(ror_id: str):
         
         updated_count += 1
         
-        # Batch commit every 500 records
         if updated_count % 500 == 0:
             try:
                 db.session.commit()
@@ -430,7 +326,6 @@ def build_researcher_names_cache(ror_id: str):
                 db.session.rollback()
                 logger.error("Error during partial commit for researcher names: %s", e)
 
-    # Final commit for remaining records
     try:
         db.session.commit()
     except Exception as e:

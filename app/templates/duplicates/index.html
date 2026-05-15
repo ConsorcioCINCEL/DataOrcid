@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Duplicate Profiles · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('Duplicate ORCID Profiles') }}</h1>
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('Duplicate Profiles') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  {% for label, value, icon, color in [
+    (_('Candidate Groups'), report.summary.candidate_groups, 'fas fa-layer-group', 'bg-primary'),
+    (_('Duplicate Profiles'), report.summary.duplicate_profiles, 'fas fa-user-friends', 'bg-warning'),
+    (_('Extra Profiles'), report.summary.extra_profiles, 'fas fa-clone', 'bg-danger'),
+    (_('Institutions'), report.summary.institutions, 'fas fa-university', 'bg-secondary'),
+    (_('Candidate Works'), report.summary.candidate_works, 'fas fa-book', 'bg-success'),
+    (_('Candidate Fundings'), report.summary.candidate_fundings, 'fas fa-hand-holding-usd', 'bg-info')
+  ] %}
+  <div class="col-sm-6 col-xl-2">
+    <div class="info-box shadow-sm">
+      <span class="info-box-icon {{ color }}"><i class="{{ icon }}"></i></span>
+      <div class="info-box-content">
+        <span class="info-box-text font-weight-bold">{{ label }}</span>
+        <span class="info-box-number">{{ value }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card card-outline card-primary shadow-sm">
+  <div class="card-header">
+    <h3 class="card-title text-bold mb-0">{{ _('Review Filters') }}</h3>
+  </div>
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 p-3 bg-light border rounded">
+      <div>
+        <span class="font-weight-bold">{{ _('Analysis Cache') }}</span>
+        <span class="badge badge-{{ 'success' if report.cache.hit else 'secondary' }} ml-2">
+          {{ _('Reused') if report.cache.hit else _('Updated') }}
+        </span>
+      </div>
+      <div class="small text-muted mt-2 mt-md-0">
+        {{ _('Generated at') }}: {{ report.cache.generated_at or _('Not available') }}
+      </div>
+    </div>
+    <form method="get" class="row">
+      <input type="hidden" name="scope" value="{{ scope }}">
+      <div class="col-lg-6">
+        <label for="duplicateSearch" class="small text-muted">{{ _('Search') }}</label>
+        <div class="input-group">
+          <input id="duplicateSearch" name="q" type="search" class="form-control" value="{{ query }}" placeholder="{{ _('Name, ORCID iD, or institution') }}">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 mt-3 mt-lg-0">
+        <label for="confidenceFilter" class="small text-muted">{{ _('Minimum Confidence') }}</label>
+        <select id="confidenceFilter" name="min_confidence" class="form-control">
+          <option value="0" {% if min_confidence == 0 %}selected{% endif %}>{{ _('Any') }}</option>
+          <option value="70" {% if min_confidence == 70 %}selected{% endif %}>{{ _('Medium') }}</option>
+          <option value="85" {% if min_confidence == 85 %}selected{% endif %}>{{ _('High') }}</option>
+        </select>
+      </div>
+      <div class="col-lg-3 mt-3 mt-lg-0 d-flex align-items-end">
+        <a href="{{ url_for('duplicates.index', scope=scope) }}" class="btn btn-outline-secondary btn-block">
+          <i class="fas fa-undo mr-1"></i>{{ _('Reset') }}
+        </a>
+      </div>
+    </form>
+  </div>
+  <div class="card-footer bg-white">
+    <div class="row align-items-center">
+      <div class="col-xl-4 mb-2 mb-xl-0">
+        <div class="small text-muted font-weight-bold text-uppercase mb-1">{{ _('Downloads') }}</div>
+        <div class="btn-group btn-group-sm">
+          <a class="btn btn-outline-primary" href="{{ url_for('duplicates.download', scope=scope, format='csv') }}">
+            <i class="fas fa-file-csv mr-1"></i>{{ _('CSV') }}
+          </a>
+          <a class="btn btn-outline-success" href="{{ url_for('duplicates.download', scope=scope, format='xlsx') }}">
+            <i class="fas fa-file-excel mr-1"></i>{{ _('Excel') }}
+          </a>
+        </div>
+      </div>
+      <div class="col-xl-4 mb-2 mb-xl-0">
+        <div class="small text-muted font-weight-bold text-uppercase mb-1">{{ _('Analysis') }}</div>
+        <div class="btn-group btn-group-sm">
+          <a class="btn btn-outline-info" href="{{ url_for('duplicates.index', scope=scope, refresh='1') }}">
+            <i class="fas fa-sync-alt mr-1"></i>{{ _('Refresh Analysis') }}
+          </a>
+          <form method="post" action="{{ url_for('duplicates.clear_cache', scope=scope) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger">
+              <i class="fas fa-trash-alt mr-1"></i>{{ _('Clear Analysis Cache') }}
+            </button>
+          </form>
+        </div>
+      </div>
+      {% if session.get('is_admin') %}
+      <div class="col-xl-4 text-xl-right">
+        <div class="small text-muted font-weight-bold text-uppercase mb-1">{{ _('Scope') }}</div>
+        <div class="btn-group btn-group-sm">
+          <a class="btn {% if scope == 'current' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('duplicates.index', scope='current') }}">
+            <i class="fas fa-university mr-1"></i>{{ _('Current Institution') }}
+          </a>
+          <a class="btn {% if scope == 'all' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('duplicates.index', scope='all') }}">
+            <i class="fas fa-globe-americas mr-1"></i>{{ _('All Institutions') }}
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-xl-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header">
+        <h3 class="card-title text-bold">{{ _('Institutions Summary') }}</h3>
+      </div>
+      <div class="card-body p-0 table-responsive">
+        <table id="institutionsSummaryTable" class="table table-sm table-hover mb-0 w-100">
+          <thead>
+            <tr>
+              <th>{{ _('Institution') }}</th>
+              <th class="text-right">{{ _('Groups') }}</th>
+              <th class="text-right">{{ _('Profiles') }}</th>
+              <th class="text-right">{{ _('Confidence') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for institution in report.institutions %}
+            <tr>
+              <td>
+                <div class="font-weight-bold">{{ institution.institution_name }}</div>
+                <div class="small text-muted">{{ institution.ror_id }}</div>
+              </td>
+              <td class="text-right" data-order="{{ institution.candidate_groups }}">{{ institution.candidate_groups }}</td>
+              <td class="text-right" data-order="{{ institution.duplicate_profiles }}">{{ institution.duplicate_profiles }}</td>
+              <td class="text-right" data-order="{{ institution.highest_confidence }}">{{ institution.highest_confidence }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-8 mt-4 mt-xl-0">
+    <div class="card shadow-sm h-100">
+      <div class="card-header">
+        <h3 class="card-title text-bold">{{ _('Methodological Note') }}</h3>
+      </div>
+      <div class="card-body">
+        <p class="mb-2">
+          {{ _('This review uses ORCID iDs found in the local works and funding caches for the selected institutional scope.') }}
+        </p>
+        <p class="mb-2">
+          {{ _('Candidate groups are created when cached profile names match after lowercasing, accent removal, punctuation removal, and whitespace normalization.') }}
+        </p>
+        <p class="mb-0">
+          {{ _('Scores prioritize exact normalized name matches, richer names, cached activity on every profile, and shared DOI evidence. Results are candidates for manual verification, not automatic merges.') }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+  <div class="card-header">
+    <h3 class="card-title text-bold">{{ _('ORCID Activity Summary') }}</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table id="orcidActivityTable" class="table table-sm table-hover mb-0 w-100">
+        <thead>
+          <tr>
+            <th style="min-width: 240px;">{{ _('ORCID iD') }}</th>
+            <th style="min-width: 180px;">{{ _('Institution') }}</th>
+            <th class="text-right">{{ _('Works') }}</th>
+            <th class="text-right">{{ _('Fundings') }}</th>
+            <th class="text-right">{{ _('Total Activity') }}</th>
+            <th class="text-right">{{ _('Candidate Groups') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for profile in report.profile_activity %}
+          <tr>
+            <td>
+              <div class="font-weight-bold">{{ profile.display_name }}</div>
+              <a href="{{ url_for('main.orcid_profile', orcid_id=profile.orcid) }}" class="small mr-3">
+                <i class="fas fa-id-card mr-1"></i>{{ profile.orcid }}
+              </a>
+              <a href="{{ profile.orcid_url }}" target="_blank" rel="noopener" class="small text-muted">
+                <i class="fas fa-external-link-alt mr-1"></i>ORCID
+              </a>
+            </td>
+            <td>
+              <div>{{ profile.institution_name }}</div>
+              <div class="small text-muted">{{ profile.ror_id }}</div>
+            </td>
+            <td class="text-right" data-order="{{ profile.works_count }}">{{ profile.works_count }}</td>
+            <td class="text-right" data-order="{{ profile.fundings_count }}">{{ profile.fundings_count }}</td>
+            <td class="text-right font-weight-bold" data-order="{{ profile.total_activity }}">{{ profile.total_activity }}</td>
+            <td class="text-right" data-order="{{ profile.candidate_groups }}">{{ profile.candidate_groups }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+  <div class="card-header">
+    <h3 class="card-title text-bold">{{ _('Candidate Details') }}</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table id="candidateDetailsTable" class="table table-hover mb-0 w-100">
+        <thead>
+          <tr>
+            <th style="min-width: 220px;">{{ _('Candidate') }}</th>
+            <th style="min-width: 180px;">{{ _('Institution') }}</th>
+            <th style="min-width: 260px;">{{ _('ORCID Profiles') }}</th>
+            <th style="min-width: 180px;">{{ _('Evidence') }}</th>
+            <th class="text-right">{{ _('Activity') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in report.groups %}
+          <tr>
+            <td>
+              <div class="font-weight-bold">{{ group.display_name }}</div>
+              <div class="small text-muted">{{ group.group_id }} · {{ group.normalized_name }}</div>
+              {% set badge_class = 'badge-success' if group.confidence_level == 'high' else ('badge-warning' if group.confidence_level == 'medium' else 'badge-secondary') %}
+              <span class="badge {{ badge_class }}">{{ confidence_labels[group.confidence_level] }} · {{ group.confidence }}%</span>
+            </td>
+            <td>
+              <div>{{ group.institution_name }}</div>
+              <div class="small text-muted">{{ group.ror_id }}</div>
+            </td>
+            <td>
+              <ul class="list-unstyled mb-0">
+                {% for profile in group.profiles %}
+                <li class="mb-2">
+                  <div class="font-weight-bold">{{ profile.display_name }}</div>
+                  <a href="{{ url_for('main.orcid_profile', orcid_id=profile.orcid) }}" class="small mr-3">
+                    <i class="fas fa-id-card mr-1"></i>{{ profile.orcid }}
+                  </a>
+                  <a href="{{ profile.orcid_url }}" target="_blank" rel="noopener" class="small text-muted">
+                    <i class="fas fa-external-link-alt mr-1"></i>ORCID
+                  </a>
+                  {% if profile.managed_by_am %}
+                  <span class="badge badge-info ml-2">{{ _('AM') }}</span>
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            </td>
+            <td>
+              {% for evidence_key in group.evidence_keys %}
+              <span class="badge badge-light border d-inline-block mb-1">{{ evidence_labels[evidence_key] }}</span>
+              {% endfor %}
+              {% if group.shared_dois %}
+              <div class="small text-muted mt-2">
+                <i class="fas fa-fingerprint mr-1"></i>{{ group.shared_dois|join(', ') }}
+              </div>
+              {% endif %}
+            </td>
+            <td class="text-right" data-order="{{ group.works_count + group.fundings_count }}">
+              <div>{{ _('Works') }}: <strong>{{ group.works_count }}</strong></div>
+              <div>{{ _('Fundings') }}: <strong>{{ group.fundings_count }}</strong></div>
+              <div class="small text-muted">{{ _('Profiles') }}: {{ group.orcid_count }}</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+  <script>
+    $(function () {
+      const languageUrl = '{{ "https://cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json" if session.get("locale") == "es" else "" }}';
+      const language = languageUrl ? { url: languageUrl } : {};
+
+      $('#institutionsSummaryTable').DataTable({
+        responsive: true,
+        paging: false,
+        searching: false,
+        info: false,
+        order: [[1, 'desc']],
+        language: language
+      });
+
+      $('#orcidActivityTable').DataTable({
+        responsive: true,
+        pageLength: 25,
+        order: [[4, 'desc']],
+        language: language
+      });
+
+      $('#candidateDetailsTable').DataTable({
+        responsive: true,
+        pageLength: 25,
+        order: [[4, 'desc']],
+        language: language
+      });
+    });
+  </script>
+{% endblock %}

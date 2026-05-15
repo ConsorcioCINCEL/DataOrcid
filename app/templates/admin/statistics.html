@@ -13,9 +13,30 @@
 
 {% block content %}
 
-{# ======= Filter Section ======= #}
+<div class="row">
+    {% for label, value, icon, color in [
+        (_('Requests'), summary.total_requests, 'fas fa-stream', 'bg-primary'),
+        (_('Active Users'), summary.unique_users, 'fas fa-users', 'bg-info'),
+        (_('Error Responses'), summary.error_requests, 'fas fa-exclamation-triangle', 'bg-danger'),
+        (_('Average Latency'), ('%.0f ms'|format(summary.average_latency)), 'fas fa-tachometer-alt', 'bg-success')
+    ] %}
+    <div class="col-sm-6 col-xl-3">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon {{ color }}"><i class="{{ icon }}"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text font-weight-bold">{{ label }}</span>
+                <span class="info-box-number">{{ value }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
 <div class="card shadow-sm mb-4">
-    <div class="card-body bg-light">
+    <div class="card-header">
+        <h3 class="card-title text-bold mb-0">{{ _('Activity Filters') }}</h3>
+    </div>
+    <div class="card-body">
         <form method="get" action="">
             <div class="row align-items-end">
                 <div class="col-md-3 mb-2">
@@ -41,7 +62,27 @@
                     </select>
                 </div>
 
-                <div class="col-md-4 mb-2">
+                <div class="col-md-2 mb-2">
+                    <label class="small font-weight-bold text-muted">{{ _('Method') }}</label>
+                    <select name="method" class="form-control form-control-sm">
+                        <option value="">{{ _('All Methods') }}</option>
+                        {% for method in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] %}
+                            <option value="{{ method }}" {% if method == selected_method %}selected{% endif %}>{{ method }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2 mb-2">
+                    <label class="small font-weight-bold text-muted">{{ _('Status') }}</label>
+                    <select name="status" class="form-control form-control-sm">
+                        <option value="">{{ _('All Statuses') }}</option>
+                        <option value="success" {% if selected_status == 'success' %}selected{% endif %}>{{ _('Success') }}</option>
+                        <option value="redirect" {% if selected_status == 'redirect' %}selected{% endif %}>{{ _('Redirects') }}</option>
+                        <option value="error" {% if selected_status == 'error' %}selected{% endif %}>{{ _('Errors') }}</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 mb-2">
                     <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success pt-2">
                         <input type="checkbox" class="custom-control-input" name="show_anonymous" value="1" id="show_anonymous" {% if show_anonymous %}checked{% endif %}>
                         <label class="custom-control-label small" for="show_anonymous">
@@ -54,6 +95,7 @@
                     <button class="btn btn-primary btn-sm btn-block shadow-sm" type="submit">
                         <i class="fas fa-filter mr-1"></i> {{ _('Apply') }}
                     </button>
+                    <a href="{{ url_for('admin.statistics') }}" class="btn btn-link btn-sm btn-block">{{ _('Reset') }}</a>
                 </div>
             </div>
         </form>
@@ -81,6 +123,7 @@
                         <th class="text-center">{{ _('Method') }}</th>
                         <th class="text-center">{{ _('Status') }}</th>
                         <th class="text-right">{{ _('Latency') }}</th>
+                        <th class="text-right">{{ _('Client') }}</th>
                         <th class="text-right">IP</th>
                     </tr>
                 </thead>
@@ -110,6 +153,9 @@
                         <td class="text-right align-middle font-weight-bold">
                             {{ "%.0f"|format(log.duration_ms or 0) }}<span class="text-muted small">ms</span>
                         </td>
+                        <td class="text-right align-middle text-muted small">
+                            {{ log.user_agent[:40] if log.user_agent else '—' }}
+                        </td>
                         <td class="text-right align-middle text-muted small">{{ log.ip }}</td>
                     </tr>
                     {% endfor %}
@@ -130,7 +176,7 @@
             <ul class="pagination pagination-sm justify-content-center mb-0">
 
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.prev_num, q=q, user=selected_user, show_anonymous=1 if show_anonymous else 0) if pagination.has_prev else '#' }}">
+                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.prev_num, q=q, user=selected_user, method=selected_method, status=selected_status, show_anonymous=1 if show_anonymous else 0) if pagination.has_prev else '#' }}">
                         <i class="fas fa-chevron-left"></i>
                     </a>
                 </li>
@@ -138,7 +184,7 @@
                 {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                     {% if p %}
                         <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('admin.statistics', page=p, q=q, user=selected_user, show_anonymous=1 if show_anonymous else 0) }}">{{ p }}</a>
+                            <a class="page-link" href="{{ url_for('admin.statistics', page=p, q=q, user=selected_user, method=selected_method, status=selected_status, show_anonymous=1 if show_anonymous else 0) }}">{{ p }}</a>
                         </li>
                     {% else %}
                         <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -146,7 +192,7 @@
                 {% endfor %}
 
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.next_num, q=q, user=selected_user, show_anonymous=1 if show_anonymous else 0) if pagination.has_next else '#' }}">
+                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.next_num, q=q, user=selected_user, method=selected_method, status=selected_status, show_anonymous=1 if show_anonymous else 0) if pagination.has_next else '#' }}">
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 </li>

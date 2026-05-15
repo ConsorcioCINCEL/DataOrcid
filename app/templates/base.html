@@ -32,9 +32,10 @@
 
     {# --- INSTITUTION CONTEXT & STATUS --- #}
     <div class="d-flex align-items-center ml-3">
-        {% if session.get('is_admin') or session.get('is_manager') %}
-            {# Admin/Manager: Show Selector #}
+        {% if session.get('is_admin') %}
+            {# Admin: Show Selector #}
             <form method="post" id="formSelectROR" class="form-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="input-group input-group-sm">
                 <div class="input-group-prepend">
                     <span class="input-group-text bg-light" title="{{ _('Switch Institution') }}">

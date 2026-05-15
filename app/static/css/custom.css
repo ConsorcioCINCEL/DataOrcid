@@ -1,17 +1,7 @@
-/* ==========================================================================
-   CINCEL BRAND IDENTITY OVERRIDES
-   Module: custom.css
-   Author: Gastón Olivares
-   Project: DataOrcid-Chile
-   Description: 
-       This stylesheet overrides AdminLTE 3 and Bootstrap 4 defaults to 
-       implement the Cincel corporate identity. It uses CSS Variables for 
-       centralized color management and targets specific component classes 
-       (Sidebar, Cards, Buttons, and Login).
-   ========================================================================== */
+/* CINCEL brand overrides for AdminLTE and Bootstrap components. */
 
 :root {
-    /* CINCEL Official Palette - Centralized Theme Variables */
+    /* CINCEL brand palette */
     --cincel-primary:   #EF5A2F;   /* Main Brand Orange */
     --cincel-dark:      #212127;   /* Corporate Dark Grey/Black */
     --cincel-light:     #F5F5F5;   /* Neutral Light Grey */
@@ -244,4 +234,3 @@ a:hover {
     background-color: #59359a !important; /* 10% darker */
     border-color: #51308d !important;
 }
-

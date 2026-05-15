@@ -49,6 +49,7 @@
                     <td class="text-right align-middle">
                         {% if p.status == 'ready' and is_authorized %}
                         <form action="{{ url_for('push_project', project_id=p.id) }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-success">
                                 <i class="fas fa-cloud-upload-alt mr-1"></i> {{ _('Push to ORCID') }}
                             </button>

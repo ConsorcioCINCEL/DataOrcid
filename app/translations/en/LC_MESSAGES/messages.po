@@ -3789,3 +3789,311 @@ msgstr ""
 #~ msgid "Top Contributors (Funding)"
 #~ msgstr ""
 
+msgid "Candidates"
+msgstr "Candidates"
+
+msgid "Methodology"
+msgstr "Methodology"
+
+msgid "Candidate Group"
+msgstr "Candidate Group"
+
+msgid "ROR ID"
+msgstr "ROR ID"
+
+msgid "Candidate Name"
+msgstr "Candidate Name"
+
+msgid "Normalized Name"
+msgstr "Normalized Name"
+
+msgid "Confidence"
+msgstr "Confidence"
+
+msgid "Confidence Level"
+msgstr "Confidence Level"
+
+msgid "Highest Confidence"
+msgstr "Highest Confidence"
+
+msgid "ORCID iD"
+msgstr "ORCID iD"
+
+msgid "ORCID URL"
+msgstr "ORCID URL"
+
+msgid "Profile Name"
+msgstr "Profile Name"
+
+msgid "Year Range"
+msgstr "Year Range"
+
+msgid "Managed by Affiliation Manager"
+msgstr "Managed by Affiliation Manager"
+
+msgid "Evidence"
+msgstr "Evidence"
+
+msgid "Shared DOIs"
+msgstr "Shared DOIs"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "No"
+msgstr "No"
+
+msgid "Step"
+msgstr "Step"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Population"
+msgstr "Population"
+
+msgid "The analysis uses ORCID iDs found in the local works and funding caches for the selected institution scope."
+msgstr "The analysis uses ORCID iDs found in the local works and funding caches for the selected institution scope."
+
+msgid "Candidate detection"
+msgstr "Candidate detection"
+
+msgid "Profiles are grouped when their cached display names match after lowercasing, removing accents, punctuation, and extra spaces."
+msgstr "Profiles are grouped when their cached display names match after lowercasing, removing accents, punctuation, and extra spaces."
+
+msgid "Scores increase when names have more tokens, each profile has cached activity, or profiles share DOI evidence."
+msgstr "Scores increase when names have more tokens, each profile has cached activity, or profiles share DOI evidence."
+
+msgid "Verification"
+msgstr "Verification"
+
+msgid "Each row keeps ORCID URLs, local activity counts, Affiliation Manager status, and shared DOI evidence for manual review."
+msgstr "Each row keeps ORCID URLs, local activity counts, Affiliation Manager status, and shared DOI evidence for manual review."
+
+msgid "Exact normalized name match"
+msgstr "Exact normalized name match"
+
+msgid "Shared DOI evidence"
+msgstr "Shared DOI evidence"
+
+msgid "Affiliation Manager evidence"
+msgstr "Affiliation Manager evidence"
+
+msgid "High"
+msgstr "High"
+
+msgid "Medium"
+msgstr "Medium"
+
+msgid "Low"
+msgstr "Low"
+
+msgid "Duplicate Profiles · Data ORCID-Chile"
+msgstr "Duplicate Profiles · Data ORCID-Chile"
+
+msgid "Duplicate ORCID Profiles"
+msgstr "Duplicate ORCID Profiles"
+
+msgid "Duplicate Profiles"
+msgstr "Duplicate Profiles"
+
+msgid "Candidate Groups"
+msgstr "Candidate Groups"
+
+msgid "Candidate Works"
+msgstr "Candidate Works"
+
+msgid "Candidate Fundings"
+msgstr "Candidate Fundings"
+
+msgid "Extra Profiles"
+msgstr "Extra Profiles"
+
+msgid "Review Filters"
+msgstr "Review Filters"
+
+msgid "Downloads"
+msgstr "Downloads"
+
+msgid "Analysis"
+msgstr "Analysis"
+
+msgid "Scope"
+msgstr "Scope"
+
+msgid "Refresh Analysis"
+msgstr "Refresh Analysis"
+
+msgid "Clear Analysis Cache"
+msgstr "Clear Analysis Cache"
+
+msgid "Analysis Cache"
+msgstr "Analysis Cache"
+
+msgid "Reused"
+msgstr "Reused"
+
+msgid "Generated at"
+msgstr "Generated at"
+
+msgid "Not available"
+msgstr "Not available"
+
+msgid "Duplicate profile analysis cache cleared: %(count)s entries removed."
+msgstr "Duplicate profile analysis cache cleared: %(count)s entries removed."
+
+msgid "CSV"
+msgstr "CSV"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "All Institutions"
+msgstr "All Institutions"
+
+msgid "Current Institution"
+msgstr "Current Institution"
+
+msgid "Name, ORCID iD, or institution"
+msgstr "Name, ORCID iD, or institution"
+
+msgid "Minimum Confidence"
+msgstr "Minimum Confidence"
+
+msgid "Any"
+msgstr "Any"
+
+msgid "Reset"
+msgstr "Reset"
+
+msgid "Institutions Summary"
+msgstr "Institutions Summary"
+
+msgid "Groups"
+msgstr "Groups"
+
+msgid "Profiles"
+msgstr "Profiles"
+
+msgid "No duplicate candidates found"
+msgstr "No duplicate candidates found"
+
+msgid "ORCID Activity"
+msgstr "ORCID Activity"
+
+msgid "ORCID Activity Summary"
+msgstr "ORCID Activity Summary"
+
+msgid "Total Activity"
+msgstr "Total Activity"
+
+msgid "No ORCID activity summary available"
+msgstr "No ORCID activity summary available"
+
+msgid "Methodological Note"
+msgstr "Methodological Note"
+
+msgid "This review uses ORCID iDs found in the local works and funding caches for the selected institutional scope."
+msgstr "This review uses ORCID iDs found in the local works and funding caches for the selected institutional scope."
+
+msgid "Candidate groups are created when cached profile names match after lowercasing, accent removal, punctuation removal, and whitespace normalization."
+msgstr "Candidate groups are created when cached profile names match after lowercasing, accent removal, punctuation removal, and whitespace normalization."
+
+msgid "Scores prioritize exact normalized name matches, richer names, cached activity on every profile, and shared DOI evidence. Results are candidates for manual verification, not automatic merges."
+msgstr "Scores prioritize exact normalized name matches, richer names, cached activity on every profile, and shared DOI evidence. Results are candidates for manual verification, not automatic merges."
+
+msgid "Candidate Details"
+msgstr "Candidate Details"
+
+msgid "Candidate"
+msgstr "Candidate"
+
+msgid "ORCID Profiles"
+msgstr "ORCID Profiles"
+
+msgid "Activity"
+msgstr "Activity"
+
+msgid "Last Activity"
+msgstr "Last Activity"
+
+msgid "View Activity"
+msgstr "View Activity"
+
+msgid "%(count)s requests"
+msgstr "%(count)s requests"
+
+msgid "Requests"
+msgstr "Requests"
+
+msgid "Active Users"
+msgstr "Active Users"
+
+msgid "Error Responses"
+msgstr "Error Responses"
+
+msgid "Average Latency"
+msgstr "Average Latency"
+
+msgid "Activity Filters"
+msgstr "Activity Filters"
+
+msgid "All Methods"
+msgstr "All Methods"
+
+msgid "All Statuses"
+msgstr "All Statuses"
+
+msgid "Success"
+msgstr "Success"
+
+msgid "Redirects"
+msgstr "Redirects"
+
+msgid "Errors"
+msgstr "Errors"
+
+msgid "Client"
+msgstr "Client"
+
+msgid "The \"Username\" field is required."
+msgstr "The \"Username\" field is required."
+
+msgid "A user with username \"%(u)s\" already exists."
+msgstr "A user with username \"%(u)s\" already exists."
+
+msgid "User \"%(u)s\" created%(r)s. Password: %(p)s"
+msgstr "User \"%(u)s\" created%(r)s. Password: %(p)s"
+
+msgid "User \"%(u)s\" updated successfully."
+msgstr "User \"%(u)s\" updated successfully."
+
+msgid "Invalid ROR ID."
+msgstr "Invalid ROR ID."
+
+msgid "Institution not found."
+msgstr "Institution not found."
+
+msgid "Your access credentials for <strong>Data ORCID-Chile</strong> have been updated:"
+msgstr "Your access credentials for <strong>Data ORCID-Chile</strong> have been updated:"
+
+msgid "Sync All Institutions"
+msgstr "Sync All Institutions"
+
+msgid "All Institutions Sync"
+msgstr "All Institutions Sync"
+
+msgid "No institutions available for synchronization."
+msgstr "No institutions available for synchronization."
+
+msgid "Start synchronization for all institutions? This can take a long time and will contact ORCID for every registered institution."
+msgstr "Start synchronization for all institutions? This can take a long time and will contact ORCID for every registered institution."
+
+msgid "The all-institution sync uses the institutional registry, including Chilean universities without user accounts, and rebuilds their Works, Fundings, and Profile names caches."
+msgstr "The all-institution sync uses the institutional registry, including Chilean universities without user accounts, and rebuilds their Works, Fundings, and Profile names caches."
+
+msgid "All-institution synchronization completed with %(failed)s institution errors. Totals: %(w)s works, %(f)s fundings, %(p)s profiles."
+msgstr "All-institution synchronization completed with %(failed)s institution errors. Totals: %(w)s works, %(f)s fundings, %(p)s profiles."
+
+msgid "All-institution synchronization complete: %(count)s institutions, %(w)s works, %(f)s fundings, %(p)s profiles."
+msgstr "All-institution synchronization complete: %(count)s institutions, %(w)s works, %(f)s fundings, %(p)s profiles."

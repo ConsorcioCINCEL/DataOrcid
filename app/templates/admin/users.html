@@ -48,6 +48,7 @@
             <th>{{ _('Full Name') }}</th>
             <th>{{ _('Institution / ROR') }}</th>
             <th class="text-center">{{ _('Roles') }}</th>
+            <th class="text-center">{{ _('Last Activity') }}</th>
             <th class="text-center">{{ _('Created') }}</th>
             <th class="text-right">{{ _('Actions') }}</th>
           </tr>
@@ -70,12 +71,26 @@
               {% if u.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
               {% if not u.is_admin and not u.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
             </td>
+            {% set activity = activity_by_user.get(u.username) %}
+            <td class="align-middle text-center small">
+              {% if activity %}
+                <div class="font-weight-bold">{{ activity.last_seen|datetimeformat }}</div>
+                <a href="{{ url_for('admin.statistics', user=u.username) }}" class="text-muted">
+                  <i class="fas fa-history mr-1"></i>{{ _('%(count)s requests', count=activity.request_count) }}
+                </a>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
             <td class="align-middle text-center small text-muted">
                 {{ u.created_at|datetimeformat if u.created_at else '—' }}
             </td>
             <td class="text-right align-middle">
-              {% if session.get('is_admin') %}
               <div class="btn-group">
+                <a class="btn btn-sm btn-default" href="{{ url_for('admin.statistics', user=u.username) }}" title="{{ _('View Activity') }}">
+                  <i class="fas fa-history text-secondary"></i>
+                </a>
+                {% if session.get('is_admin') %}
                 <button class="btn btn-sm btn-default btn-edit-user" data-toggle="modal" data-target="#modalEditUser" title="{{ _('Edit') }}"
                   data-id="{{ u.id }}" data-username="{{ u.username }}" data-email="{{ u.email or '' }}" data-first_name="{{ u.first_name or '' }}"
                   data-last_name="{{ u.last_name or '' }}" data-position="{{ u.position or '' }}" data-institution_name="{{ u.institution_name or '' }}"
@@ -85,23 +100,26 @@
                 </button>
                 
                 <form action="{{ url_for('admin.users_reset_password', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Reset password for') }} {{ u.username }}?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-default" type="submit" title="{{ _('Reset Password') }}"><i class="fas fa-key text-warning"></i></button>
                 </form>
 
                 <form action="{{ url_for('admin.users_send_creds', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Temporary credentials will be sent to') }} {{ u.email or u.username }}.');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-default" type="submit" title="{{ _('Send Credentials') }}"><i class="fas fa-paper-plane text-info"></i></button>
                 </form>
 
                 <form action="{{ url_for('admin.users_delete', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Delete user') }} {{ u.username }}?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-default" type="submit" title="{{ _('Delete') }}"><i class="fas fa-trash text-danger"></i></button>
                 </form>
+                {% endif %}
               </div>
-              {% endif %}
             </td>
           </tr>
           {% else %} 
           <tr>
-            <td colspan="7" class="text-center py-4 text-muted">{{ _('No users found.') }}</td>
+            <td colspan="8" class="text-center py-4 text-muted">{{ _('No users found.') }}</td>
           </tr>
           {% endfor %}
         </tbody>

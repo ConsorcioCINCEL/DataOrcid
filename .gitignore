@@ -99,6 +99,9 @@ app/exports/
 # create the app/static/examples/ folder and it won't be ignored
 !app/static/examples/*.csv
 !app/static/examples/*.xlsx
+!app/datasets/
+app/datasets/*
+!app/datasets/chilean_universities_ror.json
 
 # Localization binaries and templates
 *.mo

@@ -1,21 +1,4 @@
-"""
-Module: export.py
-Author: Gastón Olivares
-Project: DataOrcid-Chile (Open Source)
-License: MIT
-Description: 
-    Export Management Blueprint.
-    
-    This module provides the functionality to generate and download reports 
-    of ORCID profiles. It supports:
-    1. Full Profile Export (Multi-sheet Excel).
-    2. Section-specific Export (Excel or CSV).
-    
-    Key Features:
-    - In-memory file generation (no temporary files on disk).
-    - Bilingual headers (English/Spanish) based on user locale.
-    - specialized handling for UTF-8 BOM in CSVs for Excel compatibility.
-"""
+"""Excel and CSV exports for live ORCID profile data."""
 
 import logging
 from io import BytesIO
@@ -25,15 +8,8 @@ from flask_babel import _
 
 from ..decorators import login_required
 
-# --- Blueprint Configuration ---
 bp_export = Blueprint("export", __name__)
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# ADMINISTRATIVE EXPORT ENDPOINTS
-# ============================================================
-
 @bp_export.route('/download/excel/<string:orcid_id>')
 @login_required
 def download_excel(orcid_id: str):
@@ -142,12 +118,6 @@ def download_section_excel(section: str):
     except Exception as exc:
         logger.exception("Failed section export for %s: %s", section, exc)
         abort(500, description=_("Could not generate the requested file."))
-
-
-# ============================================================
-# INTERNAL DATA WRITERS (BILINGUAL)
-# ============================================================
-
 def _write_personal_info(writer: pd.ExcelWriter, orcid_id: str, person: dict) -> None:
     """
     Helper function to parse personal metadata and write it to Excel sheets.

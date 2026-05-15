@@ -1,19 +1,4 @@
-"""
-Module: database.py
-Author: Gastón Olivares
-Project: DataOrcid-Chile (Open Source)
-License: MIT
-Description: 
-    Database Seeding Utility.
-    
-    This module is responsible for populating the database with initial data.
-    It creates:
-    1. The default System Administrator account.
-    2. A predefined list of Chilean Universities with their ROR IDs.
-    
-    This is typically invoked via the `flask seed-db` command or during 
-    the initial application setup.
-"""
+"""Database seed data for initial admin and institution accounts."""
 
 import logging
 from typing import Tuple
@@ -21,33 +6,19 @@ from . import db
 from .models import User
 from .utils.passwords import generate_temp_password
 
-# --- Logging Configuration ---
 logger = logging.getLogger(__name__)
 
 
 def populate_users() -> Tuple[str, int]:
     """
-    Seeds the 'User' table with essential administrative and institutional accounts.
-
-    This function performs a "safe seed": it checks for the existence of 
-    accounts before creating them to prevent duplication or overwriting 
-    of existing credentials.
-
-    Returns:
-        Tuple[str, int]: A status message and an HTTP-style status code 
-                         (200 for success, 500 for internal error).
+    Seed missing default accounts without overwriting existing credentials.
     """
     try:
         created_count = 0
 
-        # ============================================================
-        # 1. SYSTEM ADMINISTRATOR SEEDING
-        # ============================================================
-        # Check if the root 'admin' user exists
         admin_user = User.query.filter_by(username="admin").first()
         
         if not admin_user:
-            # Generate a strong temporary password (14 chars) for initial setup
             admin_pwd = generate_temp_password(14)
             
             new_admin = User(
@@ -59,15 +30,9 @@ def populate_users() -> Tuple[str, int]:
             new_admin.set_password(admin_pwd)
             db.session.add(new_admin)
             created_count += 1
-            
-            # Log credentials to console/file so the admin can log in first time
+
             logger.info("System Admin created. Temporary password: %s", admin_pwd)
 
-        # ============================================================
-        # 2. INSTITUTIONAL ACCOUNTS SEEDING
-        # ============================================================
-        # List of Chilean Universities mapped to their ROR IDs.
-        # Format: (Username, Institution Name, ROR ID)
         institutions = [
             ("ANID", "Agencia Nacional de Investigación y Desarrollo", "02ap3w078"),
             ("PUC", "Pontificia Universidad Católica de Chile", "04teye511"),
@@ -95,7 +60,6 @@ def populate_users() -> Tuple[str, int]:
         ]
 
         for username, inst_name, ror_id in institutions:
-            # Only create if username doesn't exist
             if not User.query.filter_by(username=username).first():
                 temp_pwd = generate_temp_password(12)
                 
@@ -110,7 +74,6 @@ def populate_users() -> Tuple[str, int]:
                 
                 logger.info("Institutional user '%s' created. Password: %s", username, temp_pwd)
 
-        # Commit all changes in a single transaction
         db.session.commit()
         logger.info("Database seeding completed. %d users created.", created_count)
         

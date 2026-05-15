@@ -12,6 +12,7 @@ Flask==3.1.2
 flask-babel==4.0.0
 Flask-Migrate==4.1.0
 Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
 greenlet==3.3.1
 idna==3.11
 itsdangerous==2.2.0
@@ -32,3 +33,4 @@ toml==0.10.2
 typing_extensions==4.15.0
 urllib3==2.6.3
 Werkzeug==3.1.5
+WTForms==3.2.1

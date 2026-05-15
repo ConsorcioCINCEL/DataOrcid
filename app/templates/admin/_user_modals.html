@@ -1,6 +1,7 @@
 <div class="modal fade" id="modalEditUser" tabindex="-1" role="dialog" aria-labelledby="modalEditUserLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <form class="modal-content" method="post" id="formEditUser">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="modalEditUserLabel">
           <i class="fas fa-user-edit mr-2"></i> {{ _('Edit User Details') }}
@@ -93,6 +94,7 @@
 <div class="modal fade" id="modalNewUser" tabindex="-1" role="dialog" aria-labelledby="modalNewUserLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <form class="modal-content" method="post" action="{{ url_for('admin.users_new') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title" id="modalNewUserLabel">
           <i class="fas fa-user-plus mr-2"></i> {{ _('Create New User') }}

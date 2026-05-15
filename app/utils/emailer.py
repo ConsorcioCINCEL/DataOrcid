@@ -1,20 +1,4 @@
-"""
-Module: emailer.py
-Author: Gastón Olivares
-Project: DataOrcid-Chile (Open Source)
-License: MIT
-Description: 
-    Email Dispatch Utility.
-    
-    This module provides a robust wrapper around Python's `smtplib` to send 
-    transactional emails (e.g., password resets, notifications) from the application.
-    
-    Key Features:
-    - Supports both SSL and STARTTLS security protocols.
-    - Sends multi-part messages (HTML + Plain Text fallback) for better compatibility.
-    - Centralized configuration via Flask app config variables (MAIL_*).
-    - Detailed error logging for diagnosing SMTP connection issues.
-"""
+"""SMTP email helper for transactional messages."""
 
 import smtplib
 import logging
@@ -22,7 +6,6 @@ from email.message import EmailMessage
 from typing import Tuple, Optional
 from flask import current_app
 
-# --- Logging Configuration ---
 logger = logging.getLogger(__name__)
 
 
@@ -33,88 +16,58 @@ def send_email(
     text: Optional[str] = None,
 ) -> Tuple[bool, Optional[str]]:
     """
-    Sends a secure email using the configured SMTP server.
+    Send an HTML email with a plain-text fallback.
 
-    This function handles the complexities of SMTP connections, including:
-    1. Checking if mail is globally enabled via config.
-    2. Validating required credentials (Host, Port, User, Password).
-    3. Constructing a MIME multi-part message (HTML body with Text alternative).
-    4. Managing the connection lifecycle (Open, TLS Handshake, Login, Send, Close).
-
-    Args:
-        to_email (str): Recipient email address.
-        subject (str): Email subject line.
-        html (str): The HTML content of the email body.
-        text (Optional[str]): Plain text version for non-HTML clients. 
-                              Defaults to a generic fallback message if None.
-
-    Returns:
-        Tuple[bool, Optional[str]]:
-            - (True, None) if the email was sent successfully.
-            - (False, error_message) if any error occurred.
+    Returns `(success, error_message)` so routes can show user-friendly feedback.
     """
     try:
-        # 1. Feature Flag Check
         mail_conf = current_app.config.get("mail", {})
         if not mail_conf.get("enabled", False):
             msg = "Email service is disabled in configuration (MAIL_ENABLED=False)."
             logger.info(msg)
             return False, msg
 
-        # 2. Configuration Extraction
         host = mail_conf.get("smtp_host")
         port = mail_conf.get("smtp_port")
         user = mail_conf.get("smtp_user")
         pwd = mail_conf.get("smtp_pass")
         
-        # Security defaults: TLS is preferred for modern SMTP (port 587)
         use_tls = mail_conf.get("use_tls", True)
         use_ssl = mail_conf.get("use_ssl", False)
         
         from_name = mail_conf.get("from_name", "Data ORCID-Chile")
         from_email = mail_conf.get("from_email", "no-reply@example.com")
 
-        # 3. Validation
         if not all([host, port, user, pwd]):
             msg = "Missing required SMTP parameters: host, port, username, or password."
             logger.error(msg)
             return False, msg
 
-        # 4. Message Construction
         msg = EmailMessage()
         msg["Subject"] = subject
         msg["From"] = f"{from_name} <{from_email}>"
         msg["To"] = to_email
 
-        # Set content: Text is primary, HTML is added as an alternative view
         plain_text = text or "Please use an HTML-compatible email client to view this message."
         msg.set_content(plain_text)
         msg.add_alternative(html, subtype="html")
 
-        # 5. Connection Strategy
-        # Use SMTP_SSL for implicit SSL (usually port 465)
-        # Use SMTP for explicit TLS (usually port 587)
+        # SMTP_SSL is for implicit SSL, while SMTP + starttls is for explicit TLS.
         smtp_class = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
         
         logger.debug("Connecting to SMTP server at %s:%s (SSL=%s)", host, port, use_ssl)
 
-        # 6. Transmission
         with smtp_class(host, port, timeout=20) as server:
-            # Upgrade insecure connection to TLS if requested and not already SSL
             if use_tls and not use_ssl:
                 server.starttls()
-            
-            # Authenticate
+
             server.login(user, pwd)
-            
-            # Dispatch
             server.send_message(msg)
             
             logger.info("Email successfully dispatched to %s. Subject: '%s'", to_email, subject)
 
         return True, None
 
-    # 7. Error Handling
     except smtplib.SMTPAuthenticationError:
         err = "SMTP Authentication failed: Invalid username or password."
         logger.error(err)

@@ -1,18 +1,4 @@
-"""
-Module: auth.py
-Description:
-    Authentication Blueprint for DataOrcid-Chile.
-    
-    This module manages all aspects of user identity and access control:
-    - Login/Logout session management.
-    - Secure password recovery using timed cryptographic tokens.
-    - User account settings, including password changes and Affiliation Manager configuration.
-    
-    Security Features:
-    - Uses `itsdangerous` for tamper-proof token generation.
-    - Enforces session clearing on logout.
-    - Generic error messages to prevent username enumeration attacks.
-"""
+"""Authentication, password recovery, and account settings routes."""
 
 import logging
 from flask import (
@@ -28,15 +14,8 @@ from ..utils.flashes import flash_err, flash_ok, flash_success
 from ..decorators import login_required
 from ..utils.emailer import send_email
 
-# --- Blueprint Configuration ---
 bp_auth = Blueprint("auth", __name__, url_prefix="/auth")
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# INTERNAL HELPERS
-# ============================================================
-
 def _get_serializer() -> URLSafeTimedSerializer:
     """
     Creates a secure serializer for generating time-sensitive tokens.
@@ -74,12 +53,6 @@ def _get_absolute_url(endpoint: str, **values) -> str:
     
     # Fallback: Let Flask construct the external URL based on the request context
     return url_for(endpoint, _external=True, **values)
-
-
-# ============================================================
-# PASSWORD RECOVERY FLOW
-# ============================================================
-
 @bp_auth.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     """
@@ -164,8 +137,8 @@ def reset_password(token: str):
         pwd = request.form.get('new_password')
         confirm = request.form.get('confirm_password')
 
-        if len(pwd) < 6:
-            flash_err(_("Password must be at least 6 characters."))
+        if not pwd or len(pwd) < 8:
+            flash_err(_("Password must be at least 8 characters."))
         elif pwd != confirm:
             flash_err(_("Passwords do not match."))
         else:
@@ -177,12 +150,6 @@ def reset_password(token: str):
         return redirect(url_for('auth.reset_password', token=token))
 
     return render_template('auth/reset_password.html', token=token)
-
-
-# ============================================================
-# SESSION MANAGEMENT
-# ============================================================
-
 @bp_auth.route('/login', methods=['GET', 'POST'])
 def login():
     """
@@ -211,8 +178,8 @@ def login():
                 'logged_in': True,
             })
 
-            # Set initial context for admin multi-tenancy support
-            if user.ror_id:
+            # Set initial context for admin multi-tenancy support.
+            if user.is_admin and user.ror_id:
                 session['admin_selected_ror'] = user.ror_id
 
             logger.info("User %s logged in successfully.", user.username)
@@ -231,12 +198,6 @@ def logout():
     session.clear()
     flash_success(_("Session closed successfully."))
     return redirect(url_for('auth.login'))
-
-
-# ============================================================
-# ACCOUNT SETTINGS
-# ============================================================
-
 @bp_auth.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -257,8 +218,8 @@ def change_password():
             flash_err(_("Current password is incorrect."))
         elif new_pwd != confirm_pwd:
             flash_err(_("New passwords do not match."))
-        elif len(new_pwd) < 6:
-            flash_err(_("New password too short (min 6 chars)."))
+        elif not new_pwd or len(new_pwd) < 8:
+            flash_err(_("New password too short (min 8 chars)."))
         else:
             user.set_password(new_pwd)
             db.session.commit()

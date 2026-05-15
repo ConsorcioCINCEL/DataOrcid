@@ -1,18 +1,4 @@
-"""
-Module: admin.py
-Description: 
-    Administrative Blueprint for the DataOrcid-Chile application.
-    
-    This module handles user lifecycle management, role-based access control (RBAC),
-    and system monitoring logs. It is restricted to users with 'Admin' or 'Manager' roles.
-
-    Key Features:
-    - User CRUD (Create, Read, Update, Delete).
-    - Automatic fetching of GRID IDs from ROR identifiers.
-    - Secure password reset and credential distribution via email.
-    - System-wide audit logs viewing.
-    - Session context switching for multi-institutional management.
-"""
+"""Admin routes for users, institution context, and usage statistics."""
 
 import logging
 import secrets
@@ -22,7 +8,7 @@ from flask import (
     url_for, session, current_app
 )
 from flask_babel import _
-from sqlalchemy import or_
+from sqlalchemy import case, func, or_
 
 from .. import db
 from ..models import User, TrackingLog
@@ -33,16 +19,10 @@ from ..decorators import (
 from ..utils.flashes import flash_err, flash_ok, flash_info
 from ..utils.emailer import send_email
 from ..services.ror_service import fetch_grid_from_ror
+from ..services.institution_registry_service import get_institution_by_ror
 
-# --- Blueprint Configuration ---
 bp_admin = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# INTERNAL HELPERS
-# ============================================================
-
 def _require_admin_or_manager() -> bool:
     """
     Verifies if the current session belongs to an Admin or Manager.
@@ -69,12 +49,6 @@ def generate_temp_password(length: int = 12) -> str:
     """
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
-
-
-# ============================================================
-# ADMINISTRATIVE ROUTES
-# ============================================================
-
 @bp_admin.route('/users')
 @login_required
 def users_list():
@@ -92,6 +66,8 @@ def users_list():
     # Search Logic
     query_param = (request.args.get('q') or '').strip()
     users_query = User.query
+    if not session.get('is_admin'):
+        users_query = users_query.filter(User.ror_id == session.get('ror_id'))
 
     if query_param:
         search_filter = f"%{query_param}%"
@@ -104,10 +80,31 @@ def users_list():
             )
         )
 
-    # Fetch results ordered by creation date (newest first)
     users = users_query.order_by(User.created_at.desc()).all()
+    usernames = [user.username for user in users]
+    activity_rows = []
+    if usernames:
+        activity_rows = (
+            db.session.query(
+                TrackingLog.username,
+                func.max(TrackingLog.timestamp),
+                func.count(TrackingLog.id),
+            )
+            .filter(TrackingLog.username.in_(usernames))
+            .group_by(TrackingLog.username)
+            .all()
+        )
+    activity_by_user = {
+        username: {"last_seen": last_seen, "request_count": request_count}
+        for username, last_seen, request_count in activity_rows
+    }
     
-    return render_template('admin/users.html', users=users, q=query_param)
+    return render_template(
+        'admin/users.html',
+        users=users,
+        q=query_param,
+        activity_by_user=activity_by_user,
+    )
 
 
 @bp_admin.route('/users/new', methods=['POST'])
@@ -378,15 +375,23 @@ def set_ror(ror_id: str):
     context to view specific dashboards or data sets without logging out.
     """
     # Permission Check
-    if not (session.get('is_admin') or session.get('is_manager')):
-         flash_err(_("Action not allowed"))
-         return redirect(request.referrer or url_for('main.index'))
+    if not session.get('is_admin'):
+        flash_err(_("Action not allowed"))
+        return redirect(request.referrer or url_for('main.index'))
+
+    ror_id = normalize_ror_id(ror_id)
+    if not ror_id:
+        flash_err(_("Invalid ROR ID."))
+        return redirect(request.referrer or url_for('main.index'))
+
+    institution = get_institution_by_ror(ror_id)
+    if not institution:
+        flash_err(_("Institution not found."))
+        return redirect(request.referrer or url_for('main.index'))
 
     session['admin_selected_ror'] = ror_id
     
-    # Resolve display name for user feedback
-    inst = User.query.filter(User.ror_id == ror_id).filter(User.institution_name != "").first()
-    display_name = inst.institution_name if inst else ror_id
+    display_name = institution.get("name") or ror_id
     
     flash_ok(_("Active institution changed to: %(r)s", r=display_name))
     return redirect(request.referrer or url_for('main.index'))
@@ -407,31 +412,68 @@ def statistics():
     search_query = request.args.get("q", "").strip()
     selected_user = request.args.get("user", "").strip()
     show_anonymous = request.args.get("show_anonymous", "0") == "1"
+    selected_method = request.args.get("method", "").strip().upper()
+    selected_status = request.args.get("status", "").strip()
 
     log_query = TrackingLog.query
 
-    # Apply filters
     if not show_anonymous:
         log_query = log_query.filter(TrackingLog.username.isnot(None), TrackingLog.username != "")
 
     if selected_user:
         log_query = log_query.filter(TrackingLog.username == selected_user)
 
+    if selected_method:
+        log_query = log_query.filter(TrackingLog.method == selected_method)
+
+    if selected_status == "success":
+        log_query = log_query.filter(TrackingLog.status_code < 300)
+    elif selected_status == "redirect":
+        log_query = log_query.filter(TrackingLog.status_code >= 300, TrackingLog.status_code < 400)
+    elif selected_status == "error":
+        log_query = log_query.filter(TrackingLog.status_code >= 400)
+
     if search_query:
         search_filter = f"%{search_query}%"
         log_query = log_query.filter(
             (TrackingLog.username.ilike(search_filter)) |
             (TrackingLog.path.ilike(search_filter)) |
-            (TrackingLog.ip.ilike(search_filter))
+                (TrackingLog.ip.ilike(search_filter))
         )
 
-    # Execute Paginated Query
+    summary_subquery = log_query.with_entities(
+        TrackingLog.username.label("username"),
+        TrackingLog.status_code.label("status_code"),
+        TrackingLog.method.label("method"),
+        TrackingLog.duration_ms.label("duration_ms"),
+    ).subquery()
+    total_requests, unique_users, error_requests, post_requests, average_latency = (
+        db.session.query(
+            func.count(),
+            func.count(func.distinct(summary_subquery.c.username)),
+            func.coalesce(func.sum(case((summary_subquery.c.status_code >= 400, 1), else_=0)), 0),
+            func.coalesce(func.sum(case((summary_subquery.c.method == "POST", 1), else_=0)), 0),
+            func.coalesce(func.avg(summary_subquery.c.duration_ms), 0),
+        )
+        .select_from(summary_subquery)
+        .one()
+    )
+    summary = {
+        "total_requests": int(total_requests or 0),
+        "unique_users": int(unique_users or 0),
+        "error_requests": int(error_requests or 0),
+        "post_requests": int(post_requests or 0),
+        "average_latency": float(average_latency or 0),
+    }
+
     pagination = log_query.order_by(TrackingLog.timestamp.desc()).paginate(
         page=page, per_page=25, error_out=False
     )
     
-    # Get distinct users list for the filter dropdown menu
-    distinct_users = db.session.query(TrackingLog.username).distinct().all()
+    distinct_users = db.session.query(TrackingLog.username).filter(
+        TrackingLog.username.isnot(None),
+        TrackingLog.username != "",
+    ).distinct().order_by(TrackingLog.username.asc()).all()
     user_list = [u[0] for u in distinct_users if u[0]]
 
     return render_template(
@@ -442,4 +484,7 @@ def statistics():
         users=user_list,
         selected_user=selected_user,
         show_anonymous=show_anonymous,
+        selected_method=selected_method,
+        selected_status=selected_status,
+        summary=summary,
     )

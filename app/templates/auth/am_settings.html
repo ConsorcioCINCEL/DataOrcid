@@ -23,6 +23,7 @@
       </div>
       
       <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="card-body">
           <p class="text-muted">
             {{ _('To correctly identify and highlight records managed by your institution, please provide your integration credentials.') }}

@@ -1,17 +1,4 @@
-"""
-Module: fundings.py
-Author: Gastón Olivares
-Project: DataOrcid-Chile (Open Source)
-License: MIT
-Description: 
-    Funding Cache Management Blueprint.
-    
-    This module handles the lifecycle of funding/grant data associated with an institution (ROR).
-    It provides endpoints to:
-    1. Trigger a rebuild of the local funding cache (fetching fresh data from ORCID).
-    2. Check the status of cache operations.
-    3. Export the cached funding data to Excel (.xlsx) or CSV formats for analysis.
-"""
+"""Funding cache rebuild and export views."""
 
 from io import BytesIO
 import pandas as pd
@@ -28,15 +15,8 @@ from ..decorators import login_required
 from ..utils.flashes import flash_err, flash_ok
 from ..utils.session_helpers import get_active_ror_id
 
-# --- Blueprint Configuration ---
 bp_fund = Blueprint("fundings", __name__)
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# INTERNAL HELPERS
-# ============================================================
-
 def _has_cache_fundings(ror_id: str) -> bool:
     """
     Checks if there is any funding data cached for the specified ROR ID.
@@ -70,12 +50,6 @@ def _last_cache_run_fundings(ror_id: str):
         .order_by(FundingCacheRun.finished_at.desc())
         .first()
     )
-
-
-# ============================================================
-# CACHE BUILDER ENDPOINTS
-# ============================================================
-
 @bp_fund.route('/cache/fundings/build', methods=['POST'])
 @login_required
 def cache_fundings_build():
@@ -88,56 +62,42 @@ def cache_fundings_build():
     3. Updates the log with the result (success/failure) and row count.
     
     Note: 
-    This uses the Public API by default (`ORCID_BASE_URL_PUBLIC`). 
+    This uses the configured ORCID search endpoint by default.
     For higher rate limits, consider using the Member API via the `cache_control` blueprint.
     """
     from ..models import FundingCacheRun
     from ..services.cache_service import build_fundings_cache_for_ror
-
-    # 1. Context Resolution
     ror_id = get_active_ror_id()
     if not ror_id:
         flash_err(_('No ROR ID found in session.'))
         return redirect(url_for('main.index'))
-
-    # 2. Audit Log Initialization
     run = FundingCacheRun(ror_id=ror_id, status='running', started_at=dt.utcnow())
     db.session.add(run)
     db.session.commit()
 
     try:
-        # 3. Execution
         # We default to the Public API for this general user route
-        base_url = current_app.config.get('ORCID_BASE_URL_PUBLIC', 'https://pub.orcid.org/v3.0/')
+        base_url = current_app.config.get('ORCID_SEARCH_URL', 'https://pub.orcid.org/v3.0/')
         headers = {'Accept': 'application/json'}
 
         # The service layer handles logic for ROR->GRID resolution and fetching
         rows_count = build_fundings_cache_for_ror(ror_id, base_url, headers)
-        
-        # 4. Success Handling
         run.status = 'success'
         run.rows_count = rows_count
         flash_ok(_('Funding cache created successfully: %(count)s records.', count=rows_count))
 
     except Exception as e:
-        # 5. Error Handling
+        db.session.rollback()
         logger.exception("Failed building funding cache for ROR %s", ror_id)
         run.status = 'failed'
         run.error = str(e)
         flash_err(_('Error building funding cache. Check logs.'))
     finally:
-        # 6. Finalization
         run.finished_at = dt.utcnow()
         db.session.commit()
 
     # Redirect back to the status dashboard (usually shared with Works status)
     return redirect(url_for('works.cache_works_status'))
-
-
-# ============================================================
-# EXPORT ENDPOINTS
-# ============================================================
-
 @bp_fund.route('/download/all-fundings/cache')
 @login_required
 def download_all_fundings_cache():
@@ -152,8 +112,6 @@ def download_all_fundings_cache():
         File Response: The generated file stream.
     """
     from ..models import FundingCache
-
-    # 1. Validation
     ror_id = get_active_ror_id()
     if not ror_id:
         flash_err(_('No ROR ID found in session.'))
@@ -171,7 +129,6 @@ def download_all_fundings_cache():
         return redirect(url_for('works.cache_works_status'))
 
     try:
-        # 2. Data Transformation (SQLAlchemy -> Pandas DataFrame)
         # We explicitly map fields to ensure clean column names in the export
         df = pd.DataFrame([{
             'orcid': r.orcid,
@@ -196,8 +153,6 @@ def download_all_fundings_cache():
                 r.created_at.isoformat() if getattr(r, 'created_at', None) else None
             )
         } for r in rows])
-
-        # 3. File Generation
         export_format = (request.args.get('format') or '').lower()
         base_name = f"all_fundings_cache_{ror_id}"
 

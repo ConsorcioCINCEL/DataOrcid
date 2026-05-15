@@ -25,6 +25,13 @@
             <p>{{ _('System Usage Logs') }}</p>
         </a>
     </li>
+
+    <li class="nav-item">
+        <a href="{{ url_for('duplicates.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('duplicates.') %}active{% endif %}">
+            <i class="nav-icon fas fa-user-friends"></i>
+            <p>{{ _('Duplicate Profiles') }}</p>
+        </a>
+    </li>
 {% endif %}
 
 <li class="nav-header text-uppercase small font-weight-bold" style="opacity: 0.8; color: var(--cincel-secondary);">

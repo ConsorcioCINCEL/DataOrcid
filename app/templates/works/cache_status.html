@@ -22,12 +22,21 @@
                 
                 {# Only Admins and Managers can trigger the Sync #}
                 {% if session.get('is_admin') or session.get('is_manager') %}
-                <div class="ml-auto">
+                <div class="ml-auto d-flex flex-wrap justify-content-end" style="gap: 0.5rem;">
                     <form id="formMasterSync" method="post" action="{{ url_for('works.cache_full_build') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-warning font-weight-bold shadow-sm">
                             <i class="fas fa-sync-alt mr-1"></i> {{ _('Sync Everything') }}
                         </button>
                     </form>
+                    {% if session.get('is_admin') %}
+                    <form id="formAllInstitutionsSync" method="post" action="{{ url_for('works.cache_full_build_all') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger font-weight-bold shadow-sm">
+                            <i class="fas fa-globe-americas mr-1"></i> {{ _('Sync All Institutions') }}
+                        </button>
+                    </form>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
@@ -145,6 +154,111 @@
                 </table>
             </div>
         </div>
+
+        {% if session.get('is_admin') %}
+        <div class="card card-outline card-danger shadow-sm">
+            <div class="card-header border-0 d-flex align-items-center">
+                <h3 class="card-title font-weight-bold">
+                    <i class="fas fa-globe-americas mr-2 text-danger"></i> {{ _('All Institutions Exports') }}
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped table-valign-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>{{ _('Dataset') }}</th>
+                        <th class="text-center">{{ _('Records') }}</th>
+                        <th>{{ _('Scope') }}</th>
+                        <th class="text-right">{{ _('Export Data') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            <i class="fas fa-user-graduate text-purple mr-2"></i> <strong>{{ _('Associated Researchers') }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if admin_researcher_count > 0 %}
+                                <span class="badge badge-success" style="font-size: 1em;">{{ admin_researcher_count }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ _('All universities') }}</td>
+                        <td class="text-right">
+                            {% if admin_researcher_count > 0 %}
+                            <div class="btn-group">
+                                <a href="{{ url_for('works.download_all_researchers_admin') }}" class="btn btn-default btn-sm" title="CSV">
+                                    <i class="fas fa-file-csv text-success"></i>
+                                </a>
+                                <a href="{{ url_for('works.download_all_researchers_admin', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
+                                    <i class="fas fa-file-excel text-success"></i>
+                                </a>
+                            </div>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <i class="fas fa-book-open text-blue mr-2"></i> <strong>{{ _('Scholarly Works') }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if admin_works_count > 0 %}
+                                <span class="badge badge-success" style="font-size: 1em;">{{ admin_works_count }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ _('All universities') }}</td>
+                        <td class="text-right">
+                            {% if admin_works_count > 0 %}
+                            <div class="btn-group">
+                                <a href="{{ url_for('works.download_all_works_admin') }}" class="btn btn-default btn-sm" title="CSV">
+                                    <i class="fas fa-file-csv text-success"></i>
+                                </a>
+                                <a href="{{ url_for('works.download_all_works_admin', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
+                                    <i class="fas fa-file-excel text-success"></i>
+                                </a>
+                            </div>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <i class="fas fa-hand-holding-usd text-orange mr-2"></i> <strong>{{ _('Fundings & Grants') }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if admin_fundings_count > 0 %}
+                                <span class="badge badge-success" style="font-size: 1em;">{{ admin_fundings_count }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ _('All universities') }}</td>
+                        <td class="text-right">
+                            {% if admin_fundings_count > 0 %}
+                            <div class="btn-group">
+                                <a href="{{ url_for('works.download_all_fundings_admin') }}" class="btn btn-default btn-sm" title="CSV">
+                                    <i class="fas fa-file-csv text-success"></i>
+                                </a>
+                                <a href="{{ url_for('works.download_all_fundings_admin', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
+                                    <i class="fas fa-file-excel text-success"></i>
+                                </a>
+                            </div>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     {# --- RIGHT COLUMN: CONTEXTUAL HELP --- #}
@@ -170,6 +284,17 @@
                         </p>
                     </div>
                 </div>
+                {% if session.get('is_admin') %}
+                <div class="d-flex mb-3">
+                    <div class="mr-3"><i class="fas fa-globe-americas fa-2x text-danger"></i></div>
+                    <div>
+                        <h6 class="font-weight-bold">{{ _('All Institutions Sync') }}</h6>
+                        <p class="small text-muted mb-0">
+                            {{ _('The all-institution sync uses the institutional registry, including Chilean universities without user accounts, and rebuilds their Works, Fundings, and Profile names caches.') }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
                 {% else %}
                 {# Context 1: Data Availability (Regular User) #}
                 <div class="d-flex mb-3">
@@ -209,6 +334,14 @@
   $(function() {
     $('#formMasterSync').on('submit', function(e) {
         if (!confirm('{{ _("Start full synchronization? This process downloads Works, Fundings, and updates Profile Names.") }}')) {
+            e.preventDefault();
+            return;
+        }
+        $(this).find('button').attr('disabled', true).addClass('disabled');
+        $('#overlaySync').removeClass('d-none');
+    });
+    $('#formAllInstitutionsSync').on('submit', function(e) {
+        if (!confirm('{{ _("Start synchronization for all institutions? This can take a long time and will contact ORCID for every registered institution.") }}')) {
             e.preventDefault();
             return;
         }

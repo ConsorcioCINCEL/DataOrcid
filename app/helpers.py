@@ -1,18 +1,4 @@
-"""
-Module: helpers.py
-Author: Gastón Olivares
-Project: DataOrcid-Chile (Open Source)
-License: MIT
-Description: 
-    Data Processing and Transformation Utilities.
-    
-    This module serves as the ETL (Extract, Transform, Load) layer for the application.
-    It provides:
-    1. Robust JSON navigation utilities (`get_nested`) to handle missing data safely.
-    2. Normalization functions that convert complex ORCID JSON schemas (Person, Works, Fundings)
-       into flat Pandas DataFrames.
-    3. Institutional metric calculations for dashboard visualizations.
-"""
+"""ORCID JSON normalization and export helpers."""
 
 from __future__ import annotations
 import logging
@@ -28,17 +14,9 @@ from flask import current_app, session
 from flask_babel import _
 from requests.exceptions import RequestException, Timeout
 
-# Internal dependencies (Legacy queries module)
 from .orcid_queries import fetch_person, fetch_activities
 
-# --- Logging Configuration ---
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# GENERIC UTILITIES & TRANSFORMERS
-# ============================================================
-
 def timestamp_to_date(ms_timestamp: Any) -> str:
     """
     Converts a Unix millisecond timestamp to a standard 'YYYY-MM-DD' string.
@@ -102,11 +80,6 @@ def df_from_rows(rows: List[Dict[str, Any]], fallback_cols: Optional[List[str]] 
         return pd.json_normalize(rows)
     except Exception:
         return pd.DataFrame(rows)
-
-
-# ============================================================
-# PERSON SECTION NORMALIZERS
-# ============================================================
 # These functions transform specific sections of the ORCID 'Person' schema.
 
 def norm_biography(person: Dict[str, Any]) -> pd.DataFrame:
@@ -168,11 +141,6 @@ def norm_external_ids(person: Dict[str, Any]) -> pd.DataFrame:
             _('Visibility'): x.get('visibility'),
         })
     return df_from_rows(rows)
-
-
-# ============================================================
-# ACTIVITIES SECTION NORMALIZERS
-# ============================================================
 # These functions transform sections of the ORCID 'Activities' schema.
 
 def norm_distinctions(activities: Dict[str, Any]) -> pd.DataFrame:
@@ -288,12 +256,6 @@ def norm_works(activities: Dict[str, Any]) -> pd.DataFrame:
                 _('ISSN'): issn,
             })
     return df_from_rows(rows)
-
-
-# ============================================================
-# ORCHESTRATION & EXPORT LOGIC
-# ============================================================
-
 SECTION_MAP = {
     'biography': norm_biography, 'other-names': norm_other_names,
     'emails': norm_emails, 'addresses': norm_addresses,
@@ -345,12 +307,6 @@ def build_excel_for_section(orcid_id: str, section: str) -> Tuple[BytesIO, str]:
     output.seek(0)
     filename = f"orcid_{orcid_id}_{section}.xlsx"
     return output, filename
-
-
-# ============================================================
-# INSTITUTIONAL METRICS
-# ============================================================
-
 def get_researchers_by_ror(ror_id: str) -> Tuple[Optional[List[Dict]], Optional[str]]:
     """
     Queries ORCID's 'Expanded Search' API to find all researchers linked to a ROR.
@@ -364,7 +320,7 @@ def get_researchers_by_ror(ror_id: str) -> Tuple[Optional[List[Dict]], Optional[
         Tuple: (List of researcher dicts, Error message string or None).
     """
     # Use Public API for broad search queries
-    base_url = current_app.config.get('ORCID_SEARCH_URL') or current_app.config.get('ORCID_BASE_URL_PUB', 'https://pub.orcid.org/v3.0/')
+    base_url = current_app.config.get('ORCID_SEARCH_URL', 'https://pub.orcid.org/v3.0/')
     start, rows = 0, 1000
     all_results = []
     

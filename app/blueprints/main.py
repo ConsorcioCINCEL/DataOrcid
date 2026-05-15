@@ -1,18 +1,4 @@
-"""
-Module: main.py
-Author: Gastón Olivares
-Project: DataOrcid-Chile (Open Source)
-License: MIT
-Description: 
-    Core System Blueprint.
-    
-    This module manages the primary user interface and dashboard logic.
-    It handles:
-    1. The landing page (Index) with high-level stats and trends.
-    2. The Researcher Directory (fetching live data from ORCID).
-    3. The Analytics Panel (charts, trends, and top performers).
-    4. Integration guides and static resource serving.
-"""
+"""Main application views, metrics, profile pages, and dataset downloads."""
 
 import os
 import io
@@ -41,15 +27,8 @@ from ..services.orcid_service import (
 )
 from ..services.cache_service import ensure_and_heal_grid_for_ror
 
-# --- Blueprint Configuration ---
 bp_main = Blueprint("main", __name__)
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# CONTEXT PROCESSORS (GLOBAL VARIABLES)
-# ============================================================
-
 @bp_main.app_context_processor
 def inject_global_vars():
     """
@@ -76,12 +55,6 @@ def inject_global_vars():
             pass 
             
     return dict(last_works_update=last_update)
-
-
-# ============================================================
-# SYSTEM DASHBOARD & NAVIGATION
-# ============================================================
-
 @bp_main.route('/')
 @login_required
 def index():
@@ -185,7 +158,7 @@ def researcher_list():
     1. Live search results from ORCID (for the most up-to-date list).
     2. Local status flags (e.g., if a researcher is 'Managed' by Affiliation Manager).
     """
-    ror_id = session.get('admin_selected_ror') or session.get('ror_id')
+    ror_id = get_active_ror_id()
     if not ror_id:
         flash_err(_('No active ROR ID found.'))
         return redirect(url_for('main.index'))
@@ -226,12 +199,6 @@ def researcher_list():
 def cache_dashboard():
     """Shortcut redirect to the detailed data download page."""
     return redirect(url_for('works.cache_works_status'))
-
-
-# ============================================================
-# DATA MANAGEMENT & ANALYTICS
-# ============================================================
-
 def _resolve_name(orcid):
     """
     Internal Helper: Fetches a researcher's name from the live ORCID API.
@@ -287,8 +254,6 @@ def metrics_panel():
 
     if not ror_id:
         return render_template('main/metrics.html', stats=metrics)
-
-    # 1. Basic KPI Counts
     try:
         metrics['total_works'] = WorkCache.query.filter_by(ror_id=ror_id).count()
         metrics['total_fundings'] = FundingCache.query.filter_by(ror_id=ror_id).count()
@@ -301,36 +266,26 @@ def metrics_panel():
         if last_run and last_run.finished_at:
             metrics['last_update'] = last_run.finished_at.strftime("%Y-%m-%d %H:%M")
     except Exception as e: logger.error(f"Error in basic counts: {e}")
-
-    # 2. Chart: Works Trend (by Year)
     try:
         year_stats = db.session.query(WorkCache.pub_year, func.count(WorkCache.id)).filter_by(ror_id=ror_id).group_by(WorkCache.pub_year).order_by(WorkCache.pub_year).all()
         metrics['chart_years'] = [str(row[0]) for row in year_stats if row[0] and str(row[0]).isdigit()]
         metrics['chart_counts'] = [row[1] for row in year_stats if row[0] and str(row[0]).isdigit()]
     except Exception as e: logger.error(f"Error in Works Trend: {e}")
-
-    # 3. Chart: Works Types (Article, Conference, etc.)
     try:
         type_stats = db.session.query(WorkCache.type, func.count(WorkCache.id)).filter_by(ror_id=ror_id).group_by(WorkCache.type).all()
         metrics['chart_types_labels'] = [str(row[0]).replace('_', ' ').title() for row in type_stats]
         metrics['chart_types_values'] = [row[1] for row in type_stats]
     except Exception as e: logger.error(f"Error in Work Types: {e}")
-
-    # 4. Chart: Funding Trend (by Start Year)
     try:
         f_year_stats = db.session.query(FundingCache.start_y, func.count(FundingCache.id)).filter_by(ror_id=ror_id).group_by(FundingCache.start_y).order_by(FundingCache.start_y).all()
         metrics['chart_funding_years'] = [str(row[0]) for row in f_year_stats if row[0] and str(row[0]).isdigit()]
         metrics['chart_funding_counts'] = [row[1] for row in f_year_stats if row[0] and str(row[0]).isdigit()]
     except Exception as e: logger.error(f"Error in Funding Trend: {e}")
-
-    # 5. Chart: Funding Types
     try:
         f_type_stats = db.session.query(FundingCache.type, func.count(FundingCache.id)).filter_by(ror_id=ror_id).group_by(FundingCache.type).all()
         metrics['chart_funding_types_labels'] = [str(row[0]).replace('_', ' ').title() for row in f_type_stats]
         metrics['chart_funding_types_values'] = [row[1] for row in f_type_stats]
     except Exception as e: logger.error(f"Error in Funding Types: {e}")
-
-    # 6. Chart: Top Funding Organizations
     try:
         columns = [c.key for c in inspect(FundingCache).mapper.column_attrs]
         org_col = FundingCache.org_name if 'org_name' in columns else (FundingCache.organization_name if 'organization_name' in columns else FundingCache.title)
@@ -339,15 +294,11 @@ def metrics_panel():
         metrics['chart_funding_orgs_labels'] = [str(row[0])[:30] for row in fund_stats]
         metrics['chart_funding_orgs_values'] = [row[1] for row in fund_stats]
     except Exception as e: logger.error(f"Error in Funding Orgs: {e}")
-
-    # 7. Chart: Top Journals
     try:
         journal_stats = db.session.query(WorkCache.journal_title, func.count(WorkCache.id)).filter_by(ror_id=ror_id).filter(WorkCache.journal_title != None).group_by(WorkCache.journal_title).order_by(func.count(WorkCache.id).desc()).limit(5).all()
         metrics['chart_journals_labels'] = [str(row[0])[:30] + '...' for row in journal_stats]
         metrics['chart_journals_values'] = [row[1] for row in journal_stats]
     except Exception as e: logger.error(f"Error in Top Journals: {e}")
-
-    # 8. Table: Top Contributors (Works)
     try:
         raw_works = db.session.query(
             WorkCache.orcid, 
@@ -369,8 +320,6 @@ def metrics_panel():
             top_works.append((orcid, count, name))
         metrics['top_researchers_works'] = top_works
     except Exception as e: logger.error(f"Error in Top Researchers Works: {e}")
-
-    # 9. Table: Top Contributors (Fundings)
     try:
         raw_funds = db.session.query(
             FundingCache.orcid, 
@@ -507,12 +456,6 @@ def download_metrics_data(chart_type):
         logger.error(f"Export error: {exc}")
         flash_err(_("An error occurred while exporting data."))
         return redirect(url_for('main.metrics_panel'))
-
-
-# ============================================================
-# STATIC PAGES & RESOURCES
-# ============================================================
-
 @bp_main.route('/resources')
 @login_required
 def resources():

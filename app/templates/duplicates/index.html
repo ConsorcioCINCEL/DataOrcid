@@ -94,12 +94,14 @@
           <a class="btn btn-outline-info" href="{{ url_for('duplicates.index', scope=scope, refresh='1') }}">
             <i class="fas fa-sync-alt mr-1"></i>{{ _('Refresh Analysis') }}
           </a>
+          {% if session.get('is_admin') or session.get('is_manager') %}
           <form method="post" action="{{ url_for('duplicates.clear_cache', scope=scope) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline-danger">
               <i class="fas fa-trash-alt mr-1"></i>{{ _('Clear Analysis Cache') }}
             </button>
           </form>
+          {% endif %}
         </div>
       </div>
       {% if session.get('is_admin') %}
@@ -118,6 +120,19 @@
     </div>
   </div>
 </div>
+
+{% if report.summary.candidate_groups == 0 %}
+<div class="alert alert-info shadow-sm">
+  <i class="fas fa-info-circle mr-2"></i>
+  {% if has_active_filters %}
+    {{ _('No duplicate candidates found') }}
+  {% elif current_institution %}
+    {{ _('Currently, no duplicate profiles are found for %(institution)s.', institution=current_institution.name) }}
+  {% else %}
+    {{ _('Currently, no duplicate profiles are found for the selected scope.') }}
+  {% endif %}
+</div>
+{% endif %}
 
 <div class="row">
   <div class="col-xl-4">

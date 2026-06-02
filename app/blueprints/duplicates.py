@@ -6,7 +6,8 @@ import pandas as pd
 from flask import Blueprint, redirect, render_template, request, send_file, session, url_for
 from flask_babel import _
 
-from ..decorators import staff_required
+from ..decorators import login_required, staff_required
+from ..services.institution_registry_service import get_institution_by_ror
 from ..services.duplicate_profile_service import (
     build_duplicate_report,
     clear_duplicate_report_cache,
@@ -19,19 +20,20 @@ bp_duplicates = Blueprint("duplicates", __name__, url_prefix="/duplicates")
 
 
 @bp_duplicates.route("/")
-@staff_required
+@login_required
 def index():
-    """Render duplicate profile candidates for the current staff scope."""
+    """Render duplicate profile candidates for the current user scope."""
     scope = _requested_scope()
     ror_ids = _resolve_ror_ids(scope)
     if ror_ids == []:
         flash_err(_("No active ROR context found. Please log in again or select an institution."))
         return redirect(url_for("main.index"))
 
+    search_query = request.args.get("q", "")
     min_confidence = _safe_int(request.args.get("min_confidence"), default=0)
     report = build_duplicate_report(
         ror_ids=ror_ids,
-        search=request.args.get("q"),
+        search=search_query,
         min_confidence=min_confidence,
         force_refresh=request.args.get("refresh") == "1",
     )
@@ -39,15 +41,17 @@ def index():
         "duplicates/index.html",
         report=report,
         scope=scope,
-        query=request.args.get("q", ""),
+        query=search_query,
         min_confidence=min_confidence,
+        has_active_filters=bool(search_query.strip() or min_confidence),
         evidence_labels=_evidence_labels(),
         confidence_labels=_confidence_labels(),
+        current_institution=_current_institution_context(scope),
     )
 
 
 @bp_duplicates.route("/download")
-@staff_required
+@login_required
 def download():
     """Download duplicate profile candidates as CSV or Excel."""
     scope = _requested_scope()
@@ -96,6 +100,21 @@ def _resolve_ror_ids(scope: str) -> list[str] | None:
     if not ror_id:
         return []
     return [ror_id]
+
+
+def _current_institution_context(scope: str) -> dict | None:
+    if scope == "all":
+        return None
+
+    ror_id = get_active_ror_id()
+    if not ror_id:
+        return None
+
+    institution = get_institution_by_ror(ror_id)
+    return {
+        "ror_id": ror_id,
+        "name": (institution or {}).get("name") or session.get("institution_name") or ror_id,
+    }
 
 
 def _safe_int(value: str | None, default: int = 0) -> int:

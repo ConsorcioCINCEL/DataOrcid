@@ -3978,6 +3978,12 @@ msgstr "Profiles"
 msgid "No duplicate candidates found"
 msgstr "No duplicate candidates found"
 
+msgid "Currently, no duplicate profiles are found for %(institution)s."
+msgstr "Currently, no duplicate profiles are found for %(institution)s."
+
+msgid "Currently, no duplicate profiles are found for the selected scope."
+msgstr "Currently, no duplicate profiles are found for the selected scope."
+
 msgid "ORCID Activity"
 msgstr "ORCID Activity"
 

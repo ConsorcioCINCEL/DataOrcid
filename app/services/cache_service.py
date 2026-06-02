@@ -110,7 +110,7 @@ def _extract_status_from_profile(profile_data: dict, ror_id: str, orcid: str, tr
     return ResearcherStatus(ror_id=ror_id, orcid=orcid, is_managed_by_am=is_managed)
 
 
-def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
+def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict, max_orcids: int | None = None) -> int:
     """
     Rebuild works and affiliation status caches for one institution.
 
@@ -134,6 +134,9 @@ def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
         logger.info("ROR %s using custom AM Key: %s", ror_id, manager_user.am_client_id)
 
     orcid_ids = [r.get('orcid-id') for r in researchers if r.get('orcid-id')]
+    if max_orcids:
+        logger.info("Works Cache: limiting profile fetch to %d ORCID iDs for %s", max_orcids, ror_id)
+        orcid_ids = orcid_ids[:max_orcids]
 
     profiles_map = get_all_profiles_concurrently(orcid_ids, max_workers=10)
 
@@ -201,7 +204,7 @@ def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
     return total_works_cached
 
 
-def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
+def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict, max_orcids: int | None = None) -> int:
     """
     Rebuild funding cache rows for one institution.
 
@@ -214,6 +217,9 @@ def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> i
         return 0
 
     orcid_ids = [r.get('orcid-id') for r in researchers if r.get('orcid-id')]
+    if max_orcids:
+        logger.info("Funding Cache: limiting profile fetch to %d ORCID iDs for %s", max_orcids, ror_id)
+        orcid_ids = orcid_ids[:max_orcids]
     
     profiles_map = get_all_profiles_concurrently(orcid_ids, max_workers=10)
 

@@ -217,6 +217,89 @@ def _build_fundings_dataframe(records, institutions: dict | None = None) -> pd.D
     } for r in records])
 
 
+def _openalex_work_rows(ror_id: str, coverage: str = "all") -> tuple[list[dict], dict]:
+    """Join local ORCID works with OpenAlex metadata by normalized DOI."""
+    from ..models import OpenAlexSyncRun, OpenAlexWorkMetadata, WorkCache
+    from ..services.openalex_service import normalize_doi
+
+    works_query = WorkCache.query.filter(
+        WorkCache.ror_id == ror_id,
+        WorkCache.doi.isnot(None),
+        WorkCache.doi != "",
+    ).order_by(WorkCache.pub_year.desc(), WorkCache.title.asc())
+    works = works_query.all()
+
+    normalized_dois = sorted({normalize_doi(work.doi) for work in works if normalize_doi(work.doi)})
+    metadata_rows = []
+    for chunk in _chunks(normalized_dois):
+        metadata_rows.extend(
+            OpenAlexWorkMetadata.query
+            .filter(OpenAlexWorkMetadata.doi_normalized.in_(chunk))
+            .all()
+        )
+    metadata_by_doi = {row.doi_normalized: row for row in metadata_rows}
+
+    rows = []
+    for work in works:
+        normalized_doi = normalize_doi(work.doi)
+        metadata = metadata_by_doi.get(normalized_doi)
+        if coverage == "enriched" and not metadata:
+            continue
+        if coverage == "missing" and metadata:
+            continue
+
+        openalex_id = getattr(metadata, "openalex_id", None)
+        rows.append({
+            "title": work.title or "",
+            "orcid": work.orcid,
+            "type": work.type or "",
+            "pub_year": work.pub_year or "",
+            "journal_title": work.journal_title or "",
+            "doi": work.doi or "",
+            "doi_normalized": normalized_doi,
+            "matched": bool(metadata),
+            "openalex_id": openalex_id or "",
+            "openalex_url": f"https://openalex.org/{openalex_id}" if openalex_id else "",
+            "cited_by_count": getattr(metadata, "cited_by_count", None),
+            "is_oa": bool(getattr(metadata, "is_oa", False)) if metadata else None,
+            "oa_status": getattr(metadata, "oa_status", None) or "",
+            "source_name": getattr(metadata, "source_name", None) or "",
+            "source_issn_l": getattr(metadata, "source_issn_l", None) or "",
+            "primary_topic_field": getattr(metadata, "primary_topic_field", None) or "",
+            "primary_topic_domain": getattr(metadata, "primary_topic_domain", None) or "",
+        })
+
+    total_doi_works = len(works)
+    enriched_works = sum(1 for work in works if normalize_doi(work.doi) in metadata_by_doi)
+    open_access_works = sum(
+        1
+        for work in works
+        if (metadata := metadata_by_doi.get(normalize_doi(work.doi))) and metadata.is_oa
+    )
+    total_citations = sum(
+        (metadata.cited_by_count or 0)
+        for metadata in metadata_by_doi.values()
+    )
+    last_run = (
+        OpenAlexSyncRun.query
+        .filter_by(ror_id=ror_id)
+        .order_by(OpenAlexSyncRun.finished_at.desc())
+        .first()
+    )
+    summary = {
+        "total_doi_works": total_doi_works,
+        "unique_dois": len(normalized_dois),
+        "enriched_unique_dois": len(metadata_by_doi),
+        "enriched_works": enriched_works,
+        "missing_works": max(total_doi_works - enriched_works, 0),
+        "open_access_works": open_access_works,
+        "total_citations": total_citations,
+        "coverage_percent": round((len(metadata_by_doi) / len(normalized_dois) * 100), 1) if normalized_dois else 0,
+        "last_run": last_run,
+    }
+    return rows, summary
+
+
 def _has_cache_works(ror_id: str) -> bool:
     """Checks if any Works records exist for the given ROR."""
     from ..models import WorkCache
@@ -475,6 +558,31 @@ def cache_works_status():
         admin_works_count=admin_works_count,
         admin_fundings_count=admin_fundings_count,
     )
+
+
+@bp_works.route('/openalex/works')
+@login_required
+def openalex_works():
+    """Render OpenAlex enrichment coverage for DOI-backed works."""
+    ror_id = get_active_ror_id()
+    if not ror_id:
+        flash_err(_('No active institution context found.'))
+        return redirect(url_for('main.index'))
+
+    coverage = request.args.get("coverage", "all")
+    if coverage not in {"all", "enriched", "missing"}:
+        coverage = "all"
+
+    rows, summary = _openalex_work_rows(ror_id, coverage=coverage)
+    return render_template(
+        'works/openalex_works.html',
+        rows=rows,
+        summary=summary,
+        coverage=coverage,
+        ror_id=ror_id,
+    )
+
+
 @bp_works.route('/download/all-works/cache')
 @login_required
 def download_all_works_cache():

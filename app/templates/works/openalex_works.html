@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('OpenAlex Enrichment · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('OpenAlex Enrichment') }}</h1>
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('OpenAlex Enrichment') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  {% for label, value, icon, color in [
+    (_('Works with DOI'), summary.total_doi_works, 'fas fa-fingerprint', 'bg-primary'),
+    (_('Unique DOIs'), summary.unique_dois, 'fas fa-stream', 'bg-info'),
+    (_('OpenAlex Matches'), summary.enriched_unique_dois, 'fas fa-check-circle', 'bg-success'),
+    (_('Coverage'), summary.coverage_percent ~ '%', 'fas fa-chart-pie', 'bg-secondary'),
+    (_('Open Access Works'), summary.open_access_works, 'fas fa-unlock-alt', 'bg-warning'),
+    (_('OpenAlex Citations'), summary.total_citations, 'fas fa-quote-right', 'bg-danger')
+  ] %}
+  <div class="col-sm-6 col-xl-2">
+    <div class="info-box shadow-sm">
+      <span class="info-box-icon {{ color }}"><i class="{{ icon }}"></i></span>
+      <div class="info-box-content">
+        <span class="info-box-text font-weight-bold">{{ label }}</span>
+        <span class="info-box-number">{{ value }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card card-outline card-primary shadow-sm">
+  <div class="card-header d-flex align-items-center">
+    <h3 class="card-title text-bold mb-0">
+      <i class="fas fa-project-diagram mr-2 text-primary"></i>{{ _('ORCID Works + OpenAlex') }}
+    </h3>
+    <div class="ml-auto small text-muted">
+      {% if summary.last_run and summary.last_run.finished_at %}
+        <i class="far fa-clock mr-1"></i>{{ _('Last OpenAlex sync') }}: {{ summary.last_run.finished_at|datetimeformat }}
+      {% else %}
+        <i class="far fa-clock mr-1"></i>{{ _('Last OpenAlex sync') }}: {{ _('Not available') }}
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between" style="gap: 0.75rem;">
+      <div class="btn-group" role="group" aria-label="{{ _('Coverage filter') }}">
+        <a class="btn btn-sm {% if coverage == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='all') }}">
+          <i class="fas fa-list mr-1"></i>{{ _('All DOI Works') }}
+        </a>
+        <a class="btn btn-sm {% if coverage == 'enriched' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='enriched') }}">
+          <i class="fas fa-check mr-1"></i>{{ _('Enriched') }}
+        </a>
+        <a class="btn btn-sm {% if coverage == 'missing' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='missing') }}">
+          <i class="fas fa-hourglass-half mr-1"></i>{{ _('Pending OpenAlex') }}
+        </a>
+      </div>
+      <span class="badge badge-light border px-3 py-2">
+        <i class="fas fa-university mr-1 text-primary"></i>{{ ror_id }}
+      </span>
+    </div>
+  </div>
+</div>
+
+{% if not rows %}
+<div class="alert alert-info shadow-sm">
+  <i class="fas fa-info-circle mr-2"></i>{{ _('No DOI-backed works found for the selected coverage filter.') }}
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="card-header">
+    <h3 class="card-title text-bold">{{ _('Enriched Works Detail') }}</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table id="openalexWorksTable" class="table table-hover mb-0 w-100">
+        <thead>
+          <tr>
+            <th style="min-width: 280px;">{{ _('Work') }}</th>
+            <th style="min-width: 170px;">{{ _('DOI') }}</th>
+            <th class="text-right">{{ _('Citations') }}</th>
+            <th>{{ _('Open Access') }}</th>
+            <th style="min-width: 220px;">{{ _('Source') }}</th>
+            <th style="min-width: 180px;">{{ _('Topic Field') }}</th>
+            <th>{{ _('OpenAlex') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              <div class="font-weight-bold">{{ row.title or _('Untitled work') }}</div>
+              <div class="small text-muted">
+                {{ row.pub_year or _('No year') }} · {{ row.type or _('No type') }}
+              </div>
+              <a href="{{ url_for('main.orcid_profile', orcid_id=row.orcid) }}" class="small">
+                <i class="fas fa-id-card mr-1"></i>{{ row.orcid }}
+              </a>
+            </td>
+            <td>
+              <a href="https://doi.org/{{ row.doi_normalized }}" target="_blank" rel="noopener" class="small">
+                {{ row.doi }}
+              </a>
+            </td>
+            <td class="text-right" data-order="{{ row.cited_by_count if row.cited_by_count is not none else -1 }}">
+              {% if row.cited_by_count is not none %}
+                <strong>{{ row.cited_by_count }}</strong>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.matched %}
+                {% if row.is_oa %}
+                  <span class="badge badge-success">{{ row.oa_status or _('Open') }}</span>
+                {% else %}
+                  <span class="badge badge-secondary">{{ row.oa_status or _('Closed') }}</span>
+                {% endif %}
+              {% else %}
+                <span class="badge badge-light border">{{ _('Pending') }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.source_name %}
+                <div>{{ row.source_name }}</div>
+                {% if row.source_issn_l %}
+                  <div class="small text-muted">ISSN-L: {{ row.source_issn_l }}</div>
+                {% endif %}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.primary_topic_field %}
+                <div>{{ row.primary_topic_field }}</div>
+                {% if row.primary_topic_domain %}
+                  <div class="small text-muted">{{ row.primary_topic_domain }}</div>
+                {% endif %}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.openalex_url %}
+                <a href="{{ row.openalex_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info">
+                  <i class="fas fa-external-link-alt mr-1"></i>{{ row.openalex_id }}
+                </a>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+  <script>
+    $(function () {
+      const languageUrl = '{{ "https://cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json" if session.get("locale") == "es" else "" }}';
+      const language = languageUrl ? { url: languageUrl } : {};
+
+      $('#openalexWorksTable').DataTable({
+        responsive: true,
+        pageLength: 25,
+        order: [[2, 'desc']],
+        language: language
+      });
+    });
+  </script>
+{% endblock %}

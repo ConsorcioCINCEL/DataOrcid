@@ -3987,6 +3987,87 @@ msgstr "Currently, no duplicate profiles are found for the selected scope."
 msgid "ORCID Activity"
 msgstr "ORCID Activity"
 
+msgid "OpenAlex Enrichment · Data ORCID-Chile"
+msgstr "OpenAlex Enrichment · Data ORCID-Chile"
+
+msgid "OpenAlex Enrichment"
+msgstr "OpenAlex Enrichment"
+
+msgid "Works with DOI"
+msgstr "Works with DOI"
+
+msgid "Unique DOIs"
+msgstr "Unique DOIs"
+
+msgid "OpenAlex Matches"
+msgstr "OpenAlex Matches"
+
+msgid "Coverage"
+msgstr "Coverage"
+
+msgid "Open Access Works"
+msgstr "Open Access Works"
+
+msgid "OpenAlex Citations"
+msgstr "OpenAlex Citations"
+
+msgid "ORCID Works + OpenAlex"
+msgstr "ORCID Works + OpenAlex"
+
+msgid "Last OpenAlex sync"
+msgstr "Last OpenAlex sync"
+
+msgid "Coverage filter"
+msgstr "Coverage filter"
+
+msgid "All DOI Works"
+msgstr "All DOI Works"
+
+msgid "Enriched"
+msgstr "Enriched"
+
+msgid "Pending OpenAlex"
+msgstr "Pending OpenAlex"
+
+msgid "No DOI-backed works found for the selected coverage filter."
+msgstr "No DOI-backed works found for the selected coverage filter."
+
+msgid "Enriched Works Detail"
+msgstr "Enriched Works Detail"
+
+msgid "Work"
+msgstr "Work"
+
+msgid "Citations"
+msgstr "Citations"
+
+msgid "Open Access"
+msgstr "Open Access"
+
+msgid "Topic Field"
+msgstr "Topic Field"
+
+msgid "OpenAlex"
+msgstr "OpenAlex"
+
+msgid "Untitled work"
+msgstr "Untitled work"
+
+msgid "No year"
+msgstr "No year"
+
+msgid "No type"
+msgstr "No type"
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Closed"
+msgstr "Closed"
+
+msgid "Pending"
+msgstr "Pending"
+
 msgid "ORCID Activity Summary"
 msgstr "ORCID Activity Summary"
 

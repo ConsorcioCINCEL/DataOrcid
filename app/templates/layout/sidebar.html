@@ -40,9 +40,16 @@
 </li>
 
 <li class="nav-item">
-    <a href="{{ url_for('works.cache_works_status') }}" class="nav-link {% if 'works' in request.endpoint %}active{% endif %}">
+    <a href="{{ url_for('works.cache_works_status') }}" class="nav-link {% if request.endpoint == 'works.cache_works_status' %}active{% endif %}">
         <i class="nav-icon fas fa-cloud-download-alt"></i>
         <p>{{ _('Data Downloads') }}</p>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ url_for('works.openalex_works') }}" class="nav-link {% if request.endpoint == 'works.openalex_works' %}active{% endif %}">
+        <i class="nav-icon fas fa-project-diagram"></i>
+        <p>{{ _('OpenAlex Enrichment') }}</p>
     </a>
 </li>
 

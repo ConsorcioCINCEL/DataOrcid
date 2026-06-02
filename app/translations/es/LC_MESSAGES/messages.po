@@ -2685,6 +2685,87 @@ msgstr "Actualmente no se encuentran perfiles duplicados para el alcance selecci
 msgid "ORCID Activity"
 msgstr "Actividad ORCID"
 
+msgid "OpenAlex Enrichment · Data ORCID-Chile"
+msgstr "Enriquecimiento OpenAlex · Data ORCID-Chile"
+
+msgid "OpenAlex Enrichment"
+msgstr "Enriquecimiento OpenAlex"
+
+msgid "Works with DOI"
+msgstr "Obras con DOI"
+
+msgid "Unique DOIs"
+msgstr "DOI únicos"
+
+msgid "OpenAlex Matches"
+msgstr "Coincidencias OpenAlex"
+
+msgid "Coverage"
+msgstr "Cobertura"
+
+msgid "Open Access Works"
+msgstr "Obras en acceso abierto"
+
+msgid "OpenAlex Citations"
+msgstr "Citas OpenAlex"
+
+msgid "ORCID Works + OpenAlex"
+msgstr "Obras ORCID + OpenAlex"
+
+msgid "Last OpenAlex sync"
+msgstr "Última sincronización OpenAlex"
+
+msgid "Coverage filter"
+msgstr "Filtro de cobertura"
+
+msgid "All DOI Works"
+msgstr "Todas las obras con DOI"
+
+msgid "Enriched"
+msgstr "Enriquecidas"
+
+msgid "Pending OpenAlex"
+msgstr "Pendientes OpenAlex"
+
+msgid "No DOI-backed works found for the selected coverage filter."
+msgstr "No se encontraron obras con DOI para el filtro de cobertura seleccionado."
+
+msgid "Enriched Works Detail"
+msgstr "Detalle de obras enriquecidas"
+
+msgid "Work"
+msgstr "Obra"
+
+msgid "Citations"
+msgstr "Citas"
+
+msgid "Open Access"
+msgstr "Acceso abierto"
+
+msgid "Topic Field"
+msgstr "Campo temático"
+
+msgid "OpenAlex"
+msgstr "OpenAlex"
+
+msgid "Untitled work"
+msgstr "Obra sin título"
+
+msgid "No year"
+msgstr "Sin año"
+
+msgid "No type"
+msgstr "Sin tipo"
+
+msgid "Open"
+msgstr "Abierto"
+
+msgid "Closed"
+msgstr "Cerrado"
+
+msgid "Pending"
+msgstr "Pendiente"
+
 msgid "ORCID Activity Summary"
 msgstr "Resumen de actividad por ORCID"
 

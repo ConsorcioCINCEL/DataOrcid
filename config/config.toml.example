@@ -13,7 +13,10 @@
 # ------------------------------------------------------------
 [database]
 # Format: dialect+driver://user:password@host/dbname
+# MySQL:
 uri = "mysql+pymysql://USER:PASS@localhost/dataorcid_chile"
+# PostgreSQL:
+# uri = "postgresql+psycopg://USER:PASS@localhost:5432/dataorcid_chile"
 
 
 # ------------------------------------------------------------

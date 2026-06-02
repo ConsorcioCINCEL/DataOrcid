@@ -185,6 +185,74 @@ class DuplicateProfileCache(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class OpenAlexWorkRawCache(db.Model):
+    """Raw OpenAlex work payloads keyed by normalized DOI."""
+    __tablename__ = "openalex_work_raw_cache"
+
+    id = db.Column(db.Integer, primary_key=True)
+    doi_normalized = db.Column(db.String(255), unique=True, index=True, nullable=False)
+    source_doi = db.Column(db.String(255), nullable=True)
+    openalex_id = db.Column(db.String(64), index=True, nullable=True)
+    status = db.Column(db.String(16), default="pending", nullable=False)
+    http_status = db.Column(db.Integer, nullable=True)
+    raw_json = db.Column(db.JSON, nullable=True)
+    oa_updated_date = db.Column(db.DateTime, nullable=True)
+    error = db.Column(db.Text, nullable=True)
+    fetched_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class OpenAlexWorkMetadata(db.Model):
+    """Queryable OpenAlex work metadata derived from raw payloads."""
+    __tablename__ = "openalex_work_metadata"
+
+    id = db.Column(db.Integer, primary_key=True)
+    doi_normalized = db.Column(db.String(255), unique=True, index=True, nullable=False)
+    openalex_id = db.Column(db.String(64), index=True, nullable=True)
+    title = db.Column(db.Text, nullable=True)
+    publication_year = db.Column(db.Integer, index=True, nullable=True)
+    publication_date = db.Column(db.String(10), nullable=True)
+    type = db.Column(db.String(64), index=True, nullable=True)
+    language = db.Column(db.String(8), index=True, nullable=True)
+    cited_by_count = db.Column(db.Integer, default=0, nullable=False)
+    fwci = db.Column(db.Float, nullable=True)
+    is_retracted = db.Column(db.Boolean, default=False, nullable=False)
+    is_oa = db.Column(db.Boolean, default=False, nullable=False)
+    oa_status = db.Column(db.String(32), index=True, nullable=True)
+    oa_url = db.Column(db.Text, nullable=True)
+    best_pdf_url = db.Column(db.Text, nullable=True)
+    source_name = db.Column(db.Text, nullable=True)
+    source_issn_l = db.Column(db.String(32), index=True, nullable=True)
+    source_type = db.Column(db.String(64), nullable=True)
+    source_is_in_doaj = db.Column(db.Boolean, nullable=True)
+    primary_topic_name = db.Column(db.String(255), nullable=True)
+    primary_topic_field = db.Column(db.String(255), nullable=True)
+    primary_topic_domain = db.Column(db.String(255), nullable=True)
+    raw_updated_date = db.Column(db.DateTime, nullable=True)
+    fetched_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class OpenAlexSyncRun(db.Model):
+    """Audit log for OpenAlex enrichment runs."""
+    __tablename__ = "openalex_sync_run"
+
+    id = db.Column(db.Integer, primary_key=True)
+    ror_id = db.Column(db.String(32), index=True, nullable=True)
+    status = db.Column(db.String(16), default="running", nullable=False)
+    works_seen = db.Column(db.Integer, default=0, nullable=False)
+    dois_found = db.Column(db.Integer, default=0, nullable=False)
+    fetched_count = db.Column(db.Integer, default=0, nullable=False)
+    matched_count = db.Column(db.Integer, default=0, nullable=False)
+    not_found_count = db.Column(db.Integer, default=0, nullable=False)
+    error_count = db.Column(db.Integer, default=0, nullable=False)
+    skipped_count = db.Column(db.Integer, default=0, nullable=False)
+    error = db.Column(db.Text, nullable=True)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    finished_at = db.Column(db.DateTime, nullable=True)
+
+
 class InstitutionRegistry(db.Model):
     """Institution records available for cache building even without users."""
     __tablename__ = "institution_registry"

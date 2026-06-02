@@ -143,3 +143,63 @@ def register_commands(app):
                 click.echo(f"❌ Error syncing {current_ror}: {e}")
 
         click.echo("🏁 Profile synchronization finished.")
+
+    @app.cli.command("sync-openalex-works")
+    @click.option("--ror", default=None, help="Target a specific institutional ROR ID.")
+    @click.option("--all", "all_institutions", is_flag=True, help="Scan every known institution.")
+    @click.option("--limit", default=None, type=int, help="Maximum DOI count to process per scope.")
+    @click.option("--force", is_flag=True, help="Refresh records even when the local OpenAlex cache is fresh.")
+    @click.option("--stale-days", default=None, type=int, help="Refresh cached records older than this many days.")
+    @click.option("--include-all-types", is_flag=True, help="Include every ORCID work type, not only journal articles.")
+    @click.option("--dry-run", is_flag=True, help="Count candidate DOI values without calling OpenAlex.")
+    @with_appcontext
+    def sync_openalex_works_command(ror, all_institutions, limit, force, stale_days, include_all_types, dry_run):
+        """Enrich local DOI-backed works with OpenAlex metadata."""
+        from .services.institution_registry_service import get_institution_options
+        from .services.openalex_service import OpenAlexConfigError, sync_openalex_works
+
+        if ror and all_institutions:
+            click.echo("Use either --ror or --all, not both.")
+            return
+        if not ror and not all_institutions:
+            click.echo("Choose a scope with --ror <ROR_ID> or --all.")
+            return
+
+        if all_institutions:
+            try:
+                scopes = [item["ror_id"] for item in get_institution_options() if item.get("ror_id")]
+            except Exception as exc:
+                click.echo(f"Database Query Error: {exc}")
+                return
+        else:
+            scopes = [ror]
+
+        articles_only = not include_all_types
+        mode = "dry-run" if dry_run else "sync"
+        click.echo(f"Starting OpenAlex {mode} for {len(scopes)} scope(s).")
+
+        for current_ror in scopes:
+            click.echo(f"\nProcessing ROR: {current_ror}")
+            try:
+                summary = sync_openalex_works(
+                    ror_id=current_ror,
+                    limit=limit,
+                    force_refresh=force,
+                    stale_days=stale_days,
+                    articles_only=articles_only,
+                    dry_run=dry_run,
+                )
+            except OpenAlexConfigError as exc:
+                click.echo(f"OpenAlex configuration error: {exc}")
+                return
+
+            click.echo(
+                "Works: {works_seen} | DOI candidates: {dois_found} | "
+                "Fetched: {fetched_count} | Matched: {matched_count} | "
+                "Not found: {not_found_count} | Skipped: {skipped_count} | "
+                "Errors: {error_count} | Status: {status}".format(**summary)
+            )
+            if summary.get("error"):
+                click.echo(f"Error: {summary['error']}")
+
+        click.echo("\nOpenAlex synchronization finished.")

@@ -137,6 +137,15 @@ def create_app() -> Flask:
         ORCID_BASE_URL_PUB=search_url,
     )
 
+    openalex_cfg = config_data.get("openalex", {})
+    app.config.update(
+        OPENALEX_BASE_URL=(openalex_cfg.get("base_url") or "https://api.openalex.org").rstrip("/"),
+        OPENALEX_API_KEY=os.environ.get("OPENALEX_API_KEY") or openalex_cfg.get("api_key"),
+        OPENALEX_MAILTO=os.environ.get("OPENALEX_MAILTO") or openalex_cfg.get("mailto"),
+        OPENALEX_TIMEOUT=int(openalex_cfg.get("timeout", 20)),
+        OPENALEX_STALE_DAYS=int(openalex_cfg.get("stale_days", 30)),
+    )
+
     datasets_cfg = config_data.get("paths", {}).get("datasets_dir", "app/datasets")
     datasets_dir = Path(datasets_cfg)
     if not datasets_dir.is_absolute(): 
@@ -231,6 +240,7 @@ def create_app() -> Flask:
             from .services.institution_registry_service import seed_chilean_universities
             seed_chilean_universities()
         except Exception as exc:
+            db.session.rollback()
             app.logger.warning("Institution registry seed failed: %s", exc)
 
         from .blueprints.main import bp_main

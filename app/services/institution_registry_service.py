@@ -6,6 +6,8 @@ import json
 import logging
 from pathlib import Path
 
+from sqlalchemy.exc import IntegrityError
+
 from .. import db
 from ..models import InstitutionRegistry, User
 
@@ -20,16 +22,36 @@ def seed_chilean_universities() -> int:
         return 0
 
     payload = json.loads(DATASET_PATH.read_text(encoding="utf-8"))
+    try:
+        return _seed_institution_payload(payload)
+    except IntegrityError:
+        # Another process may have seeded the registry during startup.
+        db.session.rollback()
+        return _seed_institution_payload(payload)
+
+
+def _seed_institution_payload(payload: dict) -> int:
+    ror_ids = sorted({
+        _clean_ror_id(item.get("ror_id"))
+        for item in payload.get("institutions", [])
+        if _clean_ror_id(item.get("ror_id"))
+    })
+    existing = {
+        row.ror_id: row
+        for row in InstitutionRegistry.query.filter(InstitutionRegistry.ror_id.in_(ror_ids)).all()
+    }
+
     count = 0
     for item in payload.get("institutions", []):
         ror_id = _clean_ror_id(item.get("ror_id"))
         if not ror_id:
             continue
 
-        record = InstitutionRegistry.query.filter_by(ror_id=ror_id).first()
+        record = existing.get(ror_id)
         if not record:
             record = InstitutionRegistry(ror_id=ror_id)
             db.session.add(record)
+            existing[ror_id] = record
 
         record.name = item.get("name") or ror_id
         record.display_name_en = item.get("display_name_en") or record.name

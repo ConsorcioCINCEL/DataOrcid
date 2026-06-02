@@ -64,6 +64,19 @@ client_secret = "REPLACE_OR_USE_ENV"
 
 
 # ------------------------------------------------------------
+# 🔹 OPENALEX CONFIGURATION
+# ------------------------------------------------------------
+[openalex]
+base_url = "https://api.openalex.org"
+# Prefer the OPENALEX_API_KEY environment variable in production.
+api_key = "REPLACE_OR_USE_ENV"
+# Optional contact email for operational follow-up.
+mailto = "support@your-domain.cl"
+timeout = 20
+stale_days = 30
+
+
+# ------------------------------------------------------------
 # 🔹 EMAIL CONFIGURATION (SMTP)
 # ------------------------------------------------------------
 [mail]

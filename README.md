@@ -39,7 +39,7 @@ cp config.toml.example config/config.toml
 # Create tables
 flask db upgrade
 
-# Seed initial users and institutions
+# Seed the initial admin account
 flask seed-db
 
 ---

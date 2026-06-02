@@ -206,7 +206,7 @@ flask rebuild-caches --dry-run
 - Mantén las claves secretas fuera del repo (`.env` + dotenv recomendado).  
 - Producción: `gunicorn -w 4 -b 0.0.0.0:5000 "run:app"` detrás de Nginx.  
 - Ajusta `workers` según límites de ORCID.  
-- Personaliza `populate_users()` antes de publicar.  
+- Usa el registro institucional (`InstitutionRegistry`) para universidades; `populate_users()` solo crea el admin inicial.
 - Revisa logs (`gunicorn --access-logfile - --error-logfile -`).
 
 ---

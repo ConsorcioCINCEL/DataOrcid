@@ -1,0 +1,978 @@
+{% extends 'base.html' %}
+{% macro info_button(description, methodology) -%}
+  <button type="button"
+          class="btn btn-xs btn-outline-info openalex-help-button"
+          data-toggle="popover"
+          data-container="body"
+          data-placement="left"
+          data-trigger="focus"
+          data-html="true"
+          title="{{ _('How to read this') }}"
+          data-content="<strong>{{ _('What it shows')|e }}:</strong> {{ description|e }}<br><strong>{{ _('Methodology')|e }}:</strong> {{ methodology|e }}"
+          aria-label="{{ _('How to read this') }}">
+    <i class="fas fa-info-circle"></i>
+  </button>
+{%- endmacro %}
+{% macro sort_link(label, table_key, column) -%}
+  {% set table = analytics.tables[table_key] %}
+  {% set active = table.sort == column %}
+  {% set next_dir = 'asc' if (not active or table.dir == 'desc') else 'desc' %}
+  <a class="openalex-sort-link" href="{{ table_url(table_key, sort=column, dir=next_dir, page=1, tab=analytics.active_tab) }}">
+    {{ label }}
+    {% if active %}
+      <i class="fas fa-sort-{{ 'up' if table.dir == 'asc' else 'down' }} ml-1"></i>
+    {% else %}
+      <i class="fas fa-sort text-muted ml-1"></i>
+    {% endif %}
+  </a>
+{%- endmacro %}
+{% macro association_summary(summary) -%}
+  {% if summary and summary.labels %}
+    <div class="openalex-association-list">
+      {% for item in summary.labels %}
+        <span class="badge badge-light border">{{ item }}</span>
+      {% endfor %}
+      {% if summary.extra %}
+        <span class="badge badge-secondary">+{{ summary.extra }}</span>
+      {% endif %}
+    </div>
+  {% else %}
+    <span class="text-muted">&mdash;</span>
+  {% endif %}
+{%- endmacro %}
+{% macro table_pager(table_key) -%}
+  {% set table = analytics.tables[table_key] %}
+  {% set pagination = table.pagination %}
+  {% if pagination.total_rows > 0 %}
+  <div class="card-footer bg-white d-flex flex-wrap align-items-center justify-content-between" style="gap: 0.75rem;">
+    <div class="small text-muted">
+      {{ _('Showing %(start)s-%(end)s of %(total)s records', start=pagination.start, end=pagination.end, total=pagination.total_rows) }}
+    </div>
+    <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+      <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Rows per page') }}">
+        {% for size in table.per_page_options %}
+          <a class="btn {% if pagination.per_page == size %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ table_url(table_key, page=1, per_page=size, tab=analytics.active_tab) }}">{{ size }}</a>
+        {% endfor %}
+      </div>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ table_url(table_key, page=pagination.prev_page, tab=analytics.active_tab) }}"><i class="fas fa-chevron-left"></i></a>
+        </li>
+        {% for page_number in pagination.page_numbers %}
+          {% if page_number %}
+            <li class="page-item {% if page_number == pagination.page %}active{% endif %}">
+              <a class="page-link" href="{{ table_url(table_key, page=page_number, tab=analytics.active_tab) }}">{{ page_number }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ table_url(table_key, page=pagination.next_page, tab=analytics.active_tab) }}"><i class="fas fa-chevron-right"></i></a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+{%- endmacro %}
+{% macro export_buttons(table_key) -%}
+  <div class="btn-group btn-group-sm mr-2" role="group" aria-label="{{ _('Export table') }}">
+    <a href="{{ export_url(table_key, 'csv') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-file-csv mr-1"></i>CSV
+    </a>
+    <a href="{{ export_url(table_key, 'excel') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-file-excel mr-1"></i>XLSX
+    </a>
+  </div>
+{%- endmacro %}
+{% macro check_filter(name, label, options, selected_values, empty_label, helper=None) -%}
+  {% set ns = namespace(labels=[]) %}
+  {% for option in options %}
+    {% set option_value = option.value if option.value is defined else option.ror_id if option.ror_id is defined else option %}
+    {% set option_label = option.label if option.label is defined else option.name if option.name is defined else option %}
+    {% if option_value in selected_values %}
+      {% set ns.labels = ns.labels + [option_label] %}
+    {% endif %}
+  {% endfor %}
+  <div class="form-group openalex-filter-field">
+    <label>{{ label }}</label>
+    <div class="dropdown openalex-check-filter">
+      <button class="btn btn-sm btn-light dropdown-toggle openalex-check-filter-button"
+              type="button"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+              data-empty-label="{{ empty_label }}"
+              data-selected-label="{{ _('selected') }}">
+        <span class="openalex-check-filter-text">
+          {% if ns.labels|length == 0 %}
+            {{ empty_label }}
+          {% elif ns.labels|length <= 2 %}
+            {{ ns.labels|join(', ') }}
+          {% else %}
+            {{ ns.labels|length }} {{ _('selected') }}
+          {% endif %}
+        </span>
+      </button>
+      <div class="dropdown-menu p-2 openalex-check-filter-menu">
+        {% for option in options %}
+          {% set option_value = option.value if option.value is defined else option.ror_id if option.ror_id is defined else option %}
+          {% set option_label = option.label if option.label is defined else option.name if option.name is defined else option %}
+          <div class="custom-control custom-checkbox">
+            <input class="custom-control-input openalex-check-filter-input"
+                   type="checkbox"
+                   id="{{ name }}_{{ loop.index }}"
+                   name="{{ name }}"
+                   value="{{ option_value }}"
+                   data-label="{{ option_label }}"
+                   {% if option_value in selected_values %}checked{% endif %}>
+            <label class="custom-control-label" for="{{ name }}_{{ loop.index }}">{{ option_label }}</label>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% if helper %}
+      <div class="small text-muted">{{ helper }}</div>
+    {% endif %}
+  </div>
+{%- endmacro %}
+{% block title %}{{ _('Global OpenAlex Comparison - Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+  <h1 class="m-0 text-dark">{{ _('Global OpenAlex Comparison') }}</h1>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .openalex-chart {
+    position: relative;
+    height: 360px;
+    width: 100%;
+  }
+  .openalex-chart-tall {
+    position: relative;
+    height: 440px;
+    width: 100%;
+  }
+  .openalex-filter-card label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #6c757d;
+    margin-bottom: 0.2rem;
+  }
+  .openalex-filter-card .card-body {
+    padding: 0.85rem 1.25rem 0.75rem;
+  }
+  .openalex-filter-field {
+    min-width: 0;
+  }
+  .openalex-check-filter-button {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ced4da;
+    color: #495057;
+    display: flex;
+    height: calc(1.8125rem + 2px);
+    justify-content: space-between;
+    overflow: hidden;
+    text-align: left;
+    width: 100%;
+  }
+  .openalex-check-filter-button::after {
+    margin-left: 0.75rem;
+  }
+  .openalex-check-filter-button:focus,
+  .openalex-check-filter.show .openalex-check-filter-button {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.18);
+  }
+  .openalex-check-filter-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .openalex-check-filter-menu {
+    max-height: 18rem;
+    min-width: 100%;
+    overflow-y: auto;
+    width: max-content;
+  }
+  .openalex-check-filter-menu .custom-control {
+    min-width: 13rem;
+    padding-bottom: 0.2rem;
+    padding-top: 0.2rem;
+    white-space: nowrap;
+  }
+  .openalex-filter-actions {
+    margin-top: 0.25rem;
+  }
+  .openalex-comparison-table th,
+  .openalex-comparison-table td {
+    vertical-align: middle;
+  }
+  .openalex-comparison-table .metric-cell {
+    min-width: 5.5rem;
+  }
+  .openalex-sort-link {
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .openalex-sort-link:hover {
+    color: #0056b3;
+    text-decoration: none;
+  }
+  .openalex-tabs .nav-link {
+    align-items: center;
+    background: #eef2f6;
+    border: 1px solid #d8dee6;
+    border-radius: 0.28rem 0.28rem 0 0;
+    border-top: 3px solid transparent;
+    color: #343a40;
+    display: inline-flex;
+    font-weight: 700;
+    min-height: 2.5rem;
+    margin-bottom: -1px;
+    padding: 0.5rem 0.85rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .openalex-tabs {
+    background: transparent;
+    border-bottom: 2px solid #d8dee6;
+    box-shadow: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+    padding: 0;
+  }
+  .openalex-tabs.nav-tabs {
+    border-bottom: 2px solid #d8dee6;
+  }
+  .openalex-tabs .nav-item {
+    margin-bottom: 0;
+  }
+  .openalex-tabs .nav-link i {
+    color: var(--cincel-secondary, #0077c8);
+  }
+  .openalex-tabs .nav-link:hover {
+    background: #f8fafc;
+    border-color: #cfd6df;
+    border-top-color: rgba(239, 90, 47, 0.55);
+    color: #212529;
+  }
+  .openalex-tabs .nav-link.active {
+    background: #fff;
+    border-color: #d8dee6 #d8dee6 #fff;
+    border-top-color: var(--cincel-primary, #ef5a2f);
+    box-shadow: 0 -1px 0 #fff inset;
+    color: #212529;
+  }
+  .openalex-tabs .nav-link.active i {
+    color: var(--cincel-primary, #ef5a2f);
+  }
+  .openalex-summary-grid .info-box {
+    min-height: 5.8rem;
+  }
+  .openalex-summary-grid .info-box-text {
+    line-height: 1.15;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  .openalex-association-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    min-width: 14rem;
+  }
+  .openalex-table-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0.75rem;
+  }
+  .openalex-table-filter-row {
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .openalex-table-filter-row .openalex-filter-field {
+    margin-bottom: 0;
+    min-width: 22rem;
+  }
+  .card-header.d-flex::after {
+    display: none;
+  }
+  .card-header.d-flex .card-title {
+    float: none;
+  }
+  .openalex-help-button {
+    border-radius: 0.2rem;
+    height: 1.9rem;
+    width: 1.9rem;
+    padding: 0;
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+  .popover {
+    max-width: 360px;
+  }
+  .openalex-metric-guide-button {
+    white-space: nowrap;
+  }
+  .openalex-definition-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.75rem;
+  }
+  .openalex-definition-item {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #fff;
+    padding: 0.75rem;
+  }
+  @media (max-width: 767.98px) {
+    .openalex-table-filter-row .openalex-filter-field {
+      min-width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('works.openalex_analytics') }}">{{ _('OpenAlex Analytics') }}</a></li>
+  <li class="breadcrumb-item active">{{ _('Global comparison') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card card-outline card-primary shadow-sm openalex-filter-card">
+  <div class="card-header d-flex align-items-center">
+    <h3 class="card-title text-bold mb-0">
+      <i class="fas fa-filter mr-2 text-primary"></i>{{ _('Filters') }}
+    </h3>
+    <div class="ml-auto d-flex align-items-center" style="gap: 0.5rem;">
+      <button type="button" class="btn btn-sm btn-outline-secondary openalex-metric-guide-button" data-toggle="modal" data-target="#openalexMetricGuideModal">
+        <i class="fas fa-info-circle mr-1"></i>{{ _('Metric guide') }}
+      </button>
+      <a href="{{ url_for('works.openalex_analytics') }}" class="btn btn-sm btn-outline-info">
+        <i class="fas fa-chart-line mr-1"></i>{{ _('Active institution') }}
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    <form method="get" action="{{ url_for('works.openalex_global') }}">
+      <input type="hidden" name="tab" value="{{ analytics.active_tab }}">
+      {% for selected_ror in analytics.filters.institution_author_ror %}
+        <input type="hidden" name="institution_author_ror" value="{{ selected_ror }}">
+      {% endfor %}
+      <div class="form-row align-items-end">
+        <div class="form-group col-6 col-md-2">
+          <label for="year_from">{{ _('From year') }}</label>
+          <select id="year_from" name="year_from" class="form-control form-control-sm">
+            <option value="">{{ _('Any') }}</option>
+            {% for year in analytics.filter_options.years %}
+              <option value="{{ year }}" {% if analytics.filters.year_from == year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group col-6 col-md-2">
+          <label for="year_to">{{ _('To year') }}</label>
+          <select id="year_to" name="year_to" class="form-control form-control-sm">
+            <option value="">{{ _('Any') }}</option>
+            {% for year in analytics.filter_options.years %}
+              <option value="{{ year }}" {% if analytics.filters.year_to == year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          {{ check_filter('type', _('Document type'), analytics.filter_options.types, analytics.filters.type, _('Any'), _('Leave empty to include all')) }}
+        </div>
+        <div class="col-md-3">
+          {{ check_filter('oa_status', _('Open Access'), analytics.filter_options.oa_statuses, analytics.filters.oa_status, _('Any'), _('Leave empty to include all')) }}
+        </div>
+        <div class="form-group col-md-2 text-right openalex-filter-actions">
+          <a href="{{ url_for('works.openalex_global') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-undo mr-1"></i>{{ _('Reset') }}
+          </a>
+          <button type="submit" class="btn btn-sm btn-primary">
+            <i class="fas fa-check mr-1"></i>{{ _('Apply filters') }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row openalex-summary-grid">
+  {% for label, value, icon, color in [
+    (_('Universities'), analytics.summary.institutions_count, 'fas fa-university', 'bg-primary'),
+    (_('OpenAlex Articles'), analytics.summary.enriched_count, 'fas fa-project-diagram', 'bg-success'),
+    (_('Overall OpenAlex Coverage'), analytics.summary.coverage_percent ~ '%', 'fas fa-check-circle', 'bg-info'),
+    (_('Own Institution Match'), analytics.summary.selected_percent ~ '%', 'fas fa-bullseye', 'bg-secondary'),
+    (_('Associated with Chile'), analytics.summary.chile_percent ~ '%', 'fas fa-flag', 'bg-warning'),
+    (_('Total Citations'), analytics.summary.total_citations, 'fas fa-quote-right', 'bg-danger')
+  ] %}
+  <div class="col-sm-6 col-xl-2">
+    <div class="info-box shadow-sm">
+      <span class="info-box-icon {{ color }}"><i class="{{ icon }}"></i></span>
+      <div class="info-box-content">
+        <span class="info-box-text font-weight-bold">{{ label }}</span>
+        <span class="info-box-number">{{ value }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="modal fade" id="openalexMetricGuideModal" tabindex="-1" role="dialog" aria-labelledby="openalexMetricGuideTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="openalexMetricGuideTitle">{{ _('OpenAlex metric guide') }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="{{ _('Close') }}">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="openalex-definition-list">
+          <div class="openalex-definition-item">
+            <strong>{{ _('ORCID Articles') }}</strong>
+            <div class="text-muted small">{{ _('Total journal articles in the local ORCID cache for each university.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
+            <strong>{{ _('OpenAlex') }}</strong>
+            <div class="text-muted small">{{ _('Local articles with OpenAlex metadata that match the active filters.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
+            <strong>{{ _('Overall Coverage') }}</strong>
+            <div class="text-muted small">{{ _('Percent of local candidates with an OpenAlex match, calculated without restricting by year, type, or OA filters.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
+            <strong>{{ _('Own Institution') }}</strong>
+            <div class="text-muted small">{{ _('Percent of filtered articles where OpenAlex includes the same university ROR.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
+            <strong>{{ _('Chile') }}</strong>
+            <div class="text-muted small">{{ _('Percent of filtered articles with at least one Chilean institution in OpenAlex.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
+            <strong>{{ _('International') }}</strong>
+            <div class="text-muted small">{{ _('Percent of articles with a Chilean affiliation that also have at least one institution from another country.') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if analytics.summary.enriched_count == 0 %}
+  <div class="alert alert-info shadow-sm">
+    <i class="fas fa-info-circle mr-2"></i>{{ _('No OpenAlex metadata is available for the selected filters.') }}
+  </div>
+{% else %}
+<ul class="nav nav-tabs openalex-tabs mb-3">
+  {% for tab_id, label, icon in [
+    ('overview', _('Summary'), 'fas fa-chart-pie'),
+    ('universities', _('Universities'), 'fas fa-university'),
+    ('production', _('Production'), 'fas fa-users'),
+    ('institution_authors', _('Authors by Institution'), 'fas fa-user-graduate'),
+    ('articles', _('Articles'), 'fas fa-table')
+  ] %}
+  <li class="nav-item">
+    <a class="nav-link {% if analytics.active_tab == tab_id %}active{% endif %}" href="{{ query_url(tab=tab_id) }}">
+      <i class="{{ icon }} mr-1"></i>{{ label }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+
+{% if analytics.active_tab == 'overview' %}
+  <div class="row">
+    <div class="col-xl-6">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h3 class="card-title text-bold mb-0">{{ _('Document Type Evolution') }}</h3>
+          {{ info_button(
+            _('Annual evolution of OpenAlex document types across the full system.'),
+            _('Groups university-article pairs by publication year and OpenAlex type. The six highest-volume types in the filtered period are shown.')
+          ) }}
+        </div>
+        <div class="card-body">
+          <div class="openalex-chart">
+            <canvas id="chartGlobalDocumentTypeTrend"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-6">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h3 class="card-title text-bold mb-0">{{ _('Open Access Evolution') }}</h3>
+          {{ info_button(
+            _('Annual evolution of open and closed articles across all universities.'),
+            _('Counts university-article pairs by year using OpenAlex is_oa. If an article appears in multiple universities, it contributes to each university-article pair.')
+          ) }}
+        </div>
+        <div class="card-body">
+          <div class="openalex-chart">
+            <canvas id="chartGlobalOpenAccessTrend"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h3 class="card-title text-bold mb-0">{{ _('Open Access Mix') }}</h3>
+          {{ info_button(
+            _('Global share of open and closed articles.'),
+            _('Uses OpenAlex is_oa over the global filtered set. Open means is_oa=true; closed means is_oa=false.')
+          ) }}
+        </div>
+        <div class="card-body">
+          <div class="openalex-chart">
+            <canvas id="chartGlobalOpenAccess"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% elif analytics.active_tab == 'universities' %}
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h3 class="card-title text-bold mb-0">{{ _('OpenAlex Articles by University') }}</h3>
+          {{ info_button(
+            _('OpenAlex article volume by university.'),
+            _('Counts university-article pairs with OpenAlex metadata that match the active filters. A publication can be associated with more than one university if it appears in multiple local caches.')
+          ) }}
+        </div>
+        <div class="card-body">
+          <div class="openalex-chart-tall">
+            <canvas id="chartGlobalArticles"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h3 class="card-title text-bold mb-0">{{ _('Citations by University') }}</h3>
+          {{ info_button(
+            _('Accumulated OpenAlex citations by university.'),
+            _('Sums cited_by_count for the filtered articles. If an article is locally associated with multiple universities, it contributes to each one total.')
+          ) }}
+        </div>
+        <div class="card-body">
+          <div class="openalex-chart-tall">
+            <canvas id="chartGlobalCitations"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title text-bold mb-0">{{ _('Institution Association Rates') }}</h3>
+      {{ info_button(
+        _('Percent comparison between universities.'),
+        _('Overall coverage uses OpenAlex matches over total candidates. Own institution, Chile, and International are calculated over each university filtered OpenAlex articles.')
+      ) }}
+    </div>
+    <div class="card-body">
+      <div class="openalex-chart-tall">
+        <canvas id="chartGlobalRates"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title text-bold mb-0">{{ _('University Comparison Table') }}</h3>
+      <div class="d-flex align-items-center">
+        {{ export_buttons('universities') }}
+        {{ info_button(
+          _('Detailed comparison by university.'),
+          _('Each row summarizes the local ORCID cache and its OpenAlex cross-checks. Small counts under percentages show the numerator used for that rate.')
+        ) }}
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0 openalex-comparison-table">
+          <thead>
+            <tr>
+              <th>{{ sort_link(_('University'), 'universities', 'university') }}</th>
+              <th class="text-right">{{ sort_link(_('ORCID Articles'), 'universities', 'orcid_articles') }}</th>
+              <th class="text-right">{{ sort_link(_('OpenAlex'), 'universities', 'openalex') }}</th>
+              <th class="text-right">{{ sort_link(_('Overall Coverage'), 'universities', 'coverage') }}</th>
+              <th class="text-right">{{ sort_link(_('Own Institution'), 'universities', 'own') }}</th>
+              <th class="text-right">{{ sort_link(_('Chile'), 'universities', 'chile') }}</th>
+              <th class="text-right">{{ sort_link(_('International'), 'universities', 'international') }}</th>
+              <th class="text-right">{{ sort_link(_('Open Access'), 'universities', 'open_access') }}</th>
+              <th class="text-right">{{ sort_link(_('Citations'), 'universities', 'citations') }}</th>
+              <th class="text-right">{{ sort_link(_('Avg. FWCI'), 'universities', 'fwci') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in analytics.rows %}
+            <tr>
+              <td>
+                <div class="font-weight-bold">{{ row.institution }}</div>
+                <div class="small text-muted">{{ row.ror_id }}</div>
+              </td>
+              <td class="text-right metric-cell">{{ row.article_works }}</td>
+              <td class="text-right metric-cell">{{ row.enriched_count }}</td>
+              <td class="text-right metric-cell">{{ row.coverage_percent }}%</td>
+              <td class="text-right metric-cell"><strong>{{ row.selected_percent }}%</strong><div class="small text-muted">{{ row.selected_count }}</div></td>
+              <td class="text-right metric-cell">{{ row.chile_percent }}%<div class="small text-muted">{{ row.chile_count }}</div></td>
+              <td class="text-right metric-cell">{{ row.international_percent }}%<div class="small text-muted">{{ row.international_count }}</div></td>
+              <td class="text-right metric-cell">{{ row.open_access_percent }}%</td>
+              <td class="text-right metric-cell">{{ row.total_citations }}</td>
+              <td class="text-right metric-cell">{% if row.average_fwci is not none %}{{ row.average_fwci }}{% else %}N/A{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% elif analytics.active_tab == 'production' %}
+  <div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title text-bold mb-0">{{ _('Global Author Production') }}</h3>
+      <div class="d-flex align-items-center">
+        {{ export_buttons('authors') }}
+        {{ info_button(
+          _('Authors by production and citations across all filtered OpenAlex works.'),
+          _('Works are deduplicated by DOI across all universities before aggregating. A cited work contributes its full OpenAlex cited_by_count to each listed author.')
+        ) }}
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0 openalex-comparison-table">
+          <thead>
+            <tr>
+              <th>{{ sort_link(_('Author'), 'authors', 'author') }}</th>
+              <th>{{ _('Associated Institutions') }}</th>
+              <th class="text-right">{{ sort_link(_('Articles'), 'authors', 'works') }}</th>
+              <th class="text-right">{{ sort_link(_('Citations'), 'authors', 'citations') }}</th>
+              <th class="text-right">{{ sort_link(_('Avg. Citations'), 'authors', 'average_citations') }}</th>
+              <th class="text-right">{{ sort_link(_('Avg. FWCI'), 'authors', 'fwci') }}</th>
+              <th>{{ sort_link(_('Chile'), 'authors', 'chile') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in analytics.top_authors %}
+            <tr>
+              <td>
+                <div class="font-weight-bold">{{ row.author }}</div>
+                <div class="small text-muted">
+                  {% if row.orcid %}
+                    <a href="https://orcid.org/{{ row.orcid }}" target="_blank" rel="noopener">{{ row.orcid }}</a>
+                  {% elif row.author_id %}
+                    <a href="https://openalex.org/{{ row.author_id }}" target="_blank" rel="noopener">{{ row.author_id }}</a>
+                  {% else %}
+                    &mdash;
+                  {% endif %}
+                </div>
+              </td>
+              <td>{{ association_summary(row.associated_institutions) }}</td>
+              <td class="text-right metric-cell">{{ row.works_count }}</td>
+              <td class="text-right metric-cell">{{ row.total_citations }}</td>
+              <td class="text-right metric-cell">{{ row.average_citations }}</td>
+              <td class="text-right metric-cell">{% if row.average_fwci is not none %}{{ row.average_fwci }}{% else %}N/A{% endif %}</td>
+              <td>{% if row.has_chile_affiliation %}<span class="badge badge-info">{{ _('Yes') }}</span>{% else %}<span class="badge badge-light border">{{ _('No') }}</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{ table_pager('authors') }}
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title text-bold mb-0">{{ _('Global Institution Production') }}</h3>
+      <div class="d-flex align-items-center">
+        {{ export_buttons('institutions') }}
+        {{ info_button(
+          _('OpenAlex institutions by production and citations across all filtered works.'),
+          _('Works are deduplicated by DOI across all universities. A work contributes to every institution listed in its OpenAlex authorships; author links sum the number of authors associated with that institution.')
+        ) }}
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0 openalex-comparison-table">
+          <thead>
+            <tr>
+              <th>{{ sort_link(_('Institution'), 'institutions', 'institution') }}</th>
+              <th>{{ sort_link(_('Country'), 'institutions', 'country') }}</th>
+              <th>{{ _('Associated Authors') }}</th>
+              <th class="text-right">{{ sort_link(_('Articles'), 'institutions', 'works') }}</th>
+              <th class="text-right">{{ sort_link(_('Author links'), 'institutions', 'author_links') }}</th>
+              <th class="text-right">{{ sort_link(_('Corresponding'), 'institutions', 'corresponding') }}</th>
+              <th class="text-right">{{ sort_link(_('Citations'), 'institutions', 'citations') }}</th>
+              <th class="text-right">{{ sort_link(_('Avg. Citations'), 'institutions', 'average_citations') }}</th>
+              <th class="text-right">{{ sort_link(_('Avg. FWCI'), 'institutions', 'fwci') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in analytics.top_institutions %}
+            <tr>
+              <td>
+                <div class="font-weight-bold">{{ row.institution }}</div>
+                <div class="small text-muted">
+                  {% if row.ror_id %}
+                    {{ row.ror_id }}
+                  {% elif row.institution_id %}
+                    <a href="https://openalex.org/{{ row.institution_id }}" target="_blank" rel="noopener">{{ row.institution_id }}</a>
+                  {% else %}
+                    &mdash;
+                  {% endif %}
+                </div>
+              </td>
+              <td>{{ row.country_code }}</td>
+              <td>{{ association_summary(row.associated_authors) }}</td>
+              <td class="text-right metric-cell">{{ row.works_count }}</td>
+              <td class="text-right metric-cell">{{ row.author_links }}</td>
+              <td class="text-right metric-cell">{{ row.corresponding_works }}</td>
+              <td class="text-right metric-cell">{{ row.total_citations }}</td>
+              <td class="text-right metric-cell">{{ row.average_citations }}</td>
+              <td class="text-right metric-cell">{% if row.average_fwci is not none %}{{ row.average_fwci }}{% else %}N/A{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{ table_pager('institutions') }}
+  </div>
+{% elif analytics.active_tab == 'institution_authors' %}
+  <div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title text-bold mb-0">{{ _('Authors by Institution') }}</h3>
+      <div class="d-flex align-items-center">
+        {{ export_buttons('institution_authors') }}
+        {{ info_button(
+          _('Authors ranked within each local university by production and citations.'),
+          _('Rows are grouped by local university and OpenAlex author. Works are counted once per university-author pair under the active filters.')
+        ) }}
+      </div>
+    </div>
+    <div class="openalex-table-toolbar">
+      <form method="get" action="{{ url_for('works.openalex_global') }}" class="openalex-table-filter-row">
+        <input type="hidden" name="tab" value="institution_authors">
+        {% if analytics.filters.year_from is not none %}<input type="hidden" name="year_from" value="{{ analytics.filters.year_from }}">{% endif %}
+        {% if analytics.filters.year_to is not none %}<input type="hidden" name="year_to" value="{{ analytics.filters.year_to }}">{% endif %}
+        {% for type in analytics.filters.type %}<input type="hidden" name="type" value="{{ type }}">{% endfor %}
+        {% for status in analytics.filters.oa_status %}<input type="hidden" name="oa_status" value="{{ status }}">{% endfor %}
+        {{ check_filter('institution_author_ror', _('University'), analytics.filter_options.institutions, analytics.filters.institution_author_ror, _('Any'), _('Leave empty to include all')) }}
+        <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-filter mr-1"></i>{{ _('Apply filters') }}</button>
+      </form>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0 openalex-comparison-table">
+          <thead>
+            <tr>
+              <th>{{ sort_link(_('University'), 'institution_authors', 'university') }}</th>
+              <th>{{ sort_link(_('Author'), 'institution_authors', 'author') }}</th>
+              <th>{{ _('Associated Institutions') }}</th>
+              <th class="text-right">{{ sort_link(_('Articles'), 'institution_authors', 'works') }}</th>
+              <th class="text-right">{{ sort_link(_('Citations'), 'institution_authors', 'citations') }}</th>
+              <th class="text-right">{{ sort_link(_('Avg. Citations'), 'institution_authors', 'average_citations') }}</th>
+              <th class="text-right">{{ sort_link(_('Avg. FWCI'), 'institution_authors', 'fwci') }}</th>
+              <th class="text-right">{{ sort_link(_('Last year'), 'institution_authors', 'latest_year') }}</th>
+              <th>{{ sort_link(_('Chile'), 'institution_authors', 'chile') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in analytics.institution_author_rows %}
+            <tr>
+              <td>
+                <div class="font-weight-bold">{{ row.university }}</div>
+                <div class="small text-muted">{{ row.ror_id }}</div>
+              </td>
+              <td>
+                <div class="font-weight-bold">{{ row.author }}</div>
+                <div class="small text-muted">
+                  {% if row.orcid %}
+                    <a href="https://orcid.org/{{ row.orcid }}" target="_blank" rel="noopener">{{ row.orcid }}</a>
+                  {% elif row.author_id %}
+                    <a href="https://openalex.org/{{ row.author_id }}" target="_blank" rel="noopener">{{ row.author_id }}</a>
+                  {% else %}
+                    &mdash;
+                  {% endif %}
+                </div>
+              </td>
+              <td>{{ association_summary(row.associated_institutions) }}</td>
+              <td class="text-right metric-cell">{{ row.works_count }}</td>
+              <td class="text-right metric-cell">{{ row.total_citations }}</td>
+              <td class="text-right metric-cell">{{ row.average_citations }}</td>
+              <td class="text-right metric-cell">{% if row.average_fwci is not none %}{{ row.average_fwci }}{% else %}N/A{% endif %}</td>
+              <td class="text-right metric-cell">{% if row.latest_year %}{{ row.latest_year }}{% else %}&mdash;{% endif %}</td>
+              <td>{% if row.has_chile_affiliation %}<span class="badge badge-info">{{ _('Yes') }}</span>{% else %}<span class="badge badge-light border">{{ _('No') }}</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{ table_pager('institution_authors') }}
+  </div>
+{% elif analytics.active_tab == 'articles' %}
+  <div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title text-bold mb-0">{{ _('OpenAlex Article Detail') }}</h3>
+    </div>
+    <div class="card-body">
+      <a href="{{ url_for('works.openalex_works') }}" class="btn btn-primary">
+        <i class="fas fa-table mr-1"></i>{{ _('Open article detail') }}
+      </a>
+    </div>
+  </div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    $(function () {
+      $('[data-toggle="popover"]').popover({ container: 'body' });
+      $('.openalex-check-filter-menu').on('click', function (event) {
+        event.stopPropagation();
+      });
+
+      function updateCheckFilterLabel(filter) {
+        const dropdown = $(filter);
+        const labels = dropdown.find('.openalex-check-filter-input:checked').map(function () {
+          return $(this).data('label');
+        }).get();
+        const buttonLabel = dropdown.find('.openalex-check-filter-text');
+        if (!labels.length) {
+          buttonLabel.text(dropdown.find('.openalex-check-filter-button').data('empty-label'));
+        } else if (labels.length <= 2) {
+          buttonLabel.text(labels.join(', '));
+        } else {
+          buttonLabel.text(`${labels.length} ${dropdown.find('.openalex-check-filter-button').data('selected-label')}`);
+        }
+      }
+
+      $('.openalex-check-filter').each(function () {
+        updateCheckFilterLabel(this);
+      });
+
+      $('.openalex-check-filter-input').on('change', function () {
+        updateCheckFilterLabel($(this).closest('.openalex-check-filter'));
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  {% if analytics.summary.enriched_count > 0 %}
+  <script>
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.responsive = true;
+
+    const charts = {{ analytics.charts | tojson }};
+
+    function horizontalBar(id, labels, values, label, color) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      new Chart(el, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label: label, data: values, backgroundColor: color }] },
+        options: {
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { precision: 0 } },
+            y: { ticks: { autoSkip: false } }
+          }
+        }
+      });
+    }
+
+    function lineChart(id, labels, datasets) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      new Chart(el, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+          plugins: { legend: { position: 'bottom' } },
+          elements: { point: { radius: 2, hoverRadius: 4 } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
+
+    horizontalBar('chartGlobalArticles', charts.institution_labels, charts.enriched_values, '{{ _("Articles") }}', '#2a69b8');
+    horizontalBar('chartGlobalCitations', charts.institution_labels, charts.citation_values, '{{ _("Citations") }}', '#dc3545');
+    lineChart('chartGlobalDocumentTypeTrend', charts.trend_years, charts.doc_type_trend_datasets);
+    lineChart('chartGlobalOpenAccessTrend', charts.trend_years, [
+      {
+        label: '{{ _("Open Access") }}',
+        data: charts.open_access_year_values,
+        borderColor: '#28a745',
+        backgroundColor: '#28a745',
+        tension: 0.25,
+        fill: false
+      },
+      {
+        label: '{{ _("Closed") }}',
+        data: charts.closed_access_year_values,
+        borderColor: '#6c757d',
+        backgroundColor: '#6c757d',
+        tension: 0.25,
+        fill: false
+      }
+    ]);
+
+    const ratesEl = document.getElementById('chartGlobalRates');
+    if (ratesEl) {
+      new Chart(ratesEl, {
+        type: 'bar',
+        data: {
+          labels: charts.institution_labels,
+          datasets: [
+            { label: '{{ _("Overall Coverage") }}', data: charts.coverage_values, backgroundColor: '#17a2b8' },
+            { label: '{{ _("Own Institution") }}', data: charts.selected_values, backgroundColor: '#2a69b8' },
+            { label: '{{ _("Chile") }}', data: charts.chile_values, backgroundColor: '#f39c12' },
+            { label: '{{ _("International") }}', data: charts.international_values, backgroundColor: '#6f42c1' }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            x: { beginAtZero: true, max: 100, ticks: { callback: value => value + '%' } },
+            y: { ticks: { autoSkip: false } }
+          }
+        }
+      });
+    }
+
+    const globalOpenAccessEl = document.getElementById('chartGlobalOpenAccess');
+    if (globalOpenAccessEl) {
+      new Chart(globalOpenAccessEl, {
+        type: 'doughnut',
+        data: {
+          labels: charts.oa_labels,
+          datasets: [{ data: charts.oa_values, backgroundColor: ['#28a745', '#6c757d'] }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+  </script>
+  {% endif %}
+{% endblock %}

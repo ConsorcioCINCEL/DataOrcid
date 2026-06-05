@@ -74,6 +74,12 @@ api_key = "REPLACE_OR_USE_ENV"
 mailto = "support@your-domain.cl"
 timeout = 20
 stale_days = 30
+# Parallel DOI fetch workers for OpenAlex sync. Start with 4; raise carefully.
+workers = 4
+# Title fallback is heavier than DOI lookup; keep it lower to avoid 429s.
+title_workers = 2
+# Seconds to keep global OpenAlex analytics in memory per worker and filter set.
+analytics_cache_ttl = 900
 
 
 # ------------------------------------------------------------

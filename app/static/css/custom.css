@@ -89,6 +89,53 @@ body, .content-wrapper {
     background-color: rgba(255, 255, 255, 0.1); /* Subtle white overlay */
 }
 
+.nav-sidebar .nav-header {
+    font-size: 0.72rem;
+    letter-spacing: 0;
+    padding-bottom: 0.35rem;
+    padding-top: 0.85rem;
+}
+
+.nav-sidebar .nav-link p {
+    line-height: 1.2;
+    white-space: normal;
+}
+
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.openalex-parent-active {
+    background-color: rgba(0, 119, 200, 0.16) !important;
+    border-left: 3px solid var(--cincel-secondary);
+    color: #fff !important;
+}
+
+.openalex-sidebar-group > .nav-link {
+    margin-bottom: 0.15rem;
+}
+
+.openalex-sidebar-group .nav-treeview {
+    margin-bottom: 0.35rem;
+}
+
+.openalex-sidebar-group .nav-treeview > .nav-item > .nav-link {
+    font-size: 0.93rem;
+    margin-bottom: 0.1rem;
+    padding-left: 1.65rem;
+}
+
+.openalex-sidebar-group .nav-treeview .nav-icon {
+    color: #adb5bd;
+    font-size: 0.8rem;
+}
+
+.sidebar-dark-primary .openalex-sidebar-group .nav-treeview > .nav-item > .nav-link.active {
+    background-color: rgba(239, 90, 47, 0.18) !important;
+    color: #fff !important;
+    box-shadow: inset 3px 0 0 var(--cincel-primary);
+}
+
+.sidebar-dark-primary .openalex-sidebar-group .nav-treeview > .nav-item > .nav-link.active .nav-icon {
+    color: var(--cincel-primary);
+}
+
 /* 4. INSTITUTIONAL INFO COLORS (Cincel Blue)
    Maps the brand blue to 'info' utilities for systematic feedback.
    ----------------------------------------------------------------------- */

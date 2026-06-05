@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-03-12 20:07-0300\n"
+"POT-Creation-Date: 2026-06-03 11:17-0400\n"
 "PO-Revision-Date: 2026-02-12 20:30-0300\n"
 "Last-Translator: Gastón Olivares <gastonolivares@gmail.com>\n"
 "Language: es\n"
@@ -18,214 +18,222 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: app/decorators.py:69 app/decorators.py:90
+#: app/decorators.py:24 app/decorators.py:35
 msgid "You must log in to access this page."
 msgstr "Debes iniciar sesión para acceder a esta página."
 
-#: app/decorators.py:94
+#: app/blueprints/works.py:1012 app/decorators.py:39
 msgid "Access restricted to administrators."
 msgstr "Acceso restringido a administradores."
 
-#: app/decorators.py:112
+#: app/decorators.py:51
 msgid "Your session has expired or you are not logged in."
 msgstr "Tu sesión ha expirado o no has iniciado sesión."
 
-#: app/decorators.py:117
+#: app/decorators.py:56
 msgid "You do not have the required permissions to access this section."
 msgstr "No tienes los permisos necesarios para acceder a esta sección."
 
-#: app/decorators.py:134
+#: app/decorators.py:68
 msgid "This action requires administrator or manager permissions."
 msgstr "Esta acción requiere permisos de administrador o gestor."
 
-#: app/blueprints/export.py:173 app/blueprints/export.py:175 app/helpers.py:116
+#: app/blueprints/export.py:143 app/blueprints/export.py:145 app/helpers.py:89
 #: app/templates/main/orcid_profile.html:119
 msgid "Biography"
 msgstr "Biografía"
 
-#: app/helpers.py:117
+#: app/helpers.py:90
 msgid "Created Date"
 msgstr "Fecha de Creación"
 
-#: app/helpers.py:118
+#: app/helpers.py:91
 msgid "Last Modified"
 msgstr "Última Modificación"
 
-#: app/blueprints/export.py:165 app/blueprints/export.py:174 app/helpers.py:119
-#: app/helpers.py:127 app/helpers.py:128 app/helpers.py:140 app/helpers.py:148
-#: app/helpers.py:155 app/helpers.py:168
+#: app/blueprints/export.py:135 app/blueprints/export.py:144 app/helpers.py:92
+#: app/helpers.py:100 app/helpers.py:101 app/helpers.py:113 app/helpers.py:121
+#: app/helpers.py:128 app/helpers.py:141
 #: app/templates/main/orcid_profile.html:109
 msgid "Visibility"
 msgstr "Visibilidad"
 
-#: app/helpers.py:127 app/helpers.py:128
+#: app/helpers.py:100 app/helpers.py:101
 msgid "Name"
 msgstr "Nombre"
 
-#: app/helpers.py:137 app/helpers.py:142
-#: app/templates/admin/_user_modals.html:19
-#: app/templates/admin/_user_modals.html:111
+#: app/helpers.py:110 app/helpers.py:115
+#: app/templates/admin/_user_modals.html:20
+#: app/templates/admin/_user_modals.html:113
 #: app/templates/demo/authorized.html:15
 #: app/templates/main/researcher_list.html:45
 msgid "Email"
 msgstr "Email"
 
-#: app/helpers.py:138 app/helpers.py:142
+#: app/helpers.py:111 app/helpers.py:115
 msgid "Verified"
 msgstr "Verificado"
 
-#: app/helpers.py:139
+#: app/helpers.py:112
 msgid "Primary"
 msgstr "Principal"
 
-#: app/helpers.py:148 app/helpers.py:149
+#: app/helpers.py:121 app/helpers.py:122
 msgid "Country"
 msgstr "País"
 
-#: app/helpers.py:155 app/helpers.py:156
+#: app/helpers.py:128 app/helpers.py:129
 msgid "Keyword"
 msgstr "Palabras clave"
 
-#: app/blueprints/export.py:181 app/blueprints/export.py:202
-#: app/blueprints/export.py:221 app/helpers.py:165 app/helpers.py:243
-#: app/helpers.py:285
+#: app/blueprints/export.py:151 app/blueprints/export.py:172
+#: app/blueprints/export.py:191 app/helpers.py:138 app/helpers.py:211
+#: app/helpers.py:253
 msgid "Type"
 msgstr "Tipo"
 
-#: app/blueprints/export.py:181 app/helpers.py:166
+#: app/blueprints/export.py:151 app/helpers.py:139
 msgid "Value"
 msgstr "Valor"
 
-#: app/blueprints/admin.py:251 app/helpers.py:167
+#: app/blueprints/admin.py:248 app/helpers.py:140
 msgid "URL"
 msgstr "URL"
 
-#: app/blueprints/export.py:200 app/blueprints/export.py:220 app/helpers.py:190
-#: app/helpers.py:240 app/helpers.py:284
+#: app/blueprints/export.py:170 app/blueprints/export.py:190 app/helpers.py:158
+#: app/helpers.py:208 app/helpers.py:252
 msgid "Title"
 msgstr "Título"
 
-#: app/helpers.py:191 app/helpers.py:223 app/helpers.py:259
+#: app/helpers.py:159 app/helpers.py:191 app/helpers.py:227
 msgid "Organization"
 msgstr "Organización"
 
-#: app/blueprints/export.py:203 app/helpers.py:192 app/helpers.py:208
-#: app/helpers.py:224
+#: app/blueprints/export.py:173 app/helpers.py:160 app/helpers.py:176
+#: app/helpers.py:192
 msgid "Start Year"
 msgstr "Año de Inicio"
 
-#: app/helpers.py:193 app/helpers.py:209 app/helpers.py:225
+#: app/helpers.py:161 app/helpers.py:177 app/helpers.py:193
 msgid "End Year"
 msgstr "Año de Término"
 
-#: app/blueprints/export.py:204 app/blueprints/export.py:225 app/helpers.py:194
-#: app/helpers.py:210 app/helpers.py:226 app/helpers.py:245 app/helpers.py:262
+#: app/blueprints/export.py:174 app/blueprints/export.py:195 app/helpers.py:162
+#: app/helpers.py:178 app/helpers.py:194 app/helpers.py:213 app/helpers.py:230
+#: app/templates/works/openalex_works.html:107
 msgid "Source"
 msgstr "Fuente"
 
-#: app/helpers.py:206
+#: app/helpers.py:174
 msgid "Degree/Title"
 msgstr "Grado/Título"
 
-#: app/helpers.py:207 app/templates/admin/_user_modals.html:37
-#: app/templates/admin/_user_modals.html:129
+#: app/blueprints/duplicates.py:212 app/blueprints/duplicates.py:236
+#: app/blueprints/duplicates.py:260 app/helpers.py:175
+#: app/templates/admin/_user_modals.html:38
+#: app/templates/admin/_user_modals.html:131
+#: app/templates/duplicates/index.html:147
+#: app/templates/duplicates/index.html:200
+#: app/templates/duplicates/index.html:245
 msgid "Institution"
 msgstr "Institución"
 
-#: app/helpers.py:222 app/templates/admin/_user_modals.html:23
-#: app/templates/admin/_user_modals.html:115
+#: app/helpers.py:190 app/templates/admin/_user_modals.html:24
+#: app/templates/admin/_user_modals.html:117
 msgid "Position"
 msgstr "Cargo"
 
-#: app/helpers.py:241
+#: app/helpers.py:209
 msgid "Funder"
 msgstr "Financiador"
 
-#: app/helpers.py:242
+#: app/helpers.py:210
 msgid "Grant ID"
 msgstr "ID de Financiamiento"
 
-#: app/blueprints/export.py:222 app/helpers.py:244 app/helpers.py:286
+#: app/blueprints/export.py:192 app/helpers.py:212 app/helpers.py:254
+#: app/templates/works/openalex_analytics.html:243
 msgid "Year"
 msgstr "Año"
 
-#: app/helpers.py:260 app/templates/main/resources.html:78
+#: app/helpers.py:228 app/templates/main/resources.html:78
 msgid "Role"
 msgstr "Rol"
 
-#: app/helpers.py:261
+#: app/helpers.py:229
 msgid "Completion Year"
 msgstr "Año de Finalización"
 
-#: app/blueprints/export.py:223 app/helpers.py:287
+#: app/blueprints/export.py:193 app/helpers.py:255
+#: app/templates/works/openalex_works.html:104
 msgid "DOI"
 msgstr "DOI"
 
-#: app/helpers.py:288
+#: app/helpers.py:256
 msgid "ISSN"
 msgstr "ISSN"
 
-#: app/helpers.py:342
+#: app/helpers.py:304
 msgid "No data available"
 msgstr "No hay datos disponibles"
 
-#: app/helpers.py:380
+#: app/helpers.py:336
 msgid "ORCID service communication error."
 msgstr "Error de comunicación con el servicio ORCID."
 
-#: app/helpers.py:395
+#: app/helpers.py:351
 msgid "Connection timed out. Please try again."
 msgstr "La conexión expiró. Por favor intenta nuevamente."
 
-#: app/blueprints/admin.py:55
+#: app/blueprints/admin.py:35
 msgid "You need admin or manager role to access this section."
 msgstr "Necesitas rol de administrador o gestor para acceder a esta sección."
 
-#: app/blueprints/admin.py:130
+#: app/blueprints/admin.py:127
 msgid "The \"Username\" field is required."
 msgstr "El campo \"Usuario\" es obligatorio."
 
-#: app/blueprints/admin.py:155
+#: app/blueprints/admin.py:152
 #, python-format
 msgid "GRID ID '%(g)s' automatically found for ROR %(r)s."
 msgstr "ID GRID '%(g)s' encontrado automáticamente para ROR %(r)s."
 
-#: app/blueprints/admin.py:159
+#: app/blueprints/admin.py:156
 #, python-format
 msgid "A user with username \"%(u)s\" already exists."
 msgstr "Ya existe un usuario con nombre \"%(u)s\"."
 
-#: app/blueprints/admin.py:186
+#: app/blueprints/admin.py:183
 #, python-format
 msgid "User \"%(u)s\" created%(r)s. Password: %(p)s"
 msgstr "Usuario \"%(u)s\" creado%(r)s. Contraseña: %(p)s"
 
-#: app/blueprints/admin.py:191
+#: app/blueprints/admin.py:188
 msgid "Could not create user. Check logs."
 msgstr "No se pudo crear el usuario. Revisa los logs."
 
-#: app/blueprints/admin.py:213
+#: app/blueprints/admin.py:210
 #, python-format
 msgid "Password reset for %(u)s. New temporary: %(p)s"
 msgstr "Contraseña reseteada para %(u)s. Nueva temporal: %(p)s"
 
-#: app/blueprints/admin.py:217
+#: app/blueprints/admin.py:214
 msgid "Could not reset password."
 msgstr "No se pudo resetear la contraseña."
 
-#: app/blueprints/admin.py:234
+#: app/blueprints/admin.py:231
 msgid "User does not have a valid email."
 msgstr "El usuario no tiene un correo válido."
 
-#: app/blueprints/admin.py:245
+#: app/blueprints/admin.py:242
 msgid "Access to Data ORCID-Chile (credentials)"
 msgstr "Acceso a Data ORCID-Chile (credenciales)"
 
-#: app/blueprints/admin.py:249
+#: app/blueprints/admin.py:246
 msgid "Hello"
 msgstr "Hola"
 
-#: app/blueprints/admin.py:250
+#: app/blueprints/admin.py:247
 msgid ""
 "Your access credentials for <strong>Data ORCID-Chile</strong> have been "
 "updated:"
@@ -233,334 +241,594 @@ msgstr ""
 "Tus credenciales de acceso para <strong>Data ORCID-Chile</strong> han "
 "sido actualizadas:"
 
-#: app/blueprints/admin.py:252 app/templates/admin/_user_modals.html:15
-#: app/templates/admin/_user_modals.html:107 app/templates/admin/users.html:46
+#: app/blueprints/admin.py:249 app/templates/admin/_user_modals.html:16
+#: app/templates/admin/_user_modals.html:109 app/templates/admin/users.html:46
 msgid "Username"
 msgstr "Usuario"
 
-#: app/blueprints/admin.py:253
+#: app/blueprints/admin.py:250
 msgid "Temporary Password"
 msgstr "Contraseña temporal"
 
-#: app/blueprints/admin.py:254
+#: app/blueprints/admin.py:251
 msgid "For security reasons, please change your password upon login."
 msgstr ""
 "Por razones de seguridad, por favor cambie su contraseña al iniciar "
 "sesión."
 
-#: app/blueprints/admin.py:277
+#: app/blueprints/admin.py:274
 #, python-format
 msgid "Credentials sent to %(r)s."
 msgstr "Credenciales enviadas a %(r)s."
 
-#: app/blueprints/admin.py:280
+#: app/blueprints/admin.py:277
 msgid "Could not send email."
 msgstr "No se pudo enviar el correo."
 
-#: app/blueprints/admin.py:314
+#: app/blueprints/admin.py:311
 msgid "You cannot remove admin role from your own account."
 msgstr "No puedes quitar el rol de administrador a tu propia cuenta."
 
-#: app/blueprints/admin.py:322
+#: app/blueprints/admin.py:319
 #, python-format
 msgid "GRID ID '%(g)s' automatically found."
 msgstr "ID GRID '%(g)s' encontrado automáticamente."
 
-#: app/blueprints/admin.py:335
+#: app/blueprints/admin.py:332
 #, python-format
 msgid "User \"%(u)s\" updated successfully."
 msgstr "Usuario \"%(u)s\" actualizado correctamente."
 
-#: app/blueprints/admin.py:339
+#: app/blueprints/admin.py:336
 msgid "Could not update user."
 msgstr "No se pudo actualizar el usuario."
 
-#: app/blueprints/admin.py:356
+#: app/blueprints/admin.py:353
 msgid "You cannot delete the main admin account."
 msgstr "No puedes eliminar la cuenta admin principal."
 
-#: app/blueprints/admin.py:362
+#: app/blueprints/admin.py:359
 msgid "User deleted successfully."
 msgstr "Usuario eliminado correctamente."
 
-#: app/blueprints/admin.py:366
+#: app/blueprints/admin.py:363
 msgid "Could not delete user."
 msgstr "No se pudo eliminar el usuario."
 
-#: app/blueprints/admin.py:382
+#: app/blueprints/admin.py:379
 msgid "Action not allowed"
 msgstr "Acción no permitida"
 
-#: app/blueprints/admin.py:391
+#: app/blueprints/admin.py:384
+msgid "Invalid ROR ID."
+msgstr "ROR ID inválido."
+
+#: app/blueprints/admin.py:389
+msgid "Institution not found."
+msgstr "Institución no encontrada."
+
+#: app/blueprints/admin.py:396
 #, python-format
 msgid "Active institution changed to: %(r)s"
 msgstr "Institución activa cambiada a: %(r)s"
 
-#: app/blueprints/api_misc.py:59
+#: app/blueprints/api_misc.py:24
 msgid "Parameter 'year' must be specified."
 msgstr "Debe especificarse el parámetro 'year'."
 
-#: app/blueprints/api_misc.py:63
+#: app/blueprints/api_misc.py:27
 msgid "Invalid mode. Use 'cache' or 'fresh'."
 msgstr "Modo inválido. Use 'cache' o 'fresh'."
 
-#: app/blueprints/api_misc.py:83
+#: app/blueprints/api_misc.py:43
 #, python-format
 msgid "No cache available for year %(y)s."
 msgstr "No hay caché disponible para el año %(y)s."
 
-#: app/blueprints/api_misc.py:99
+#: app/blueprints/api_misc.py:52
 msgid "Could not fetch data from ORCID."
 msgstr "No se pudo obtener datos desde ORCID."
 
-#: app/blueprints/api_misc.py:118
+#: app/blueprints/api_misc.py:65
 msgid "Internal server error."
 msgstr "Error interno del servidor."
 
-#: app/blueprints/auth.py:120
+#: app/blueprints/auth.py:93
 msgid "Recover your password — Data ORCID-Chile"
 msgstr "Recupera tu contraseña — Data ORCID-Chile"
 
-#: app/blueprints/auth.py:127
+#: app/blueprints/auth.py:100
 msgid "Could not send recovery email."
 msgstr "No fue posible enviar el correo de recuperación."
 
-#: app/blueprints/auth.py:132
+#: app/blueprints/auth.py:105
 msgid "If the account exists, we will send instructions."
 msgstr "Si la cuenta existe, enviaremos las instrucciones."
 
-#: app/blueprints/auth.py:155
+#: app/blueprints/auth.py:128
 msgid "Invalid or non-existent user."
 msgstr "Usuario inválido o inexistente."
 
-#: app/blueprints/auth.py:159
+#: app/blueprints/auth.py:132
 msgid "Token expired."
 msgstr "Token expirado."
 
-#: app/blueprints/auth.py:159
+#: app/blueprints/auth.py:132
 msgid "Invalid token."
 msgstr "Token inválido."
 
-#: app/blueprints/auth.py:168
-msgid "Password must be at least 6 characters."
-msgstr "La contraseña debe tener al menos 6 caracteres."
+#: app/blueprints/auth.py:141
+msgid "Password must be at least 8 characters."
+msgstr ""
 
-#: app/blueprints/auth.py:170
+#: app/blueprints/auth.py:143
 msgid "Passwords do not match."
 msgstr "Las contraseñas no coinciden."
 
-#: app/blueprints/auth.py:174
+#: app/blueprints/auth.py:147
 msgid "Password updated successfully. Please log in."
 msgstr "Contraseña actualizada exitosamente. Por favor, inicia sesión."
 
-#: app/blueprints/auth.py:221
+#: app/blueprints/auth.py:188
 msgid "Invalid username or password."
 msgstr "Usuario o contraseña inválido."
 
-#: app/blueprints/auth.py:232
+#: app/blueprints/auth.py:199
 msgid "Session closed successfully."
 msgstr "Sesión cerrada correctamente."
 
-#: app/blueprints/auth.py:257
+#: app/blueprints/auth.py:218
 msgid "Current password is incorrect."
 msgstr "La contraseña actual es incorrecta."
 
-#: app/blueprints/auth.py:259
+#: app/blueprints/auth.py:220
 msgid "New passwords do not match."
 msgstr "Las nuevas contraseñas no coinciden."
 
-#: app/blueprints/auth.py:261
-msgid "New password too short (min 6 chars)."
-msgstr "La nueva contraseña es muy corta (mínimo 6 caracteres)."
+#: app/blueprints/auth.py:222
+msgid "New password too short (min 8 chars)."
+msgstr ""
 
-#: app/blueprints/auth.py:265
+#: app/blueprints/auth.py:226
 msgid "Password updated successfully."
 msgstr "Contraseña actualizada correctamente."
 
-#: app/blueprints/auth.py:287
+#: app/blueprints/auth.py:248
 msgid "The Affiliation Manager ID must start with 'APP-'."
 msgstr "El ID del Affiliation Manager debe comenzar con 'APP-'."
 
-#: app/blueprints/auth.py:292
+#: app/blueprints/auth.py:253
 msgid "Affiliation Manager settings updated."
 msgstr "Configuración del Affiliation Manager actualizada."
 
-#: app/blueprints/auth.py:296
+#: app/blueprints/auth.py:257
 msgid "Internal database error while saving settings."
 msgstr "Error interno de base de datos al guardar la configuración."
 
-#: app/blueprints/cache_control.py:117
+#: app/blueprints/cache_control.py:91 app/blueprints/works.py:984
+#: app/blueprints/works.py:1151
 msgid "You do not have sufficient permissions to perform this action."
 msgstr "No tienes permisos suficientes para realizar esta acción."
 
-#: app/blueprints/cache_control.py:125
+#: app/blueprints/cache_control.py:97
 msgid "No active institution (ROR ID) selected. Please select one first."
 msgstr "No hay institución activa (ROR ID) seleccionada. Selecciona una primero."
 
-#: app/blueprints/cache_control.py:135
+#: app/blueprints/cache_control.py:105
 msgid "Authentication failed: Could not obtain a valid ORCID Member Token."
 msgstr ""
 "Fallo de autenticación: No se pudo obtener un Token de Miembro ORCID "
 "válido."
 
-#: app/blueprints/cache_control.py:145
+#: app/blueprints/cache_control.py:113
 #, python-format
 msgid "Works cache successfully rebuilt: %(count)s records updated."
 msgstr ""
 "Caché de contribuciones (works) reconstruida: %(count)s registros "
 "actualizados."
 
-#: app/blueprints/cache_control.py:151
+#: app/blueprints/cache_control.py:119
 #, python-format
 msgid "Funding cache successfully rebuilt: %(count)s records updated."
 msgstr "Caché de financiamiento reconstruida: %(count)s registros actualizados."
 
-#: app/blueprints/cache_control.py:154
+#: app/blueprints/cache_control.py:122
 #, python-format
 msgid "Invalid cache target specified: '%(target)s'."
 msgstr "Objetivo de caché especificado inválido: '%(target)s'."
 
-#: app/blueprints/cache_control.py:161
+#: app/blueprints/cache_control.py:129
 #, python-format
 msgid "Critical error during cache rebuild: %(error)s"
 msgstr "Error crítico durante la reconstrucción de caché: %(error)s"
 
-#: app/blueprints/dashboard.py:73
+#: app/blueprints/dashboard.py:36 app/blueprints/duplicates.py:29
+#: app/blueprints/duplicates.py:60 app/blueprints/duplicates.py:81
 msgid "No active ROR context found. Please log in again or select an institution."
 msgstr ""
 
-#: app/blueprints/dashboard.py:89
+#: app/blueprints/dashboard.py:49
 msgid "With DOI"
 msgstr "Con DOI"
 
-#: app/blueprints/dashboard.py:89
+#: app/blueprints/dashboard.py:49
 msgid "Without DOI"
 msgstr "Sin DOI"
 
-#: app/blueprints/dashboard.py:142
+#: app/blueprints/dashboard.py:102
 msgid "An error occurred while generating publication statistics."
 msgstr "Ocurrió un error al generar las estadísticas de publicaciones."
 
-#: app/blueprints/export.py:73
-msgid "ORCID_Full_Report"
-msgstr "Reporte_Completo_ORCID"
+#: app/blueprints/duplicates.py:85
+#, python-format
+msgid "Duplicate profile analysis cache cleared: %(count)s entries removed."
+msgstr ""
+"Caché del análisis de perfiles duplicados limpiada: %(count)s entradas "
+"eliminadas."
 
-#: app/blueprints/export.py:84
-msgid "Could not generate the requested Excel file."
-msgstr "No se pudo generar el archivo Excel solicitado."
+#: app/blueprints/duplicates.py:145
+msgid "Yes"
+msgstr "Sí"
 
-#: app/blueprints/export.py:144
-msgid "Could not generate the requested file."
-msgstr "No se pudo generar el archivo solicitado."
+#: app/blueprints/duplicates.py:145
+msgid "No"
+msgstr "No"
 
-#: app/blueprints/export.py:161
+#: app/blueprints/duplicates.py:156
+msgid "Candidates"
+msgstr "Candidatos"
+
+#: app/blueprints/duplicates.py:161 app/templates/duplicates/index.html:24
+#: app/templates/main/researcher_list.html:46
+msgid "Institutions"
+msgstr "Instituciones"
+
+#: app/blueprints/duplicates.py:168
+msgid "ORCID Activity"
+msgstr "Actividad ORCID"
+
+#: app/blueprints/duplicates.py:173
+msgid "Methodology"
+msgstr "Metodología"
+
+#: app/blueprints/duplicates.py:211
+msgid "Candidate Group"
+msgstr "Grupo candidato"
+
+#: app/blueprints/duplicates.py:213 app/blueprints/duplicates.py:235
+#: app/blueprints/duplicates.py:261
+msgid "ROR ID"
+msgstr "ROR ID"
+
+#: app/blueprints/duplicates.py:214
+msgid "Candidate Name"
+msgstr "Nombre candidato"
+
+#: app/blueprints/duplicates.py:215
+msgid "Normalized Name"
+msgstr "Nombre normalizado"
+
+#: app/blueprints/duplicates.py:216 app/blueprints/duplicates.py:283
+#: app/templates/duplicates/index.html:150
+msgid "Confidence"
+msgstr "Confianza"
+
+#: app/blueprints/duplicates.py:217
+msgid "Confidence Level"
+msgstr "Nivel de confianza"
+
+#: app/blueprints/duplicates.py:218 app/blueprints/duplicates.py:262
+#: app/templates/duplicates/index.html:199
+msgid "ORCID iD"
+msgstr "ORCID iD"
+
+#: app/blueprints/duplicates.py:219 app/blueprints/duplicates.py:268
+msgid "ORCID URL"
+msgstr "URL de ORCID"
+
+#: app/blueprints/duplicates.py:220 app/blueprints/duplicates.py:263
+msgid "Profile Name"
+msgstr "Nombre del perfil"
+
+#: app/blueprints/duplicates.py:221 app/blueprints/export.py:131
 msgid "Given Names"
 msgstr "Nombres"
 
-#: app/blueprints/export.py:162
+#: app/blueprints/duplicates.py:222 app/blueprints/export.py:132
 msgid "Family Names"
 msgstr "Apellidos"
 
-#: app/blueprints/export.py:163
+#: app/blueprints/duplicates.py:223 app/blueprints/export.py:133
 msgid "Credit Name"
 msgstr "Nombre de crédito"
 
-#: app/blueprints/export.py:164 app/templates/admin/users.html:51
+#: app/blueprints/duplicates.py:224 app/blueprints/duplicates.py:264
+#: app/blueprints/export.py:199 app/templates/dashboard/index.html:115
+#: app/templates/duplicates/index.html:201
+#: app/templates/duplicates/index.html:293 app/templates/main/index.html:207
+#: app/templates/main/index.html:235
+msgid "Works"
+msgstr "Contribuciones (works)"
+
+#: app/blueprints/duplicates.py:225 app/blueprints/duplicates.py:265
+#: app/blueprints/export.py:178 app/templates/duplicates/index.html:202
+#: app/templates/duplicates/index.html:294 app/templates/main/index.html:207
+msgid "Fundings"
+msgstr "Financiamientos"
+
+#: app/blueprints/duplicates.py:226
+msgid "Year Range"
+msgstr "Rango de años"
+
+#: app/blueprints/duplicates.py:227
+msgid "Managed by Affiliation Manager"
+msgstr "Gestionado por Affiliation Manager"
+
+#: app/blueprints/duplicates.py:228 app/templates/duplicates/index.html:247
+msgid "Evidence"
+msgstr "Evidencia"
+
+#: app/blueprints/duplicates.py:229
+msgid "Shared DOIs"
+msgstr "DOI compartidos"
+
+#: app/blueprints/duplicates.py:237 app/blueprints/duplicates.py:267
+#: app/templates/duplicates/index.html:21
+#: app/templates/duplicates/index.html:204
+msgid "Candidate Groups"
+msgstr "Grupos candidatos"
+
+#: app/blueprints/duplicates.py:238 app/templates/duplicates/index.html:15
+#: app/templates/duplicates/index.html:22 app/templates/layout/sidebar.html:73
+msgid "Duplicate Profiles"
+msgstr "Duplicados"
+
+#: app/blueprints/duplicates.py:239 app/templates/duplicates/index.html:23
+msgid "Extra Profiles"
+msgstr "Perfiles adicionales"
+
+#: app/blueprints/duplicates.py:240
+msgid "Highest Confidence"
+msgstr "Confianza más alta"
+
+#: app/blueprints/duplicates.py:266 app/templates/duplicates/index.html:203
+msgid "Total Activity"
+msgstr "Actividad total"
+
+#: app/blueprints/duplicates.py:275 app/blueprints/duplicates.py:279
+#: app/blueprints/duplicates.py:283 app/blueprints/duplicates.py:287
+msgid "Step"
+msgstr "Paso"
+
+#: app/blueprints/duplicates.py:275
+msgid "Population"
+msgstr "Población"
+
+#: app/blueprints/duplicates.py:276 app/blueprints/duplicates.py:280
+#: app/blueprints/duplicates.py:284 app/blueprints/duplicates.py:288
+msgid "Description"
+msgstr "Descripción"
+
+#: app/blueprints/duplicates.py:276
+msgid ""
+"The analysis uses ORCID iDs found in the local works and funding caches "
+"for the selected institution scope."
+msgstr ""
+"El análisis usa los ORCID iD encontrados en las cachés locales de "
+"publicaciones y financiamientos para el alcance institucional "
+"seleccionado."
+
+#: app/blueprints/duplicates.py:279
+msgid "Candidate detection"
+msgstr "Detección de candidatos"
+
+#: app/blueprints/duplicates.py:280
+msgid ""
+"Profiles are grouped when their cached display names match after "
+"lowercasing, removing accents, punctuation, and extra spaces."
+msgstr ""
+"Los perfiles se agrupan cuando sus nombres en caché coinciden después de "
+"convertir a minúsculas, eliminar acentos, puntuación y espacios "
+"adicionales."
+
+#: app/blueprints/duplicates.py:284
+msgid ""
+"Scores increase when names have more tokens, each profile has cached "
+"activity, or profiles share DOI evidence."
+msgstr ""
+"Los puntajes aumentan cuando los nombres tienen más componentes, cada "
+"perfil tiene actividad en caché o los perfiles comparten evidencia DOI."
+
+#: app/blueprints/duplicates.py:287
+msgid "Verification"
+msgstr "Verificación"
+
+#: app/blueprints/duplicates.py:288
+msgid ""
+"Each row keeps ORCID URLs, local activity counts, Affiliation Manager "
+"status, and shared DOI evidence for manual review."
+msgstr ""
+"Cada fila conserva URL de ORCID, conteos de actividad local, estado de "
+"Affiliation Manager y evidencia DOI compartida para revisión manual."
+
+#: app/blueprints/duplicates.py:295
+msgid "Exact normalized name match"
+msgstr "Coincidencia exacta de nombre normalizado"
+
+#: app/blueprints/duplicates.py:296
+msgid "Shared DOI evidence"
+msgstr "Evidencia DOI compartida"
+
+#: app/blueprints/duplicates.py:297
+msgid "Affiliation Manager evidence"
+msgstr "Evidencia de Affiliation Manager"
+
+#: app/blueprints/duplicates.py:303 app/templates/duplicates/index.html:70
+msgid "High"
+msgstr "Alta"
+
+#: app/blueprints/duplicates.py:304 app/templates/duplicates/index.html:69
+msgid "Medium"
+msgstr "Media"
+
+#: app/blueprints/duplicates.py:305
+msgid "Low"
+msgstr "Baja"
+
+#: app/blueprints/export.py:49
+msgid "ORCID_Full_Report"
+msgstr "Reporte_Completo_ORCID"
+
+#: app/blueprints/export.py:60
+msgid "Could not generate the requested Excel file."
+msgstr "No se pudo generar el archivo Excel solicitado."
+
+#: app/blueprints/export.py:120
+msgid "Could not generate the requested file."
+msgstr "No se pudo generar el archivo solicitado."
+
+#: app/blueprints/export.py:134 app/templates/admin/users.html:52
 #: app/templates/main/orcid_profile.html:107
 msgid "Created"
 msgstr "Creado"
 
-#: app/blueprints/export.py:167
+#: app/blueprints/export.py:137
 msgid "Identity"
 msgstr "Identidad"
 
-#: app/blueprints/export.py:182
+#: app/blueprints/export.py:152
 msgid "ExternalIDs"
 msgstr "Identificadores Externos"
 
-#: app/blueprints/export.py:201
+#: app/blueprints/export.py:171
 msgid "Agency"
 msgstr "Agencia"
 
-#: app/blueprints/export.py:208 app/templates/main/index.html:207
-msgid "Fundings"
-msgstr "Financiamientos"
-
-#: app/blueprints/export.py:224
+#: app/blueprints/export.py:194
 msgid "Journal/Publisher"
 msgstr "Revista/Editorial"
 
-#: app/blueprints/export.py:229 app/templates/dashboard/index.html:115
-#: app/templates/main/index.html:207 app/templates/main/index.html:235
-msgid "Works"
-msgstr "Contribuciones (works)"
-
-#: app/blueprints/fundings.py:100 app/blueprints/fundings.py:159
+#: app/blueprints/fundings.py:72 app/blueprints/fundings.py:117
 msgid "No ROR ID found in session."
 msgstr "No se encontró ROR ID en la sesión."
 
-#: app/blueprints/fundings.py:120
+#: app/blueprints/fundings.py:87
 #, python-format
 msgid "Funding cache created successfully: %(count)s records."
 msgstr "Caché de financiamiento creada exitosamente: %(count)s registros."
 
-#: app/blueprints/fundings.py:127
+#: app/blueprints/fundings.py:94
 msgid "Error building funding cache. Check logs."
 msgstr "Error construyendo caché de financiamiento. Revisa los logs."
 
-#: app/blueprints/fundings.py:165
+#: app/blueprints/fundings.py:123
 msgid "No funding cache available. Please run \"Download from scratch\"."
 msgstr ""
 "No hay caché de financiamiento disponible. Por favor ejecuta \"Descargar "
 "desde cero\"."
 
-#: app/blueprints/fundings.py:170
+#: app/blueprints/fundings.py:128
 msgid "Funding cache is empty."
 msgstr "La caché de financiamiento está vacía."
 
-#: app/blueprints/fundings.py:232
+#: app/blueprints/fundings.py:187
 msgid "An error occurred generating the export file."
 msgstr "Ocurrió un error al generar el archivo de exportación."
 
-#: app/blueprints/main.py:190
+#: app/blueprints/main.py:163
 msgid "No active ROR ID found."
 msgstr "No se encontró un ROR ID activo."
 
-#: app/blueprints/main.py:217
+#: app/blueprints/main.py:190
 msgid "Could not communicate with ORCID services."
 msgstr "No fue posible comunicarse con los servicios de ORCID."
 
-#: app/blueprints/main.py:242 app/blueprints/main.py:244
-#: app/blueprints/main.py:253 app/blueprints/main.py:255
-#: app/blueprints/main.py:368 app/blueprints/main.py:391
+#: app/blueprints/main.py:209 app/blueprints/main.py:211
+#: app/blueprints/main.py:220 app/blueprints/main.py:222
+#: app/blueprints/main.py:319 app/blueprints/main.py:340
 msgid "Unknown Researcher"
 msgstr "Investigador Desconocido"
 
-#: app/blueprints/main.py:488
+#: app/blueprints/main.py:437
 msgid "No data available to download for this chart."
 msgstr "No hay datos disponibles para descargar en este gráfico."
 
-#: app/blueprints/main.py:508
+#: app/blueprints/main.py:457
 msgid "An error occurred while exporting data."
 msgstr "Ocurrió un error al exportar los datos."
 
-#: app/blueprints/main.py:539
+#: app/blueprints/main.py:482
 msgid "The requested ORCID profile could not be loaded."
 msgstr "No se pudo cargar el perfil ORCID solicitado."
 
-#: app/blueprints/main.py:561
+#: app/blueprints/main.py:504
 msgid "The requested file was not found on the server."
 msgstr "El archivo solicitado no se encontró en el servidor."
 
-#: app/blueprints/main.py:580
+#: app/blueprints/main.py:523
 msgid "Could not retrieve the list of available files."
 msgstr "No fue posible recuperar la lista de archivos disponibles."
 
-#: app/blueprints/works.py:97 app/blueprints/works.py:236
+#: app/blueprints/works.py:714
+msgid "Unknown type"
+msgstr "Tipo desconocido"
+
+#: app/blueprints/works.py:715
+msgid "Unknown OA status"
+msgstr "Estado OA desconocido"
+
+#: app/blueprints/works.py:716
+msgid "Unknown field"
+msgstr "Campo desconocido"
+
+#: app/blueprints/works.py:717
+msgid "Unknown domain"
+msgstr "Dominio desconocido"
+
+#: app/blueprints/works.py:718 app/templates/works/openalex_analytics.html:252
+msgid "Unknown source"
+msgstr "Fuente desconocida"
+
+#: app/blueprints/works.py:719
+msgid "Unknown language"
+msgstr "Idioma desconocido"
+
+#: app/blueprints/works.py:721
+msgid "Unknown country"
+msgstr "País desconocido"
+
+#: app/blueprints/works.py:812 app/templates/works/openalex_works.html:65
+msgid "Matched"
+msgstr "Coincidentes"
+
+#: app/blueprints/works.py:813 app/templates/works/openalex_works.html:144
+msgid "Not found"
+msgstr "No encontrado"
+
+#: app/blueprints/works.py:814 app/templates/admin/statistics.html:81
+msgid "Errors"
+msgstr "Errores"
+
+#: app/blueprints/works.py:815 app/templates/demo/authorized.html:30
+#: app/templates/works/openalex_works.html:148
+msgid "Pending"
+msgstr "Pendiente"
+
+#: app/blueprints/works.py:861 app/blueprints/works.py:866
+msgid "Unknown institution"
+msgstr "Institución desconocida"
+
+#: app/blueprints/works.py:871
+msgid "Unknown author"
+msgstr "Autor desconocido"
+
+#: app/blueprints/works.py:989 app/blueprints/works.py:1111
+#: app/blueprints/works.py:1156 app/blueprints/works.py:1229
+#: app/blueprints/works.py:1259
 msgid "No active institution context found."
 msgstr "No se encontró un contexto de institución activa."
 
-#: app/blueprints/works.py:160
+#: app/blueprints/works.py:999
 #, python-format
 msgid ""
 "Full synchronization complete: %(w)s works, %(f)s grants, and %(p)s "
@@ -569,144 +837,213 @@ msgstr ""
 "Sincronización completa finalizada: %(w)s contribuciones, %(f)s proyectos"
 " y %(p)s perfiles actualizados."
 
-#: app/blueprints/works.py:163
+#: app/blueprints/works.py:1002
 #, python-format
 msgid "Sync completed with errors in: %(err)s. Check logs."
 msgstr "Sincronización completada con errores en: %(err)s. Revisa los logs."
 
-#: app/blueprints/works.py:197
+#: app/blueprints/works.py:1019
+msgid "No institutions available for synchronization."
+msgstr "No hay instituciones disponibles para sincronización."
+
+#: app/blueprints/works.py:1040
+#, python-format
+msgid ""
+"All-institution synchronization completed with %(failed)s institution "
+"errors. Totals: %(w)s works, %(f)s fundings, %(p)s profiles."
+msgstr ""
+"La sincronización de todas las instituciones finalizó con %(failed)s "
+"instituciones con error. Totales: %(w)s publicaciones, %(f)s "
+"financiamientos, %(p)s perfiles."
+
+#: app/blueprints/works.py:1045
+#, python-format
+msgid ""
+"All-institution synchronization complete: %(count)s institutions, %(w)s "
+"works, %(f)s fundings, %(p)s profiles."
+msgstr ""
+"Sincronización de todas las instituciones completa: %(count)s "
+"instituciones, %(w)s publicaciones, %(f)s financiamientos, %(p)s "
+"perfiles."
+
+#: app/blueprints/works.py:1077
 msgid "Funding cache updated."
 msgstr "Caché de financiamiento actualizada."
 
-#: app/blueprints/works.py:201
+#: app/blueprints/works.py:1082
 msgid "Error updating fundings."
 msgstr "Error actualizando financiamientos."
 
-#: app/blueprints/works.py:215
+#: app/blueprints/works.py:1096
 #, python-format
 msgid "Profiles updated: %s"
 msgstr "Perfiles actualizados: %s"
 
-#: app/blueprints/works.py:217
+#: app/blueprints/works.py:1098
 msgid "Error updating profiles"
 msgstr "Error actualizando perfiles"
 
-#: app/blueprints/works.py:276
+#: app/blueprints/works.py:1161 app/blueprints/works.py:1195
+msgid "Invalid OpenAlex synchronization mode."
+msgstr "Modo de sincronización OpenAlex no válido."
+
+#: app/blueprints/works.py:1175 app/blueprints/works.py:1209
+#, python-format
+msgid "OpenAlex synchronization failed: %(error)s"
+msgstr "Falló la sincronización OpenAlex: %(error)s"
+
+#: app/blueprints/works.py:1175 app/blueprints/works.py:1209
+msgid "Check logs."
+msgstr "Revisa los logs."
+
+#: app/blueprints/works.py:1178
+#, python-format
+msgid ""
+"OpenAlex synchronization complete: %(fetched)s fetched, %(matched)s "
+"matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors."
+msgstr ""
+"Sincronización OpenAlex completa: %(fetched)s descargados, %(matched)s "
+"coincidentes, %(not_found)s no encontrados, %(skipped)s omitidos, "
+"%(errors)s errores."
+
+#: app/blueprints/works.py:1212
+#, python-format
+msgid ""
+"System-wide OpenAlex synchronization complete: %(fetched)s fetched, "
+"%(matched)s matched, %(not_found)s not found, %(skipped)s skipped, "
+"%(errors)s errors."
+msgstr ""
+"Sincronización OpenAlex global completa: %(fetched)s descargados, "
+"%(matched)s coincidentes, %(not_found)s no encontrados, %(skipped)s "
+"omitidos, %(errors)s errores."
+
+#: app/blueprints/works.py:1281 app/blueprints/works.py:1344
 msgid "The publication cache is currently empty."
 msgstr "La caché de publicaciones está vacía actualmente."
 
-#: app/blueprints/works.py:318
+#: app/blueprints/works.py:1304 app/blueprints/works.py:1367
 msgid "The funding cache is empty."
 msgstr "La caché de financiamiento está vacía."
+
+#: app/blueprints/works.py:1322
+msgid "No researcher cache data available."
+msgstr ""
+
+#: app/blueprints/works.py:1394
+msgid "The OpenAlex cache is empty."
+msgstr "La caché OpenAlex está vacía."
 
 #: app/templates/admin/statistics.html:10 app/templates/admin/users.html:10
 #: app/templates/auth/am_settings.html:10
 #: app/templates/auth/change_password.html:10 app/templates/base.html:29
-#: app/templates/base.html:137 app/templates/dashboard/index.html:10
-#: app/templates/main/index.html:9 app/templates/main/integration_guide.html:9
+#: app/templates/base.html:138 app/templates/dashboard/index.html:10
+#: app/templates/duplicates/index.html:14 app/templates/main/index.html:9
+#: app/templates/main/integration_guide.html:9
 #: app/templates/main/integration_pull.html:9 app/templates/main/metrics.html:9
 #: app/templates/main/orcid_profile.html:36
 #: app/templates/main/researcher_list.html:9
 #: app/templates/main/resources.html:9 app/templates/works/cache_status.html:9
+#: app/templates/works/openalex_analytics.html:24
+#: app/templates/works/openalex_works.html:14
 msgid "Home"
 msgstr "Inicio"
 
-#: app/templates/base.html:40
+#: app/templates/base.html:41
 msgid "Switch Institution"
 msgstr "Cambiar Institución"
 
-#: app/templates/base.html:52
+#: app/templates/base.html:53
 msgid "Loading..."
 msgstr "Cargando..."
 
-#: app/templates/base.html:62
+#: app/templates/base.html:63
 msgid "My Institution"
 msgstr "Mi Institución"
 
-#: app/templates/base.html:68
+#: app/templates/base.html:69
 msgid "Last data synchronization"
 msgstr "Última sincronización de datos"
 
-#: app/templates/base.html:69
+#: app/templates/base.html:70
 msgid "Updated:"
 msgstr "Actualizado:"
 
-#: app/templates/base.html:93
+#: app/templates/base.html:94
 msgid "Logout"
 msgstr "Cerrar sesión"
 
-#: app/templates/base.html:174
+#: app/templates/base.html:175
 msgid "For questions, support, or to schedule online training, contact:"
 msgstr ""
 "Para dudas, soporte o agendar una <strong>capacitación online</strong>, "
 "contactar a <strong>Gastón Olivares</strong> —"
 
-#: app/templates/admin/_user_modals.html:6
+#: app/templates/admin/_user_modals.html:7
 msgid "Edit User Details"
 msgstr "Editar detalles del usuario"
 
-#: app/templates/admin/_user_modals.html:29
-#: app/templates/admin/_user_modals.html:121
+#: app/templates/admin/_user_modals.html:30
+#: app/templates/admin/_user_modals.html:123
 msgid "First Name"
 msgstr "Nombre"
 
-#: app/templates/admin/_user_modals.html:33
-#: app/templates/admin/_user_modals.html:125
+#: app/templates/admin/_user_modals.html:34
+#: app/templates/admin/_user_modals.html:127
 msgid "Last Name"
 msgstr "Apellido"
 
-#: app/templates/admin/_user_modals.html:52
-#: app/templates/admin/_user_modals.html:144
-#: app/templates/auth/am_settings.html:41
+#: app/templates/admin/_user_modals.html:53
+#: app/templates/admin/_user_modals.html:146
+#: app/templates/auth/am_settings.html:42
 msgid "Affiliation Manager Client ID"
 msgstr "Client ID del Affiliation Manager"
 
-#: app/templates/admin/_user_modals.html:54
+#: app/templates/admin/_user_modals.html:55
 msgid "Optional. Used to identify Managed Records (AM Badge)."
 msgstr "Opcional. Usado para identificar Registros Gestionados (Sello AM)."
 
-#: app/templates/admin/_user_modals.html:58
+#: app/templates/admin/_user_modals.html:59
 msgid "Preferred Language"
 msgstr "Idioma Preferido"
 
-#: app/templates/admin/_user_modals.html:65
+#: app/templates/admin/_user_modals.html:66
 msgid "Assign Roles"
 msgstr "Asignar Roles"
 
-#: app/templates/admin/_user_modals.html:70
-#: app/templates/admin/_user_modals.html:161 app/templates/admin/users.html:69
+#: app/templates/admin/_user_modals.html:71
+#: app/templates/admin/_user_modals.html:163 app/templates/admin/users.html:70
 msgid "Admin"
 msgstr "Admin"
 
-#: app/templates/admin/_user_modals.html:76
-#: app/templates/admin/_user_modals.html:167 app/templates/admin/users.html:70
+#: app/templates/admin/_user_modals.html:77
+#: app/templates/admin/_user_modals.html:169 app/templates/admin/users.html:71
 msgid "Manager"
 msgstr "Gestor"
 
-#: app/templates/admin/_user_modals.html:84
-#: app/templates/admin/_user_modals.html:175
-#: app/templates/auth/am_settings.html:60
-#: app/templates/auth/change_password.html:57
+#: app/templates/admin/_user_modals.html:85
+#: app/templates/admin/_user_modals.html:177
+#: app/templates/auth/am_settings.html:61
+#: app/templates/auth/change_password.html:58
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: app/templates/admin/_user_modals.html:86
+#: app/templates/admin/_user_modals.html:87
 msgid "Update User"
 msgstr "Actualizar Usuario"
 
-#: app/templates/admin/_user_modals.html:98
+#: app/templates/admin/_user_modals.html:100
 msgid "Create New User"
 msgstr "Crear nuevo usuario"
 
-#: app/templates/admin/_user_modals.html:149
+#: app/templates/admin/_user_modals.html:151
 msgid "Default Language"
 msgstr "Idioma predeterminado"
 
-#: app/templates/admin/_user_modals.html:156
+#: app/templates/admin/_user_modals.html:158
 msgid "Initial Roles"
 msgstr "Roles Iniciales"
 
-#: app/templates/admin/_user_modals.html:177 app/templates/admin/users.html:31
+#: app/templates/admin/_user_modals.html:179 app/templates/admin/users.html:31
 msgid "Create User"
 msgstr "Crear usuario"
 
@@ -722,72 +1059,120 @@ msgstr "Logs de Actividad del Sistema"
 msgid "Statistics"
 msgstr "Estadísticas"
 
-#: app/templates/admin/statistics.html:22
+#: app/templates/admin/statistics.html:18
+msgid "Requests"
+msgstr "Solicitudes"
+
+#: app/templates/admin/statistics.html:19
+msgid "Active Users"
+msgstr "Usuarios activos"
+
+#: app/templates/admin/statistics.html:20
+msgid "Error Responses"
+msgstr "Respuestas con error"
+
+#: app/templates/admin/statistics.html:21
+msgid "Average Latency"
+msgstr "Latencia promedio"
+
+#: app/templates/admin/statistics.html:37
+msgid "Activity Filters"
+msgstr "Filtros de actividad"
+
+#: app/templates/admin/statistics.html:43
 msgid "Search Keyword"
 msgstr "Palabra clave de búsqueda"
 
-#: app/templates/admin/statistics.html:28
+#: app/templates/admin/statistics.html:49
 msgid "User, path, or IP..."
 msgstr "Usuario, ruta o IP..."
 
-#: app/templates/admin/statistics.html:33
+#: app/templates/admin/statistics.html:54
 msgid "Filter by User"
 msgstr "Filtrar por usuario"
 
-#: app/templates/admin/statistics.html:35
+#: app/templates/admin/statistics.html:56
 msgid "All Users"
 msgstr "Todos los usuarios"
 
-#: app/templates/admin/statistics.html:48
-msgid "Include anonymous (guest) access"
-msgstr "Incluir acceso anónimo (invitado)"
-
-#: app/templates/admin/statistics.html:55
-msgid "Apply"
-msgstr "Aplicar"
-
 #: app/templates/admin/statistics.html:66
-msgid "Recent Requests"
-msgstr "Solicitudes Recientes"
-
-#: app/templates/admin/statistics.html:68
-msgid "Page"
-msgstr "Página"
-
-#: app/templates/admin/statistics.html:68
-msgid "of"
-msgstr "de"
-
-#: app/templates/admin/statistics.html:78
-msgid "Timestamp"
-msgstr "Marca de tiempo"
-
-#: app/templates/admin/statistics.html:79 app/templates/admin/users.html:71
-msgid "User"
-msgstr "Usuario"
-
-#: app/templates/admin/statistics.html:80
-msgid "Request Path"
-msgstr "Ruta de Solicitud"
-
-#: app/templates/admin/statistics.html:81
+#: app/templates/admin/statistics.html:123
 msgid "Method"
 msgstr "Método"
 
-#: app/templates/admin/statistics.html:82 app/templates/demo/authorized.html:16
-#: app/templates/demo/projects.html:28 app/templates/main/resources.html:80
+#: app/templates/admin/statistics.html:68
+msgid "All Methods"
+msgstr "Todos los métodos"
+
+#: app/templates/admin/statistics.html:76
+#: app/templates/admin/statistics.html:124
+#: app/templates/demo/authorized.html:16 app/templates/demo/projects.html:28
+#: app/templates/main/resources.html:80
 msgid "Status"
 msgstr "Estado"
 
-#: app/templates/admin/statistics.html:83
+#: app/templates/admin/statistics.html:78
+msgid "All Statuses"
+msgstr "Todos los estados"
+
+#: app/templates/admin/statistics.html:79
+msgid "Success"
+msgstr "Éxito"
+
+#: app/templates/admin/statistics.html:80
+msgid "Redirects"
+msgstr "Redirecciones"
+
+#: app/templates/admin/statistics.html:89
+msgid "Include anonymous (guest) access"
+msgstr "Incluir acceso anónimo (invitado)"
+
+#: app/templates/admin/statistics.html:96
+msgid "Apply"
+msgstr "Aplicar"
+
+#: app/templates/admin/statistics.html:98
+#: app/templates/duplicates/index.html:75
+msgid "Reset"
+msgstr "Restablecer"
+
+#: app/templates/admin/statistics.html:108
+msgid "Recent Requests"
+msgstr "Solicitudes Recientes"
+
+#: app/templates/admin/statistics.html:110
+msgid "Page"
+msgstr "Página"
+
+#: app/templates/admin/statistics.html:110
+msgid "of"
+msgstr "de"
+
+#: app/templates/admin/statistics.html:120
+msgid "Timestamp"
+msgstr "Marca de tiempo"
+
+#: app/templates/admin/statistics.html:121 app/templates/admin/users.html:72
+msgid "User"
+msgstr "Usuario"
+
+#: app/templates/admin/statistics.html:122
+msgid "Request Path"
+msgstr "Ruta de Solicitud"
+
+#: app/templates/admin/statistics.html:125
 msgid "Latency"
 msgstr "Latencia"
 
-#: app/templates/admin/statistics.html:123
+#: app/templates/admin/statistics.html:126
+msgid "Client"
+msgstr "Cliente"
+
+#: app/templates/admin/statistics.html:169
 msgid "No activity logs found for the selected filters."
 msgstr "No hay registros de actividad para los filtros seleccionados."
 
-#: app/templates/admin/statistics.html:176
+#: app/templates/admin/statistics.html:222
 msgid "Select a user"
 msgstr "Seleccionar un usuario"
 
@@ -803,7 +1188,7 @@ msgstr "Usuarios"
 msgid "Search by username, institution, ROR or email"
 msgstr "Buscar por usuario, institución, ROR o email"
 
-#: app/templates/admin/users.html:22
+#: app/templates/admin/users.html:22 app/templates/duplicates/index.html:57
 msgid "Search"
 msgstr "Buscar"
 
@@ -827,39 +1212,52 @@ msgstr "Institución / ROR"
 msgid "Roles"
 msgstr "Roles"
 
-#: app/templates/admin/users.html:52 app/templates/demo/authorized.html:18
+#: app/templates/admin/users.html:51
+msgid "Last Activity"
+msgstr "Última actividad"
+
+#: app/templates/admin/users.html:53 app/templates/demo/authorized.html:18
 msgid "Actions"
 msgstr "Acciones"
 
 #: app/templates/admin/users.html:79
+#, python-format
+msgid "%(count)s requests"
+msgstr "%(count)s solicitudes"
+
+#: app/templates/admin/users.html:90
+msgid "View Activity"
+msgstr "Ver actividad"
+
+#: app/templates/admin/users.html:94
 msgid "Edit"
 msgstr "Editar"
 
-#: app/templates/admin/users.html:87
+#: app/templates/admin/users.html:102
 msgid "Reset password for"
 msgstr "Resetear contraseña para"
 
-#: app/templates/admin/users.html:88 app/templates/auth/reset_password.html:11
+#: app/templates/admin/users.html:104 app/templates/auth/reset_password.html:11
 msgid "Reset Password"
 msgstr "Resetear contraseña"
 
-#: app/templates/admin/users.html:91
+#: app/templates/admin/users.html:107
 msgid "Temporary credentials will be sent to"
 msgstr "Se enviará un correo con credenciales temporales a"
 
-#: app/templates/admin/users.html:92
+#: app/templates/admin/users.html:109
 msgid "Send Credentials"
 msgstr "Enviar Credenciales"
 
-#: app/templates/admin/users.html:95
+#: app/templates/admin/users.html:112
 msgid "Delete user"
 msgstr "Eliminar usuario"
 
-#: app/templates/admin/users.html:96
+#: app/templates/admin/users.html:114
 msgid "Delete"
 msgstr "Eliminar"
 
-#: app/templates/admin/users.html:104
+#: app/templates/admin/users.html:122
 msgid "No users found."
 msgstr "No se encontraron usuarios."
 
@@ -875,7 +1273,7 @@ msgstr "Clave de Affiliation Manager"
 msgid "Institutional Manager Identifier"
 msgstr "Identificador de Gestor Institucional"
 
-#: app/templates/auth/am_settings.html:28
+#: app/templates/auth/am_settings.html:29
 msgid ""
 "To correctly identify and highlight records managed by your institution, "
 "please provide your integration credentials."
@@ -883,7 +1281,7 @@ msgstr ""
 "Para identificar correctamente y destacar los registros gestionados por "
 "tu institución, por favor proporciona tus credenciales de integración."
 
-#: app/templates/auth/am_settings.html:35
+#: app/templates/auth/am_settings.html:36
 msgid ""
 "Enter the <strong>Client ID</strong> used by your <em>Affiliation "
 "Manager</em> tool to write to ORCID. The system will use this ID to "
@@ -894,11 +1292,11 @@ msgstr ""
 "este ID para identificar qué registros fueron gestionados por tu "
 "institución (Sello AM)."
 
-#: app/templates/auth/am_settings.html:48
+#: app/templates/auth/am_settings.html:49
 msgid "Ex: APP-4B3XYWJHXCC1VLVV"
 msgstr "Ej: APP-4B3XYWJHXCC1VLVV"
 
-#: app/templates/auth/am_settings.html:54
+#: app/templates/auth/am_settings.html:55
 msgid ""
 "Note: This is different from your Public or Member API Key. It usually "
 "starts with the prefix"
@@ -906,15 +1304,15 @@ msgstr ""
 "Nota: Esto es diferente a tu API Key Pública o de Miembro. Usualmente "
 "comienza con el prefijo"
 
-#: app/templates/auth/am_settings.html:62
+#: app/templates/auth/am_settings.html:63
 msgid "Save Configuration"
 msgstr "Guardar Configuración"
 
-#: app/templates/auth/am_settings.html:70
+#: app/templates/auth/am_settings.html:71
 msgid "Don't have an Affiliation Manager ID yet?"
 msgstr "¿Aún no tienes un ID de Affiliation Manager?"
 
-#: app/templates/auth/am_settings.html:72
+#: app/templates/auth/am_settings.html:73
 msgid "Learn more about ORCID AM"
 msgstr "Conoce más sobre ORCID AM"
 
@@ -931,11 +1329,11 @@ msgid "Change Password"
 msgstr "Cambiar contraseña"
 
 #: app/templates/auth/change_password.html:20
-#: app/templates/auth/change_password.html:59
+#: app/templates/auth/change_password.html:60
 msgid "Update Password"
 msgstr "Actualizar Contraseña"
 
-#: app/templates/auth/change_password.html:27
+#: app/templates/auth/change_password.html:28
 msgid ""
 "For your security, please do not share your credentials. Use a strong "
 "password with at least 8 characters."
@@ -943,26 +1341,26 @@ msgstr ""
 "Por tu seguridad, no compartas tus credenciales. Usa una contraseña "
 "fuerte con al menos 8 caracteres."
 
-#: app/templates/auth/change_password.html:31
+#: app/templates/auth/change_password.html:32
 msgid "Current Password"
 msgstr "Contraseña actual"
 
-#: app/templates/auth/change_password.html:43
-#: app/templates/auth/reset_password.html:31
+#: app/templates/auth/change_password.html:44
+#: app/templates/auth/reset_password.html:32
 msgid "New Password"
 msgstr "Nueva contraseña"
 
-#: app/templates/auth/change_password.html:46
-#: app/templates/auth/reset_password.html:39
+#: app/templates/auth/change_password.html:47
+#: app/templates/auth/reset_password.html:40
 msgid "Minimum 8 characters."
 msgstr "Mínimo 8 caracteres."
 
-#: app/templates/auth/change_password.html:50
-#: app/templates/auth/reset_password.html:43
+#: app/templates/auth/change_password.html:51
+#: app/templates/auth/reset_password.html:44
 msgid "Confirm New Password"
 msgstr "Confirmar nueva contraseña"
 
-#: app/templates/auth/change_password.html:67
+#: app/templates/auth/change_password.html:68
 msgid ""
 "If you have forgotten your password, please contact your institutional "
 "administrator."
@@ -970,7 +1368,7 @@ msgstr ""
 "Si has olvidado tu contraseña, por favor contacta a tu administrador "
 "institucional."
 
-#: app/templates/auth/change_password.html:95
+#: app/templates/auth/change_password.html:96
 msgid "New password and confirmation do not match."
 msgstr "La nueva contraseña y la confirmación no coinciden."
 
@@ -1070,7 +1468,7 @@ msgstr "Iniciar sesión"
 msgid "Create New Password"
 msgstr "Crear Nueva Contraseña"
 
-#: app/templates/auth/reset_password.html:27
+#: app/templates/auth/reset_password.html:28
 msgid ""
 "Please enter and confirm your new password below. Ensure it is secure and"
 " easy for you to remember."
@@ -1078,11 +1476,11 @@ msgstr ""
 "Por favor ingresa y confirma tu nueva contraseña abajo. Asegúrate de que "
 "sea segura y fácil de recordar para ti."
 
-#: app/templates/auth/reset_password.html:56
+#: app/templates/auth/reset_password.html:57
 msgid "Reset & Login"
 msgstr "Resetear e Iniciar Sesión"
 
-#: app/templates/auth/reset_password.html:76
+#: app/templates/auth/reset_password.html:77
 msgid "The passwords entered do not match. Please try again."
 msgstr "Las contraseñas ingresadas no coinciden. Por favor intenta nuevamente."
 
@@ -1111,7 +1509,7 @@ msgid "Active Researchers"
 msgstr "Investigadores Activos"
 
 #: app/templates/dashboard/index.html:48 app/templates/main/metrics.html:20
-#: app/templates/works/cache_status.html:48
+#: app/templates/works/cache_status.html:79
 msgid "Last Update"
 msgstr "Última Actualización"
 
@@ -1176,10 +1574,6 @@ msgstr "Proyectos"
 msgid "Authorized"
 msgstr "Autorizado"
 
-#: app/templates/demo/authorized.html:30
-msgid "Pending"
-msgstr "Pendiente"
-
 #: app/templates/demo/authorized.html:38
 msgid "Manage Projects"
 msgstr "Gestionar Proyectos"
@@ -1224,11 +1618,11 @@ msgstr "Enviado (Pushed)"
 msgid "Ready"
 msgstr "Listo"
 
-#: app/templates/demo/projects.html:53
+#: app/templates/demo/projects.html:54
 msgid "Push to ORCID"
 msgstr "Enviar a ORCID"
 
-#: app/templates/demo/projects.html:59
+#: app/templates/demo/projects.html:60
 msgid "Waiting for authorization"
 msgstr "Esperando autorización"
 
@@ -1240,7 +1634,7 @@ msgstr "Cargar Proyectos · Demo ORCID"
 msgid "Upload Projects CSV"
 msgstr "Cargar CSV de Proyectos"
 
-#: app/templates/demo/upload.html:14
+#: app/templates/demo/upload.html:15
 msgid ""
 "Select a CSV file containing researcher IDs and project data to initiate "
 "the integration flow."
@@ -1248,13 +1642,191 @@ msgstr ""
 "Selecciona un archivo CSV que contenga los IDs de los investigadores y "
 "datos de proyectos para iniciar el flujo de integración."
 
-#: app/templates/demo/upload.html:19
+#: app/templates/demo/upload.html:20
 msgid "Choose CSV file"
 msgstr "Elegir archivo CSV"
 
-#: app/templates/demo/upload.html:24
+#: app/templates/demo/upload.html:25
 msgid "Process & Send Invites"
 msgstr "Procesar y Enviar Invitaciones"
+
+#: app/templates/duplicates/index.html:2
+msgid "Duplicate Profiles · Data ORCID-Chile"
+msgstr "Perfiles duplicados · Data ORCID-Chile"
+
+#: app/templates/duplicates/index.html:5
+msgid "Duplicate ORCID Profiles"
+msgstr "Perfiles ORCID duplicados"
+
+#: app/templates/duplicates/index.html:25
+msgid "Candidate Works"
+msgstr "Publicaciones candidatas"
+
+#: app/templates/duplicates/index.html:26
+msgid "Candidate Fundings"
+msgstr "Financiamientos candidatos"
+
+#: app/templates/duplicates/index.html:42
+msgid "Review Filters"
+msgstr "Filtros de revisión"
+
+#: app/templates/duplicates/index.html:44
+msgid "Analysis Cache"
+msgstr "Caché del análisis"
+
+#: app/templates/duplicates/index.html:46
+msgid "Reused"
+msgstr "Reutilizada"
+
+#: app/templates/duplicates/index.html:46
+#: app/templates/main/orcid_profile.html:108
+msgid "Updated"
+msgstr "Actualizado"
+
+#: app/templates/duplicates/index.html:49
+msgid "Generated at"
+msgstr "Generada el"
+
+#: app/templates/duplicates/index.html:49
+#: app/templates/works/openalex_works.html:53
+msgid "Not available"
+msgstr "No disponible"
+
+#: app/templates/duplicates/index.html:59
+msgid "Name, ORCID iD, or institution"
+msgstr "Nombre, ORCID iD o institución"
+
+#: app/templates/duplicates/index.html:66
+msgid "Minimum Confidence"
+msgstr "Confianza mínima"
+
+#: app/templates/duplicates/index.html:68
+msgid "Any"
+msgstr "Cualquiera"
+
+#: app/templates/duplicates/index.html:81
+msgid "Downloads"
+msgstr "Descargas"
+
+#: app/templates/duplicates/index.html:84
+msgid "CSV"
+msgstr "CSV"
+
+#: app/templates/duplicates/index.html:87
+msgid "Excel"
+msgstr "Excel"
+
+#: app/templates/duplicates/index.html:92
+msgid "Analysis"
+msgstr "Análisis"
+
+#: app/templates/duplicates/index.html:95
+msgid "Refresh Analysis"
+msgstr "Actualizar análisis"
+
+#: app/templates/duplicates/index.html:101
+msgid "Clear Analysis Cache"
+msgstr "Limpiar caché del análisis"
+
+#: app/templates/duplicates/index.html:109
+#: app/templates/works/cache_status.html:246
+msgid "Scope"
+msgstr "Alcance"
+
+#: app/templates/duplicates/index.html:112
+msgid "Current Institution"
+msgstr "Institución actual"
+
+#: app/templates/duplicates/index.html:115
+msgid "All Institutions"
+msgstr "Todas las instituciones"
+
+#: app/templates/duplicates/index.html:128
+msgid "No duplicate candidates found"
+msgstr "No se encontraron candidatos duplicados"
+
+#: app/templates/duplicates/index.html:130
+#, python-format
+msgid "Currently, no duplicate profiles are found for %(institution)s."
+msgstr "Actualmente no se encuentran perfiles duplicados para %(institution)s."
+
+#: app/templates/duplicates/index.html:132
+msgid "Currently, no duplicate profiles are found for the selected scope."
+msgstr ""
+"Actualmente no se encuentran perfiles duplicados para el alcance "
+"seleccionado."
+
+#: app/templates/duplicates/index.html:141
+msgid "Institutions Summary"
+msgstr "Resumen de instituciones"
+
+#: app/templates/duplicates/index.html:148
+msgid "Groups"
+msgstr "Grupos"
+
+#: app/templates/duplicates/index.html:149
+#: app/templates/duplicates/index.html:295
+msgid "Profiles"
+msgstr "Perfiles"
+
+#: app/templates/duplicates/index.html:173
+msgid "Methodological Note"
+msgstr "Nota metodológica"
+
+#: app/templates/duplicates/index.html:177
+msgid ""
+"This review uses ORCID iDs found in the local works and funding caches "
+"for the selected institutional scope."
+msgstr ""
+"Esta revisión usa los ORCID iD encontrados en las cachés locales de "
+"publicaciones y financiamientos para el alcance institucional "
+"seleccionado."
+
+#: app/templates/duplicates/index.html:180
+msgid ""
+"Candidate groups are created when cached profile names match after "
+"lowercasing, accent removal, punctuation removal, and whitespace "
+"normalization."
+msgstr ""
+"Los grupos candidatos se crean cuando los nombres de perfil en caché "
+"coinciden después de convertir a minúsculas, eliminar acentos, puntuación"
+" y normalizar espacios."
+
+#: app/templates/duplicates/index.html:183
+msgid ""
+"Scores prioritize exact normalized name matches, richer names, cached "
+"activity on every profile, and shared DOI evidence. Results are "
+"candidates for manual verification, not automatic merges."
+msgstr ""
+"Los puntajes priorizan coincidencias exactas de nombre normalizado, "
+"nombres más completos, actividad en caché en cada perfil y evidencia DOI "
+"compartida. Los resultados son candidatos para verificación manual, no "
+"fusiones automáticas."
+
+#: app/templates/duplicates/index.html:192
+msgid "ORCID Activity Summary"
+msgstr "Resumen de actividad por ORCID"
+
+#: app/templates/duplicates/index.html:237
+msgid "Candidate Details"
+msgstr "Detalle de candidatos"
+
+#: app/templates/duplicates/index.html:244
+msgid "Candidate"
+msgstr "Candidato"
+
+#: app/templates/duplicates/index.html:246
+msgid "ORCID Profiles"
+msgstr "Perfiles ORCID"
+
+#: app/templates/duplicates/index.html:248
+msgid "Activity"
+msgstr "Actividad"
+
+#: app/templates/duplicates/index.html:276
+#: app/templates/main/researcher_list.html:41
+msgid "AM"
+msgstr "AM"
 
 #: app/templates/layout/sidebar.html:10
 msgid "Administration"
@@ -1268,43 +1840,56 @@ msgstr "Gestión de Usuarios"
 msgid "System Usage Logs"
 msgstr "Logs de Uso del Sistema"
 
-#: app/templates/layout/sidebar.html:31
+#: app/templates/layout/sidebar.html:32
 msgid "Institutional Data"
 msgstr "Datos Institucionales"
 
-#: app/templates/layout/sidebar.html:37 app/templates/main/index.html:142
+#: app/templates/layout/sidebar.html:38 app/templates/main/index.html:142
 msgid "ORCID Analytics"
 msgstr "Analítica ORCID"
 
-#: app/templates/layout/sidebar.html:44 app/templates/main/index.html:150
+#: app/templates/layout/sidebar.html:45 app/templates/main/index.html:150
 msgid "Data Downloads"
-msgstr "Descarga de Datos"
+msgstr "Descargas"
 
-#: app/templates/layout/sidebar.html:51 app/templates/main/index.html:158
+#: app/templates/layout/sidebar.html:52
+#: app/templates/works/openalex_analytics.html:25
+#: app/templates/works/openalex_works.html:5
+#: app/templates/works/openalex_works.html:15
+msgid "OpenAlex Enrichment"
+msgstr "Enriquecimiento OpenAlex"
+
+#: app/templates/layout/sidebar.html:59
+#: app/templates/works/openalex_analytics.html:5
+#: app/templates/works/openalex_analytics.html:26
+msgid "OpenAlex Analytics"
+msgstr "Analítica OpenAlex"
+
+#: app/templates/layout/sidebar.html:66 app/templates/main/index.html:158
 msgid "Researchers List"
-msgstr "Lista de Investigadores"
+msgstr "Investigadores"
 
-#: app/templates/layout/sidebar.html:56
+#: app/templates/layout/sidebar.html:78
 msgid "Integration Tools"
 msgstr "Herramientas de Integración"
 
-#: app/templates/layout/sidebar.html:62
+#: app/templates/layout/sidebar.html:84
 msgid "API Read (Pull)"
 msgstr "API Lectura (Pull)"
 
-#: app/templates/layout/sidebar.html:69
+#: app/templates/layout/sidebar.html:91
 msgid "API Write (Push)"
 msgstr "API Escritura (Push)"
 
-#: app/templates/layout/sidebar.html:76
+#: app/templates/layout/sidebar.html:98
 msgid "AM Settings"
 msgstr "Configuración AM"
 
-#: app/templates/layout/sidebar.html:83
+#: app/templates/layout/sidebar.html:105
 msgid "Knowledge Base"
 msgstr "Base de Conocimiento"
 
-#: app/templates/layout/sidebar.html:91
+#: app/templates/layout/sidebar.html:113
 msgid "Sign Out"
 msgstr "Cerrar Sesión"
 
@@ -1385,7 +1970,9 @@ msgstr "Rankings Completos"
 msgid ""
 "Comparison of data volume of contributions (Works) vs. fundings in local "
 "cache."
-msgstr "Comparación del volumen de datos de contribuciones (Works) vs. financiamientos en caché local."
+msgstr ""
+"Comparación del volumen de datos de contribuciones (Works) vs. "
+"financiamientos en caché local."
 
 #: app/templates/main/index.html:112
 msgid "No data cached. Please run a sync."
@@ -1398,7 +1985,6 @@ msgstr "Tendencia de Producción de Contribuciones"
 #: app/templates/main/index.html:128
 msgid "Evolution of contributions (Works) over the last 5 years."
 msgstr "Evolución de contribuciones (Works) en los últimos 5 años."
-
 
 #: app/templates/main/index.html:138
 msgid "System Modules"
@@ -1916,10 +2502,6 @@ msgstr "ítems"
 msgid "Registry Data"
 msgstr "Datos del Registro"
 
-#: app/templates/main/orcid_profile.html:108
-msgid "Updated"
-msgstr "Actualizado"
-
 #: app/templates/main/orcid_profile.html:133
 msgid "Other Identifiers"
 msgstr "Otros Identificadores"
@@ -1997,10 +2579,6 @@ msgstr "Directorio de Investigadores"
 msgid "Refresh"
 msgstr "Actualizar"
 
-#: app/templates/main/researcher_list.html:41
-msgid "AM"
-msgstr "AM"
-
 #: app/templates/main/researcher_list.html:43
 msgid "First Names"
 msgstr "Nombres"
@@ -2008,10 +2586,6 @@ msgstr "Nombres"
 #: app/templates/main/researcher_list.html:44
 msgid "Last Names"
 msgstr "Apellidos"
-
-#: app/templates/main/researcher_list.html:46
-msgid "Institutions"
-msgstr "Instituciones"
 
 #: app/templates/main/researcher_list.html:55
 msgid "Managed via Affiliation Manager"
@@ -2334,91 +2908,153 @@ msgstr "Descarga Masiva"
 msgid "Cache Status"
 msgstr "Estado de la Caché"
 
-#: app/templates/works/cache_status.html:28
+#: app/templates/works/cache_status.html:29
 msgid "Sync Everything"
 msgstr "Sincronizar Todo"
 
-#: app/templates/works/cache_status.html:39
-msgid "Synchronizing Works, Fundings & Profiles..."
-msgstr "Sincronizando Contribuciones, Financiamientos y Perfiles..."
+#: app/templates/works/cache_status.html:36
+msgid "Sync All Institutions"
+msgstr "Sincronizar todas las instituciones"
 
-#: app/templates/works/cache_status.html:39
+#: app/templates/works/cache_status.html:41
+#: app/templates/works/openalex_analytics.html:244
+#: app/templates/works/openalex_works.html:109
+msgid "OpenAlex"
+msgstr "OpenAlex"
+
+#: app/templates/works/cache_status.html:48
+msgid "Sync Missing All"
+msgstr "Sincronizar faltantes globales"
+
+#: app/templates/works/cache_status.html:56
+msgid "Refresh System"
+msgstr "Actualizar sistema"
+
+#: app/templates/works/cache_status.html:70
+msgid "Synchronizing data..."
+msgstr ""
+
+#: app/templates/works/cache_status.html:70
 msgid "This may take several minutes."
 msgstr "Esto puede tomar varios minutos."
 
-#: app/templates/works/cache_status.html:46
+#: app/templates/works/cache_status.html:77
 msgid "Data Type"
 msgstr "Tipo de Dato"
 
-#: app/templates/works/cache_status.html:47
+#: app/templates/works/cache_status.html:78
 msgid "Records Cached"
 msgstr "Registros en Caché"
 
-#: app/templates/works/cache_status.html:162
-msgid "All Institutions Exports"
-msgstr "Exportaciones de todas las instituciones"
-
-#: app/templates/works/cache_status.html:169
-msgid "Dataset"
-msgstr "Conjunto de datos"
-
-#: app/templates/works/cache_status.html:170
-msgid "Records"
-msgstr "Registros"
-
-#: app/templates/works/cache_status.html:49
+#: app/templates/works/cache_status.html:80
+#: app/templates/works/cache_status.html:247
 msgid "Export Data"
 msgstr "Exportar Datos"
 
-#: app/templates/works/cache_status.html:178
-msgid "Associated Researchers"
-msgstr "Investigadores asociados"
-
-#: app/templates/works/cache_status.html:187
-#: app/templates/works/cache_status.html:214
-#: app/templates/works/cache_status.html:241
-msgid "All universities"
-msgstr "Todas las universidades"
-
-#: app/templates/works/cache_status.html:57
+#: app/templates/works/cache_status.html:88
+#: app/templates/works/cache_status.html:280
 msgid "Scholarly Works"
 msgstr "Trabajos Académicos"
 
-#: app/templates/works/cache_status.html:63
-#: app/templates/works/cache_status.html:98
+#: app/templates/works/cache_status.html:94
 #: app/templates/works/cache_status.html:133
+#: app/templates/works/cache_status.html:182
+#: app/templates/works/cache_status.html:217
+#: app/templates/works/cache_status.html:259
+#: app/templates/works/cache_status.html:286
+#: app/templates/works/cache_status.html:313
+#: app/templates/works/cache_status.html:341
 msgid "Empty"
 msgstr "Vacío"
 
-#: app/templates/works/cache_status.html:92
+#: app/templates/works/cache_status.html:123
+#: app/templates/works/cache_status.html:334
+#: app/templates/works/openalex_analytics.html:32
+msgid "OpenAlex Articles"
+msgstr "Artículos OpenAlex"
+
+#: app/templates/works/cache_status.html:124
+msgid "Journal articles with DOI"
+msgstr "Artículos de revista con DOI"
+
+#: app/templates/works/cache_status.html:130
+#, python-format
+msgid "%(count)s pending"
+msgstr "%(count)s pendientes"
+
+#: app/templates/works/cache_status.html:145
+msgid "OpenAlex detail"
+msgstr "Detalle OpenAlex"
+
+#: app/templates/works/cache_status.html:148
+msgid "OpenAlex analytics"
+msgstr "Analítica OpenAlex"
+
+#: app/templates/works/cache_status.html:158
+msgid "Sync Missing"
+msgstr "Sincronizar faltantes"
+
+#: app/templates/works/cache_status.html:165
+msgid "Refresh All"
+msgstr "Actualizar todo"
+
+#: app/templates/works/cache_status.html:176
+#: app/templates/works/cache_status.html:307
 msgid "Fundings & Grants"
 msgstr "Financiamientos y Subvenciones"
 
-#: app/templates/works/cache_status.html:127
+#: app/templates/works/cache_status.html:211
 msgid "Researcher Names"
 msgstr "Nombres de Investigadores"
 
-#: app/templates/works/cache_status.html:137
+#: app/templates/works/cache_status.html:221
 msgid "Auto-updated with Sync"
 msgstr "Auto-actualizado con Sincronización"
 
-#: app/templates/works/cache_status.html:140
+#: app/templates/works/cache_status.html:224
 msgid "Internal Use"
 msgstr "Uso Interno"
 
-#: app/templates/works/cache_status.html:155
+#: app/templates/works/cache_status.html:237
+msgid "All Institutions Exports"
+msgstr "Exportaciones de todas las instituciones"
+
+#: app/templates/works/cache_status.html:244
+msgid "Dataset"
+msgstr "Conjunto de datos"
+
+#: app/templates/works/cache_status.html:245
+msgid "Records"
+msgstr "Registros"
+
+#: app/templates/works/cache_status.html:253
+msgid "Associated Researchers"
+msgstr "Investigadores asociados"
+
+#: app/templates/works/cache_status.html:262
+#: app/templates/works/cache_status.html:289
+#: app/templates/works/cache_status.html:316
+#: app/templates/works/cache_status.html:344
+msgid "All universities"
+msgstr "Todas las universidades"
+
+#: app/templates/works/cache_status.html:335
+msgid "OpenAlex cache, raw payloads, and derived article metadata"
+msgstr "Caché OpenAlex, payloads en bruto y metadatos derivados de artículos"
+
+#: app/templates/works/cache_status.html:372
 msgid "Management Actions"
 msgstr "Acciones de Gestión"
 
-#: app/templates/works/cache_status.html:157
+#: app/templates/works/cache_status.html:374
 msgid "Data Access"
 msgstr "Acceso a Datos"
 
-#: app/templates/works/cache_status.html:167
+#: app/templates/works/cache_status.html:384
 msgid "Full Sync"
 msgstr "Sincronización Completa"
 
-#: app/templates/works/cache_status.html:169
+#: app/templates/works/cache_status.html:386
 msgid ""
 "The \"Sync Everything\" button triggers a sequential update of "
 "Publications, Funding, and Profile names. This ensures reports reflect "
@@ -2428,11 +3064,49 @@ msgstr ""
 "Publicaciones, Financiamiento y Nombres de perfil. Esto asegura que los "
 "reportes reflejen los datos más recientes de ORCID."
 
-#: app/templates/works/cache_status.html:178
+#: app/templates/works/cache_status.html:394
+msgid "All Institutions Sync"
+msgstr "Sincronización de todas las instituciones"
+
+#: app/templates/works/cache_status.html:396
+msgid ""
+"The all-institution sync uses the institutional registry, including "
+"Chilean universities without user accounts, and rebuilds their Works, "
+"Fundings, and Profile names caches."
+msgstr ""
+"La sincronización de todas las instituciones usa el registro "
+"institucional, incluyendo universidades chilenas sin cuentas de usuario, "
+"y reconstruye sus cachés de publicaciones, financiamientos y nombres de "
+"perfil."
+
+#: app/templates/works/cache_status.html:404
+msgid "OpenAlex Sync"
+msgstr "Sincronización OpenAlex"
+
+#: app/templates/works/cache_status.html:406
+msgid ""
+"Sync Missing only requests article DOIs that do not have an OpenAlex "
+"cache row. Refresh All requests every article DOI again and overwrites "
+"the stored OpenAlex response."
+msgstr ""
+"Sincronizar faltantes solo consulta los DOI de artículos que no tienen "
+"una fila en la caché OpenAlex. Actualizar todo vuelve a consultar cada "
+"DOI de artículo y sobrescribe la respuesta OpenAlex almacenada."
+
+#: app/templates/works/cache_status.html:410
+msgid ""
+"System-wide OpenAlex sync uses every unique journal-article DOI in the "
+"local Works cache, regardless of the active institution."
+msgstr ""
+"La sincronización OpenAlex global usa cada DOI único de artículo de "
+"revista en la caché local de publicaciones, independiente de la "
+"institución activa."
+
+#: app/templates/works/cache_status.html:420
 msgid "Data Availability"
 msgstr "Disponibilidad de Datos"
 
-#: app/templates/works/cache_status.html:180
+#: app/templates/works/cache_status.html:422
 msgid ""
 "This data is centrally synchronized by the institutional administrators. "
 "You can download the latest available datasets in CSV or Excel format."
@@ -2441,21 +3115,38 @@ msgstr ""
 "institucionales. Puedes descargar los últimos conjuntos de datos "
 "disponibles en formato CSV o Excel."
 
-#: app/templates/works/cache_status.html:192
+#: app/templates/works/cache_status.html:434
+#: app/templates/works/openalex_works.html:47
 msgid "Analytics"
 msgstr "Analítica"
 
-#: app/templates/works/cache_status.html:194
+#: app/templates/works/cache_status.html:436
 msgid "Visualize trends, funding sources, and top journals in the Metrics Panel."
 msgstr ""
 "Visualiza tendencias, fuentes de financiamiento y principales revistas en"
 " el Panel de Métricas."
 
-#: app/templates/works/cache_status.html:196
+#: app/templates/works/cache_status.html:438
 msgid "Go to Metrics"
 msgstr "Ir a Métricas"
 
-#: app/templates/works/cache_status.html:211
+#: app/templates/works/cache_status.html:455
+msgid "Preparing download..."
+msgstr "Preparando descarga..."
+
+#: app/templates/works/cache_status.html:456
+msgid ""
+"Large exports can take a few minutes. The file will start downloading "
+"automatically."
+msgstr ""
+"Las exportaciones grandes pueden tardar algunos minutos. El archivo se "
+"descargará automáticamente."
+
+#: app/templates/works/cache_status.html:460
+msgid "Close"
+msgstr "Cerrar"
+
+#: app/templates/works/cache_status.html:474
 msgid ""
 "Start full synchronization? This process downloads Works, Fundings, and "
 "updates Profile Names."
@@ -2463,422 +3154,762 @@ msgstr ""
 "¿Iniciar sincronización completa? Este proceso descarga Contribuciones, "
 "Financiamientos y actualiza Nombres de Perfil."
 
-#~ msgid "Welcome,"
-#~ msgstr "Bienvenido/a,"
-
-#~ msgid "Consortium Member"
-#~ msgstr "Miembro del Consorcio"
-
-#~ msgid "No active ROR. Please select one first."
-#~ msgstr "No hay ROR activo. Selecciona uno primero."
-
-#~ msgid "Ratio of Publications vs. Research Grants in local cache."
-#~ msgstr "Proporción de Publicaciones vs. Fondos de Investigación en caché local."
-
-#~ msgid "Institutional Activity Level"
-#~ msgstr "Nivel de Actividad Institucional"
-
-#~ msgid "Comparison of data volume across primary research categories."
-#~ msgstr ""
-#~ "Comparación del volumen de datos a "
-#~ "través de las principales categorías de"
-#~ " investigación."
-
-#~ msgid "Volume Comparison"
-#~ msgstr "Comparación de Volumen"
-
-msgid "Candidates"
-msgstr "Candidatos"
-
-msgid "Methodology"
-msgstr "Metodología"
-
-msgid "Candidate Group"
-msgstr "Grupo candidato"
-
-msgid "ROR ID"
-msgstr "ROR ID"
-
-msgid "Candidate Name"
-msgstr "Nombre candidato"
-
-msgid "Normalized Name"
-msgstr "Nombre normalizado"
-
-msgid "Confidence"
-msgstr "Confianza"
-
-msgid "Confidence Level"
-msgstr "Nivel de confianza"
-
-msgid "Highest Confidence"
-msgstr "Confianza más alta"
-
-msgid "ORCID iD"
-msgstr "ORCID iD"
-
-msgid "ORCID URL"
-msgstr "URL de ORCID"
-
-msgid "Profile Name"
-msgstr "Nombre del perfil"
-
-msgid "Year Range"
-msgstr "Rango de años"
-
-msgid "Managed by Affiliation Manager"
-msgstr "Gestionado por Affiliation Manager"
-
-msgid "Evidence"
-msgstr "Evidencia"
-
-msgid "Shared DOIs"
-msgstr "DOI compartidos"
-
-msgid "Yes"
-msgstr "Sí"
-
-msgid "No"
-msgstr "No"
-
-msgid "Step"
-msgstr "Paso"
-
-msgid "Description"
-msgstr "Descripción"
-
-msgid "Population"
-msgstr "Población"
-
-msgid "The analysis uses ORCID iDs found in the local works and funding caches for the selected institution scope."
-msgstr "El análisis usa los ORCID iD encontrados en las cachés locales de publicaciones y financiamientos para el alcance institucional seleccionado."
-
-msgid "Candidate detection"
-msgstr "Detección de candidatos"
-
-msgid "Profiles are grouped when their cached display names match after lowercasing, removing accents, punctuation, and extra spaces."
-msgstr "Los perfiles se agrupan cuando sus nombres en caché coinciden después de convertir a minúsculas, eliminar acentos, puntuación y espacios adicionales."
-
-msgid "Scores increase when names have more tokens, each profile has cached activity, or profiles share DOI evidence."
-msgstr "Los puntajes aumentan cuando los nombres tienen más componentes, cada perfil tiene actividad en caché o los perfiles comparten evidencia DOI."
-
-msgid "Verification"
-msgstr "Verificación"
-
-msgid "Each row keeps ORCID URLs, local activity counts, Affiliation Manager status, and shared DOI evidence for manual review."
-msgstr "Cada fila conserva URL de ORCID, conteos de actividad local, estado de Affiliation Manager y evidencia DOI compartida para revisión manual."
-
-msgid "Exact normalized name match"
-msgstr "Coincidencia exacta de nombre normalizado"
-
-msgid "Shared DOI evidence"
-msgstr "Evidencia DOI compartida"
-
-msgid "Affiliation Manager evidence"
-msgstr "Evidencia de Affiliation Manager"
-
-msgid "High"
-msgstr "Alta"
-
-msgid "Medium"
-msgstr "Media"
-
-msgid "Low"
-msgstr "Baja"
-
-msgid "Duplicate Profiles · Data ORCID-Chile"
-msgstr "Perfiles duplicados · Data ORCID-Chile"
-
-msgid "Duplicate ORCID Profiles"
-msgstr "Perfiles ORCID duplicados"
-
-msgid "Duplicate Profiles"
-msgstr "Perfiles duplicados"
-
-msgid "Candidate Groups"
-msgstr "Grupos candidatos"
-
-msgid "Candidate Works"
-msgstr "Publicaciones candidatas"
-
-msgid "Candidate Fundings"
-msgstr "Financiamientos candidatos"
-
-msgid "Extra Profiles"
-msgstr "Perfiles adicionales"
-
-msgid "Review Filters"
-msgstr "Filtros de revisión"
-
-msgid "Downloads"
-msgstr "Descargas"
-
-msgid "Analysis"
-msgstr "Análisis"
-
-msgid "Scope"
-msgstr "Alcance"
-
-msgid "Refresh Analysis"
-msgstr "Actualizar análisis"
-
-msgid "Clear Analysis Cache"
-msgstr "Limpiar caché del análisis"
-
-msgid "Analysis Cache"
-msgstr "Caché del análisis"
-
-msgid "Reused"
-msgstr "Reutilizada"
-
-msgid "Generated at"
-msgstr "Generada el"
-
-msgid "Not available"
-msgstr "No disponible"
-
-msgid "Duplicate profile analysis cache cleared: %(count)s entries removed."
-msgstr "Caché del análisis de perfiles duplicados limpiada: %(count)s entradas eliminadas."
-
-msgid "CSV"
-msgstr "CSV"
-
-msgid "Excel"
-msgstr "Excel"
-
-msgid "All Institutions"
-msgstr "Todas las instituciones"
-
-msgid "Current Institution"
-msgstr "Institución actual"
-
-msgid "Name, ORCID iD, or institution"
-msgstr "Nombre, ORCID iD o institución"
-
-msgid "Minimum Confidence"
-msgstr "Confianza mínima"
-
-msgid "Any"
-msgstr "Cualquiera"
-
-msgid "Reset"
-msgstr "Restablecer"
-
-msgid "Institutions Summary"
-msgstr "Resumen de instituciones"
-
-msgid "Groups"
-msgstr "Grupos"
-
-msgid "Profiles"
-msgstr "Perfiles"
-
-msgid "No duplicate candidates found"
-msgstr "No se encontraron candidatos duplicados"
-
-msgid "Currently, no duplicate profiles are found for %(institution)s."
-msgstr "Actualmente no se encuentran perfiles duplicados para %(institution)s."
-
-msgid "Currently, no duplicate profiles are found for the selected scope."
-msgstr "Actualmente no se encuentran perfiles duplicados para el alcance seleccionado."
-
-msgid "ORCID Activity"
-msgstr "Actividad ORCID"
-
+#: app/templates/works/cache_status.html:482
+msgid ""
+"Start synchronization for all institutions? This can take a long time and"
+" will contact ORCID for every registered institution."
+msgstr ""
+"¿Iniciar sincronización para todas las instituciones? Esto puede tardar "
+"mucho y contactará ORCID por cada institución registrada."
+
+#: app/templates/works/cache_status.html:490
+msgid ""
+"Synchronize only missing OpenAlex article records for the active "
+"institution?"
+msgstr ""
+"¿Sincronizar solo los registros OpenAlex faltantes de artículos para la "
+"institución activa?"
+
+#: app/templates/works/cache_status.html:498
+msgid ""
+"Refresh all OpenAlex article records for the active institution? This can"
+" take a long time."
+msgstr ""
+"¿Actualizar todos los registros OpenAlex de artículos para la institución"
+" activa? Esto puede tardar bastante."
+
+#: app/templates/works/cache_status.html:506
+msgid "Synchronize missing OpenAlex article records across all institutions?"
+msgstr "¿Sincronizar registros OpenAlex faltantes en todas las instituciones?"
+
+#: app/templates/works/cache_status.html:514
+msgid ""
+"Refresh every OpenAlex article DOI across all institutions? This can take"
+" a very long time."
+msgstr ""
+"¿Actualizar cada DOI de artículo OpenAlex en todas las instituciones? "
+"Esto puede tardar mucho."
+
+#: app/templates/works/openalex_analytics.html:2
+msgid "OpenAlex Analytics · Data ORCID-Chile"
+msgstr "Analítica OpenAlex · Data ORCID-Chile"
+
+#: app/templates/works/openalex_analytics.html:33
+#: app/templates/works/openalex_works.html:23
+msgid "Processed DOIs"
+msgstr "DOI procesados"
+
+#: app/templates/works/openalex_analytics.html:34
+#: app/templates/works/openalex_works.html:106
+msgid "Open Access"
+msgstr "Acceso abierto"
+
+#: app/templates/works/openalex_analytics.html:35
+msgid "Total Citations"
+msgstr "Citas totales"
+
+#: app/templates/works/openalex_analytics.html:36
+msgid "Avg. Citations"
+msgstr "Prom. citas"
+
+#: app/templates/works/openalex_analytics.html:37
+msgid "Avg. FWCI"
+msgstr "Prom. FWCI"
+
+#: app/templates/works/openalex_analytics.html:53
+msgid "DOIs with Chile Affiliation"
+msgstr "DOI con afiliación en Chile"
+
+#: app/templates/works/openalex_analytics.html:54
+msgid "International Collaboration"
+msgstr "Colaboración internacional"
+
+#: app/templates/works/openalex_analytics.html:55
+msgid "Chile-Affiliated Authors"
+msgstr "Autores con afiliación en Chile"
+
+#: app/templates/works/openalex_analytics.html:56
+msgid "OpenAlex Institutions"
+msgstr "Instituciones OpenAlex"
+
+#: app/templates/works/openalex_analytics.html:73
+msgid "OpenAlex Trends"
+msgstr "Tendencias OpenAlex"
+
+#: app/templates/works/openalex_analytics.html:77
+msgid "Detail"
+msgstr "Detalle"
+
+#: app/templates/works/openalex_analytics.html:87
+msgid "No OpenAlex metadata is available for the active institution yet."
+msgstr "Aún no hay metadatos OpenAlex disponibles para la institución activa."
+
+#: app/templates/works/openalex_analytics.html:111
+msgid "Chile Affiliation Trend"
+msgstr "Tendencia de afiliación en Chile"
+
+#: app/templates/works/openalex_analytics.html:123
+msgid "Affiliation Countries"
+msgstr "Países de afiliación"
+
+#: app/templates/works/openalex_analytics.html:138
+msgid "Top OpenAlex Institutions"
+msgstr "Principales instituciones OpenAlex"
+
+#: app/templates/works/openalex_analytics.html:150
+msgid "Top Chilean Institutions"
+msgstr "Principales instituciones chilenas"
+
+#: app/templates/works/openalex_analytics.html:165
+msgid "Top Chile-Affiliated Authors"
+msgstr "Principales autores con afiliación en Chile"
+
+#: app/templates/works/openalex_analytics.html:180
+msgid "Open Access Status"
+msgstr "Estado de acceso abierto"
+
+#: app/templates/works/openalex_analytics.html:192
+msgid "OpenAlex Work Types"
+msgstr "Tipos de obra OpenAlex"
+
+#: app/templates/works/openalex_analytics.html:207
+msgid "Topic Fields"
+msgstr "Campos temáticos"
+
+#: app/templates/works/openalex_analytics.html:219
+msgid "Sources"
+msgstr "Fuentes"
+
+#: app/templates/works/openalex_analytics.html:234
+msgid "Top Cited OpenAlex Articles"
+msgstr "Artículos OpenAlex más citados"
+
+#: app/templates/works/openalex_analytics.html:241
+#: app/templates/works/openalex_works.html:103
+msgid "Article"
+msgstr "Artículo"
+
+#: app/templates/works/openalex_analytics.html:242
+#: app/templates/works/openalex_analytics.html:315
+#: app/templates/works/openalex_works.html:105
+msgid "Citations"
+msgstr "Citas"
+
+#: app/templates/works/openalex_analytics.html:251
+#: app/templates/works/openalex_works.html:116
+msgid "Untitled work"
+msgstr "Obra sin título"
+
+#: app/templates/works/openalex_analytics.html:276
+msgid "Languages"
+msgstr "Idiomas"
+
+#: app/templates/works/openalex_analytics.html:306
+#: app/templates/works/openalex_analytics.html:340
+#: app/templates/works/openalex_analytics.html:374
+msgid "Articles"
+msgstr "Artículos"
+
+#: app/templates/works/openalex_analytics.html:348
+msgid "With Chile Affiliation"
+msgstr "Con afiliación en Chile"
+
+#: app/templates/works/openalex_works.html:2
 msgid "OpenAlex Enrichment · Data ORCID-Chile"
 msgstr "Enriquecimiento OpenAlex · Data ORCID-Chile"
 
-msgid "OpenAlex Enrichment"
-msgstr "Enriquecimiento OpenAlex"
+#: app/templates/works/openalex_works.html:21
+msgid "Articles with DOI"
+msgstr "Artículos con DOI"
 
-msgid "Works with DOI"
-msgstr "Obras con DOI"
+#: app/templates/works/openalex_works.html:22
+msgid "Unique Article DOIs"
+msgstr "DOI únicos de artículos"
 
-msgid "Unique DOIs"
-msgstr "DOI únicos"
-
+#: app/templates/works/openalex_works.html:24
 msgid "OpenAlex Matches"
 msgstr "Coincidencias OpenAlex"
+
+#: app/templates/works/openalex_works.html:25
+msgid "Open Access Works"
+msgstr "Obras en acceso abierto"
+
+#: app/templates/works/openalex_works.html:26
+msgid "OpenAlex Citations"
+msgstr "Citas OpenAlex"
+
+#: app/templates/works/openalex_works.html:43
+msgid "ORCID Works + OpenAlex"
+msgstr "Obras ORCID + OpenAlex"
+
+#: app/templates/works/openalex_works.html:51
+#: app/templates/works/openalex_works.html:53
+msgid "Last OpenAlex sync"
+msgstr "Última sincronización OpenAlex"
+
+#: app/templates/works/openalex_works.html:60
+msgid "Coverage filter"
+msgstr "Filtro de cobertura"
+
+#: app/templates/works/openalex_works.html:62
+msgid "All DOI Articles"
+msgstr "Todos los artículos con DOI"
+
+#: app/templates/works/openalex_works.html:68
+msgid "Pending OpenAlex"
+msgstr "Pendientes OpenAlex"
+
+#: app/templates/works/openalex_works.html:73
+#, python-format
+msgid "Showing %(start)s-%(end)s of %(total)s records"
+msgstr "Mostrando %(start)s-%(end)s de %(total)s registros"
+
+#: app/templates/works/openalex_works.html:75
+msgid "Rows per page"
+msgstr "Filas por página"
+
+#: app/templates/works/openalex_works.html:90
+msgid "No DOI-backed journal articles found for the selected coverage filter."
+msgstr ""
+"No se encontraron artículos de revista con DOI para el filtro de "
+"cobertura seleccionado."
+
+#: app/templates/works/openalex_works.html:96
+msgid "OpenAlex Article Detail"
+msgstr "Detalle de artículos OpenAlex"
+
+#: app/templates/works/openalex_works.html:108
+msgid "Topic Field"
+msgstr "Campo temático"
+
+#: app/templates/works/openalex_works.html:118
+msgid "No year"
+msgstr "Sin año"
+
+#: app/templates/works/openalex_works.html:118
+msgid "No type"
+msgstr "Sin tipo"
+
+#: app/templates/works/openalex_works.html:139
+msgid "Open"
+msgstr "Abierto"
+
+#: app/templates/works/openalex_works.html:141
+msgid "Closed"
+msgstr "Cerrado"
+
+#: app/templates/works/openalex_works.html:146
+msgid "Error"
+msgstr "Error"
+
+#: app/templates/works/openalex_works.html:189
+msgid "OpenAlex pagination"
+msgstr "Paginación OpenAlex"
+
+msgid "Journal Articles"
+msgstr "Artículos de revista"
+
+msgid "All Articles"
+msgstr "Todos los artículos"
+
+msgid "No journal articles found for the selected coverage filter."
+msgstr "No se encontraron artículos de revista para el filtro de cobertura seleccionado."
+
+msgid "No DOI"
+msgstr "Sin DOI"
+
+msgid "Sync"
+msgstr "Sincronizar"
+
+msgid "Match Titles All"
+msgstr "Coincidir títulos global"
+
+msgid "Match by Title"
+msgstr "Coincidir por título"
+
+msgid "Search OpenAlex by title for DOI misses and articles without DOI in the active institution?"
+msgstr "¿Buscar en OpenAlex por título para DOI no encontrados y artículos sin DOI de la institución activa?"
+
+msgid "Search OpenAlex by title for DOI misses and articles without DOI across all institutions?"
+msgstr "¿Buscar en OpenAlex por título para DOI no encontrados y artículos sin DOI en todas las instituciones?"
+
+msgid "Match by Title searches only DOI records already not found in OpenAlex and journal articles without DOI. Matches are saved only when title confidence is high."
+msgstr "Coincidir por título busca solo registros DOI ya no encontrados en OpenAlex y artículos de revista sin DOI. Las coincidencias se guardan solo cuando la confianza del título es alta."
+
+msgid "OpenAlex title matching complete: %(fetched)s searched, %(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors."
+msgstr "Coincidencia por título OpenAlex completa: %(fetched)s buscados, %(matched)s coincidentes, %(not_found)s no encontrados, %(skipped)s omitidos, %(errors)s errores."
+
+msgid "System-wide OpenAlex title matching complete: %(fetched)s searched, %(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors."
+msgstr "Coincidencia por título OpenAlex global completa: %(fetched)s buscados, %(matched)s coincidentes, %(not_found)s no encontrados, %(skipped)s omitidos, %(errors)s errores."
+
+#: app/templates/works/openalex_works.html:192
+msgid "Previous"
+msgstr "Anterior"
+
+#: app/templates/works/openalex_works.html:195
+#, python-format
+msgid "Page %(page)s of %(pages)s"
+msgstr "Página %(page)s de %(pages)s"
+
+#: app/templates/works/openalex_works.html:198
+msgid "Next"
+msgstr "Siguiente"
+
+msgid "OpenAlex Analytics - Data ORCID-Chile"
+msgstr "Analítica OpenAlex - Data ORCID-Chile"
+
+msgid "Filters"
+msgstr "Filtros"
+
+msgid "From year"
+msgstr "Desde año"
+
+msgid "To year"
+msgstr "Hasta año"
+
+msgid "Document type"
+msgstr "Tipo de documento"
+
+msgid "All types"
+msgstr "Todos los tipos"
+
+msgid "All OA statuses"
+msgstr "Todos los estados OA"
+
+msgid "Affiliation"
+msgstr "Afiliación"
+
+msgid "Apply filters"
+msgstr "Aplicar filtros"
+
+msgid "Filtered OpenAlex Articles"
+msgstr "Artículos OpenAlex filtrados"
+
+msgid "Associated with Selected Institution"
+msgstr "Asociados a la institución seleccionada"
+
+msgid "Associated with Chile"
+msgstr "Asociados a Chile"
+
+msgid "Selected Institution + International"
+msgstr "Institución seleccionada + internacional"
+
+msgid "Selected Institution Articles"
+msgstr "Artículos de la institución seleccionada"
+
+msgid "Chile-Affiliated Articles"
+msgstr "Artículos con afiliación en Chile"
+
+msgid "No OpenAlex metadata is available for the selected filters."
+msgstr "No hay metadatos OpenAlex para los filtros seleccionados."
+
+msgid "Publication, Affiliation, and Citation Trend"
+msgstr "Tendencia de publicaciones, afiliación y citas"
+
+msgid "Affiliation Coverage"
+msgstr "Cobertura de afiliación"
+
+msgid "Top OpenAlex Authors"
+msgstr "Principales autores OpenAlex"
+
+msgid "Topic Domains"
+msgstr "Dominios temáticos"
+
+msgid "Institution Collaboration Network"
+msgstr "Red de colaboración institucional"
+
+msgid "No institution network is available for the selected filters."
+msgstr "No hay red institucional disponible para los filtros seleccionados."
+
+msgid "Chile-Affiliated Author Network"
+msgstr "Red de autores con afiliación en Chile"
+
+msgid "No author network is available for the selected filters."
+msgstr "No hay red de autores disponible para los filtros seleccionados."
+
+msgid "Document Types"
+msgstr "Tipos de documento"
+
+msgid "Selected institution"
+msgstr "Institución seleccionada"
+
+msgid "Chile affiliation"
+msgstr "Afiliación en Chile"
+
+msgid "Unknown"
+msgstr "Desconocido"
+
+msgid "shared articles"
+msgstr "artículos compartidos"
+
+msgid "collaboration links"
+msgstr "enlaces de colaboración"
+
+msgid "All affiliations"
+msgstr "Todas las afiliaciones"
+
+msgid "Any Chile affiliation"
+msgstr "Cualquier afiliación en Chile"
+
+msgid "International collaboration"
+msgstr "Colaboración internacional"
+
+msgid "Not associated with selected institution"
+msgstr "No asociados a la institución seleccionada"
+
+msgid "Other Chile affiliation"
+msgstr "Otra afiliación en Chile"
+
+msgid "No Chile affiliation"
+msgstr "Sin afiliación en Chile"
+
+msgid "Other Chile institution"
+msgstr "Otra institución chilena"
+
+msgid "International institution"
+msgstr "Institución internacional"
+
+msgid "Unknown institution country"
+msgstr "País de institución desconocido"
+
+msgid "Author with selected institution affiliation"
+msgstr "Autor con afiliación a la institución seleccionada"
+
+msgid "Other Chile-affiliated author"
+msgstr "Otro autor con afiliación en Chile"
+
+msgid "Unknown author affiliation"
+msgstr "Afiliación de autor desconocida"
+
+msgid "Global comparison"
+msgstr "Comparación global"
+
+msgid "OpenAlex Global"
+msgstr "OpenAlex Global"
+
+msgid "Global OpenAlex Comparison - Data ORCID-Chile"
+msgstr "Comparación global OpenAlex - Data ORCID-Chile"
+
+msgid "Global OpenAlex Comparison"
+msgstr "Comparación global OpenAlex"
+
+msgid "Active institution"
+msgstr "Institución activa"
+
+msgid "Universities"
+msgstr "Universidades"
+
+msgid "OpenAlex Coverage"
+msgstr "Cobertura OpenAlex"
+
+msgid "Own Institution Match"
+msgstr "Coincidencia con institución propia"
+
+msgid "OpenAlex Articles by University"
+msgstr "Artículos OpenAlex por universidad"
+
+msgid "Open Access Mix"
+msgstr "Composición de acceso abierto"
+
+msgid "Institution Association Rates"
+msgstr "Tasas de asociación institucional"
+
+msgid "Citations by University"
+msgstr "Citas por universidad"
+
+msgid "University Comparison Table"
+msgstr "Tabla comparativa de universidades"
+
+msgid "University"
+msgstr "Universidad"
+
+msgid "ORCID Articles"
+msgstr "Artículos ORCID"
 
 msgid "Coverage"
 msgstr "Cobertura"
 
-msgid "Open Access Works"
-msgstr "Obras en acceso abierto"
+msgid "Own Institution"
+msgstr "Institución propia"
 
-msgid "OpenAlex Citations"
-msgstr "Citas OpenAlex"
+msgid "Chile"
+msgstr "Chile"
 
-msgid "ORCID Works + OpenAlex"
-msgstr "Obras ORCID + OpenAlex"
+msgid "International"
+msgstr "Internacional"
 
-msgid "Last OpenAlex sync"
-msgstr "Última sincronización OpenAlex"
+msgid "Overall OpenAlex Coverage"
+msgstr "Cobertura general OpenAlex"
 
-msgid "Coverage filter"
-msgstr "Filtro de cobertura"
+msgid "Overall Coverage"
+msgstr "Cobertura general"
 
-msgid "All DOI Works"
-msgstr "Todas las obras con DOI"
+msgid "Network nodes"
+msgstr "Nodos de red"
 
-msgid "Enriched"
-msgstr "Enriquecidas"
+msgid "Document Type Evolution"
+msgstr "Evolución por tipo de documento"
 
-msgid "Pending OpenAlex"
-msgstr "Pendientes OpenAlex"
+msgid "Open Access Evolution"
+msgstr "Evolución de acceso abierto"
 
-msgid "No DOI-backed works found for the selected coverage filter."
-msgstr "No se encontraron obras con DOI para el filtro de cobertura seleccionado."
+msgid "Accumulated OpenAlex citations by university."
+msgstr "Citas OpenAlex acumuladas por universidad."
 
-msgid "Enriched Works Detail"
-msgstr "Detalle de obras enriquecidas"
+msgid "Affiliation countries present in the filtered articles."
+msgstr "Países de afiliación presentes en los artículos filtrados."
 
-msgid "Work"
-msgstr "Obra"
+msgid "Annual changes in the main OpenAlex document types."
+msgstr "Cambios anuales en los principales tipos documentales OpenAlex."
 
-msgid "Citations"
-msgstr "Citas"
+msgid "Annual evolution of OpenAlex document types across the full system."
+msgstr "Evolución anual de los tipos documentales OpenAlex en todo el sistema."
 
-msgid "Open Access"
-msgstr "Acceso abierto"
+msgid "Annual evolution of article volume, institutional or Chilean affiliation, and citations."
+msgstr "Evolución anual del volumen de artículos, afiliación institucional o chilena y citas."
 
-msgid "Topic Field"
-msgstr "Campo temático"
+msgid "Annual evolution of open and closed articles across all universities."
+msgstr "Evolución anual de artículos abiertos y cerrados en todas las universidades."
 
-msgid "OpenAlex"
-msgstr "OpenAlex"
+msgid "Annual evolution of open and closed articles."
+msgstr "Evolución anual de artículos abiertos y cerrados."
 
-msgid "Untitled work"
-msgstr "Obra sin título"
+msgid "Articles with a Chilean affiliation and at least one institution from another country in OpenAlex."
+msgstr "Artículos con una afiliación chilena y al menos una institución de otro país en OpenAlex."
 
-msgid "No year"
-msgstr "Sin año"
+msgid "Authors are stored here only when the OpenAlex authorship includes country CL; this is not a census of all university ORCID profiles."
+msgstr "Los autores se guardan aquí solo cuando la autoría OpenAlex incluye país CL; no es un censo de todos los perfiles ORCID de la universidad."
 
-msgid "No type"
-msgstr "Sin tipo"
+msgid "Chilean-affiliated authors with the most articles in the filtered set."
+msgstr "Autores con afiliación chilena con más artículos en el conjunto filtrado."
 
-msgid "Open"
-msgstr "Abierto"
+msgid "Composition of the filtered set by document type."
+msgstr "Composición del conjunto filtrado por tipo documental."
 
-msgid "Closed"
-msgstr "Cerrado"
+msgid "Counts authors stored from OpenAlex when the authorship has country CL. This is not a census of all ORCID researchers."
+msgstr "Cuenta autores guardados desde OpenAlex cuando la autoría tiene país CL. No es un censo de todos los investigadores ORCID."
 
-msgid "Pending"
-msgstr "Pendiente"
+msgid "Counts countries from OpenAlex institutions by article. A single article can appear in more than one country when it has international collaboration."
+msgstr "Cuenta países de instituciones OpenAlex por artículo. Un mismo artículo puede aparecer en más de un país cuando tiene colaboración internacional."
 
-msgid "ORCID Activity Summary"
-msgstr "Resumen de actividad por ORCID"
+msgid "Counts filtered OpenAlex works by publication year. Citations are summed by year and use the right axis."
+msgstr "Cuenta trabajos OpenAlex filtrados por año de publicación. Las citas se suman por año y usan el eje derecho."
 
-msgid "Total Activity"
-msgstr "Actividad total"
+msgid "Counts institutions present in OpenAlex authorships, deduplicated by article. A publication can count toward more than one institution."
+msgstr "Cuenta instituciones presentes en autorías OpenAlex, deduplicadas por artículo. Una publicación puede sumar a más de una institución."
 
-msgid "No ORCID activity summary available"
-msgstr "No hay resumen de actividad ORCID disponible"
+msgid "Counts university-article pairs by year using OpenAlex is_oa. If an article appears in multiple universities, it contributes to each university-article pair."
+msgstr "Cuenta pares universidad-artículo por año usando is_oa de OpenAlex. Si un artículo aparece en varias universidades, aporta a cada par universidad-artículo."
 
-msgid "Methodological Note"
-msgstr "Nota metodológica"
+msgid "Counts university-article pairs with OpenAlex metadata that match the active filters. A publication can be associated with more than one university if it appears in multiple local caches."
+msgstr "Cuenta pares universidad-artículo con metadatos OpenAlex que cumplen los filtros activos. Una publicación puede asociarse a más de una universidad si aparece en varias cachés locales."
 
-msgid "This review uses ORCID iDs found in the local works and funding caches for the selected institutional scope."
-msgstr "Esta revisión usa los ORCID iD encontrados en las cachés locales de publicaciones y financiamientos para el alcance institucional seleccionado."
+msgid "Detailed comparison by university."
+msgstr "Comparación detallada por universidad."
 
-msgid "Candidate groups are created when cached profile names match after lowercasing, accent removal, punctuation removal, and whitespace normalization."
-msgstr "Los grupos candidatos se crean cuando los nombres de perfil en caché coinciden después de convertir a minúsculas, eliminar acentos, puntuación y normalizar espacios."
+msgid "Distribution by OpenAlex topic domains."
+msgstr "Distribución por dominios temáticos OpenAlex."
 
-msgid "Scores prioritize exact normalized name matches, richer names, cached activity on every profile, and shared DOI evidence. Results are candidates for manual verification, not automatic merges."
-msgstr "Los puntajes priorizan coincidencias exactas de nombre normalizado, nombres más completos, actividad en caché en cada perfil y evidencia DOI compartida. Los resultados son candidatos para verificación manual, no fusiones automáticas."
+msgid "Distribution of OpenAlex open access status."
+msgstr "Distribución del estado de acceso abierto informado por OpenAlex."
 
-msgid "Candidate Details"
-msgstr "Detalle de candidatos"
+msgid "Distribution of articles by their relationship with the active institution and Chile."
+msgstr "Distribución de artículos según su relación con la institución activa y Chile."
 
-msgid "Candidate"
-msgstr "Candidato"
+msgid "Each filtered article is classified as selected institution, other Chilean affiliation, or no Chilean affiliation recorded in OpenAlex."
+msgstr "Cada artículo filtrado se clasifica como institución seleccionada, otra afiliación chilena o sin afiliación chilena registrada en OpenAlex."
 
-msgid "ORCID Profiles"
-msgstr "Perfiles ORCID"
+msgid "Each row summarizes the local ORCID cache and its OpenAlex cross-checks. Small counts under percentages show the numerator used for that rate."
+msgstr "Cada fila resume la caché local ORCID y sus cruces con OpenAlex. Los conteos pequeños bajo algunos porcentajes muestran el numerador usado para esa tasa."
 
-msgid "Activity"
-msgstr "Actividad"
+msgid "FWCI"
+msgstr "FWCI"
 
-msgid "Last Activity"
-msgstr "Última actividad"
+msgid "Field-Weighted Citation Impact reported by OpenAlex. Values above 1 suggest impact above the field average."
+msgstr "Field-Weighted Citation Impact informado por OpenAlex. Valores sobre 1 sugieren impacto sobre el promedio del campo."
 
-msgid "View Activity"
-msgstr "Ver actividad"
+msgid "Filtered articles with the highest OpenAlex citation counts."
+msgstr "Artículos filtrados con mayor cantidad de citas OpenAlex."
 
-msgid "%(count)s requests"
-msgstr "%(count)s solicitudes"
+msgid "Filtered works are grouped by publication year and OpenAlex type; the six highest-volume types in the filtered period are shown."
+msgstr "Los trabajos filtrados se agrupan por año de publicación y tipo OpenAlex; se muestran los seis tipos con mayor volumen en el periodo filtrado."
 
-msgid "Requests"
-msgstr "Solicitudes"
+msgid "Filters OpenAlex institutions with country_code=CL and counts unique articles per institution."
+msgstr "Filtra instituciones OpenAlex con country_code=CL y cuenta artículos únicos por institución."
 
-msgid "Active Users"
-msgstr "Usuarios activos"
+msgid "Global share of open and closed articles."
+msgstr "Proporción global de artículos abiertos y cerrados."
 
-msgid "Error Responses"
-msgstr "Respuestas con error"
+msgid "Groups university-article pairs by publication year and OpenAlex type. The six highest-volume types in the filtered period are shown."
+msgstr "Agrupa pares universidad-artículo por año de publicación y tipo OpenAlex. Se muestran los seis tipos con mayor volumen en el periodo filtrado."
 
-msgid "Average Latency"
-msgstr "Latencia promedio"
+msgid "How to read this"
+msgstr "Cómo leer esto"
 
-msgid "Activity Filters"
-msgstr "Filtros de actividad"
+msgid "Local articles with OpenAlex metadata that match the active filters."
+msgstr "Artículos locales con metadatos OpenAlex que cumplen los filtros activos."
 
-msgid "All Methods"
-msgstr "Todos los métodos"
+msgid "Local journal articles with OpenAlex metadata that match the active filters."
+msgstr "Artículos de revista locales con metadatos OpenAlex que cumplen los filtros activos."
 
-msgid "All Statuses"
-msgstr "Todos los estados"
+msgid "Metric guide"
+msgstr "Guía de métricas"
 
-msgid "Success"
-msgstr "Éxito"
+msgid "Most frequent Chilean institutions in the filtered articles."
+msgstr "Instituciones chilenas más frecuentes en los artículos filtrados."
 
-msgid "Redirects"
-msgstr "Redirecciones"
+msgid "Most frequent OpenAlex topic fields."
+msgstr "Campos temáticos OpenAlex más frecuentes."
 
-msgid "Errors"
-msgstr "Errores"
+msgid "Most frequent sources or journals in the filtered set."
+msgstr "Fuentes o revistas más frecuentes en el conjunto filtrado."
 
-msgid "Client"
-msgstr "Cliente"
+msgid "OpenAlex article volume by university."
+msgstr "Volumen de artículos OpenAlex por universidad."
 
-msgid "The \"Username\" field is required."
-msgstr "El campo \"Usuario\" es obligatorio."
+msgid "OpenAlex institutions with the highest presence in the filtered articles."
+msgstr "Instituciones OpenAlex con mayor presencia en los artículos filtrados."
 
-msgid "A user with username \"%(u)s\" already exists."
-msgstr "Ya existe un usuario con el nombre \"%(u)s\"."
+msgid "OpenAlex metric guide"
+msgstr "Guía de métricas OpenAlex"
 
-msgid "User \"%(u)s\" created%(r)s. Password: %(p)s"
-msgstr "Usuario \"%(u)s\" creado%(r)s. Contraseña: %(p)s"
+msgid "Overall coverage uses OpenAlex matches over total candidates. Own institution, Chile, and International are calculated over each university filtered OpenAlex articles."
+msgstr "La cobertura general usa coincidencias OpenAlex sobre candidatos totales. Institución propia, Chile e Internacional se calculan sobre los artículos OpenAlex filtrados de cada universidad."
 
-msgid "User \"%(u)s\" updated successfully."
-msgstr "Usuario \"%(u)s\" actualizado correctamente."
+msgid "Percent comparison between universities."
+msgstr "Comparación porcentual entre universidades."
 
-msgid "Invalid ROR ID."
-msgstr "ROR ID inválido."
+msgid "Percent of articles with a Chilean affiliation that also have at least one institution from another country."
+msgstr "Porcentaje de artículos con afiliación chilena que además tienen al menos una institución de otro país."
 
-msgid "Institution not found."
-msgstr "Institución no encontrada."
+msgid "Percent of filtered articles where OpenAlex includes the same university ROR."
+msgstr "Porcentaje de artículos filtrados donde OpenAlex incluye el mismo ROR de la universidad."
 
-msgid "Your access credentials for <strong>Data ORCID-Chile</strong> have been updated:"
-msgstr "Tus credenciales de acceso para <strong>Data ORCID-Chile</strong> han sido actualizadas:"
+msgid "Percent of filtered articles where OpenAlex reports an institution with the same ROR as the active university."
+msgstr "Porcentaje de artículos filtrados donde OpenAlex declara una institución con el mismo ROR de la universidad activa."
 
-msgid "Sync All Institutions"
-msgstr "Sincronizar todas las instituciones"
+msgid "Percent of filtered articles with at least one Chilean institution in OpenAlex affiliations."
+msgstr "Porcentaje de artículos filtrados con al menos una institución chilena en las afiliaciones OpenAlex."
 
-msgid "All Institutions Sync"
-msgstr "Sincronización de todas las instituciones"
+msgid "Percent of filtered articles with at least one Chilean institution in OpenAlex."
+msgstr "Porcentaje de artículos filtrados con al menos una institución chilena en OpenAlex."
 
-msgid "No institutions available for synchronization."
-msgstr "No hay instituciones disponibles para sincronización."
+msgid "Percent of local candidates with an OpenAlex match, calculated without restricting by year, type, or OA filters."
+msgstr "Porcentaje de candidatos locales con coincidencia OpenAlex, calculado sin restringir por filtros de año, tipo u OA."
 
-msgid "Start synchronization for all institutions? This can take a long time and will contact ORCID for every registered institution."
-msgstr "¿Iniciar sincronización para todas las instituciones? Esto puede tardar mucho y contactará ORCID por cada institución registrada."
+msgid "Sorts by cited_by_count descending. Citations use the current counter stored from OpenAlex."
+msgstr "Ordena por cited_by_count descendente. Las citas usan el contador actual almacenado desde OpenAlex."
 
-msgid "The all-institution sync uses the institutional registry, including Chilean universities without user accounts, and rebuilds their Works, Fundings, and Profile names caches."
-msgstr "La sincronización de todas las instituciones usa el registro institucional, incluyendo universidades chilenas sin cuentas de usuario, y reconstruye sus cachés de publicaciones, financiamientos y nombres de perfil."
+msgid "Sums cited_by_count for the filtered articles. If an article is locally associated with multiple universities, it contributes to each one total."
+msgstr "Suma cited_by_count de los artículos filtrados. Si un artículo está asociado localmente a varias universidades, aporta al total de cada una."
 
-msgid "All-institution synchronization completed with %(failed)s institution errors. Totals: %(w)s works, %(f)s fundings, %(p)s profiles."
-msgstr "La sincronización de todas las instituciones finalizó con %(failed)s instituciones con error. Totales: %(w)s publicaciones, %(f)s financiamientos, %(p)s perfiles."
+msgid "Total journal articles in the local ORCID cache for each university."
+msgstr "Total de artículos de revista en la caché local ORCID por universidad."
 
-msgid "All-institution synchronization complete: %(count)s institutions, %(w)s works, %(f)s fundings, %(p)s profiles."
-msgstr "Sincronización de todas las instituciones completa: %(count)s instituciones, %(w)s publicaciones, %(f)s financiamientos, %(p)s perfiles."
+msgid "Uses OpenAlex is_oa over the global filtered set. Open means is_oa=true; closed means is_oa=false."
+msgstr "Usa is_oa de OpenAlex sobre el conjunto global filtrado. Abierto corresponde a is_oa=true; cerrado a is_oa=false."
+
+msgid "Uses oa_status when available. It can distinguish gold, green, hybrid, bronze, closed, or other statuses defined by OpenAlex."
+msgstr "Usa oa_status cuando está disponible. Puede distinguir gold, green, hybrid, bronze, closed u otros estados definidos por OpenAlex."
+
+msgid "Uses primary_topic_domain from each enriched work. Missing classifications are grouped as unknown."
+msgstr "Usa primary_topic_domain de cada trabajo enriquecido. Las clasificaciones faltantes se agrupan como desconocidas."
+
+msgid "Uses primary_topic_field from each enriched work and counts articles by field."
+msgstr "Usa primary_topic_field de cada trabajo enriquecido y cuenta artículos por campo."
+
+msgid "Uses source_name from OpenAlex. Empty values are grouped as unknown source."
+msgstr "Usa source_name de OpenAlex. Los valores vacíos se agrupan como fuente desconocida."
+
+msgid "Uses the OpenAlex is_oa field. Open means is_oa=true; closed means is_oa=false for the filtered works."
+msgstr "Usa el campo is_oa de OpenAlex. Abierto corresponde a is_oa=true; cerrado corresponde a is_oa=false para los trabajos filtrados."
+
+msgid "Uses the OpenAlex type field and shows the most frequent types in the selected period."
+msgstr "Usa el campo type de OpenAlex y muestra los tipos más frecuentes en el periodo seleccionado."
+
+msgid "What it shows"
+msgstr "Qué muestra"
+
+msgid "Author"
+msgstr "Autor"
+
+msgid "Author links"
+msgstr "Vínculos de autor"
+
+msgid "Corresponding"
+msgstr "Correspondencia"
+
+msgid "Global Author Production"
+msgstr "Producción global por autor"
+
+msgid "Global Institution Production"
+msgstr "Producción global por institución"
+
+msgid "Top OpenAlex institutions by production and citations across all filtered works."
+msgstr "Principales instituciones OpenAlex por producción y citas en todos los trabajos filtrados."
+
+msgid "Top authors by production and citations across all filtered OpenAlex works."
+msgstr "Principales autores por producción y citas en todos los trabajos OpenAlex filtrados."
+
+msgid "Works are deduplicated by DOI across all universities before aggregating. A cited work contributes its full OpenAlex cited_by_count to each listed author."
+msgstr "Los trabajos se deduplican por DOI en todas las universidades antes de agregar. Una obra citada aporta todo su cited_by_count de OpenAlex a cada autor listado."
+
+msgid "Works are deduplicated by DOI across all universities. A work contributes to every institution listed in its OpenAlex authorships; author links sum the number of authors associated with that institution."
+msgstr "Los trabajos se deduplican por DOI en todas las universidades. Una obra aporta a cada institución listada en sus autorías OpenAlex; los vínculos de autor suman la cantidad de autores asociados a esa institución."
+
+msgid "Summary"
+msgstr "Resumen"
+
+msgid "Production"
+msgstr "Producción"
+
+msgid "Authors by Institution"
+msgstr "Autores por institución"
+
+msgid "Authors by production and citations across all filtered OpenAlex works."
+msgstr "Autores por producción y citas en todos los trabajos OpenAlex filtrados."
+
+msgid "Associated Institutions"
+msgstr "Instituciones asociadas"
+
+msgid "OpenAlex institutions by production and citations across all filtered works."
+msgstr "Instituciones OpenAlex por producción y citas en todos los trabajos filtrados."
+
+msgid "Associated Authors"
+msgstr "Autores asociados"
+
+msgid "Authors ranked within each local university by production and citations."
+msgstr "Autores ordenados dentro de cada universidad local por producción y citas."
+
+msgid "Rows are grouped by local university and OpenAlex author. Works are counted once per university-author pair under the active filters."
+msgstr "Las filas se agrupan por universidad local y autor OpenAlex. Los trabajos se cuentan una vez por par universidad-autor según los filtros activos."
+
+msgid "Last year"
+msgstr "Último año"
+
+msgid "Open article detail"
+msgstr "Abrir detalle de artículos"
+
+msgid "Enrichment"
+msgstr "Enriquecimiento"
+
+msgid "Institution analytics"
+msgstr "Analítica institucional"
+
+msgid "Invalid export table."
+msgstr "Tabla de exportación inválida."
+
+msgid "Leave empty to include all"
+msgstr "Dejar vacío para incluir todo"
+
+msgid "Visible metrics"
+msgstr "Métricas visibles"
+
+msgid "Export table"
+msgstr "Exportar tabla"
+
+msgid "All"
+msgstr "Todo"
+
+msgid "selected"
+msgstr "seleccionados"

@@ -168,11 +168,17 @@ def register_commands(app):
     @click.option("--stale-days", default=None, type=int, help="Refresh cached records older than this many days.")
     @click.option("--include-all-types", is_flag=True, help="Include every ORCID work type, not only journal articles.")
     @click.option("--dry-run", is_flag=True, help="Count candidate DOI values without calling OpenAlex.")
+    @click.option("--workers", default=None, type=int, help="Parallel DOI fetch workers. Defaults to openalex.workers.")
+    @click.option("--title-fallback", is_flag=True, help="Search by title only for DOI misses and works without DOI.")
     @with_appcontext
-    def sync_openalex_works_command(ror, all_institutions, limit, force, stale_days, include_all_types, dry_run):
+    def sync_openalex_works_command(ror, all_institutions, limit, force, stale_days, include_all_types, dry_run, workers, title_fallback):
         """Enrich local DOI-backed works with OpenAlex metadata."""
         from .services.institution_registry_service import get_institution_options
-        from .services.openalex_service import OpenAlexConfigError, sync_openalex_works
+        from .services.openalex_service import (
+            OpenAlexConfigError,
+            sync_openalex_title_matches,
+            sync_openalex_works,
+        )
 
         if ror and all_institutions:
             click.echo("Use either --ror or --all, not both.")
@@ -191,26 +197,31 @@ def register_commands(app):
             scopes = [ror]
 
         articles_only = not include_all_types
-        mode = "dry-run" if dry_run else "sync"
+        mode = "title fallback" if title_fallback else "DOI sync"
+        if dry_run:
+            mode = f"{mode} dry-run"
         click.echo(f"Starting OpenAlex {mode} for {len(scopes)} scope(s).")
 
         for current_ror in scopes:
             click.echo(f"\nProcessing ROR: {current_ror}")
             try:
-                summary = sync_openalex_works(
+                sync_func = sync_openalex_title_matches if title_fallback else sync_openalex_works
+                summary = sync_func(
                     ror_id=current_ror,
                     limit=limit,
                     force_refresh=force,
                     stale_days=stale_days,
                     articles_only=articles_only,
                     dry_run=dry_run,
+                    workers=workers,
                 )
             except OpenAlexConfigError as exc:
                 click.echo(f"OpenAlex configuration error: {exc}")
                 return
 
             click.echo(
-                "Works: {works_seen} | DOI candidates: {dois_found} | "
+                "Works: {works_seen} | Candidates: {dois_found} | "
+                "Workers: {workers} | "
                 "Fetched: {fetched_count} | Matched: {matched_count} | "
                 "Not found: {not_found_count} | Skipped: {skipped_count} | "
                 "Errors: {error_count} | Status: {status}".format(**summary)
@@ -219,3 +230,32 @@ def register_commands(app):
                 click.echo(f"Error: {summary['error']}")
 
         click.echo("\nOpenAlex synchronization finished.")
+
+    @app.cli.command("rebuild-openalex-dimensions")
+    @click.option("--limit", default=None, type=int, help="Maximum raw OpenAlex records to process.")
+    @click.option("--batch-size", default=50, type=int, help="Raw records to process before each commit.")
+    @click.option("--missing-only", is_flag=True, help="Only process raw records without author dimension rows.")
+    @click.option("--reset", is_flag=True, help="Delete existing OpenAlex dimensions before rebuilding.")
+    @with_appcontext
+    def rebuild_openalex_dimensions_command(limit, batch_size, missing_only, reset):
+        """Build author and institution dimensions from stored OpenAlex raw JSON."""
+        from .services.openalex_service import rebuild_openalex_dimensions
+
+        click.echo("Rebuilding OpenAlex author and institution dimensions from raw cache...")
+        def _progress(processed, author_rows, institution_rows, last_id):
+            click.echo(
+                f"Processed {processed} raw records | "
+                f"authors {author_rows} | institutions {institution_rows} | last raw id {last_id}"
+            )
+
+        summary = rebuild_openalex_dimensions(
+            limit=limit,
+            batch_size=batch_size,
+            missing_only=missing_only,
+            reset=reset,
+            progress=_progress,
+        )
+        click.echo(
+            "Processed: {processed} | Author rows: {author_rows} | "
+            "Institution rows: {institution_rows}".format(**summary)
+        )

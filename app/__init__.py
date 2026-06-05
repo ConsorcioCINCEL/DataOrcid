@@ -144,6 +144,9 @@ def create_app() -> Flask:
         OPENALEX_MAILTO=os.environ.get("OPENALEX_MAILTO") or openalex_cfg.get("mailto"),
         OPENALEX_TIMEOUT=int(openalex_cfg.get("timeout", 20)),
         OPENALEX_STALE_DAYS=int(openalex_cfg.get("stale_days", 30)),
+        OPENALEX_WORKERS=int(os.environ.get("OPENALEX_WORKERS") or openalex_cfg.get("workers", 4)),
+        OPENALEX_TITLE_WORKERS=int(os.environ.get("OPENALEX_TITLE_WORKERS") or openalex_cfg.get("title_workers", 2)),
+        OPENALEX_ANALYTICS_CACHE_TTL=int(openalex_cfg.get("analytics_cache_ttl", 900)),
     )
 
     datasets_cfg = config_data.get("paths", {}).get("datasets_dir", "app/datasets")

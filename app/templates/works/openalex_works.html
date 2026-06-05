@@ -18,10 +18,10 @@
 {% block content %}
 <div class="row">
   {% for label, value, icon, color in [
-    (_('Works with DOI'), summary.total_doi_works, 'fas fa-fingerprint', 'bg-primary'),
-    (_('Unique DOIs'), summary.unique_dois, 'fas fa-stream', 'bg-info'),
+    (_('Journal Articles'), summary.total_article_works, 'fas fa-newspaper', 'bg-primary'),
+    (_('Unique Article DOIs'), summary.unique_dois, 'fas fa-stream', 'bg-info'),
+    (_('Processed DOIs'), summary.processed_unique_dois, 'fas fa-sync-alt', 'bg-secondary'),
     (_('OpenAlex Matches'), summary.enriched_unique_dois, 'fas fa-check-circle', 'bg-success'),
-    (_('Coverage'), summary.coverage_percent ~ '%', 'fas fa-chart-pie', 'bg-secondary'),
     (_('Open Access Works'), summary.open_access_works, 'fas fa-unlock-alt', 'bg-warning'),
     (_('OpenAlex Citations'), summary.total_citations, 'fas fa-quote-right', 'bg-danger')
   ] %}
@@ -42,50 +42,73 @@
     <h3 class="card-title text-bold mb-0">
       <i class="fas fa-project-diagram mr-2 text-primary"></i>{{ _('ORCID Works + OpenAlex') }}
     </h3>
-    <div class="ml-auto small text-muted">
+    <div class="ml-auto d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+      <a href="{{ url_for('works.openalex_analytics') }}" class="btn btn-sm btn-outline-primary">
+        <i class="fas fa-chart-line mr-1"></i>{{ _('Analytics') }}
+      </a>
+      <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Export table') }}">
+        <a href="{{ url_for('works.openalex_works_export', coverage=coverage) }}" class="btn btn-outline-secondary">
+          <i class="fas fa-file-csv mr-1"></i>CSV
+        </a>
+        <a href="{{ url_for('works.openalex_works_export', coverage=coverage, format='excel') }}" class="btn btn-outline-secondary">
+          <i class="fas fa-file-excel mr-1"></i>XLSX
+        </a>
+      </div>
+      <span class="small text-muted">
       {% if summary.last_run and summary.last_run.finished_at %}
         <i class="far fa-clock mr-1"></i>{{ _('Last OpenAlex sync') }}: {{ summary.last_run.finished_at|datetimeformat }}
       {% else %}
         <i class="far fa-clock mr-1"></i>{{ _('Last OpenAlex sync') }}: {{ _('Not available') }}
       {% endif %}
+      </span>
     </div>
   </div>
   <div class="card-body">
     <div class="d-flex flex-wrap align-items-center justify-content-between" style="gap: 0.75rem;">
       <div class="btn-group" role="group" aria-label="{{ _('Coverage filter') }}">
-        <a class="btn btn-sm {% if coverage == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='all') }}">
-          <i class="fas fa-list mr-1"></i>{{ _('All DOI Works') }}
+        <a class="btn btn-sm {% if coverage == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='all', per_page=pagination.per_page) }}">
+          <i class="fas fa-list mr-1"></i>{{ _('All Articles') }}
         </a>
-        <a class="btn btn-sm {% if coverage == 'enriched' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='enriched') }}">
-          <i class="fas fa-check mr-1"></i>{{ _('Enriched') }}
+        <a class="btn btn-sm {% if coverage == 'enriched' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='enriched', per_page=pagination.per_page) }}">
+          <i class="fas fa-check mr-1"></i>{{ _('Matched') }}
         </a>
-        <a class="btn btn-sm {% if coverage == 'missing' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='missing') }}">
+        <a class="btn btn-sm {% if coverage == 'missing' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('works.openalex_works', coverage='missing', per_page=pagination.per_page) }}">
           <i class="fas fa-hourglass-half mr-1"></i>{{ _('Pending OpenAlex') }}
         </a>
       </div>
-      <span class="badge badge-light border px-3 py-2">
-        <i class="fas fa-university mr-1 text-primary"></i>{{ ror_id }}
-      </span>
+      <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+        <span class="small text-muted">
+          {{ _('Showing %(start)s-%(end)s of %(total)s records', start=pagination.start, end=pagination.end, total=pagination.total_rows) }}
+        </span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Rows per page') }}">
+          {% for size in [50, 100, 250] %}
+            <a class="btn {% if pagination.per_page == size %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('works.openalex_works', coverage=coverage, per_page=size) }}">{{ size }}</a>
+          {% endfor %}
+        </div>
+        <span class="badge badge-light border px-3 py-2">
+          <i class="fas fa-university mr-1 text-primary"></i>{{ ror_id }}
+        </span>
+      </div>
     </div>
   </div>
 </div>
 
 {% if not rows %}
-<div class="alert alert-info shadow-sm">
-  <i class="fas fa-info-circle mr-2"></i>{{ _('No DOI-backed works found for the selected coverage filter.') }}
+    <div class="alert alert-info shadow-sm">
+  <i class="fas fa-info-circle mr-2"></i>{{ _('No journal articles found for the selected coverage filter.') }}
 </div>
 {% endif %}
 
 <div class="card shadow-sm">
   <div class="card-header">
-    <h3 class="card-title text-bold">{{ _('Enriched Works Detail') }}</h3>
+    <h3 class="card-title text-bold">{{ _('OpenAlex Article Detail') }}</h3>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
       <table id="openalexWorksTable" class="table table-hover mb-0 w-100">
         <thead>
           <tr>
-            <th style="min-width: 280px;">{{ _('Work') }}</th>
+            <th style="min-width: 280px;">{{ _('Article') }}</th>
             <th style="min-width: 170px;">{{ _('DOI') }}</th>
             <th class="text-right">{{ _('Citations') }}</th>
             <th>{{ _('Open Access') }}</th>
@@ -107,9 +130,13 @@
               </a>
             </td>
             <td>
-              <a href="https://doi.org/{{ row.doi_normalized }}" target="_blank" rel="noopener" class="small">
-                {{ row.doi }}
-              </a>
+              {% if row.has_doi %}
+                <a href="https://doi.org/{{ row.doi_normalized }}" target="_blank" rel="noopener" class="small">
+                  {{ row.doi }}
+                </a>
+              {% else %}
+                <span class="badge badge-light border">{{ _('No DOI') }}</span>
+              {% endif %}
             </td>
             <td class="text-right" data-order="{{ row.cited_by_count if row.cited_by_count is not none else -1 }}">
               {% if row.cited_by_count is not none %}
@@ -118,16 +145,20 @@
                 <span class="text-muted">—</span>
               {% endif %}
             </td>
-            <td>
-              {% if row.matched %}
-                {% if row.is_oa %}
-                  <span class="badge badge-success">{{ row.oa_status or _('Open') }}</span>
-                {% else %}
-                  <span class="badge badge-secondary">{{ row.oa_status or _('Closed') }}</span>
-                {% endif %}
-              {% else %}
-                <span class="badge badge-light border">{{ _('Pending') }}</span>
-              {% endif %}
+                <td>
+                  {% if row.matched %}
+                    {% if row.is_oa %}
+                      <span class="badge badge-success">{{ row.oa_status or _('Open') }}</span>
+                    {% else %}
+                      <span class="badge badge-secondary">{{ row.oa_status or _('Closed') }}</span>
+                    {% endif %}
+                  {% elif row.raw_status == 'not_found' %}
+                    <span class="badge badge-warning">{{ _('Not found') }}</span>
+                  {% elif row.raw_status == 'error' %}
+                    <span class="badge badge-danger">{{ _('Error') }}</span>
+                  {% else %}
+                    <span class="badge badge-light border">{{ _('Pending') }}</span>
+                  {% endif %}
             </td>
             <td>
               {% if row.source_name %}
@@ -163,8 +194,24 @@
         </tbody>
       </table>
     </div>
-  </div>
-</div>
+      </div>
+    </div>
+
+{% if pagination.total_rows > 0 %}
+<nav aria-label="{{ _('OpenAlex pagination') }}">
+  <ul class="pagination justify-content-end">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('works.openalex_works', coverage=coverage, page=pagination.prev_page, per_page=pagination.per_page) }}">{{ _('Previous') }}</a>
+    </li>
+    <li class="page-item disabled">
+      <span class="page-link">{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>
+    </li>
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('works.openalex_works', coverage=coverage, page=pagination.next_page, per_page=pagination.per_page) }}">{{ _('Next') }}</a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -178,12 +225,13 @@
       const languageUrl = '{{ "https://cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json" if session.get("locale") == "es" else "" }}';
       const language = languageUrl ? { url: languageUrl } : {};
 
-      $('#openalexWorksTable').DataTable({
-        responsive: true,
-        pageLength: 25,
-        order: [[2, 'desc']],
-        language: language
-      });
+          $('#openalexWorksTable').DataTable({
+            responsive: true,
+            paging: false,
+            info: false,
+            order: [[2, 'desc']],
+            language: language
+          });
     });
   </script>
 {% endblock %}

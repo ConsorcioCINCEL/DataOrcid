@@ -50,6 +50,9 @@ class User(db.Model):
 class WorkCache(db.Model):
     """Cached ORCID work summary scoped by institution ROR."""
     __tablename__ = "work_cache"
+    __table_args__ = (
+        db.Index("ix_work_cache_ror_type_doi", "ror_id", "type", "doi"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     ror_id = db.Column(db.String(32), index=True, nullable=False)
@@ -65,7 +68,7 @@ class WorkCache(db.Model):
     pub_day = db.Column(db.String(4))
     
     doi = db.Column(db.String(255), index=True)
-    issn = db.Column(db.String(64))
+    issn = db.Column(db.Text)
     other_external_ids = db.Column(db.Text) # Serialized list of other IDs
     
     source = db.Column(db.Text)         # Who added this record to ORCID?
@@ -109,7 +112,7 @@ class FundingCache(db.Model):
     end_m = db.Column(db.String(4))
     end_d = db.Column(db.String(4))
     
-    grant_number = db.Column(db.String(255))
+    grant_number = db.Column(db.Text)
     currency = db.Column(db.String(8))
     amount = db.Column(db.String(64))
     
@@ -231,6 +234,53 @@ class OpenAlexWorkMetadata(db.Model):
     raw_updated_date = db.Column(db.DateTime, nullable=True)
     fetched_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class OpenAlexWorkAuthor(db.Model):
+    """Author-level metadata extracted from OpenAlex authorships."""
+    __tablename__ = "openalex_work_author"
+    __table_args__ = (
+        db.Index("ix_openalex_work_author_doi_author", "doi_normalized", "author_id"),
+        db.Index("ix_openalex_work_author_chile_doi", "has_chile_affiliation", "doi_normalized"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    doi_normalized = db.Column(db.String(255), index=True, nullable=False)
+    openalex_id = db.Column(db.String(64), index=True, nullable=True)
+    author_id = db.Column(db.String(64), index=True, nullable=True)
+    author_name = db.Column(db.Text, nullable=True)
+    orcid = db.Column(db.String(32), index=True, nullable=True)
+    raw_author_name = db.Column(db.Text, nullable=True)
+    author_position = db.Column(db.String(32), nullable=True)
+    is_corresponding = db.Column(db.Boolean, default=False, nullable=False)
+    has_chile_affiliation = db.Column(db.Boolean, default=False, nullable=False)
+    countries = db.Column(db.JSON, nullable=True)
+    institution_rors = db.Column(db.JSON, nullable=True)
+    institution_names = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class OpenAlexWorkInstitution(db.Model):
+    """Institution-level metadata extracted from OpenAlex authorships."""
+    __tablename__ = "openalex_work_institution"
+    __table_args__ = (
+        db.Index("ix_openalex_work_institution_doi_country", "doi_normalized", "country_code"),
+        db.Index("ix_openalex_work_institution_country_doi", "country_code", "doi_normalized"),
+        db.Index("ix_openalex_work_institution_doi_ror", "doi_normalized", "ror_id"),
+        db.Index("ix_openalex_work_institution_ror_doi", "ror_id", "doi_normalized"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    doi_normalized = db.Column(db.String(255), index=True, nullable=False)
+    openalex_id = db.Column(db.String(64), index=True, nullable=True)
+    institution_id = db.Column(db.String(64), index=True, nullable=True)
+    institution_name = db.Column(db.Text, nullable=True)
+    ror_id = db.Column(db.String(32), index=True, nullable=True)
+    country_code = db.Column(db.String(2), index=True, nullable=True)
+    institution_type = db.Column(db.String(64), nullable=True)
+    author_count = db.Column(db.Integer, default=0, nullable=False)
+    has_corresponding_author = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 

@@ -1,6 +1,7 @@
 """Build and refresh local ORCID caches for works, fundings, and profiles."""
 
 import logging
+import re
 from flask import current_app
 from sqlalchemy import or_
 from .. import db
@@ -10,6 +11,22 @@ from .ror_service import fetch_grid_from_ror
 from .institution_registry_service import get_institution_by_ror
 
 logger = logging.getLogger(__name__)
+ISSN_RE = re.compile(r"^\d{4}-?\d{3}[\dXx]$")
+
+
+def _clean_external_id_value(value: str | None) -> str | None:
+    text = (value or "").strip()
+    return text or None
+
+
+def _is_valid_issn(value: str | None) -> bool:
+    text = _clean_external_id_value(value)
+    return bool(text and len(text) <= 64 and ISSN_RE.match(text))
+
+
+def _serialize_external_id(id_type: str, value: str) -> str:
+    label = (id_type or "external-id").strip() or "external-id"
+    return f"{label}:{value}"
 
 def _flush_bulk(bulk: list, model_name: str) -> int:
     """Flush a batch while keeping the caller's transaction open."""
@@ -166,13 +183,16 @@ def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict, max_orc
                 doi, issn, others = None, None, []
                 for eid in external_ids:
                     id_type = (eid.get('external-id-type') or '').lower()
-                    id_val = eid.get('external-id-value')
+                    id_val = _clean_external_id_value(eid.get('external-id-value'))
+                    if not id_val:
+                        continue
+
                     if id_type == 'doi' and not doi:
                         doi = id_val
-                    elif id_type == 'issn' and not issn:
+                    elif id_type == 'issn' and not issn and _is_valid_issn(id_val):
                         issn = id_val
-                    elif id_val:
-                        others.append(f"{id_type}:{id_val}")
+                    else:
+                        others.append(_serialize_external_id(id_type, id_val))
 
                 works_buffer.append(WorkCache(
                     ror_id=ror_id, orcid=orcid_id, 
@@ -246,8 +266,8 @@ def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict, max_
                 external_ids = (summary.get('external-ids') or {}).get('external-id') or []
                 
                 grant_id = next(
-                    (eid.get('external-id-value') for eid in external_ids 
-                     if 'grant' in (eid.get('external-id-type') or '').lower()), 
+                    (_clean_external_id_value(eid.get('external-id-value')) for eid in external_ids
+                     if 'grant' in (eid.get('external-id-type') or '').lower()),
                     None
                 )
 

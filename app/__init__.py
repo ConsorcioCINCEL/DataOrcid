@@ -132,6 +132,7 @@ def create_app() -> Flask:
 
     app.config["LANGUAGES"] = config_data.get("languages", {}).get("supported", ["es", "en"])
     app.config["BABEL_DEFAULT_LOCALE"] = config_data.get("languages", {}).get("default", "es")
+    app.config["BABEL_DEFAULT_TIMEZONE"] = "America/Santiago"
 
     orcid_cfg = config_data.get("orcid", {})
     api_cfg = config_data.get("api", {})

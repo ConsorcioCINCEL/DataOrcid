@@ -142,7 +142,7 @@
                             </td>
                             <td class="small text-muted">
                                 {% if openalex_summary.last_run and openalex_summary.last_run.finished_at %}
-                                    <i class="far fa-clock mr-1"></i> {{ openalex_summary.last_run.finished_at.strftime('%Y-%m-%d %H:%M') }}
+                                    <i class="far fa-clock mr-1"></i> {{ openalex_summary.last_run.finished_at|datetimeformat }}
                                 {% else %}
                                     —
                                 {% endif %}

@@ -44,6 +44,7 @@
           <th>{{ _('Last Names') }}</th>
           <th>{{ _('Email') }}</th>
           <th>{{ _('Institutions') }}</th>
+          <th>{{ _('Matched by') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -71,6 +72,12 @@
             <td class="align-middle truncate small">
               {% set inst = r.get('institution-name') %}
               {% if inst %}{{ inst if inst is string else inst|join(' / ') }}{% else %}—{% endif %}
+            </td>
+            <td class="align-middle small">
+              {% set matches = r.get('matched_identifiers') or {} %}
+              {% if matches.get('ror') %}<span class="badge badge-primary mr-1">ROR</span>{% endif %}
+              {% if matches.get('grid') %}<span class="badge badge-secondary mr-1">GRID</span>{% endif %}
+              {% if matches.get('ringgold') %}<span class="badge badge-info">Ringgold</span>{% endif %}
             </td>
           </tr>
         {% endfor %}

@@ -14,15 +14,20 @@ def register_commands(app):
 
     @app.cli.command("rebuild-caches")
     @click.option("--ror", default=None, help="Target specific ROR ID. If omitted, scans all active institutions.")
+    @click.option("--start-at", default=None, help="Resume an all-institution rebuild at this ROR ID.")
     @click.option("--target", default="both", type=click.Choice(['works', 'fundings', 'both']), help="Data type to synchronize.")
     @click.option("--limit-orcids", default=None, type=int, help="Testing only: limit profile fetches per institution.")
     @with_appcontext
-    def rebuild_caches(ror, target, limit_orcids):
+    def rebuild_caches(ror, start_at, target, limit_orcids):
         """Rebuild works and/or funding caches for one or all institutions."""
         # Keep imports local so CLI registration does not trigger service imports early.
         from . import db
         from .models import WorkCacheRun, FundingCacheRun
-        from .services.cache_service import build_works_cache_for_ror, build_fundings_cache_for_ror
+        from .services.cache_service import (
+            build_full_cache_for_ror,
+            build_fundings_cache_for_ror,
+            build_works_cache_for_ror,
+        )
         from .services.institution_registry_service import get_institution_options
         from .services.orcid_service import get_client_credentials_token
 
@@ -57,6 +62,16 @@ def register_commands(app):
             except Exception as exc:
                 click.echo(f"❌ Database Query Error: {exc}")
                 return
+
+            if start_at:
+                clean_start = start_at.strip().rstrip("/").split("/")[-1].lower()
+                try:
+                    start_index = ror_list.index(clean_start)
+                except ValueError:
+                    click.echo(f"❌ Resume ROR ID not found in the active registry: {clean_start}")
+                    return
+                ror_list = ror_list[start_index:]
+                click.echo(f"▶️ Resuming the rebuild at ROR {clean_start}.")
         
         total_rors = len(ror_list)
         click.echo(f"Identified {total_rors} institutional record(s) for processing.")
@@ -93,16 +108,38 @@ def register_commands(app):
             click.echo(f"Processing Institution [{index}/{total_rors}]: {current_ror}")
             click.echo(f"{'='*50}")
 
-            if target in ['works', 'both']:
+            if target == 'both':
                 try:
-                    click.echo(f"  > Initializing Works synchronization...")
+                    click.echo("  > Discovering researchers and synchronizing all metadata...")
+                    result = build_full_cache_for_ror(
+                        current_ror,
+                        base_url=member_url,
+                        headers=headers,
+                        max_orcids=limit_orcids,
+                    )
+                    click.echo(
+                        "  > Success: "
+                        f"{result['researchers']} researchers, {result['works']} works, "
+                        f"{result['fundings']} fundings, and {result['profiles']} profiles."
+                    )
+                    _log_execution_run(WorkCacheRun, current_ror, 'success', result['works'])
+                    _log_execution_run(FundingCacheRun, current_ror, 'success', result['fundings'])
+                except Exception as exc:
+                    db.session.rollback()
+                    click.echo(f"  > Full metadata synchronization failed: {exc}")
+                    _log_execution_run(WorkCacheRun, current_ror, 'failed', 0, str(exc))
+                    _log_execution_run(FundingCacheRun, current_ror, 'failed', 0, str(exc))
+                continue
+
+            if target == 'works':
+                try:
+                    click.echo("  > Initializing Works synchronization...")
                     count = build_works_cache_for_ror(
                         current_ror,
                         base_url=member_url,
                         headers=headers,
                         max_orcids=limit_orcids,
                     )
-                    
                     click.echo(f"  > [Works] Success: {count} records synchronized.")
                     _log_execution_run(WorkCacheRun, current_ror, 'success', count)
                 except Exception as exc:
@@ -110,7 +147,7 @@ def register_commands(app):
                     click.echo(f"  > [Works] Critical failure: {exc}")
                     _log_execution_run(WorkCacheRun, current_ror, 'failed', 0, str(exc))
 
-            if target in ['fundings', 'both']:
+            if target == 'fundings':
                 try:
                     click.echo(f"  > Initializing Funding synchronization...")
                     count = build_fundings_cache_for_ror(

@@ -1,0 +1,12 @@
+{
+  "source": "ORCID Public API v3.0 affiliation records",
+  "validated_at": "2026-07-14",
+  "method": "Each Ringgold ID was found on a public ORCID affiliation with disambiguation source RINGGOLD and matched to the corresponding ROR organization name or alias.",
+  "identifiers": [
+    {"ror_id": "003hb2249", "ror_name": "Health Research Board", "ringgold_id": "40306"},
+    {"ror_id": "028ynny55", "ror_name": "Clínica Alemana", "ringgold_id": "60588"},
+    {"ror_id": "037zh7469", "ror_name": "Departamento Universitario Obrero Campesino", "ringgold_id": "125379"},
+    {"ror_id": "03dmz0111", "ror_name": "Makerere University", "ringgold_id": "58588"},
+    {"ror_id": "048nfjm95", "ror_name": "National University of Ireland, Maynooth", "ringgold_id": "8798"}
+  ]
+}

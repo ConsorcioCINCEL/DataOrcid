@@ -3,6 +3,8 @@
 Aplicación **Flask** para consultar, **cachear** y exportar información pública de **ORCID** por institución (**ROR**).  
 Incluye interfaz **AdminLTE 3**, autenticación básica y utilidades de exportación a **CSV/Excel**.
 
+Los identificadores Ringgold incluidos fueron validados contra afiliaciones públicas de ORCID cuya fuente de desambiguación es `RINGGOLD`. ROR se mantiene como identificador institucional canónico porque ORCID ya no actualiza los datos del registro Ringgold.
+
 > 📄 Proyecto desarrollado por **Gastón Olivares**.  
 > Versión documentada: *2025-08-29*.  
 > Este README describe el comportamiento real del sistema según su código fuente.
@@ -53,9 +55,11 @@ README.md
   - **Administrador:** gestiona usuarios, contraseñas y ROR.
   - **Gestor:** acceso avanzado sin modificar usuarios.
 - 🏛️ **Contexto institucional (ROR):**
-  - Consultas ORCID *expanded-search* por ROR.
+  - Consultas ORCID *expanded-search* por ROR, GRID y Ringgold verificados.
+  - ROR se mantiene como identificador institucional canónico.
   - Selección dinámica de ROR en sesión.
 - 🧩 **Caché ORCID:**
+  - Asociaciones completas entre instituciones e investigadores, aunque no tengan obras o financiamientos públicos.
   - **Works** (`WorkCache`) y **Fundings** (`FundingCache`) por ROR.
   - Seguimiento con `WorkCacheRun` / `FundingCacheRun`.
 - 📈 **Dashboard** con métricas y conteos.
@@ -197,6 +201,9 @@ flask rebuild-caches --dry-run
 | `WorkCacheRun` | Seguimiento de reconstrucción de works |
 | `FundingCache` | Financiamiento cacheado por ROR |
 | `FundingCacheRun` | Seguimiento de reconstrucción de fundings |
+| `InstitutionRegistry` | Registro canónico de instituciones por ROR |
+| `InstitutionIdentifier` | Identificadores ROR, GRID y Ringgold verificados |
+| `InstitutionResearcher` | Asociaciones encontradas entre instituciones y ORCID |
 | `OrcidCache` | Almacenamiento JSON por año |
 
 ---

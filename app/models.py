@@ -1,8 +1,13 @@
 """SQLAlchemy models for users, ORCID caches, sync runs, and audit logs."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 import bcrypt
 from . import db
+
+
+def utc_now() -> datetime:
+    """Return a naive UTC timestamp for database columns without time zones."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 class User(db.Model):
     """Application user with role and institution scope metadata."""
@@ -27,7 +32,7 @@ class User(db.Model):
     am_client_id = db.Column(db.String(40), nullable=True)
 
     locale = db.Column(db.String(5), default='es', nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
 
     def set_password(self, password: str) -> None:
         """Hash and store a password using bcrypt."""
@@ -51,7 +56,7 @@ class WorkCache(db.Model):
     """Cached ORCID work summary scoped by institution ROR."""
     __tablename__ = "work_cache"
     __table_args__ = (
-        db.Index("ix_work_cache_ror_type_doi", "ror_id", "type", "doi"),
+        db.Index("ix_work_cache_ror_type", "ror_id", "type"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -67,7 +72,7 @@ class WorkCache(db.Model):
     pub_month = db.Column(db.String(4))
     pub_day = db.Column(db.String(4))
     
-    doi = db.Column(db.String(255), index=True)
+    doi = db.Column(db.Text)
     issn = db.Column(db.Text)
     other_external_ids = db.Column(db.Text) # Serialized list of other IDs
     
@@ -75,7 +80,7 @@ class WorkCache(db.Model):
     url = db.Column(db.Text)
     visibility = db.Column(db.String(32)) # public, limited, registered-only
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class WorkCacheRun(db.Model):
@@ -119,7 +124,7 @@ class FundingCache(db.Model):
     source = db.Column(db.Text)
     visibility = db.Column(db.String(32))
     url = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class FundingCacheRun(db.Model):
@@ -162,7 +167,7 @@ class ResearcherCache(db.Model):
     credit_name = db.Column(db.String(255))
     email = db.Column(db.String(255), nullable=True)
     
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
 
 
 class OrcidCache(db.Model):
@@ -172,7 +177,7 @@ class OrcidCache(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     year = db.Column(db.Integer, nullable=False, index=True)
     data = db.Column(db.JSON, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class DuplicateProfileCache(db.Model):
@@ -184,8 +189,8 @@ class DuplicateProfileCache(db.Model):
     dependency_hash = db.Column(db.String(64), nullable=False)
     report_json = db.Column(db.JSON, nullable=False)
     source_summary = db.Column(db.JSON, nullable=True)
-    generated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    generated_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
 
 class OpenAlexWorkRawCache(db.Model):
@@ -316,8 +321,60 @@ class InstitutionRegistry(db.Model):
     institution_type = db.Column(db.String(64), default="university", nullable=False)
     source = db.Column(db.String(64), default="ror", nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class InstitutionIdentifier(db.Model):
+    """Verified external identifiers assigned to an institution."""
+    __tablename__ = "institution_identifier"
+
+    id = db.Column(db.Integer, primary_key=True)
+    institution_id = db.Column(
+        db.Integer,
+        db.ForeignKey("institution_registry.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    scheme = db.Column(db.String(16), nullable=False, index=True)
+    value = db.Column(db.String(255), nullable=False)
+    source = db.Column(db.String(64), default="manual", nullable=False)
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    verified_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("scheme", "value", name="uq_institution_identifier_scheme_value"),
+    )
+
+
+class InstitutionResearcher(db.Model):
+    """Search-backed association between an institution and an ORCID record."""
+    __tablename__ = "institution_researcher"
+
+    id = db.Column(db.Integer, primary_key=True)
+    institution_id = db.Column(
+        db.Integer,
+        db.ForeignKey("institution_registry.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    orcid = db.Column(db.String(32), nullable=False, index=True)
+    matched_by_ror = db.Column(db.Boolean, default=False, nullable=False)
+    matched_by_grid = db.Column(db.Boolean, default=False, nullable=False)
+    matched_by_ringgold = db.Column(db.Boolean, default=False, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+    profile_status = db.Column(db.String(16), default="pending", nullable=False)
+    profile_error = db.Column(db.Text, nullable=True)
+    first_seen_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    last_seen_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    profile_updated_at = db.Column(db.DateTime, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint("institution_id", "orcid", name="uq_institution_researcher"),
+    )
 
 
 class TrackingLog(db.Model):
@@ -334,4 +391,4 @@ class TrackingLog(db.Model):
     ip = db.Column(db.String(50))
     user_agent = db.Column(db.String(255))
     duration_ms = db.Column(db.Float)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, default=utc_now, nullable=False)

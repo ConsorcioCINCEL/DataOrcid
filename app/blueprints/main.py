@@ -12,10 +12,11 @@ from flask import (
 from flask_babel import _
 from sqlalchemy import func, inspect, desc
 
-from .. import db
+from .. import db, datetimeformat
 from ..models import (
     WorkCache, FundingCache, WorkCacheRun, 
-    FundingCacheRun, ResearcherStatus, User, ResearcherCache
+    FundingCacheRun, InstitutionRegistry, InstitutionResearcher,
+    ResearcherStatus, User, ResearcherCache
 )
 from ..decorators import login_required
 from ..utils.flashes import flash_err
@@ -49,7 +50,7 @@ def inject_global_vars():
                 last_run = FundingCacheRun.query.filter_by(ror_id=ror_id, status='success').order_by(FundingCacheRun.finished_at.desc()).first()
             
             if last_run and last_run.finished_at:
-                last_update = last_run.finished_at.strftime("%Y-%m-%d %H:%M")
+                last_update = last_run.finished_at
         except Exception:
             # Fail silently to avoid breaking the entire page render
             pass 
@@ -83,8 +84,23 @@ def index():
         works_count = db.session.query(WorkCache.id).filter_by(ror_id=ror_id).count()
         fundings_count = db.session.query(FundingCache.id).filter_by(ror_id=ror_id).count()
 
-        # Count unique researchers in local cache
-        rc = db.session.query(WorkCache.orcid).filter_by(ror_id=ror_id).distinct().count()
+        # Prefer the complete search-backed association snapshot when available.
+        rc = (
+            db.session.query(InstitutionResearcher.orcid)
+            .join(
+                InstitutionRegistry,
+                InstitutionRegistry.id == InstitutionResearcher.institution_id,
+            )
+            .filter(
+                InstitutionRegistry.ror_id == ror_id,
+                InstitutionRegistry.is_active.is_(True),
+                InstitutionResearcher.is_active.is_(True),
+            )
+            .distinct()
+            .count()
+        )
+        if rc == 0:
+            rc = db.session.query(WorkCache.orcid).filter_by(ror_id=ror_id).distinct().count()
         if rc == 0:
             rc = db.session.query(FundingCache.orcid).filter_by(ror_id=ror_id).distinct().count()
 
@@ -264,7 +280,7 @@ def metrics_panel():
         
         last_run = WorkCacheRun.query.filter_by(ror_id=ror_id, status='success').order_by(WorkCacheRun.finished_at.desc()).first()
         if last_run and last_run.finished_at:
-            metrics['last_update'] = last_run.finished_at.strftime("%Y-%m-%d %H:%M")
+            metrics['last_update'] = datetimeformat(last_run.finished_at)
     except Exception as e: logger.error(f"Error in basic counts: {e}")
     try:
         year_stats = db.session.query(WorkCache.pub_year, func.count(WorkCache.id)).filter_by(ror_id=ror_id).group_by(WorkCache.pub_year).order_by(WorkCache.pub_year).all()

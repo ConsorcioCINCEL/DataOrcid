@@ -17,6 +17,10 @@ _TOKEN_EXPIRY: float = 0
 _TOKEN_LOCK = threading.Lock()
 
 
+class OrcidSearchError(RuntimeError):
+    """Raised when an institutional ORCID search cannot be completed safely."""
+
+
 def get_client_credentials_token() -> Optional[str]:
     """
     Return a cached ORCID client-credentials token, refreshing it when needed.
@@ -124,20 +128,22 @@ def list_orcids_for_institution(
     headers: Optional[Dict] = None,
     rows: int = 1000,
     delay: float = 0.0,
+    ringgold_ids: Optional[List[str]] = None,
+    grid_ids: Optional[List[str]] = None,
 ) -> List[Dict]:
     """
-    Search ORCID for researchers affiliated with a ROR and/or GRID identifier.
+    Search ORCID separately by ROR, GRID, and Ringgold identifiers.
 
-    ORCID expanded search is paginated; results are deduplicated by ORCID iD.
+    Separate searches preserve match provenance while results are deduplicated
+    by ORCID iD. Any incomplete page raises an error so callers can keep their
+    previous cache instead of replacing it with a truncated result set.
     """
-    start = 0
-    unique_results = {} 
-    
-    search_url = current_app.config.get('ORCID_SEARCH_URL') or base_url
+    unique_results = {}
+    search_url = base_url or current_app.config.get('ORCID_SEARCH_URL')
     
     if not search_url:
         logger.error("Configuration Error: No ORCID Search URL defined.")
-        return []
+        raise OrcidSearchError("No ORCID Search URL is configured.")
     
     search_headers = {'Accept': 'application/json'}
     if headers:
@@ -147,54 +153,131 @@ def list_orcids_for_institution(
     if token and 'Authorization' not in search_headers:
         search_headers['Authorization'] = f"Bearer {token}"
 
-    query_parts = []
+    resolved_grid_ids = _unique_values([grid_id] + list(grid_ids or []))
+    resolved_ringgold_ids = _unique_values(ringgold_ids or [])
+
+    if not resolved_ringgold_ids or not resolved_grid_ids:
+        try:
+            from .institution_registry_service import get_institution_identifiers
+
+            stored_identifiers = get_institution_identifiers(ror_id or "")
+            resolved_grid_ids = _unique_values(
+                resolved_grid_ids + stored_identifiers.get("grid", [])
+            )
+            resolved_ringgold_ids = _unique_values(
+                resolved_ringgold_ids + stored_identifiers.get("ringgold", [])
+            )
+        except Exception as exc:
+            logger.debug("Stored institutional identifiers could not be loaded: %s", exc)
+
+    searches = []
     if ror_id:
-        query_parts.append(f'ror-org-id:"https://ror.org/{ror_id}"')
-    if grid_id:
-        query_parts.append(f'grid-org-id:"{grid_id}"')
+        clean_ror = ror_id.strip().rstrip('/').split('/')[-1].lower()
+        searches.append(("ror", clean_ror, f'ror-org-id:"https://ror.org/{clean_ror}"'))
+    searches.extend(
+        ("grid", value, f'grid-org-id:"{_escape_query_value(value)}"')
+        for value in resolved_grid_ids
+    )
+    searches.extend(
+        ("ringgold", value, f'ringgold-org-id:"{_escape_query_value(value)}"')
+        for value in resolved_ringgold_ids
+    )
     
-    if not query_parts:
-        logger.warning("Search aborted: No ROR or GRID ID provided.")
+    if not searches:
+        logger.warning("Search aborted: No institutional identifier was provided.")
         return []
 
-    raw_query = " OR ".join(query_parts)
-    logger.info("Executing Institutional Search: %s", raw_query)
+    for scheme, identifier, raw_query in searches:
+        logger.info("Executing institutional %s search: %s", scheme.upper(), raw_query)
+        records = _expanded_search(
+            search_url,
+            raw_query,
+            search_headers,
+            rows=rows,
+            delay=delay,
+        )
+        for record in records:
+            orcid_id = (record.get("orcid-id") or "").strip()
+            if not orcid_id:
+                continue
 
-    while True:
-        try:
-            encoded_query = urllib.parse.quote(raw_query)
-            endpoint = f"{search_url.rstrip('/')}/expanded-search/"
-            url = f"{endpoint}?q={encoded_query}&start={start}&rows={rows}"
-            
-            response = safe_get(url, search_headers, timeout=30)
-            if not response or response.status_code != 200:
-                logger.error("Search request failed at start index %d", start)
-                break 
+            stored = unique_results.setdefault(orcid_id, dict(record))
+            matches = stored.setdefault("matched_identifiers", {})
+            values = matches.setdefault(scheme, [])
+            if identifier not in values:
+                values.append(identifier)
 
-            data = response.json()
-            chunk = data.get("expanded-result", []) or []
-            if not chunk:
-                break
-
-            for record in chunk:
-                orcid_id = (record.get("orcid-id") or "").strip()
-                if orcid_id:
-                    unique_results[orcid_id] = record
-
-            if len(chunk) < rows:
-                break
-                
-            start += rows
-            
-            if delay > 0:
-                time.sleep(delay)
-
-        except Exception as exc:
-            logger.exception("Critical error during ORCID search pagination loop: %s", exc)
-            break
+            for key in ("given-names", "family-names", "credit-name", "other-name", "email", "institution-name"):
+                if not stored.get(key) and record.get(key):
+                    stored[key] = record[key]
 
     logger.info("Search Completed. Total Unique Researchers Found: %d", len(unique_results))
     return list(unique_results.values())
+
+
+def _expanded_search(
+    search_url: str,
+    raw_query: str,
+    headers: Dict,
+    *,
+    rows: int,
+    delay: float,
+) -> List[Dict]:
+    """Return every expanded-search page for one exact institutional query."""
+    page_size = max(1, min(int(rows or 1000), 1000))
+    endpoint = f"{search_url.rstrip('/')}/expanded-search/"
+    encoded_query = urllib.parse.quote(raw_query)
+    start = 0
+    results = []
+
+    while True:
+        url = f"{endpoint}?q={encoded_query}&start={start}&rows={page_size}"
+        response = safe_get(url, headers, timeout=30)
+        if response is None or response.status_code != 200:
+            status = response.status_code if response is not None else "unavailable"
+            raise OrcidSearchError(
+                f"ORCID search failed for query {raw_query!r} at offset {start} "
+                f"with status {status}."
+            )
+
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise OrcidSearchError(
+                f"ORCID returned invalid JSON for query {raw_query!r} at offset {start}."
+            ) from exc
+
+        chunk = data.get("expanded-result") or []
+        total = int(data.get("num-found") or 0)
+        if not chunk:
+            if start < total:
+                raise OrcidSearchError(
+                    f"ORCID returned an empty page before all {total} results were read "
+                    f"for query {raw_query!r}."
+                )
+            break
+
+        results.extend(chunk)
+        start += len(chunk)
+        if start >= total:
+            break
+        if delay > 0:
+            time.sleep(delay)
+
+    return results
+
+
+def _escape_query_value(value: str) -> str:
+    return str(value).replace('\\', '\\\\').replace('"', '\\"')
+
+
+def _unique_values(values) -> List[str]:
+    result = []
+    for value in values:
+        clean_value = (value or "").strip()
+        if clean_value and clean_value not in result:
+            result.append(clean_value)
+    return result
 
 
 def fetch_single_profile(orcid_id: str, base_url: str, token: str) -> Dict:

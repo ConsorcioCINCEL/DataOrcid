@@ -2,7 +2,9 @@
 
 **DataOrcid-Chile** is a scientific production management and monitoring platform designed specifically to meet the needs of the **Chilean Consortium**. This project was developed by **Gastón Olivares** at **Cincel** to enhance the visibility and tracking of research records linked to Chilean institutions.
 
-The platform allows institutions to synchronize, cache, and export data (Works, Fundings, and Profiles) directly from ORCID APIs using ROR identifiers.
+The platform allows institutions to synchronize, cache, and export data (Researchers, Works, Fundings, and Profiles) directly from ORCID APIs. Institutional discovery combines verified ROR, GRID, and historical Ringgold identifiers and deduplicates matches by ORCID iD.
+
+Ringgold identifiers in the bundled Chilean university dataset were validated against public ORCID affiliation records whose disambiguation source is `RINGGOLD`. ROR remains the canonical institutional identifier because ORCID no longer updates its Ringgold registry data.
 
 ---
 
@@ -57,7 +59,7 @@ gunicorn --workers 4 --bind 0.0.0.0:5000 "run:app"
 ---
 
 ## 🔄 Cache Management (CLI)
-The system utilizes a local cache to prevent ORCID API rate-limiting. CLI commands are optimized for **Member API Mode**:
+The system utilizes a local cache to prevent ORCID API rate-limiting. CLI commands are optimized for **Member API Mode**. A full synchronization searches every verified institutional identifier and downloads each ORCID profile once:
 
 # Sync ALL institutions
 flask rebuild-caches

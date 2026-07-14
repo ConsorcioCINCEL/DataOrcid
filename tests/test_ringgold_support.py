@@ -6,7 +6,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from flask import Flask
+from flask import Flask, render_template_string
 from sqlalchemy import Text
 
 from app import db, datetimeformat
@@ -66,6 +66,18 @@ class RinggoldDatasetTest(unittest.TestCase):
     def test_utc_timestamps_are_displayed_in_chile_time(self):
         self.assertEqual("2026-07-14 12:34", datetimeformat(datetime(2026, 7, 14, 16, 34)))
         self.assertEqual("2026-01-14 12:34", datetimeformat(datetime(2026, 1, 14, 15, 34)))
+
+    def test_datetime_filter_displays_log_timestamps_in_chile_time(self):
+        app = Flask(__name__)
+        app.jinja_env.filters["datetimeformat"] = datetimeformat
+
+        with app.app_context():
+            rendered = render_template_string(
+                "{{ timestamp|datetimeformat }}",
+                timestamp=datetime(2026, 7, 14, 19, 34),
+            )
+
+        self.assertEqual("2026-07-14 15:34", rendered)
 
 
 class OrcidInstitutionSearchTest(unittest.TestCase):

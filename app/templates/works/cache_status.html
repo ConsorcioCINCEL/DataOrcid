@@ -74,7 +74,7 @@
                         </td>
                         <td class="small text-muted">
                             {% if last_run_works %}
-                                <i class="far fa-clock mr-1"></i> {{ last_run_works.finished_at.strftime('%Y-%m-%d %H:%M') }}
+                                <i class="far fa-clock mr-1"></i> {{ last_run_works.finished_at|datetimeformat }}
                             {% else %}
                                 —
                             {% endif %}
@@ -109,7 +109,7 @@
                         </td>
                         <td class="small text-muted">
                             {% if last_run_fundings %}
-                                <i class="far fa-clock mr-1"></i> {{ last_run_fundings.finished_at.strftime('%Y-%m-%d %H:%M') }}
+                                <i class="far fa-clock mr-1"></i> {{ last_run_fundings.finished_at|datetimeformat }}
                             {% else %}
                                 —
                             {% endif %}
@@ -130,10 +130,10 @@
                         </td>
                     </tr>
 
-                    {# --- ROW 3: PROFILES (Only relevant for display context) --- #}
+                    {# --- ROW 3: RESEARCHER ASSOCIATIONS --- #}
                     <tr>
                         <td>
-                            <i class="fas fa-id-card text-purple mr-2"></i> <strong>{{ _('Researcher Names') }}</strong>
+                            <i class="fas fa-id-card text-purple mr-2"></i> <strong>{{ _('Associated Researchers') }}</strong>
                         </td>
                         <td class="text-center">
                             {% if count_profiles > 0 %}
@@ -143,10 +143,21 @@
                             {% endif %}
                         </td>
                         <td class="small text-muted">
-                            {{ _('Auto-updated with Sync') }}
+                            {{ _('Researchers matched by ROR, GRID, or Ringgold') }}
                         </td>
                         <td class="text-right">
-                            <span class="text-muted small text-italic">{{ _('Internal Use') }}</span>
+                            {% if count_profiles > 0 %}
+                            <div class="btn-group">
+                                <a href="{{ url_for('works.download_researchers_cache') }}" class="btn btn-default btn-sm" title="CSV">
+                                    <i class="fas fa-file-csv text-success"></i>
+                                </a>
+                                <a href="{{ url_for('works.download_researchers_cache', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
+                                    <i class="fas fa-file-excel text-success"></i>
+                                </a>
+                            </div>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -280,7 +291,7 @@
                     <div>
                         <h6 class="font-weight-bold">{{ _('Full Sync') }}</h6>
                         <p class="small text-muted mb-0">
-                            {{ _('The "Sync Everything" button triggers a sequential update of Publications, Funding, and Profile names. This ensures reports reflect the latest data from ORCID.') }}
+                            {{ _('The full sync searches all verified institutional identifiers and downloads each ORCID profile once to update researchers, works, fundings, and Affiliation Manager status.') }}
                         </p>
                     </div>
                 </div>
@@ -333,7 +344,7 @@
   <script>
   $(function() {
     $('#formMasterSync').on('submit', function(e) {
-        if (!confirm('{{ _("Start full synchronization? This process downloads Works, Fundings, and updates Profile Names.") }}')) {
+        if (!confirm('{{ _("Start full synchronization? This process searches ROR, GRID, and Ringgold, then downloads public ORCID metadata.") }}')) {
             e.preventDefault();
             return;
         }

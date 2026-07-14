@@ -55,6 +55,7 @@ base_url = "http://localhost:5000"
 [orcid]
 base_url_public  = "https://pub.orcid.org/v3.0/"
 base_url_member  = "https://api.orcid.org/v3.0/"
+search_url       = "https://api.orcid.org/v3.0/"
 token_url      = "https://orcid.org/oauth/token"
 client_id      = "APP-XXXXXX"
 client_secret = "REPLACE_OR_USE_ENV"

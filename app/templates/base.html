@@ -67,7 +67,7 @@
 
         {% if last_works_update %}
             <span class="navbar-text ml-3 small text-muted d-none d-md-inline-block" title="{{ _('Last data synchronization') }}">
-                <i class="far fa-clock mr-1"></i> {{ _('Updated:') }} {{ last_works_update }}
+                <i class="far fa-clock mr-1"></i> {{ _('Updated:') }} {{ last_works_update|datetimeformat }}
             </span>
         {% endif %}
     </div>

@@ -2801,3 +2801,30 @@ msgstr "La sincronización de todas las instituciones finalizó con %(failed)s i
 
 msgid "All-institution synchronization complete: %(count)s institutions, %(w)s works, %(f)s fundings, %(p)s profiles."
 msgstr "Sincronización de todas las instituciones completa: %(count)s instituciones, %(w)s publicaciones, %(f)s financiamientos, %(p)s perfiles."
+
+msgid "Ringgold ID"
+msgstr "ID Ringgold"
+
+msgid "Researchers matched by ROR, GRID, or Ringgold"
+msgstr "Investigadores encontrados mediante ROR, GRID o Ringgold"
+
+msgid "The full sync searches all verified institutional identifiers and downloads each ORCID profile once to update researchers, works, fundings, and Affiliation Manager status."
+msgstr "La sincronización completa busca todos los identificadores institucionales verificados y descarga cada perfil ORCID una sola vez para actualizar investigadores, publicaciones, financiamientos y el estado de Affiliation Manager."
+
+msgid "Start full synchronization? This process searches ROR, GRID, and Ringgold, then downloads public ORCID metadata."
+msgstr "¿Iniciar la sincronización completa? Este proceso busca por ROR, GRID y Ringgold, y luego descarga los metadatos públicos de ORCID."
+
+msgid "No researcher association data available."
+msgstr "No hay datos disponibles de investigadores asociados."
+
+msgid "Full synchronization complete: %(r)s researchers, %(w)s works, %(f)s fundings, and %(p)s profiles downloaded."
+msgstr "Sincronización completa: %(r)s investigadores, %(w)s publicaciones, %(f)s financiamientos y %(p)s perfiles descargados."
+
+msgid "All-institution synchronization completed with %(failed)s institution errors. Totals: %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles."
+msgstr "La sincronización de todas las instituciones finalizó con errores en %(failed)s instituciones. Totales: %(r)s investigadores, %(w)s publicaciones, %(f)s financiamientos y %(p)s perfiles."
+
+msgid "All-institution synchronization complete: %(count)s institutions, %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles."
+msgstr "Sincronización completa de todas las instituciones: %(count)s instituciones, %(r)s investigadores, %(w)s publicaciones, %(f)s financiamientos y %(p)s perfiles."
+
+msgid "Matched by"
+msgstr "Encontrado por"

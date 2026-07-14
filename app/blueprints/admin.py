@@ -19,7 +19,7 @@ from ..decorators import (
 from ..utils.flashes import flash_err, flash_ok, flash_info
 from ..utils.emailer import send_email
 from ..services.ror_service import fetch_grid_from_ror
-from ..services.institution_registry_service import get_institution_by_ror
+from ..services.institution_registry_service import get_institution_by_ror, get_institution_options
 
 bp_admin = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
@@ -98,12 +98,18 @@ def users_list():
         username: {"last_seen": last_seen, "request_count": request_count}
         for username, last_seen, request_count in activity_rows
     }
+    institution_metadata = {
+        item["ror_id"]: item
+        for item in get_institution_options()
+        if item.get("ror_id")
+    }
     
     return render_template(
         'admin/users.html',
         users=users,
         q=query_param,
         activity_by_user=activity_by_user,
+        institution_metadata=institution_metadata,
     )
 
 

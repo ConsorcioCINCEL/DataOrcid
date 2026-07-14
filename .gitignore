@@ -102,6 +102,7 @@ app/exports/
 !app/datasets/
 app/datasets/*
 !app/datasets/chilean_universities_ror.json
+!app/datasets/additional_validated_ringgold_identifiers.json
 
 # Localization binaries and templates
 *.mo

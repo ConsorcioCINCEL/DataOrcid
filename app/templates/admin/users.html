@@ -65,6 +65,10 @@
             <td class="align-middle">
               <span class="d-block">{{ u.institution_name or '—' }}</span>
               {% if u.ror_id %}<code class="small text-primary">ROR: {{ u.ror_id }}</code>{% endif %}
+              {% set institution = institution_metadata.get(u.ror_id or '') %}
+              {% if institution and institution.ringgold_ids %}
+                <code class="small text-secondary d-block">{{ _('Ringgold ID') }}: {{ institution.ringgold_ids|join(', ') }}</code>
+              {% endif %}
             </td>
             <td class="align-middle text-center">
               {% if u.is_admin %}<span class="badge badge-primary">{{ _('Admin') }}</span>{% endif %}

@@ -17,6 +17,7 @@ from ..models import (
     DuplicateProfileCache,
     FundingCache,
     InstitutionRegistry,
+    InstitutionResearcher,
     ResearcherCache,
     ResearcherStatus,
     User,
@@ -235,6 +236,20 @@ def _empty_report() -> dict:
 
 def _load_researcher_population(allowed_rors: set[str] | None) -> set[tuple[str, str]]:
     population = set()
+    association_query = db.session.query(
+        InstitutionRegistry.ror_id,
+        InstitutionResearcher.orcid,
+    ).join(
+        InstitutionResearcher,
+        InstitutionResearcher.institution_id == InstitutionRegistry.id,
+    ).filter(
+        InstitutionRegistry.is_active.is_(True),
+        InstitutionResearcher.is_active.is_(True),
+    )
+    if allowed_rors:
+        association_query = association_query.filter(InstitutionRegistry.ror_id.in_(allowed_rors))
+    population.update(association_query.distinct().all())
+
     for model in (WorkCache, FundingCache):
         query = db.session.query(model.ror_id, model.orcid).filter(
             model.ror_id.isnot(None),
@@ -264,6 +279,7 @@ def _dependency_signature(allowed_rors: set[str] | None, population: set[tuple[s
         "works": _table_signature(WorkCache, allowed_rors, "created_at"),
         "fundings": _table_signature(FundingCache, allowed_rors, "created_at"),
         "statuses": _table_signature(ResearcherStatus, allowed_rors, "last_updated"),
+        "associations": _association_signature(allowed_rors),
         "researchers": _researcher_signature(orcids),
     }
     raw = json.dumps(summary, sort_keys=True, default=str)
@@ -299,6 +315,23 @@ def _researcher_signature(orcids: list[str]) -> dict:
     return {
         "count": total_count,
         "last_updated": _datetime_value(last_updated),
+    }
+
+
+def _association_signature(allowed_rors: set[str] | None) -> dict:
+    query = db.session.query(
+        func.count(InstitutionResearcher.id),
+        func.max(InstitutionResearcher.last_seen_at),
+    ).join(
+        InstitutionRegistry,
+        InstitutionRegistry.id == InstitutionResearcher.institution_id,
+    ).filter(InstitutionResearcher.is_active.is_(True))
+    if allowed_rors:
+        query = query.filter(InstitutionRegistry.ror_id.in_(allowed_rors))
+    count, last_seen = query.one()
+    return {
+        "count": int(count or 0),
+        "last_seen_at": _datetime_value(last_seen),
     }
 
 

@@ -63,6 +63,17 @@ def _institution_lookup() -> dict:
     }
 
 
+def _institution_metadata_lookup() -> dict:
+    """Map ROR IDs to institutional names and external identifiers."""
+    from ..services.institution_registry_service import get_institution_options
+
+    return {
+        item["ror_id"]: item
+        for item in get_institution_options()
+        if item.get("ror_id")
+    }
+
+
 def _institution_name(ror_id: str, institutions: dict) -> str:
     return institutions.get(ror_id) or ror_id or ""
 
@@ -72,11 +83,31 @@ def _chunks(items: list, size: int = 500):
         yield items[start:start + size]
 
 
-def _researcher_pairs():
+def _researcher_pairs(ror_id: str | None = None):
     """Return unique (ror_id, orcid) pairs known by any local cache."""
-    from ..models import FundingCache, ResearcherStatus, WorkCache
+    from ..models import (
+        FundingCache,
+        InstitutionRegistry,
+        InstitutionResearcher,
+        ResearcherStatus,
+        WorkCache,
+    )
 
     pairs = set()
+    association_query = db.session.query(
+        InstitutionRegistry.ror_id,
+        InstitutionResearcher.orcid,
+    ).join(
+        InstitutionResearcher,
+        InstitutionResearcher.institution_id == InstitutionRegistry.id,
+    ).filter(
+        InstitutionRegistry.is_active.is_(True),
+        InstitutionResearcher.is_active.is_(True),
+    )
+    if ror_id:
+        association_query = association_query.filter(InstitutionRegistry.ror_id == ror_id)
+    pairs.update(association_query.distinct().all())
+
     sources = (
         db.session.query(WorkCache.ror_id, WorkCache.orcid).filter(
             WorkCache.ror_id.isnot(None),
@@ -98,19 +129,28 @@ def _researcher_pairs():
         ),
     )
     for query in sources:
+        if ror_id:
+            query = query.filter_by(ror_id=ror_id)
         pairs.update((ror_id, orcid) for ror_id, orcid in query.distinct().all())
     return sorted(pairs)
 
 
-def _researcher_count() -> int:
-    return len(_researcher_pairs())
+def _researcher_count(ror_id: str | None = None) -> int:
+    return len(_researcher_pairs(ror_id))
 
 
-def _build_researchers_dataframe() -> pd.DataFrame:
-    from ..models import FundingCache, ResearcherCache, ResearcherStatus, WorkCache
+def _build_researchers_dataframe(ror_id: str | None = None) -> pd.DataFrame:
+    from ..models import (
+        FundingCache,
+        InstitutionRegistry,
+        InstitutionResearcher,
+        ResearcherCache,
+        ResearcherStatus,
+        WorkCache,
+    )
 
-    institutions = _institution_lookup()
-    pairs = _researcher_pairs()
+    institutions = _institution_metadata_lookup()
+    pairs = _researcher_pairs(ror_id)
     orcids = sorted({orcid for _, orcid in pairs})
 
     metadata = {}
@@ -127,6 +167,20 @@ def _build_researchers_dataframe() -> pd.DataFrame:
     status_map = {
         (row.ror_id, row.orcid): bool(row.is_managed_by_am)
         for row in status_rows
+    }
+
+    association_query = db.session.query(
+        InstitutionRegistry.ror_id,
+        InstitutionResearcher,
+    ).join(
+        InstitutionResearcher,
+        InstitutionResearcher.institution_id == InstitutionRegistry.id,
+    ).filter(InstitutionResearcher.is_active.is_(True))
+    if ror_id:
+        association_query = association_query.filter(InstitutionRegistry.ror_id == ror_id)
+    association_map = {
+        (institution_ror, association.orcid): association
+        for institution_ror, association in association_query.all()
     }
 
     works_counts = {
@@ -152,19 +206,47 @@ def _build_researchers_dataframe() -> pd.DataFrame:
         ).group_by(FundingCache.ror_id, FundingCache.orcid).all()
     }
 
-    return pd.DataFrame([{
-        'institution': _institution_name(ror_id, institutions),
-        'ror_id': ror_id,
-        'orcid': orcid,
-        'given_names': getattr(metadata.get(orcid), 'given_names', None),
-        'family_name': getattr(metadata.get(orcid), 'family_name', None),
-        'credit_name': getattr(metadata.get(orcid), 'credit_name', None),
-        'email': getattr(metadata.get(orcid), 'email', None),
-        'is_managed_by_am': status_map.get((ror_id, orcid), False),
-        'works_count': works_counts.get((ror_id, orcid), 0),
-        'fundings_count': funding_counts.get((ror_id, orcid), 0),
-        'profile_updated_at': _format_datetime(getattr(metadata.get(orcid), 'updated_at', None)),
-    } for ror_id, orcid in pairs])
+    rows = []
+    for institution_ror, orcid in pairs:
+        institution = institutions.get(institution_ror, {})
+        association = association_map.get((institution_ror, orcid))
+        matched_by_ror = bool(getattr(association, 'matched_by_ror', False))
+        matched_by_grid = bool(getattr(association, 'matched_by_grid', False))
+        matched_by_ringgold = bool(getattr(association, 'matched_by_ringgold', False))
+        match_sources = [
+            scheme
+            for scheme, matched in (
+                ('ROR', matched_by_ror),
+                ('GRID', matched_by_grid),
+                ('Ringgold', matched_by_ringgold),
+            )
+            if matched
+        ]
+        rows.append({
+            'institution': institution.get('name') or institution_ror,
+            'ror_id': institution_ror,
+            'grid_ids': '; '.join(institution.get('grid_ids') or []),
+            'ringgold_ids': '; '.join(institution.get('ringgold_ids') or []),
+            'orcid': orcid,
+            'orcid_url': f'https://orcid.org/{orcid}',
+            'given_names': getattr(metadata.get(orcid), 'given_names', None),
+            'family_name': getattr(metadata.get(orcid), 'family_name', None),
+            'credit_name': getattr(metadata.get(orcid), 'credit_name', None),
+            'email': getattr(metadata.get(orcid), 'email', None),
+            'matched_by_ror': matched_by_ror,
+            'matched_by_grid': matched_by_grid,
+            'matched_by_ringgold': matched_by_ringgold,
+            'match_sources': '; '.join(match_sources),
+            'is_managed_by_am': status_map.get((institution_ror, orcid), False),
+            'works_count': works_counts.get((institution_ror, orcid), 0),
+            'fundings_count': funding_counts.get((institution_ror, orcid), 0),
+            'profile_status': getattr(association, 'profile_status', None),
+            'profile_error': getattr(association, 'profile_error', None),
+            'association_first_seen_at': _format_datetime(getattr(association, 'first_seen_at', None)),
+            'association_last_seen_at': _format_datetime(getattr(association, 'last_seen_at', None)),
+            'profile_updated_at': _format_datetime(getattr(metadata.get(orcid), 'updated_at', None)),
+        })
+    return pd.DataFrame(rows)
 
 
 def _build_works_dataframe(records, institutions: dict | None = None) -> pd.DataFrame:
@@ -249,58 +331,45 @@ def _last_cache_run_fundings(ror_id: str):
 
 
 def _run_full_sync_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
-    """Run works, fundings, and profile-name synchronization for one ROR."""
+    """Run one profile download pass and populate every institutional cache."""
     from ..models import WorkCacheRun, FundingCacheRun
-    from ..services.cache_service import (
-        build_works_cache_for_ror,
-        build_fundings_cache_for_ror,
-        build_researcher_names_cache,
-    )
+    from ..services.cache_service import build_full_cache_for_ror
 
-    result = {"ror_id": ror_id, "works": 0, "fundings": 0, "profiles": 0, "errors": []}
+    result = {
+        "ror_id": ror_id,
+        "researchers": 0,
+        "works": 0,
+        "fundings": 0,
+        "profiles": 0,
+        "errors": [],
+    }
 
     run_w = WorkCacheRun(ror_id=ror_id, status='running', started_at=dt.utcnow())
-    db.session.add(run_w)
-    db.session.commit()
-    try:
-        result["works"] = build_works_cache_for_ror(ror_id, base_url, headers)
-        run_w.status = 'success'
-        run_w.rows_count = result["works"]
-    except Exception as exc:
-        db.session.rollback()
-        logger.exception("Works sync failed for ROR %s: %s", ror_id, exc)
-        result["errors"].append("Works")
-        run_w.status = 'failed'
-        run_w.error = str(exc)
-    finally:
-        run_w.finished_at = dt.utcnow()
-        db.session.add(run_w)
-        db.session.commit()
-
     run_f = FundingCacheRun(ror_id=ror_id, status='running', started_at=dt.utcnow())
+    db.session.add(run_w)
     db.session.add(run_f)
     db.session.commit()
     try:
-        result["fundings"] = build_fundings_cache_for_ror(ror_id, base_url, headers)
+        cache_result = build_full_cache_for_ror(ror_id, base_url, headers)
+        result.update(cache_result)
+        run_w.status = 'success'
+        run_w.rows_count = result["works"]
         run_f.status = 'success'
         run_f.rows_count = result["fundings"]
     except Exception as exc:
         db.session.rollback()
-        logger.exception("Fundings sync failed for ROR %s: %s", ror_id, exc)
-        result["errors"].append("Fundings")
+        logger.exception("Full metadata sync failed for ROR %s: %s", ror_id, exc)
+        result["errors"].append("Metadata")
+        run_w.status = 'failed'
+        run_w.error = str(exc)
         run_f.status = 'failed'
         run_f.error = str(exc)
     finally:
+        run_w.finished_at = dt.utcnow()
         run_f.finished_at = dt.utcnow()
+        db.session.add(run_w)
         db.session.add(run_f)
         db.session.commit()
-
-    try:
-        result["profiles"] = build_researcher_names_cache(ror_id)
-    except Exception as exc:
-        db.session.rollback()
-        logger.exception("Profiles sync failed for ROR %s: %s", ror_id, exc)
-        result["errors"].append("Profiles")
 
     return result
 
@@ -309,14 +378,9 @@ def _run_full_sync_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
 @login_required
 def cache_full_build():
     """
-    Executes the complete synchronization sequence for an institution.
-    
-    Sequence:
-    1. Works (Publications)
-    2. Fundings (Grants)
-    3. Researcher Profiles (Names/Bio) - Optimized Multithreaded
-    
-    This ensures data consistency across all related tables in a single operation.
+    Discover researchers through every verified institution identifier and use
+    one profile download pass to rebuild researcher, work, funding, and status
+    metadata.
     """
     if not (session.get('is_admin') or session.get('is_manager')):
         flash_err(_("You do not have sufficient permissions to perform this action."))
@@ -334,8 +398,13 @@ def cache_full_build():
     result = _run_full_sync_for_ror(ror_id, base_url, headers)
 
     if not result["errors"]:
-        flash_ok(_('Full synchronization complete: %(w)s works, %(f)s grants, and %(p)s profiles updated.', 
-                   w=result["works"], f=result["fundings"], p=result["profiles"]))
+        flash_ok(_(
+            'Full synchronization complete: %(r)s researchers, %(w)s works, %(f)s fundings, and %(p)s profiles downloaded.',
+            r=result["researchers"],
+            w=result["works"],
+            f=result["fundings"],
+            p=result["profiles"],
+        ))
     else:
         flash_err(_('Sync completed with errors in: %(err)s. Check logs.', err=", ".join(result["errors"])))
 
@@ -360,13 +429,14 @@ def cache_full_build_all():
     base_url = current_app.config.get('ORCID_SEARCH_URL', 'https://pub.orcid.org/v3.0/')
     headers = {'Accept': 'application/json'}
 
-    totals = {"works": 0, "fundings": 0, "profiles": 0, "failed": 0}
+    totals = {"researchers": 0, "works": 0, "fundings": 0, "profiles": 0, "failed": 0}
     for institution in institutions:
         ror_id = institution.get("ror_id")
         if not ror_id:
             continue
 
         result = _run_full_sync_for_ror(ror_id, base_url, headers)
+        totals["researchers"] += result["researchers"]
         totals["works"] += result["works"]
         totals["fundings"] += result["fundings"]
         totals["profiles"] += result["profiles"]
@@ -375,13 +445,13 @@ def cache_full_build_all():
 
     if totals["failed"]:
         flash_err(_(
-            "All-institution synchronization completed with %(failed)s institution errors. Totals: %(w)s works, %(f)s fundings, %(p)s profiles.",
-            failed=totals["failed"], w=totals["works"], f=totals["fundings"], p=totals["profiles"],
+            "All-institution synchronization completed with %(failed)s institution errors. Totals: %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles.",
+            failed=totals["failed"], r=totals["researchers"], w=totals["works"], f=totals["fundings"], p=totals["profiles"],
         ))
     else:
         flash_ok(_(
-            "All-institution synchronization complete: %(count)s institutions, %(w)s works, %(f)s fundings, %(p)s profiles.",
-            count=len(institutions), w=totals["works"], f=totals["fundings"], p=totals["profiles"],
+            "All-institution synchronization complete: %(count)s institutions, %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles.",
+            count=len(institutions), r=totals["researchers"], w=totals["works"], f=totals["fundings"], p=totals["profiles"],
         ))
 
     return redirect(url_for('works.cache_works_status'))
@@ -456,8 +526,7 @@ def cache_works_status():
     last_run_fundings = _last_cache_run_fundings(ror_id)
     f_count = db.session.query(FundingCache.id).filter_by(ror_id=ror_id).count()
     
-    # Global profile count (Approximate)
-    p_count = db.session.query(ResearcherCache.orcid).count()
+    p_count = _researcher_count(ror_id)
     admin_researcher_count = _researcher_count() if session.get('is_admin') else 0
     admin_works_count = db.session.query(WorkCache.id).count() if session.get('is_admin') else 0
     admin_fundings_count = db.session.query(FundingCache.id).count() if session.get('is_admin') else 0
@@ -518,6 +587,27 @@ def download_all_fundings_cache():
         return _send_dataframe_export(data_frame, file_base_name, 'Fundings')
     except Exception as exc:
         logger.exception("EXPORT ERROR: %s", exc)
+        return redirect(url_for('works.cache_works_status'))
+
+
+@bp_works.route('/download/researchers/cache')
+@login_required
+def download_researchers_cache():
+    """Export all active researcher associations for the current institution."""
+    ror_id = get_active_ror_id()
+    data_frame = _build_researchers_dataframe(ror_id)
+    if data_frame.empty:
+        flash_err(_('No researcher association data available.'))
+        return redirect(url_for('works.cache_works_status'))
+
+    try:
+        return _send_dataframe_export(
+            data_frame,
+            f'orcid_researchers_{ror_id}',
+            'Researchers',
+        )
+    except Exception as exc:
+        logger.exception("RESEARCHERS EXPORT ERROR FOR ROR %s: %s", ror_id, exc)
         return redirect(url_for('works.cache_works_status'))
 
 

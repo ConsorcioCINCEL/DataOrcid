@@ -2270,6 +2270,36 @@ msgstr ""
 msgid "Internal Use"
 msgstr ""
 
+msgid "Ringgold ID"
+msgstr ""
+
+msgid "Associated Researchers"
+msgstr ""
+
+msgid "Researchers matched by ROR, GRID, or Ringgold"
+msgstr ""
+
+msgid "The full sync searches all verified institutional identifiers and downloads each ORCID profile once to update researchers, works, fundings, and Affiliation Manager status."
+msgstr ""
+
+msgid "Start full synchronization? This process searches ROR, GRID, and Ringgold, then downloads public ORCID metadata."
+msgstr ""
+
+msgid "No researcher association data available."
+msgstr ""
+
+msgid "Full synchronization complete: %(r)s researchers, %(w)s works, %(f)s fundings, and %(p)s profiles downloaded."
+msgstr ""
+
+msgid "All-institution synchronization completed with %(failed)s institution errors. Totals: %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles."
+msgstr ""
+
+msgid "All-institution synchronization complete: %(count)s institutions, %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles."
+msgstr ""
+
+msgid "Matched by"
+msgstr ""
+
 #: app/templates/works/cache_status.html:155
 msgid "Management Actions"
 msgstr ""

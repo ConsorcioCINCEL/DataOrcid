@@ -4,6 +4,7 @@ import os
 import toml
 import datetime as dt
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from flask import Flask, session, request, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -14,6 +15,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 babel = Babel()
 csrf = CSRFProtect()
+CHILE_TIMEZONE = ZoneInfo("America/Santiago")
 
 
 def get_locale() -> str:
@@ -58,20 +60,32 @@ def get_locale() -> str:
 
 
 def datetimeformat(value, format: str = "%Y-%m-%d %H:%M") -> str:
-    """Format datetime objects and common API date strings for templates."""
+    """Format UTC timestamps in Chile's current civil time."""
     if not value:
         return ""
-    if isinstance(value, (dt.datetime, dt.date)):
+    if isinstance(value, dt.datetime):
+        return _to_chile_time(value).strftime(format)
+    if isinstance(value, dt.date):
         return value.strftime(format)
     
     s = str(value)
     fmts = ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d")
     for fmt in fmts:
         try:
-            return dt.datetime.strptime(s, fmt).strftime(format)
+            parsed = dt.datetime.strptime(s, fmt)
+            if fmt == "%Y-%m-%d":
+                return parsed.strftime(format)
+            return _to_chile_time(parsed).strftime(format)
         except ValueError:
             continue
     return s
+
+
+def _to_chile_time(value: dt.datetime) -> dt.datetime:
+    """Convert an aware or naive UTC datetime to America/Santiago."""
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=dt.timezone.utc)
+    return value.astimezone(CHILE_TIMEZONE)
 
 
 def timestamp_to_date(value) -> str:
@@ -80,7 +94,8 @@ def timestamp_to_date(value) -> str:
         if not value:
             return "N/A"
         ms = int(value)
-        return dt.datetime.fromtimestamp(ms / 1000.0).strftime("%Y-%m-%d %H:%M")
+        value = dt.datetime.fromtimestamp(ms / 1000.0, tz=dt.timezone.utc)
+        return value.astimezone(CHILE_TIMEZONE).strftime("%Y-%m-%d %H:%M")
     except (ValueError, TypeError, Exception):
         return "N/A"
 
@@ -122,7 +137,14 @@ def create_app() -> Flask:
     api_cfg = config_data.get("api", {})
 
     member_url = api_cfg.get("members_url") or orcid_cfg.get("base_url_member") or "https://api.orcid.org/v3.0/"
-    search_url = api_cfg.get("search_url") or orcid_cfg.get("base_url_public") or "https://pub.orcid.org/v3.0/"
+    public_url = (
+        api_cfg.get("public_url")
+        or orcid_cfg.get("base_url_public")
+        or orcid_cfg.get("base_url_pub")
+        or orcid_cfg.get("base_url")
+        or "https://pub.orcid.org/v3.0/"
+    )
+    search_url = api_cfg.get("search_url") or orcid_cfg.get("search_url") or member_url
 
     app.config.update(
         ORCID_CLIENT_ID=orcid_cfg.get("client_id"),
@@ -131,10 +153,11 @@ def create_app() -> Flask:
         # Canonical ORCID endpoints used by the service layer.
         ORCID_MEMBER_URL=member_url,
         ORCID_SEARCH_URL=search_url,
+        ORCID_PUBLIC_URL=public_url,
         # Backward-compatible aliases for older modules and deployments.
         ORCID_BASE_URL_MEMBER=member_url,
-        ORCID_BASE_URL_PUBLIC=search_url,
-        ORCID_BASE_URL_PUB=search_url,
+        ORCID_BASE_URL_PUBLIC=public_url,
+        ORCID_BASE_URL_PUB=public_url,
     )
 
     datasets_cfg = config_data.get("paths", {}).get("datasets_dir", "app/datasets")
@@ -226,6 +249,9 @@ def create_app() -> Flask:
     app.jinja_env.filters["timestamp_to_date"] = timestamp_to_date
 
     with app.app_context():
+        # Register every model before create_all() checks the database schema.
+        from . import models as _models  # noqa: F401
+
         db.create_all()
         try:
             from .services.institution_registry_service import seed_chilean_universities

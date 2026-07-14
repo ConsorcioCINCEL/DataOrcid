@@ -130,7 +130,7 @@
                 <tbody>
                     {% for log in logs %}
                     <tr>
-                        <td class="text-nowrap align-middle">{{ log.timestamp }}</td>
+                        <td class="text-nowrap align-middle">{{ log.timestamp|datetimeformat }}</td>
                         <td class="align-middle">
                             {% if log.username %}
                                 <span class="badge badge-info"><i class="fas fa-user mr-1"></i> {{ log.username }}</span>

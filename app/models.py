@@ -225,6 +225,8 @@ class OpenAlexWorkRawCache(db.Model):
     raw_json = db.Column(db.JSON, nullable=True)
     oa_updated_date = db.Column(db.DateTime, nullable=True)
     error = db.Column(db.Text, nullable=True)
+    attempt_count = db.Column(db.Integer, default=0, nullable=False)
+    next_retry_at = db.Column(db.DateTime, index=True, nullable=True)
     fetched_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
@@ -265,7 +267,11 @@ class OpenAlexWorkAuthor(db.Model):
     """Author-level metadata extracted from OpenAlex authorships."""
     __tablename__ = "openalex_work_author"
     __table_args__ = (
-        db.Index("ix_openalex_work_author_doi_author", "doi_normalized", "author_id"),
+        db.UniqueConstraint(
+            "doi_normalized",
+            "author_id",
+            name="uq_openalex_work_author_doi_author",
+        ),
         db.Index("ix_openalex_work_author_chile_doi", "has_chile_affiliation", "doi_normalized"),
     )
 
@@ -289,6 +295,11 @@ class OpenAlexWorkInstitution(db.Model):
     """Institution-level metadata extracted from OpenAlex authorships."""
     __tablename__ = "openalex_work_institution"
     __table_args__ = (
+        db.UniqueConstraint(
+            "doi_normalized",
+            "institution_id",
+            name="uq_openalex_work_institution_doi_institution",
+        ),
         db.Index("ix_openalex_work_institution_doi_country", "doi_normalized", "country_code"),
         db.Index("ix_openalex_work_institution_country_doi", "country_code", "doi_normalized"),
         db.Index("ix_openalex_work_institution_doi_ror", "doi_normalized", "ror_id"),

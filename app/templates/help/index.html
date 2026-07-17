@@ -253,6 +253,7 @@
           <ul class="help-check-list">
             <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Use the displayed last-update timestamp rather than assuming a fixed refresh schedule.') }}</li>
             <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Administrators and managers may start synchronization jobs from the web interface.') }}</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OpenAlex-only updates also run in the background. Transient failures wait progressively longer before another automatic attempt, while an explicit full refresh bypasses that waiting period.') }}</li>
             <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The interface uses current, stale, running, partial, failed, and empty states consistently across the overview and data-management views.') }}</li>
             <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Exports are generated from the current local cache and therefore share its update timestamp and limitations.') }}</li>
             <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('When a verified Ringgold identifier is available, authorized users can download the institution search results used to discover authors; results are deduplicated by ORCID iD.') }}</li>

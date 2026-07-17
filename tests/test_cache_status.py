@@ -25,6 +25,7 @@ from app.models import (
     OpenAlexWorkMetadata,
     OpenAlexWorkRawCache,
     ResearcherStatus,
+    SyncJob,
     User,
     WorkCache,
     WorkCacheRun,
@@ -138,6 +139,34 @@ class CacheStatusSummaryTest(unittest.TestCase):
         self.assertEqual(8, runs[0]["records"])
         self.assertEqual(1, runs[1]["errors"])
         self.assertEqual(60, runs[2]["duration_seconds"])
+
+    def test_system_history_includes_unscoped_openalex_jobs(self):
+        with self.app.app_context():
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
+            db.session.add_all([
+                OpenAlexSyncRun(
+                    ror_id=None,
+                    status="running",
+                    started_at=now,
+                ),
+                SyncJob(
+                    id="system-openalex-job",
+                    name="openalex-system-missing",
+                    job_type="openalex_system_sync",
+                    ror_id=None,
+                    status="queued",
+                    result_json={
+                        "openalex": {"matched_count": 12},
+                        "errors": [],
+                    },
+                ),
+            ])
+            db.session.commit()
+            runs = _recent_sync_runs("01test123", include_system=True, limit=10)
+
+        system_job = next(run for run in runs if run["id"] == "system-openalex-job")
+        self.assertEqual("openalex", system_job["kind"])
+        self.assertEqual(12, system_job["records"])
 
     def test_institution_summaries_group_counts_coverage_and_freshness(self):
         with self.app.app_context():
@@ -375,6 +404,53 @@ class CacheStatusSummaryTest(unittest.TestCase):
         self.assertTrue(response.headers["Location"].endswith("/cache/works/status?scope=system"))
         self.assertEqual("full-cache-01test123", submit_job.call_args.args[1])
         self.assertEqual("01test123", submit_job.call_args.args[3])
+
+    def test_institution_openalex_sync_is_queued_and_deduplicated(self):
+        with self.client.session_transaction() as session:
+            session.update(
+                logged_in=True,
+                user_id=self.manager_id,
+                is_admin=False,
+                is_manager=True,
+                ror_id="01test123",
+            )
+
+        with patch(
+            "app.services.background_jobs.submit_background_job",
+            return_value="openalex-job",
+        ) as submit_job:
+            response = self.client.post("/openalex/sync", data={"mode": "missing"})
+
+        self.assertEqual(302, response.status_code)
+        self.assertEqual("openalex-01test123-missing", submit_job.call_args.args[1])
+        self.assertEqual("01test123", submit_job.call_args.args[3])
+        self.assertEqual("missing", submit_job.call_args.args[4])
+        self.assertTrue(submit_job.call_args.kwargs["deduplicate"])
+
+    def test_system_openalex_sync_is_queued_without_ror_scope(self):
+        with self.client.session_transaction() as session:
+            session.update(
+                logged_in=True,
+                user_id=self.manager_id,
+                is_admin=True,
+                is_manager=True,
+                ror_id="01test123",
+            )
+
+        with patch(
+            "app.services.background_jobs.submit_background_job",
+            return_value="system-openalex-job",
+        ) as submit_job:
+            response = self.client.post(
+                "/openalex/sync-system",
+                data={"mode": "title"},
+            )
+
+        self.assertEqual(302, response.status_code)
+        self.assertEqual("openalex-system-title", submit_job.call_args.args[1])
+        self.assertIsNone(submit_job.call_args.args[3])
+        self.assertEqual("title", submit_job.call_args.args[4])
+        self.assertTrue(submit_job.call_args.kwargs["deduplicate"])
 
     def test_full_institution_refresh_includes_orcid_and_openalex(self):
         call_order = []

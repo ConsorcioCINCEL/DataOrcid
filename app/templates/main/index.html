@@ -74,7 +74,7 @@
           <i class="fas fa-user-friends" aria-hidden="true"></i>
           {{ _('Review profiles') }}
         </a>
-        <a class="dashboard-secondary-link" href="{{ url_for('duplicates.index') }}#methodology">
+        <a class="dashboard-secondary-link" href="{{ url_for('duplicates.index', methodology='1') }}">
           {{ _('View methodology') }} <i class="fas fa-external-link-alt" aria-hidden="true"></i>
         </a>
       {% elif not has_any_cache and can_sync %}

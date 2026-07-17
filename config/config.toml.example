@@ -89,6 +89,9 @@ api_key = "REPLACE_OR_USE_ENV"
 mailto = "support@your-domain.cl"
 timeout = 20
 stale_days = 30
+# Failed requests use exponential backoff from this initial delay up to the cap.
+error_retry_minutes = 15
+error_retry_max_hours = 24
 # Parallel DOI fetch workers for OpenAlex sync. Start with 4; raise carefully.
 workers = 4
 # Title fallback is heavier than DOI lookup; keep it lower to avoid 429s.

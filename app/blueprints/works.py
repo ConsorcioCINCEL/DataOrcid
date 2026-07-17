@@ -2853,9 +2853,26 @@ def _last_cache_run_fundings(ror_id: str):
     )
 
 
-def _recent_sync_runs(ror_id: str, limit: int = 6) -> list[dict]:
-    """Return recent institutional cache runs in a shared presentation shape."""
+def _recent_sync_runs(
+    ror_id: str,
+    limit: int = 6,
+    include_system: bool = False,
+) -> list[dict]:
+    """Return recent institutional and optional system runs in one shape."""
     from ..models import FundingCacheRun, OpenAlexSyncRun, SyncJob, WorkCacheRun
+
+    openalex_query = OpenAlexSyncRun.query
+    job_query = SyncJob.query
+    if include_system:
+        openalex_query = openalex_query.filter(
+            or_(OpenAlexSyncRun.ror_id == ror_id, OpenAlexSyncRun.ror_id.is_(None))
+        )
+        job_query = job_query.filter(
+            or_(SyncJob.ror_id == ror_id, SyncJob.ror_id.is_(None))
+        )
+    else:
+        openalex_query = openalex_query.filter_by(ror_id=ror_id)
+        job_query = job_query.filter_by(ror_id=ror_id)
 
     run_groups = (
         (
@@ -2874,7 +2891,7 @@ def _recent_sync_runs(ror_id: str, limit: int = 6) -> list[dict]:
         ),
         (
             "openalex",
-            OpenAlexSyncRun.query.filter_by(ror_id=ror_id)
+            openalex_query
             .order_by(OpenAlexSyncRun.started_at.desc())
             .limit(limit)
             .all(),
@@ -2909,15 +2926,14 @@ def _recent_sync_runs(ror_id: str, limit: int = 6) -> list[dict]:
                 "errors": int(errors),
             })
 
-    for job in (
-        SyncJob.query.filter_by(ror_id=ror_id)
-        .order_by(SyncJob.created_at.desc())
-        .limit(limit)
-        .all()
-    ):
+    for job in job_query.order_by(SyncJob.created_at.desc()).limit(limit).all():
+        is_openalex_job = (job.job_type or "").startswith("openalex_")
+        result = job.result_json or {}
+        openalex_result = (result.get("openalex") or {}) if isinstance(result, dict) else {}
+        result_errors = (result.get("errors") or []) if isinstance(result, dict) else []
         runs.append({
             "id": job.id,
-            "kind": "full",
+            "kind": "openalex" if is_openalex_job else "full",
             "status": (job.status or "queued").lower(),
             "started_at": job.started_at,
             "finished_at": job.finished_at,
@@ -2927,9 +2943,13 @@ def _recent_sync_runs(ror_id: str, limit: int = 6) -> list[dict]:
                 if job.started_at and job.finished_at
                 else None
             ),
-            "records": int(job.progress_current or 0),
+            "records": int(
+                openalex_result.get("matched_count", 0)
+                if is_openalex_job
+                else job.progress_current or 0
+            ),
             "records_total": int(job.progress_total or 0),
-            "errors": 1 if job.error else 0,
+            "errors": len(result_errors) if result_errors else (1 if job.error else 0),
         })
 
     runs.sort(key=lambda item: item["timestamp"] or dt.min, reverse=True)
@@ -2946,7 +2966,7 @@ def _run_full_sync_for_ror(
     from ..models import WorkCacheRun, FundingCacheRun
     from ..services.cache_service import build_full_cache_for_ror
     from ..services.openalex_service import sync_openalex_works
-    from ..services.background_jobs import update_job_step
+    from ..services.background_jobs import update_background_job, update_job_step
 
     result = {
         "ror_id": ror_id,
@@ -3012,21 +3032,32 @@ def _run_full_sync_for_ror(
 
     update_job_step(job_id, "openalex", "running")
     try:
+        sync_kwargs = {
+            "ror_id": ror_id,
+            "force_refresh": True,
+            "stale_days": 0,
+            "articles_only": True,
+        }
+        if job_id:
+            sync_kwargs["progress"] = lambda summary: update_background_job(
+                job_id,
+                message=(
+                    f"OpenAlex: {summary['fetched_count'] + summary['skipped_count']} "
+                    f"of {summary['dois_found']} candidates processed."
+                ),
+            )
         openalex_result = sync_openalex_works(
-            ror_id=ror_id,
-            force_refresh=True,
-            stale_days=0,
-            articles_only=True,
+            **sync_kwargs,
         )
         result["openalex"].update(openalex_result)
-        if openalex_result.get("status") == "failed":
+        if openalex_result.get("status") in {"failed", "partial"}:
             result["errors"].append("OpenAlex")
             update_job_step(
                 job_id,
                 "openalex",
                 "failed",
                 records_count=openalex_result.get("matched_count", 0),
-                error=openalex_result.get("error"),
+                error=openalex_result.get("error") or "Some OpenAlex records could not be synchronized.",
             )
         else:
             update_job_step(
@@ -3360,7 +3391,10 @@ def cache_works_status():
         else 0
     )
     openalex_summary = _openalex_cache_summary(ror_id)
-    recent_runs = _recent_sync_runs(ror_id)
+    recent_runs = _recent_sync_runs(
+        ror_id,
+        include_system=bool(is_admin and cache_scope == "system"),
+    )
 
     from ..services.canonical_work_service import canonical_work_counts
     from ..services.data_health_service import institution_data_health
@@ -3478,10 +3512,79 @@ def data_quality_rebuild_canonical_works():
     return redirect(url_for('works.data_quality'))
 
 
+def _run_openalex_sync(
+    ror_id: str | None,
+    mode: str,
+    job_id: str | None = None,
+) -> dict:
+    """Run one durable OpenAlex synchronization job and report partial results."""
+    from ..services.background_jobs import update_background_job, update_job_step
+    from ..services.openalex_service import sync_openalex_title_matches, sync_openalex_works
+
+    update_job_step(job_id, "openalex", "running")
+
+    def progress(summary: dict) -> None:
+        if not job_id:
+            return
+        processed = summary["fetched_count"] + summary["skipped_count"]
+        update_background_job(
+            job_id,
+            message=f"OpenAlex: {processed} of {summary['dois_found']} candidates processed.",
+        )
+
+    if mode == "title":
+        result = sync_openalex_title_matches(
+            ror_id=ror_id,
+            stale_days=0,
+            articles_only=True,
+            progress=progress,
+        )
+    else:
+        result = sync_openalex_works(
+            ror_id=ror_id,
+            force_refresh=mode == "all",
+            stale_days=0,
+            articles_only=True,
+            progress=progress,
+        )
+
+    records_count = result.get("matched_count", 0)
+    if result.get("status") == "failed":
+        error = result.get("error") or "OpenAlex synchronization failed."
+        update_job_step(job_id, "openalex", "failed", records_count=records_count, error=error)
+        raise RuntimeError(error)
+    if result.get("status") == "partial":
+        error = result.get("error") or "Some OpenAlex records could not be synchronized."
+        update_job_step(job_id, "openalex", "failed", records_count=records_count, error=error)
+        return {"openalex": result, "errors": [error]}
+
+    update_job_step(job_id, "openalex", "success", records_count=records_count)
+    return {"openalex": result, "errors": []}
+
+
+def _queue_openalex_sync(ror_id: str | None, mode: str) -> str:
+    """Queue or reuse the same active OpenAlex synchronization scope."""
+    from ..services.background_jobs import submit_background_job
+
+    scope = ror_id or "system"
+    return submit_background_job(
+        current_app._get_current_object(),
+        f"openalex-{scope}-{mode}",
+        _run_openalex_sync,
+        ror_id,
+        mode,
+        job_type="openalex_system_sync" if ror_id is None else "openalex_institution_sync",
+        ror_id=ror_id,
+        requested_by_user_id=session.get("user_id"),
+        steps=["openalex"],
+        deduplicate=True,
+    )
+
+
 @bp_works.route('/openalex/sync', methods=['POST'])
 @login_required
 def openalex_sync():
-    """Synchronize OpenAlex metadata for DOI-backed journal articles."""
+    """Queue OpenAlex metadata synchronization for the active institution."""
     if not (session.get('is_admin') or session.get('is_manager')):
         flash_err(_("You do not have sufficient permissions to perform this action."))
         return redirect(url_for('works.cache_works_status'))
@@ -3496,43 +3599,11 @@ def openalex_sync():
         flash_err(_('Invalid OpenAlex synchronization mode.'))
         return redirect(url_for('works.cache_works_status'))
 
-    from ..services.openalex_service import sync_openalex_title_matches, sync_openalex_works
-
-    force_refresh = mode == "all"
-    if mode == "title":
-        result = sync_openalex_title_matches(
-            ror_id=ror_id,
-            stale_days=0,
-            articles_only=True,
-        )
-    else:
-        result = sync_openalex_works(
-            ror_id=ror_id,
-            force_refresh=force_refresh,
-            stale_days=0,
-            articles_only=True,
-        )
-
-    if result["status"] == "failed":
-        flash_err(_('OpenAlex synchronization failed: %(error)s', error=result.get("error") or _("Check logs.")))
-    elif mode == "title":
-        flash_ok(_(
-            'OpenAlex title matching complete: %(fetched)s searched, %(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors.',
-            fetched=result["fetched_count"],
-            matched=result["matched_count"],
-            not_found=result["not_found_count"],
-            skipped=result["skipped_count"],
-            errors=result["error_count"],
-        ))
-    else:
-        flash_ok(_(
-            'OpenAlex synchronization complete: %(fetched)s fetched, %(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors.',
-            fetched=result["fetched_count"],
-            matched=result["matched_count"],
-            not_found=result["not_found_count"],
-            skipped=result["skipped_count"],
-            errors=result["error_count"],
-        ))
+    job_id = _queue_openalex_sync(ror_id, mode)
+    flash_ok(_(
+        'OpenAlex synchronization was queued or is already running. Job ID: %(job)s',
+        job=job_id,
+    ))
 
     return redirect(url_for('works.cache_works_status'))
 
@@ -3540,49 +3611,17 @@ def openalex_sync():
 @bp_works.route('/openalex/sync-system', methods=['POST'])
 @admin_required
 def openalex_sync_system():
-    """Synchronize OpenAlex metadata for DOI-backed journal articles system-wide."""
+    """Queue system-wide OpenAlex metadata synchronization."""
     mode = (request.form.get("mode") or "missing").strip().lower()
     if mode not in {"missing", "all", "title"}:
         flash_err(_('Invalid OpenAlex synchronization mode.'))
         return redirect(url_for('works.cache_works_status'))
 
-    from ..services.openalex_service import sync_openalex_title_matches, sync_openalex_works
-
-    force_refresh = mode == "all"
-    if mode == "title":
-        result = sync_openalex_title_matches(
-            ror_id=None,
-            stale_days=0,
-            articles_only=True,
-        )
-    else:
-        result = sync_openalex_works(
-            ror_id=None,
-            force_refresh=force_refresh,
-            stale_days=0,
-            articles_only=True,
-        )
-
-    if result["status"] == "failed":
-        flash_err(_('OpenAlex synchronization failed: %(error)s', error=result.get("error") or _("Check logs.")))
-    elif mode == "title":
-        flash_ok(_(
-            'System-wide OpenAlex title matching complete: %(fetched)s searched, %(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors.',
-            fetched=result["fetched_count"],
-            matched=result["matched_count"],
-            not_found=result["not_found_count"],
-            skipped=result["skipped_count"],
-            errors=result["error_count"],
-        ))
-    else:
-        flash_ok(_(
-            'System-wide OpenAlex synchronization complete: %(fetched)s fetched, %(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors.',
-            fetched=result["fetched_count"],
-            matched=result["matched_count"],
-            not_found=result["not_found_count"],
-            skipped=result["skipped_count"],
-            errors=result["error_count"],
-        ))
+    job_id = _queue_openalex_sync(None, mode)
+    flash_ok(_(
+        'System-wide OpenAlex synchronization was queued or is already running. Job ID: %(job)s',
+        job=job_id,
+    ))
 
     return redirect(url_for('works.cache_works_status'))
 

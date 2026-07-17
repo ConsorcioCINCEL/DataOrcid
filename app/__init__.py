@@ -203,6 +203,8 @@ def create_app() -> Flask:
         OPENALEX_MAILTO=os.environ.get("OPENALEX_MAILTO") or openalex_cfg.get("mailto"),
         OPENALEX_TIMEOUT=int(openalex_cfg.get("timeout", 20)),
         OPENALEX_STALE_DAYS=int(openalex_cfg.get("stale_days", 30)),
+        OPENALEX_ERROR_RETRY_MINUTES=int(openalex_cfg.get("error_retry_minutes", 15)),
+        OPENALEX_ERROR_RETRY_MAX_HOURS=int(openalex_cfg.get("error_retry_max_hours", 24)),
         OPENALEX_WORKERS=int(os.environ.get("OPENALEX_WORKERS") or openalex_cfg.get("workers", 4)),
         OPENALEX_TITLE_WORKERS=int(os.environ.get("OPENALEX_TITLE_WORKERS") or openalex_cfg.get("title_workers", 2)),
         OPENALEX_ANALYTICS_CACHE_TTL=int(openalex_cfg.get("analytics_cache_ttl", 86400)),

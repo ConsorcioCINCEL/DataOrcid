@@ -575,7 +575,7 @@
   <aside class="card cache-runs-card" aria-labelledby="cacheRunsTitle">
     <div class="card-header">
       <h2 id="cacheRunsTitle" class="card-title"><i class="fas fa-history mr-2" aria-hidden="true"></i>{{ _('Recent synchronization runs') }}</h2>
-      <p>{{ _('Latest activity for the active institution.') }}</p>
+      <p>{% if cache_scope == 'system' %}{{ _('Latest activity for the system and active institution.') }}{% else %}{{ _('Latest activity for the active institution.') }}{% endif %}</p>
     </div>
     <div class="card-body">
       {% if recent_runs %}

@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 import logging
 import re
-from time import sleep
+from threading import Lock, local
+from time import monotonic, sleep
 import unicodedata
 from urllib.parse import quote
 
 import requests
 from flask import current_app
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from .. import db
 from ..models import (
@@ -33,9 +35,12 @@ OPENALEX_RETRY_STATUSES = {429, 500, 502, 503, 504}
 OPENALEX_MAX_RETRIES = 2
 OPENALEX_DB_MAX_RETRIES = 3
 OPENALEX_PROGRESS_INTERVAL = 500
+OPENALEX_PROGRESS_SECONDS = 30
 TITLE_MATCH_NOT_FOUND_ERROR = "No confident OpenAlex title match."
 TITLE_MATCH_MIN_SCORE_WITH_YEAR = 0.88
 TITLE_MATCH_MIN_SCORE_WITHOUT_YEAR = 0.94
+_OPENALEX_WORKER_STATE = local()
+_OPENALEX_PERSISTENCE_LOCKS = tuple(Lock() for _ in range(256))
 
 
 class OpenAlexConfigError(RuntimeError):
@@ -127,11 +132,14 @@ class OpenAlexClient:
         base_url: str = "https://api.openalex.org",
         timeout: int = 20,
         mailto: str | None = None,
+        session: requests.Session | None = None,
     ) -> None:
         self.api_key = (api_key or "").strip()
         self.base_url = (base_url or "https://api.openalex.org").rstrip("/")
         self.timeout = int(timeout or 20)
         self.mailto = (mailto or "").strip() or None
+        self.session = session or requests.Session()
+        self.session.headers.update({"Accept": "application/json"})
 
         if not self.api_key or self.api_key == "REPLACE_OR_USE_ENV":
             raise OpenAlexConfigError("OPENALEX_API_KEY is not configured.")
@@ -141,11 +149,10 @@ class OpenAlexClient:
         url = f"{self.base_url}{path}"
         for attempt in range(OPENALEX_MAX_RETRIES + 1):
             try:
-                response = requests.get(
+                response = self.session.get(
                     url,
                     params=params,
                     timeout=self.timeout,
-                    headers={"Accept": "application/json"},
                 )
             except requests.RequestException as exc:
                 if attempt >= OPENALEX_MAX_RETRIES:
@@ -408,12 +415,49 @@ def should_refresh_raw(raw_row: OpenAlexWorkRawCache | None, stale_days: int, fo
     if force_refresh or not raw_row:
         return True
     if raw_row.status in {"error", "pending"}:
-        return True
+        return not raw_row.next_retry_at or raw_row.next_retry_at <= utc_now()
     if stale_days <= 0:
         return False
     if not raw_row.fetched_at:
         return True
     return raw_row.fetched_at < utc_now() - timedelta(days=stale_days)
+
+
+def _set_raw_result_state(raw_row: OpenAlexWorkRawCache, status: str, now: datetime) -> None:
+    """Persist retry state without hammering OpenAlex after transient failures."""
+    raw_row.status = status
+    if status != "error":
+        raw_row.attempt_count = 0
+        raw_row.next_retry_at = None
+        return
+
+    raw_row.attempt_count = int(raw_row.attempt_count or 0) + 1
+    base_minutes = max(int(current_app.config.get("OPENALEX_ERROR_RETRY_MINUTES", 15)), 1)
+    max_hours = max(int(current_app.config.get("OPENALEX_ERROR_RETRY_MAX_HOURS", 24)), 1)
+    delay_minutes = min(base_minutes * (2 ** (raw_row.attempt_count - 1)), max_hours * 60)
+    raw_row.next_retry_at = now + timedelta(minutes=delay_minutes)
+
+
+@contextmanager
+def _openalex_persistence_lock(cache_key: str):
+    """Serialize one work locally and across PostgreSQL application processes."""
+    process_lock = _OPENALEX_PERSISTENCE_LOCKS[hash(cache_key) % len(_OPENALEX_PERSISTENCE_LOCKS)]
+    with process_lock:
+        if db.session.get_bind().dialect.name == "postgresql":
+            db.session.execute(
+                text("SELECT pg_advisory_xact_lock(hashtextextended(:cache_key, 0))"),
+                {"cache_key": cache_key},
+            )
+        yield
+
+
+def _worker_openalex_client() -> OpenAlexClient:
+    """Reuse one HTTP connection pool for each executor worker thread."""
+    client = getattr(_OPENALEX_WORKER_STATE, "client", None)
+    if client is None:
+        client = OpenAlexClient.from_current_app()
+        _OPENALEX_WORKER_STATE.client = client
+    return client
 
 
 def _openalex_worker_count(workers: int | None = None) -> int:
@@ -446,39 +490,40 @@ def sync_work_by_doi(
         return {"status": "error", "doi": doi, "error": "Missing DOI."}
 
     stale_days = current_app.config.get("OPENALEX_STALE_DAYS", 30) if stale_days is None else stale_days
-    raw_row = OpenAlexWorkRawCache.query.filter_by(doi_normalized=normalized_doi).first()
-    if not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
-        return {"status": "skipped", "doi": normalized_doi, "raw_status": raw_row.status}
-    is_new_raw_row = raw_row is None
+    with _openalex_persistence_lock(normalized_doi):
+        raw_row = OpenAlexWorkRawCache.query.filter_by(doi_normalized=normalized_doi).first()
+        if not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
+            return {"status": "skipped", "doi": normalized_doi, "raw_status": raw_row.status}
+        is_new_raw_row = raw_row is None
 
-    client = client or OpenAlexClient.from_current_app()
-    result = client.fetch_work_by_doi(normalized_doi)
-    now = utc_now()
+        client = client or OpenAlexClient.from_current_app()
+        result = client.fetch_work_by_doi(normalized_doi)
+        now = utc_now()
 
-    if not raw_row:
-        raw_row = OpenAlexWorkRawCache(doi_normalized=normalized_doi)
-        db.session.add(raw_row)
+        if not raw_row:
+            raw_row = OpenAlexWorkRawCache(doi_normalized=normalized_doi)
+            db.session.add(raw_row)
 
-    raw_row.source_doi = doi
-    raw_row.status = result["status"]
-    raw_row.http_status = result.get("http_status")
-    raw_row.raw_json = result.get("payload")
-    raw_row.error = result.get("error")
-    raw_row.fetched_at = now
+        raw_row.source_doi = doi
+        _set_raw_result_state(raw_row, result["status"], now)
+        raw_row.http_status = result.get("http_status")
+        raw_row.raw_json = result.get("payload")
+        raw_row.error = result.get("error")
+        raw_row.fetched_at = now
 
-    payload = result.get("payload")
-    if payload:
-        raw_row.openalex_id = _short_openalex_id(payload.get("id"))
-        raw_row.oa_updated_date = _parse_openalex_datetime(payload.get("updated_date"))
-        _upsert_metadata(extract_work_metadata(payload, normalized_doi))
-        _replace_work_dimensions(normalized_doi, payload, delete_existing=not is_new_raw_row)
-    elif result["status"] == "not_found":
-        OpenAlexWorkMetadata.query.filter_by(doi_normalized=normalized_doi).delete(synchronize_session=False)
-        if not is_new_raw_row:
-            _delete_work_dimensions(normalized_doi)
+        payload = result.get("payload")
+        if payload:
+            raw_row.openalex_id = _short_openalex_id(payload.get("id"))
+            raw_row.oa_updated_date = _parse_openalex_datetime(payload.get("updated_date"))
+            _upsert_metadata(extract_work_metadata(payload, normalized_doi))
+            _replace_work_dimensions(normalized_doi, payload, delete_existing=not is_new_raw_row)
+        elif result["status"] == "not_found":
+            OpenAlexWorkMetadata.query.filter_by(doi_normalized=normalized_doi).delete(synchronize_session=False)
+            if not is_new_raw_row:
+                _delete_work_dimensions(normalized_doi)
 
-    db.session.commit()
-    return {"status": result["status"], "doi": normalized_doi, "error": result.get("error")}
+        db.session.commit()
+        return {"status": result["status"], "doi": normalized_doi, "error": result.get("error")}
 
 
 def sync_work_by_title(
@@ -494,64 +539,69 @@ def sync_work_by_title(
         return {"status": "error", "doi": cache_key, "error": "Missing local work key or title."}
 
     stale_days = current_app.config.get("OPENALEX_STALE_DAYS", 30) if stale_days is None else stale_days
-    raw_row = OpenAlexWorkRawCache.query.filter_by(doi_normalized=cache_key).first()
-    metadata_row = OpenAlexWorkMetadata.query.filter_by(doi_normalized=cache_key).first()
-    is_new_raw_row = raw_row is None
-    title_search_already_failed = bool(raw_row and raw_row.error == TITLE_MATCH_NOT_FOUND_ERROR)
+    with _openalex_persistence_lock(cache_key):
+        raw_row = OpenAlexWorkRawCache.query.filter_by(doi_normalized=cache_key).first()
+        metadata_row = OpenAlexWorkMetadata.query.filter_by(doi_normalized=cache_key).first()
+        is_new_raw_row = raw_row is None
+        title_search_already_failed = bool(raw_row and raw_row.error == TITLE_MATCH_NOT_FOUND_ERROR)
 
-    if metadata_row and not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
-        return {"status": "skipped", "doi": cache_key, "raw_status": raw_row.status if raw_row else "found"}
-    if title_search_already_failed and not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
-        return {"status": "skipped", "doi": cache_key, "raw_status": raw_row.status}
+        if metadata_row and not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
+            return {"status": "skipped", "doi": cache_key, "raw_status": raw_row.status if raw_row else "found"}
+        if raw_row and raw_row.status in {"error", "pending"} and not should_refresh_raw(
+            raw_row, int(stale_days or 0), force_refresh
+        ):
+            return {"status": "skipped", "doi": cache_key, "raw_status": raw_row.status}
+        if title_search_already_failed and not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
+            return {"status": "skipped", "doi": cache_key, "raw_status": raw_row.status}
 
-    client = client or OpenAlexClient.from_current_app()
-    result = client.search_works_by_title(title)
-    now = utc_now()
+        client = client or OpenAlexClient.from_current_app()
+        result = client.search_works_by_title(title)
+        now = utc_now()
 
-    if not raw_row:
-        raw_row = OpenAlexWorkRawCache(doi_normalized=cache_key)
-        db.session.add(raw_row)
+        if not raw_row:
+            raw_row = OpenAlexWorkRawCache(doi_normalized=cache_key)
+            db.session.add(raw_row)
 
-    raw_row.source_doi = candidate.get("source_doi")
-    raw_row.http_status = result.get("http_status")
-    raw_row.fetched_at = now
+        raw_row.source_doi = candidate.get("source_doi")
+        raw_row.http_status = result.get("http_status")
+        raw_row.fetched_at = now
 
-    if result["status"] == "error":
-        raw_row.status = "not_found" if candidate.get("source_doi") else "error"
-        raw_row.raw_json = None
-        raw_row.error = result.get("error")
+        if result["status"] == "error":
+            _set_raw_result_state(raw_row, "error", now)
+            raw_row.raw_json = None
+            raw_row.error = result.get("error")
+            db.session.commit()
+            return {"status": "error", "doi": cache_key, "error": result.get("error")}
+
+        payloads = (result.get("payload") or {}).get("results") or []
+        payload, match_info = _select_best_title_match(candidate, payloads)
+        if payload:
+            payload.setdefault("_local_match", match_info)
+            _set_raw_result_state(raw_row, "found", now)
+            raw_row.raw_json = payload
+            raw_row.error = None
+            raw_row.openalex_id = _short_openalex_id(payload.get("id"))
+            raw_row.oa_updated_date = _parse_openalex_datetime(payload.get("updated_date"))
+            _upsert_metadata(extract_work_metadata(payload, cache_key))
+            _replace_work_dimensions(cache_key, payload, delete_existing=not is_new_raw_row)
+            db.session.commit()
+            return {
+                "status": "found",
+                "doi": cache_key,
+                "error": None,
+                "match_score": match_info.get("score"),
+            }
+
+        _set_raw_result_state(raw_row, "not_found", now)
+        raw_row.raw_json = {"_local_match": match_info}
+        raw_row.error = TITLE_MATCH_NOT_FOUND_ERROR
+        raw_row.openalex_id = None
+        raw_row.oa_updated_date = None
+        OpenAlexWorkMetadata.query.filter_by(doi_normalized=cache_key).delete(synchronize_session=False)
+        if not is_new_raw_row:
+            _delete_work_dimensions(cache_key)
         db.session.commit()
-        return {"status": "error", "doi": cache_key, "error": result.get("error")}
-
-    payloads = (result.get("payload") or {}).get("results") or []
-    payload, match_info = _select_best_title_match(candidate, payloads)
-    if payload:
-        payload.setdefault("_local_match", match_info)
-        raw_row.status = "found"
-        raw_row.raw_json = payload
-        raw_row.error = None
-        raw_row.openalex_id = _short_openalex_id(payload.get("id"))
-        raw_row.oa_updated_date = _parse_openalex_datetime(payload.get("updated_date"))
-        _upsert_metadata(extract_work_metadata(payload, cache_key))
-        _replace_work_dimensions(cache_key, payload, delete_existing=not is_new_raw_row)
-        db.session.commit()
-        return {
-            "status": "found",
-            "doi": cache_key,
-            "error": None,
-            "match_score": match_info.get("score"),
-        }
-
-    raw_row.status = "not_found"
-    raw_row.raw_json = {"_local_match": match_info}
-    raw_row.error = TITLE_MATCH_NOT_FOUND_ERROR
-    raw_row.openalex_id = None
-    raw_row.oa_updated_date = None
-    OpenAlexWorkMetadata.query.filter_by(doi_normalized=cache_key).delete(synchronize_session=False)
-    if not is_new_raw_row:
-        _delete_work_dimensions(cache_key)
-    db.session.commit()
-    return {"status": "not_found", "doi": cache_key, "error": TITLE_MATCH_NOT_FOUND_ERROR}
+        return {"status": "not_found", "doi": cache_key, "error": TITLE_MATCH_NOT_FOUND_ERROR}
 
 
 def _is_retryable_database_error(exc: Exception) -> bool:
@@ -560,7 +610,7 @@ def _is_retryable_database_error(exc: Exception) -> bool:
     args = getattr(original, "args", ())
     mysql_code = args[0] if args else None
     sqlstate = getattr(original, "sqlstate", None) or getattr(original, "pgcode", None)
-    return mysql_code in {1205, 1213} or sqlstate in {"40001", "40P01", "55P03"}
+    return mysql_code in {1205, 1213} or sqlstate in {"23505", "40001", "40P01", "55P03"}
 
 
 def _bounded_executor_results(executor, submit, candidates, max_pending: int):
@@ -591,6 +641,7 @@ def _sync_candidate_in_worker(app, candidate: dict, force_refresh: bool, stale_d
             try:
                 return sync_work_by_doi(
                     candidate["source_doi"],
+                    client=_worker_openalex_client(),
                     force_refresh=force_refresh,
                     stale_days=stale_days,
                 )
@@ -626,6 +677,7 @@ def _sync_title_candidate_in_worker(app, candidate: dict, force_refresh: bool, s
             try:
                 return sync_work_by_title(
                     candidate,
+                    client=_worker_openalex_client(),
                     force_refresh=force_refresh,
                     stale_days=stale_days,
                 )
@@ -682,10 +734,37 @@ def _checkpoint_sync_run(run: OpenAlexSyncRun, summary: dict) -> None:
     db.session.commit()
 
 
-def _checkpoint_sync_run_if_due(run: OpenAlexSyncRun, summary: dict) -> None:
+def _checkpoint_sync_run_if_due(
+    run: OpenAlexSyncRun,
+    summary: dict,
+    checkpoint_state: dict,
+    progress=None,
+) -> None:
     processed = summary["fetched_count"] + summary["skipped_count"]
-    if processed and processed % OPENALEX_PROGRESS_INTERVAL == 0:
-        _checkpoint_sync_run(run, summary)
+    now = monotonic()
+    due_by_count = processed and processed % OPENALEX_PROGRESS_INTERVAL == 0
+    due_by_time = processed and now - checkpoint_state["last_at"] >= OPENALEX_PROGRESS_SECONDS
+    if not (due_by_count or due_by_time):
+        return
+
+    _checkpoint_sync_run(run, summary)
+    checkpoint_state["last_at"] = now
+    if progress:
+        try:
+            progress(dict(summary))
+        except Exception:
+            logger.exception("OpenAlex progress callback failed.")
+
+
+def _final_sync_status(summary: dict) -> str:
+    if not summary["error_count"]:
+        return "success"
+    successful_or_skipped = (
+        summary["matched_count"]
+        + summary["not_found_count"]
+        + summary["skipped_count"]
+    )
+    return "partial" if successful_or_skipped else "failed"
 
 
 def _upsert_metadata(values: dict) -> OpenAlexWorkMetadata:
@@ -911,7 +990,11 @@ def _delete_duplicate_dimension_rows(model, group_columns, eligibility) -> int:
     return removed
 
 
-def collect_work_dois(ror_id: str | None = None, articles_only: bool = True) -> tuple[int, list[dict]]:
+def collect_work_dois(
+    ror_id: str | None = None,
+    articles_only: bool = True,
+    limit: int | None = None,
+) -> tuple[int, list[dict]]:
     """Return candidate DOI values from the local ORCID works cache."""
     base_query = WorkCache.query
     if ror_id:
@@ -925,7 +1008,8 @@ def collect_work_dois(ror_id: str | None = None, articles_only: bool = True) -> 
         .with_entities(WorkCache.doi)
         .filter(WorkCache.doi.isnot(None), WorkCache.doi != "")
         .distinct()
-        .all()
+        .order_by(WorkCache.doi.asc())
+        .yield_per(1000)
     )
 
     by_normalized = {}
@@ -936,11 +1020,17 @@ def collect_work_dois(ror_id: str | None = None, articles_only: bool = True) -> 
                 "doi": normalized,
                 "source_doi": source_doi,
             }
+            if limit and len(by_normalized) >= limit:
+                break
 
     return works_seen, sorted(by_normalized.values(), key=lambda item: item["doi"])
 
 
-def collect_title_match_candidates(ror_id: str | None = None, articles_only: bool = True) -> tuple[int, list[dict]]:
+def collect_title_match_candidates(
+    ror_id: str | None = None,
+    articles_only: bool = True,
+    limit: int | None = None,
+) -> tuple[int, list[dict]]:
     """Return works eligible for title-only OpenAlex matching.
 
     Candidates are local works with a title where either no DOI exists locally, or
@@ -957,20 +1047,33 @@ def collect_title_match_candidates(ror_id: str | None = None, articles_only: boo
         base_query
         .filter(WorkCache.title.isnot(None), WorkCache.title != "")
         .order_by(WorkCache.id.asc())
-        .all()
+        .yield_per(500)
     )
 
-    doi_keys = sorted({
-        normalize_doi(work.doi)
-        for work in work_rows
-        if normalize_doi(work.doi)
-    })
-    no_doi_keys = [
-        _work_cache_key(work)
-        for work in work_rows
-        if not normalize_doi(work.doi)
-    ]
-    raw_keys = doi_keys + no_doi_keys
+    candidates = {}
+    batch = []
+    for work in work_rows:
+        batch.append(work)
+        if len(batch) < 500:
+            continue
+        _collect_title_candidate_batch(batch, candidates, limit)
+        batch = []
+        if limit and len(candidates) >= limit:
+            break
+
+    if batch and (not limit or len(candidates) < limit):
+        _collect_title_candidate_batch(batch, candidates, limit)
+
+    return works_seen, sorted(candidates.values(), key=lambda item: (normalize_title(item["title"]), item["cache_key"]))
+
+
+def _collect_title_candidate_batch(
+    work_rows: list[WorkCache],
+    candidates: dict[str, dict],
+    limit: int | None,
+) -> None:
+    """Resolve cached OpenAlex state for one bounded group of local works."""
+    raw_keys = sorted({_work_cache_key(work) for work in work_rows})
     raw_by_key = {
         row.doi_normalized: row
         for row in OpenAlexWorkRawCache.query
@@ -984,23 +1087,17 @@ def collect_title_match_candidates(ror_id: str | None = None, articles_only: boo
         .all()
     } if raw_keys else set()
 
-    candidates = {}
     for work in work_rows:
         normalized_doi = normalize_doi(work.doi)
+        cache_key = normalized_doi or _work_cache_key(work)
+        raw_row = raw_by_key.get(cache_key)
         if normalized_doi:
-            raw_row = raw_by_key.get(normalized_doi)
-            if normalized_doi in metadata_keys or not raw_row or raw_row.status != "not_found":
+            if cache_key in metadata_keys or not raw_row or raw_row.status != "not_found":
                 continue
-            if raw_row.error == TITLE_MATCH_NOT_FOUND_ERROR:
-                continue
-            cache_key = normalized_doi
-        else:
-            cache_key = _work_cache_key(work)
-            raw_row = raw_by_key.get(cache_key)
-            if cache_key in metadata_keys or (raw_row and raw_row.status == "found"):
-                continue
-            if raw_row and raw_row.error == TITLE_MATCH_NOT_FOUND_ERROR:
-                continue
+        elif cache_key in metadata_keys or (raw_row and raw_row.status == "found"):
+            continue
+        if raw_row and raw_row.error == TITLE_MATCH_NOT_FOUND_ERROR:
+            continue
 
         if cache_key not in candidates:
             candidates[cache_key] = {
@@ -1013,8 +1110,8 @@ def collect_title_match_candidates(ror_id: str | None = None, articles_only: boo
                 "orcid": work.orcid,
                 "ror_id": work.ror_id,
             }
-
-    return works_seen, sorted(candidates.values(), key=lambda item: (normalize_title(item["title"]), item["cache_key"]))
+            if limit and len(candidates) >= limit:
+                return
 
 
 def sync_openalex_works(
@@ -1025,11 +1122,14 @@ def sync_openalex_works(
     articles_only: bool = True,
     dry_run: bool = False,
     workers: int | None = None,
+    progress=None,
 ) -> dict:
     """Synchronize OpenAlex metadata for DOI-backed works in the local ORCID cache."""
-    works_seen, candidates = collect_work_dois(ror_id=ror_id, articles_only=articles_only)
-    if limit:
-        candidates = candidates[:limit]
+    works_seen, candidates = collect_work_dois(
+        ror_id=ror_id,
+        articles_only=articles_only,
+        limit=limit,
+    )
     worker_count = _openalex_worker_count(workers)
 
     summary = {
@@ -1051,10 +1151,13 @@ def sync_openalex_works(
     run = OpenAlexSyncRun(ror_id=ror_id, works_seen=works_seen, dois_found=len(candidates))
     db.session.add(run)
     db.session.commit()
+    checkpoint_state = {"last_at": monotonic()}
 
     try:
-        client = OpenAlexClient.from_current_app()
-        if worker_count == 1 or len(candidates) <= 1:
+        if not candidates:
+            summary["status"] = "success"
+        elif worker_count == 1 or len(candidates) == 1:
+            client = OpenAlexClient.from_current_app()
             for candidate in candidates:
                 result = sync_work_by_doi(
                     candidate["source_doi"],
@@ -1063,7 +1166,7 @@ def sync_openalex_works(
                     stale_days=stale_days,
                 )
                 _apply_sync_result(summary, result)
-                _checkpoint_sync_run_if_due(run, summary)
+                _checkpoint_sync_run_if_due(run, summary, checkpoint_state, progress)
         else:
             app = current_app._get_current_object()
             max_workers = min(worker_count, len(candidates))
@@ -1085,9 +1188,9 @@ def sync_openalex_works(
                 )
                 for result in results:
                     _apply_sync_result(summary, result)
-                    _checkpoint_sync_run_if_due(run, summary)
+                    _checkpoint_sync_run_if_due(run, summary, checkpoint_state, progress)
 
-        summary["status"] = "failed" if summary["error_count"] else "success"
+        summary["status"] = _final_sync_status(summary)
     except Exception as exc:
         db.session.rollback()
         logger.exception("OpenAlex synchronization failed: %s", exc)
@@ -1095,10 +1198,13 @@ def sync_openalex_works(
         summary["error"] = str(exc)
     finally:
         run.status = summary["status"]
-        _checkpoint_sync_run(run, summary)
         run.finished_at = utc_now()
-        db.session.add(run)
-        db.session.commit()
+        _checkpoint_sync_run(run, summary)
+        if progress:
+            try:
+                progress(dict(summary))
+            except Exception:
+                logger.exception("OpenAlex final progress callback failed.")
 
     return summary
 
@@ -1111,11 +1217,14 @@ def sync_openalex_title_matches(
     articles_only: bool = True,
     dry_run: bool = False,
     workers: int | None = None,
+    progress=None,
 ) -> dict:
     """Synchronize OpenAlex metadata by title for DOI misses and works without DOI."""
-    works_seen, candidates = collect_title_match_candidates(ror_id=ror_id, articles_only=articles_only)
-    if limit:
-        candidates = candidates[:limit]
+    works_seen, candidates = collect_title_match_candidates(
+        ror_id=ror_id,
+        articles_only=articles_only,
+        limit=limit,
+    )
     worker_count = _openalex_title_worker_count(workers)
 
     summary = {
@@ -1138,10 +1247,13 @@ def sync_openalex_title_matches(
     run = OpenAlexSyncRun(ror_id=ror_id, works_seen=works_seen, dois_found=len(candidates))
     db.session.add(run)
     db.session.commit()
+    checkpoint_state = {"last_at": monotonic()}
 
     try:
-        client = OpenAlexClient.from_current_app()
-        if worker_count == 1 or len(candidates) <= 1:
+        if not candidates:
+            summary["status"] = "success"
+        elif worker_count == 1 or len(candidates) == 1:
+            client = OpenAlexClient.from_current_app()
             for candidate in candidates:
                 result = sync_work_by_title(
                     candidate,
@@ -1150,7 +1262,7 @@ def sync_openalex_title_matches(
                     stale_days=stale_days,
                 )
                 _apply_sync_result(summary, result)
-                _checkpoint_sync_run_if_due(run, summary)
+                _checkpoint_sync_run_if_due(run, summary, checkpoint_state, progress)
         else:
             app = current_app._get_current_object()
             max_workers = min(worker_count, len(candidates))
@@ -1172,9 +1284,9 @@ def sync_openalex_title_matches(
                 )
                 for result in results:
                     _apply_sync_result(summary, result)
-                    _checkpoint_sync_run_if_due(run, summary)
+                    _checkpoint_sync_run_if_due(run, summary, checkpoint_state, progress)
 
-        summary["status"] = "failed" if summary["error_count"] else "success"
+        summary["status"] = _final_sync_status(summary)
     except Exception as exc:
         db.session.rollback()
         logger.exception("OpenAlex title synchronization failed: %s", exc)
@@ -1182,9 +1294,12 @@ def sync_openalex_title_matches(
         summary["error"] = str(exc)
     finally:
         run.status = summary["status"]
-        _checkpoint_sync_run(run, summary)
         run.finished_at = utc_now()
-        db.session.add(run)
-        db.session.commit()
+        _checkpoint_sync_run(run, summary)
+        if progress:
+            try:
+                progress(dict(summary))
+            except Exception:
+                logger.exception("OpenAlex final progress callback failed.")
 
     return summary

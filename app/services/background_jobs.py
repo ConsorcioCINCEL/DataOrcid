@@ -3,19 +3,34 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager, nullcontext
 from datetime import timedelta
 import inspect
 import logging
+from threading import Lock
 import uuid
 from typing import Any, Callable
 
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from .. import db
 from ..models import SyncJob, SyncJobStep, utc_now
 
 logger = logging.getLogger(__name__)
 _EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="orcid-job")
+_SUBMISSION_LOCK = Lock()
+
+
+@contextmanager
+def _deduplicated_submission(name: str):
+    """Serialize active-job checks locally and across PostgreSQL processes."""
+    with _SUBMISSION_LOCK:
+        if db.session.get_bind().dialect.name == "postgresql":
+            db.session.execute(
+                text("SELECT pg_advisory_xact_lock(hashtextextended(:name, 1))"),
+                {"name": name},
+            )
+        yield
 
 
 def submit_background_job(
@@ -27,31 +42,46 @@ def submit_background_job(
     ror_id: str | None = None,
     requested_by_user_id: int | None = None,
     steps: list[str] | None = None,
+    deduplicate: bool = False,
     **kwargs,
 ) -> str:
     """Persist and submit a callable to run under an application context."""
-    job_id = str(uuid.uuid4())
-    job = SyncJob(
-        id=job_id,
-        name=name,
-        job_type=job_type,
-        ror_id=ror_id,
-        requested_by_user_id=requested_by_user_id,
-        status="queued",
-        progress_total=len(steps or []),
-        heartbeat_at=utc_now(),
-    )
-    db.session.add(job)
-    for position, step_name in enumerate(steps or [], start=1):
-        db.session.add(
-            SyncJobStep(
-                sync_job_id=job_id,
-                name=step_name,
-                position=position,
-                status="pending",
+    submission_context = _deduplicated_submission(name) if deduplicate else nullcontext()
+    with submission_context:
+        if deduplicate:
+            active_job = (
+                SyncJob.query
+                .filter_by(name=name)
+                .filter(SyncJob.status.in_({"queued", "running"}))
+                .order_by(SyncJob.created_at.desc())
+                .first()
             )
+            if active_job:
+                db.session.commit()
+                return active_job.id
+
+        job_id = str(uuid.uuid4())
+        job = SyncJob(
+            id=job_id,
+            name=name,
+            job_type=job_type,
+            ror_id=ror_id,
+            requested_by_user_id=requested_by_user_id,
+            status="queued",
+            progress_total=len(steps or []),
+            heartbeat_at=utc_now(),
         )
-    db.session.commit()
+        db.session.add(job)
+        for position, step_name in enumerate(steps or [], start=1):
+            db.session.add(
+                SyncJobStep(
+                    sync_job_id=job_id,
+                    name=step_name,
+                    position=position,
+                    status="pending",
+                )
+            )
+        db.session.commit()
 
     _EXECUTOR.submit(_run_job, app, job_id, func, args, kwargs)
     return job_id

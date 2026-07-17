@@ -8,7 +8,7 @@ from .. import db
 from ..decorators import login_required
 from ..models import FundingCacheRun, WorkCacheRun, utc_now
 from ..services.cache_service import build_works_cache_for_ror, build_fundings_cache_for_ror
-from ..services.background_jobs import submit_background_job
+from ..services.background_jobs import submit_background_job, update_job_progress, update_job_step
 from ..services.orcid_service import get_client_credentials_token
 from ..utils.session_helpers import get_active_ror_id
 from ..utils.flashes import flash_err, flash_success
@@ -77,8 +77,15 @@ def _log_run_web(model_class, ror_id, status, count, error_msg=None):
         logger.error("Failed to save execution log for ROR %s: %s", ror_id, exc)
 
 
-def _run_member_cache_rebuild(target: str, ror_id: str, base_url: str, headers: dict) -> None:
+def _run_member_cache_rebuild(
+    target: str,
+    ror_id: str,
+    base_url: str,
+    headers: dict,
+    job_id: str | None = None,
+) -> None:
     """Run a member API cache rebuild outside the request lifecycle."""
+    update_job_step(job_id, target, "running")
     try:
         if target == 'works':
             count = build_works_cache_for_ror(ror_id, base_url, headers)
@@ -86,11 +93,14 @@ def _run_member_cache_rebuild(target: str, ror_id: str, base_url: str, headers: 
         elif target == 'fundings':
             count = build_fundings_cache_for_ror(ror_id, base_url, headers)
             _log_run_web(FundingCacheRun, ror_id, 'success', count)
+        update_job_progress(job_id, count, count, "records")
+        update_job_step(job_id, target, "success", records_count=count)
     except Exception as exc:
         db.session.rollback()
         logger.exception("Cache rebuild failed for target %s and ROR %s", target, ror_id)
         log_model = WorkCacheRun if target == 'works' else FundingCacheRun
         _log_run_web(log_model, ror_id, 'failed', 0, str(exc))
+        update_job_step(job_id, target, "failed", error=str(exc))
         raise
 
 

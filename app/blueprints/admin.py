@@ -8,13 +8,13 @@ from zoneinfo import ZoneInfo
 
 from flask import (
     Blueprint, render_template, request, redirect,
-    url_for, session, current_app, g
+    url_for, session, current_app, g, jsonify
 )
 from flask_babel import _
-from sqlalchemy import case, func, not_, or_
+from sqlalchemy import and_, case, func, not_, or_
 
 from .. import db
-from ..models import User, TrackingLog
+from ..models import SyncJob, SyncJobStep, TrackingLog, User, utc_now
 from ..decorators import (
     login_required, admin_required,
     normalize_ror_id
@@ -34,6 +34,9 @@ _USER_ROLES = {"all", "admin", "manager", "user"}
 _USER_ACTIVITY_STATES = {"all", "active", "inactive", "never"}
 _USER_SORT_OPTIONS = {"created", "name", "institution", "activity"}
 _USER_PER_PAGE = {25, 50, 100}
+_JOB_STATUSES = {"all", "active", "queued", "running", "success", "partial", "failed", "interrupted"}
+_JOB_PER_PAGE = {10, 25, 50}
+_JOB_SORT_OPTIONS = {"created", "started", "status", "type", "institution"}
 
 
 def _background_request_condition():
@@ -203,6 +206,78 @@ def _user_agent_summary(value: str | None) -> str:
     if browser in {"Werkzeug", "curl"}:
         device = _("API client")
     return f"{browser} · {platform} · {device}"
+
+
+def _format_job_duration(seconds: int | float | None) -> str:
+    """Return a compact duration for background-job monitoring."""
+    seconds = max(int(seconds or 0), 0)
+    if seconds < 60:
+        return _("%(count)s sec", count=seconds)
+    if seconds < 3600:
+        return _("%(count)s min", count=seconds // 60)
+    hours, remainder = divmod(seconds, 3600)
+    minutes = remainder // 60
+    return _("%(hours)sh %(minutes)smin", hours=hours, minutes=minutes)
+
+
+def _job_type_label(job_type: str | None) -> str:
+    labels = {
+        "full_institution_sync": _("Full institutional synchronization"),
+        "full_system_sync": _("All-institution synchronization"),
+        "openalex_institution_sync": _("Institutional OpenAlex synchronization"),
+        "openalex_system_sync": _("System-wide OpenAlex synchronization"),
+        "member_works_sync": _("Member API works synchronization"),
+        "member_fundings_sync": _("Member API funding synchronization"),
+        "association_backfill": _("Researcher relationship backfill"),
+        "canonical_work_rebuild": _("Canonical work reconstruction"),
+        "generic": _("Background operation"),
+    }
+    return labels.get(job_type or "", (job_type or _("Unknown job")).replace("_", " ").title())
+
+
+def _job_step_label(step_name: str | None) -> str:
+    labels = {
+        "researchers": _("Researchers"),
+        "profiles": _("Profiles"),
+        "works": _("Scholarly works"),
+        "fundings": _("Funding and grants"),
+        "canonical_works": _("Canonical works"),
+        "openalex": _("OpenAlex enrichment"),
+        "association_backfill": _("Researcher relationships"),
+    }
+    name = step_name or ""
+    if name.startswith("institution:"):
+        return _("Institution %(ror)s", ror=name.split(":", 1)[1])
+    return labels.get(name, name.replace("_", " ").title() or _("Unspecified step"))
+
+
+def _job_progress_unit_label(unit: str | None) -> str:
+    labels = {
+        "candidates": _("candidates"),
+        "institutions": _("institutions"),
+        "records": _("records"),
+        "items": _("items"),
+    }
+    return labels.get(unit or "", (unit or _("items")).replace("_", " "))
+
+
+def _job_message_label(message: str | None) -> str:
+    """Translate known internal messages while preserving useful unknown errors."""
+    if not message:
+        return ""
+    labels = {
+        "Background job started.": _("Background job started."),
+        "Background job completed.": _("Background job completed."),
+        "Background job completed with errors.": _("Background job completed with errors."),
+        "Background job failed.": _("Background job failed."),
+    }
+    if message.startswith("OpenAlex:"):
+        return _("OpenAlex candidate processing is in progress.")
+    if message.startswith("Processed institution"):
+        return _("Institution processing is in progress.")
+    return labels.get(message, message)
+
+
 def _require_admin_or_manager() -> bool:
     """
     Verifies if the current session belongs to an Admin or Manager.
@@ -754,6 +829,285 @@ def set_ror(ror_id: str):
     
     flash_ok(_("Active institution changed to: %(r)s", r=display_name))
     return redirect(request.referrer or url_for('main.index'))
+
+
+def _job_dashboard_context() -> dict:
+    """Build the filtered, source-backed model for the admin job dashboard."""
+    page = max(request.args.get("page", 1, type=int), 1)
+    requested_per_page = request.args.get("per_page", 10, type=int)
+    per_page = requested_per_page if requested_per_page in _JOB_PER_PAGE else 10
+    search_query = request.args.get("q", "").strip()
+
+    selected_status = request.args.get("status", "all").strip().lower()
+    if selected_status not in _JOB_STATUSES:
+        selected_status = "all"
+    selected_type = request.args.get("type", "").strip()
+    selected_institution_raw = request.args.get("institution", "").strip().lower()
+    selected_institution = (
+        "system"
+        if selected_institution_raw == "system"
+        else normalize_ror_id(selected_institution_raw)
+    )
+    selected_user = request.args.get("user", type=int)
+
+    selected_period, period_start, period_end, date_from, date_to = _statistics_period_bounds(
+        request.args.get("period", "7d").strip().lower(),
+        request.args.get("date_from", "").strip(),
+        request.args.get("date_to", "").strip(),
+    )
+
+    sort_key = request.args.get("sort", "created").strip().lower()
+    sort_key = sort_key if sort_key in _JOB_SORT_OPTIONS else "created"
+    sort_direction = request.args.get("dir", "desc").strip().lower()
+    sort_direction = sort_direction if sort_direction in {"asc", "desc"} else "desc"
+
+    def jobs_url(**updates):
+        params = request.args.to_dict(flat=True)
+        params.pop("fragment", None)
+        params.update(updates)
+        clean_params = {
+            key: value
+            for key, value in params.items()
+            if value not in (None, "", "all")
+        }
+        return url_for("admin.jobs", **clean_params)
+
+    dimension_query = SyncJob.query.outerjoin(User, User.id == SyncJob.requested_by_user_id)
+    if selected_type:
+        dimension_query = dimension_query.filter(SyncJob.job_type == selected_type)
+    if selected_institution == "system":
+        dimension_query = dimension_query.filter(SyncJob.ror_id.is_(None))
+    elif selected_institution:
+        dimension_query = dimension_query.filter(SyncJob.ror_id == selected_institution)
+    if selected_user:
+        dimension_query = dimension_query.filter(SyncJob.requested_by_user_id == selected_user)
+    if search_query:
+        pattern = f"%{search_query}%"
+        dimension_query = dimension_query.filter(or_(
+            SyncJob.id.ilike(pattern),
+            SyncJob.name.ilike(pattern),
+            SyncJob.message.ilike(pattern),
+            SyncJob.error.ilike(pattern),
+            SyncJob.ror_id.ilike(pattern),
+            User.username.ilike(pattern),
+        ))
+
+    period_filters = []
+    if period_start is not None:
+        period_filters.append(SyncJob.created_at >= period_start)
+    if period_end is not None:
+        period_filters.append(SyncJob.created_at < period_end)
+    period_query = dimension_query.filter(*period_filters)
+
+    active_statuses = {"queued", "running"}
+    table_query = dimension_query
+    if period_filters:
+        table_query = table_query.filter(or_(
+            and_(*period_filters),
+            SyncJob.status.in_(active_statuses),
+        ))
+    if selected_status == "active":
+        table_query = table_query.filter(SyncJob.status.in_(active_statuses))
+    elif selected_status != "all":
+        table_query = table_query.filter(SyncJob.status == selected_status)
+
+    stale_minutes = max(int(current_app.config.get("JOB_STALE_MINUTES", 30)), 1)
+    stale_cutoff = utc_now() - timedelta(minutes=stale_minutes)
+    summary = {
+        "running": dimension_query.filter(SyncJob.status == "running").count(),
+        "queued": dimension_query.filter(SyncJob.status == "queued").count(),
+        "successful": period_query.filter(SyncJob.status == "success").count(),
+        "attention": period_query.filter(
+            SyncJob.status.in_({"partial", "failed", "interrupted"})
+        ).count(),
+        "stale": dimension_query.filter(
+            SyncJob.status == "running",
+            or_(SyncJob.heartbeat_at.is_(None), SyncJob.heartbeat_at < stale_cutoff),
+        ).count(),
+    }
+
+    sort_columns = {
+        "created": SyncJob.created_at,
+        "started": SyncJob.started_at,
+        "status": SyncJob.status,
+        "type": SyncJob.job_type,
+        "institution": SyncJob.ror_id,
+    }
+    sort_column = sort_columns[sort_key]
+    primary_order = sort_column.asc() if sort_direction == "asc" else sort_column.desc()
+    order_clauses = [primary_order]
+    if sort_key != "created":
+        order_clauses.append(SyncJob.created_at.desc())
+    pagination = table_query.order_by(*order_clauses).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False,
+    )
+
+    job_ids = [job.id for job in pagination.items]
+    steps_by_job = {job_id: [] for job_id in job_ids}
+    if job_ids:
+        for step in (
+            SyncJobStep.query
+            .filter(SyncJobStep.sync_job_id.in_(job_ids))
+            .order_by(SyncJobStep.sync_job_id.asc(), SyncJobStep.position.asc())
+            .all()
+        ):
+            steps_by_job.setdefault(step.sync_job_id, []).append(step)
+
+    requester_ids = {
+        job.requested_by_user_id for job in pagination.items if job.requested_by_user_id
+    }
+    requester_lookup = {
+        user.id: user.username
+        for user in User.query.filter(User.id.in_(requester_ids)).all()
+    } if requester_ids else {}
+    institution_options = get_institution_options()
+    institution_lookup = {
+        option["ror_id"]: option.get("name") or option["ror_id"]
+        for option in institution_options
+        if option.get("ror_id")
+    }
+
+    now = utc_now()
+    jobs = []
+    terminal_step_statuses = {"success", "failed", "skipped", "interrupted"}
+    for job in pagination.items:
+        raw_steps = steps_by_job.get(job.id, [])
+        completed_steps = sum(step.status in terminal_step_statuses for step in raw_steps)
+        step_total = max(int(job.progress_total or 0), len(raw_steps))
+        step_current = max(int(job.progress_current or 0), completed_steps)
+        step_percent = round(step_current / step_total * 100, 1) if step_total else 0.0
+        item_total = max(int(job.items_total or 0), 0)
+        item_current = max(int(job.items_current or 0), 0)
+        item_percent = round(min(item_current, item_total) / item_total * 100, 1) if item_total else 0.0
+
+        current_step = next((step for step in raw_steps if step.status == "running"), None)
+        if not current_step:
+            current_step = next((step for step in raw_steps if step.status == "pending"), None)
+        if not current_step and raw_steps:
+            current_step = raw_steps[-1]
+
+        started_at = job.started_at or job.created_at
+        duration_end = job.finished_at or (now if job.status in active_statuses else started_at)
+        duration_seconds = max(int((duration_end - started_at).total_seconds()), 0) if started_at else 0
+        is_stale = bool(
+            job.status == "running"
+            and (not job.heartbeat_at or job.heartbeat_at < stale_cutoff)
+        )
+
+        step_rows = []
+        for step in raw_steps:
+            step_end = step.finished_at or (now if step.status == "running" else step.started_at)
+            step_duration = (
+                max(int((step_end - step.started_at).total_seconds()), 0)
+                if step.started_at and step_end
+                else None
+            )
+            step_rows.append({
+                "name": step.name,
+                "label": _job_step_label(step.name),
+                "status": step.status,
+                "records_count": int(step.records_count or 0),
+                "error": step.error,
+                "started_at": step.started_at,
+                "finished_at": step.finished_at,
+                "duration": _format_job_duration(step_duration) if step_duration is not None else "",
+            })
+
+        jobs.append({
+            "id": job.id,
+            "short_id": job.id.split("-", 1)[0],
+            "name": job.name,
+            "job_type": job.job_type,
+            "type_label": _job_type_label(job.job_type),
+            "ror_id": job.ror_id,
+            "institution": institution_lookup.get(job.ror_id, job.ror_id) if job.ror_id else _("System-wide"),
+            "requester": requester_lookup.get(job.requested_by_user_id) or _("System process"),
+            "status": job.status,
+            "message": _job_message_label(job.message),
+            "error": job.error,
+            "created_at": job.created_at,
+            "started_at": job.started_at,
+            "finished_at": job.finished_at,
+            "heartbeat_at": job.heartbeat_at,
+            "duration": _format_job_duration(duration_seconds),
+            "is_stale": is_stale,
+            "step_current": step_current,
+            "step_total": step_total,
+            "step_percent": step_percent,
+            "current_step": _job_step_label(current_step.name) if current_step else _("No steps recorded"),
+            "items_current": item_current,
+            "items_total": item_total,
+            "items_percent": item_percent,
+            "progress_unit": _job_progress_unit_label(job.progress_unit),
+            "steps": step_rows,
+        })
+
+    job_types = [
+        value
+        for (value,) in db.session.query(SyncJob.job_type)
+        .filter(SyncJob.job_type.isnot(None), SyncJob.job_type != "")
+        .distinct()
+        .order_by(SyncJob.job_type.asc())
+        .all()
+        if value
+    ]
+    requester_options = (
+        db.session.query(User.id, User.username)
+        .join(SyncJob, SyncJob.requested_by_user_id == User.id)
+        .distinct()
+        .order_by(User.username.asc())
+        .all()
+    )
+    period_labels = {
+        "24h": _("Last 24 hours"),
+        "7d": _("Last 7 days"),
+        "30d": _("Last 30 days"),
+        "all": _("All time"),
+        "custom": _("Custom range"),
+    }
+
+    return {
+        "jobs": jobs,
+        "pagination": pagination,
+        "summary": summary,
+        "q": search_query,
+        "selected_status": selected_status,
+        "selected_type": selected_type,
+        "selected_institution": selected_institution,
+        "selected_user": selected_user,
+        "selected_period": selected_period,
+        "period_label": period_labels[selected_period],
+        "date_from": date_from,
+        "date_to": date_to,
+        "sort_key": sort_key,
+        "sort_direction": sort_direction,
+        "per_page": per_page,
+        "per_page_options": sorted(_JOB_PER_PAGE),
+        "job_types": [{"value": value, "label": _job_type_label(value)} for value in job_types],
+        "institution_options": institution_options,
+        "requester_options": requester_options,
+        "jobs_url": jobs_url,
+        "has_active": bool(summary["running"] or summary["queued"]),
+        "stale_minutes": stale_minutes,
+        "refreshed_at": now,
+    }
+
+
+@bp_admin.route("/jobs")
+@admin_required
+def jobs():
+    """Monitor durable background jobs, item progress, and execution steps."""
+    context = _job_dashboard_context()
+    if request.args.get("fragment") == "1":
+        return jsonify({
+            "html": render_template("admin/_jobs_table.html", **context),
+            "summary": context["summary"],
+            "has_active": context["has_active"],
+            "refreshed_at": context["refreshed_at"].isoformat(),
+        })
+    return render_template("admin/jobs.html", **context)
 
 
 @bp_admin.route("/statistics")

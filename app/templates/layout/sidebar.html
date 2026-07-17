@@ -18,7 +18,8 @@
 ] %}
 {% set administration_endpoints = [
   'admin.users_list',
-  'admin.statistics'
+  'admin.statistics',
+  'admin.jobs'
 ] %}
 {% set explore_active = request.endpoint in explore_endpoints %}
 {% set data_active = request.endpoint in data_endpoints or (request.endpoint and request.endpoint.startswith('duplicates.')) %}
@@ -173,6 +174,14 @@
         <p>{{ _('System activity') }}</p>
       </a>
     </li>
+    {% if session.get('is_admin') %}
+    <li class="nav-item">
+      <a href="{{ url_for('admin.jobs') }}" class="nav-link {% if request.endpoint == 'admin.jobs' %}active{% endif %}">
+        <i class="fas fa-tasks nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Background jobs') }}</p>
+      </a>
+    </li>
+    {% endif %}
   </ul>
 </li>
 {% endif %}

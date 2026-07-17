@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-17 18:01-0400\n"
+"POT-Creation-Date: 2026-07-17 18:34-0400\n"
 "PO-Revision-Date: 2026-02-12 20:30-0300\n"
 "Last-Translator: Gastón Olivares <gastonolivares@gmail.com>\n"
 "Language: es\n"
@@ -18,7 +18,7 @@ msgstr ""
 msgid "You must log in to access this page."
 msgstr "Debes iniciar sesión para acceder a esta página."
 
-#: app/blueprints/works.py:3127 app/decorators.py:39
+#: app/blueprints/works.py:3130 app/decorators.py:39
 msgid "Access restricted to administrators."
 msgstr "Acceso restringido a administradores."
 
@@ -97,7 +97,7 @@ msgstr "Tipo"
 msgid "Value"
 msgstr "Valor"
 
-#: app/blueprints/admin.py:581 app/helpers.py:140
+#: app/blueprints/admin.py:656 app/helpers.py:140
 msgid "URL"
 msgstr "URL"
 
@@ -134,10 +134,11 @@ msgstr "Grado/Título"
 
 #: app/blueprints/duplicates.py:333 app/blueprints/duplicates.py:361
 #: app/blueprints/duplicates.py:385 app/blueprints/main.py:829
-#: app/helpers.py:175 app/templates/admin/_user_modals.html:49
-#: app/templates/admin/_user_modals.html:197 app/templates/admin/users.html:166
-#: app/templates/admin/users.html:189 app/templates/admin/users.html:240
-#: app/templates/admin/users.html:302
+#: app/helpers.py:175 app/templates/admin/_jobs_table.html:32
+#: app/templates/admin/_user_modals.html:49
+#: app/templates/admin/_user_modals.html:197 app/templates/admin/jobs.html:79
+#: app/templates/admin/users.html:166 app/templates/admin/users.html:189
+#: app/templates/admin/users.html:240 app/templates/admin/users.html:302
 #: app/templates/auth/_account_summary.html:21
 #: app/templates/duplicates/index.html:273
 #: app/templates/duplicates/index.html:296
@@ -196,75 +197,231 @@ msgstr "Error de comunicación con el servicio ORCID."
 msgid "Connection timed out. Please try again."
 msgstr "La conexión expiró. Por favor intenta nuevamente."
 
-#: app/blueprints/admin.py:187
+#: app/blueprints/admin.py:190
 msgid "Unknown client"
 msgstr "Cliente desconocido"
 
-#: app/blueprints/admin.py:200
+#: app/blueprints/admin.py:203
 msgid "Unknown platform"
 msgstr "Plataforma desconocida"
 
-#: app/blueprints/admin.py:202
+#: app/blueprints/admin.py:205
 msgid "Mobile"
 msgstr "Móvil"
 
-#: app/blueprints/admin.py:202
+#: app/blueprints/admin.py:205
 msgid "Desktop"
 msgstr "Escritorio"
 
-#: app/blueprints/admin.py:204
+#: app/blueprints/admin.py:207
 msgid "API client"
 msgstr "Cliente API"
 
-#: app/blueprints/admin.py:215
+#: app/blueprints/admin.py:215 app/templates/works/cache_status.html:596
+#, python-format
+msgid "%(count)s sec"
+msgstr "%(count)s s"
+
+#: app/blueprints/admin.py:217 app/templates/works/cache_status.html:596
+#, python-format
+msgid "%(count)s min"
+msgstr "%(count)s min"
+
+#: app/blueprints/admin.py:220
+#, python-format
+msgid "%(hours)sh %(minutes)smin"
+msgstr "%(hours)sh %(minutes)smin"
+
+#: app/blueprints/admin.py:225 app/templates/works/cache_status.html:590
+msgid "Full institutional synchronization"
+msgstr "Sincronización institucional completa"
+
+#: app/blueprints/admin.py:226
+msgid "All-institution synchronization"
+msgstr "Sincronización de todas las instituciones"
+
+#: app/blueprints/admin.py:227
+msgid "Institutional OpenAlex synchronization"
+msgstr "Sincronización institucional de OpenAlex"
+
+#: app/blueprints/admin.py:228
+msgid "System-wide OpenAlex synchronization"
+msgstr "Sincronización global de OpenAlex"
+
+#: app/blueprints/admin.py:229
+msgid "Member API works synchronization"
+msgstr "Sincronización de publicaciones mediante la API de miembros"
+
+#: app/blueprints/admin.py:230
+msgid "Member API funding synchronization"
+msgstr "Sincronización de financiamientos mediante la API de miembros"
+
+#: app/blueprints/admin.py:231
+msgid "Researcher relationship backfill"
+msgstr "Reconstrucción de relaciones de investigadores"
+
+#: app/blueprints/admin.py:232
+msgid "Canonical work reconstruction"
+msgstr "Reconstrucción de publicaciones canónicas"
+
+#: app/blueprints/admin.py:233
+msgid "Background operation"
+msgstr "Operación en segundo plano"
+
+#: app/blueprints/admin.py:235
+msgid "Unknown job"
+msgstr "Tarea desconocida"
+
+#: app/blueprints/admin.py:240 app/blueprints/main.py:842
+#: app/templates/duplicates/index.html:147 app/templates/layout/sidebar.html:49
+#: app/templates/main/metrics.html:119 app/templates/main/orcid_profile.html:41
+#: app/templates/main/researcher_list.html:14
+#: app/templates/main/researcher_list.html:40
+#: app/templates/main/researcher_list.html:76
+#: app/templates/works/cache_status.html:35
+#: app/templates/works/cache_status.html:40
+#: app/templates/works/cache_status.html:112
+#: app/templates/works/cache_status.html:487
+#: app/templates/works/cache_status.html:533
+msgid "Researchers"
+msgstr "Investigadores"
+
+#: app/blueprints/admin.py:241 app/templates/duplicates/index.html:177
+#: app/templates/duplicates/index.html:296 app/templates/main/index.html:283
+msgid "Profiles"
+msgstr "Perfiles"
+
+#: app/blueprints/admin.py:242 app/templates/works/cache_status.html:48
+#: app/templates/works/cache_status.html:53
+#: app/templates/works/cache_status.html:121
+#: app/templates/works/cache_status.html:395
+#: app/templates/works/cache_status.html:402
+#: app/templates/works/cache_status.html:590
+msgid "Scholarly works"
+msgstr "Trabajos académicos"
+
+#: app/blueprints/admin.py:243 app/templates/works/cache_status.html:61
+#: app/templates/works/cache_status.html:66
+#: app/templates/works/cache_status.html:130
+#: app/templates/works/cache_status.html:437
+#: app/templates/works/cache_status.html:444
+#: app/templates/works/cache_status.html:590
+msgid "Funding and grants"
+msgstr "Financiamientos y subvenciones"
+
+#: app/blueprints/admin.py:244
+msgid "Canonical works"
+msgstr "Publicaciones canónicas"
+
+#: app/blueprints/admin.py:245 app/templates/layout/sidebar.html:105
+#: app/templates/main/index.html:295 app/templates/works/openalex_works.html:7
+msgid "OpenAlex enrichment"
+msgstr "Enriquecimiento OpenAlex"
+
+#: app/blueprints/admin.py:246
+msgid "Researcher relationships"
+msgstr "Relaciones de investigadores"
+
+#: app/blueprints/admin.py:250
+#, python-format
+msgid "Institution %(ror)s"
+msgstr "Institución %(ror)s"
+
+#: app/blueprints/admin.py:251
+msgid "Unspecified step"
+msgstr "Etapa sin especificar"
+
+#: app/blueprints/admin.py:256
+msgid "candidates"
+msgstr "candidatos"
+
+#: app/blueprints/admin.py:257
+msgid "institutions"
+msgstr "instituciones"
+
+#: app/blueprints/admin.py:258
+msgid "records"
+msgstr "registros"
+
+#: app/blueprints/admin.py:259 app/blueprints/admin.py:261
+#: app/templates/main/orcid_profile.html:93
+msgid "items"
+msgstr "ítems"
+
+#: app/blueprints/admin.py:269
+msgid "Background job started."
+msgstr "La tarea en segundo plano se inició."
+
+#: app/blueprints/admin.py:270
+msgid "Background job completed."
+msgstr "La tarea en segundo plano finalizó."
+
+#: app/blueprints/admin.py:271
+#, python-format
+msgid "Background job completed with errors."
+msgstr "La tarea en segundo plano finalizó con errores."
+
+#: app/blueprints/admin.py:272
+msgid "Background job failed."
+msgstr "La tarea en segundo plano falló."
+
+#: app/blueprints/admin.py:275
+msgid "OpenAlex candidate processing is in progress."
+msgstr "El procesamiento de candidatos de OpenAlex está en curso."
+
+#: app/blueprints/admin.py:277
+msgid "Institution processing is in progress."
+msgstr "El procesamiento de instituciones está en curso."
+
+#: app/blueprints/admin.py:290
 msgid "You need admin or manager role to access this section."
 msgstr "Necesitas rol de administrador o gestor para acceder a esta sección."
 
-#: app/blueprints/admin.py:460 app/blueprints/admin.py:630
+#: app/blueprints/admin.py:535 app/blueprints/admin.py:705
 msgid "The \"Username\" field is required."
 msgstr "El campo \"Usuario\" es obligatorio."
 
-#: app/blueprints/admin.py:485
+#: app/blueprints/admin.py:560
 #, python-format
 msgid "GRID ID '%(g)s' automatically found for ROR %(r)s."
 msgstr "ID GRID '%(g)s' encontrado automáticamente para ROR %(r)s."
 
-#: app/blueprints/admin.py:489 app/blueprints/admin.py:638
+#: app/blueprints/admin.py:564 app/blueprints/admin.py:713
 #, python-format
 msgid "A user with username \"%(u)s\" already exists."
 msgstr "Ya existe un usuario con nombre \"%(u)s\"."
 
-#: app/blueprints/admin.py:516
+#: app/blueprints/admin.py:591
 #, python-format
 msgid "User \"%(u)s\" created%(r)s. Password: %(p)s"
 msgstr "Usuario \"%(u)s\" creado%(r)s. Contraseña: %(p)s"
 
-#: app/blueprints/admin.py:521
+#: app/blueprints/admin.py:596
 msgid "Could not create user. Check logs."
 msgstr "No se pudo crear el usuario. Revisa los logs."
 
-#: app/blueprints/admin.py:543
+#: app/blueprints/admin.py:618
 #, python-format
 msgid "Password reset for %(u)s. New temporary: %(p)s"
 msgstr "Contraseña reseteada para %(u)s. Nueva temporal: %(p)s"
 
-#: app/blueprints/admin.py:547
+#: app/blueprints/admin.py:622
 msgid "Could not reset password."
 msgstr "No se pudo resetear la contraseña."
 
-#: app/blueprints/admin.py:564
+#: app/blueprints/admin.py:639
 msgid "User does not have a valid email."
 msgstr "El usuario no tiene un correo válido."
 
-#: app/blueprints/admin.py:575
+#: app/blueprints/admin.py:650
 msgid "Access to Data ORCID-Chile (credentials)"
 msgstr "Acceso a Data ORCID-Chile (credenciales)"
 
-#: app/blueprints/admin.py:579
+#: app/blueprints/admin.py:654
 msgid "Hello"
 msgstr "Hola"
 
-#: app/blueprints/admin.py:580
+#: app/blueprints/admin.py:655
 msgid ""
 "Your access credentials for <strong>Data ORCID-Chile</strong> have been "
 "updated:"
@@ -272,156 +429,175 @@ msgstr ""
 "Tus credenciales de acceso para <strong>Data ORCID-Chile</strong> han "
 "sido actualizadas:"
 
-#: app/blueprints/admin.py:582 app/templates/admin/_user_modals.html:25
+#: app/blueprints/admin.py:657 app/templates/admin/_user_modals.html:25
 #: app/templates/admin/_user_modals.html:173
 msgid "Username"
 msgstr "Usuario"
 
-#: app/blueprints/admin.py:583
+#: app/blueprints/admin.py:658
 msgid "Temporary Password"
 msgstr "Contraseña temporal"
 
-#: app/blueprints/admin.py:584
+#: app/blueprints/admin.py:659
 msgid "For security reasons, please change your password upon login."
 msgstr ""
 "Por razones de seguridad, por favor cambie su contraseña al iniciar "
 "sesión."
 
-#: app/blueprints/admin.py:607
+#: app/blueprints/admin.py:682
 #, python-format
 msgid "Credentials sent to %(r)s."
 msgstr "Credenciales enviadas a %(r)s."
 
-#: app/blueprints/admin.py:610
+#: app/blueprints/admin.py:685
 msgid "Could not send email."
 msgstr "No se pudo enviar el correo."
 
-#: app/blueprints/admin.py:658
+#: app/blueprints/admin.py:733
 msgid "You cannot remove admin role from your own account."
 msgstr "No puedes quitar el rol de administrador a tu propia cuenta."
 
-#: app/blueprints/admin.py:666
+#: app/blueprints/admin.py:741
 #, python-format
 msgid "GRID ID '%(g)s' automatically found."
 msgstr "ID GRID '%(g)s' encontrado automáticamente."
 
-#: app/blueprints/admin.py:687
+#: app/blueprints/admin.py:762
 #, python-format
 msgid "User \"%(u)s\" updated successfully."
 msgstr "Usuario \"%(u)s\" actualizado correctamente."
 
-#: app/blueprints/admin.py:691
+#: app/blueprints/admin.py:766
 msgid "Could not update user."
 msgstr "No se pudo actualizar el usuario."
 
-#: app/blueprints/admin.py:707
+#: app/blueprints/admin.py:782
 msgid "You cannot delete your own account."
 msgstr "No puedes eliminar tu propia cuenta."
 
-#: app/blueprints/admin.py:712
+#: app/blueprints/admin.py:787
 msgid "You cannot delete the main admin account."
 msgstr "No puedes eliminar la cuenta admin principal."
 
-#: app/blueprints/admin.py:718
+#: app/blueprints/admin.py:793
 msgid "User deleted successfully."
 msgstr "Usuario eliminado correctamente."
 
-#: app/blueprints/admin.py:722
+#: app/blueprints/admin.py:797
 msgid "Could not delete user."
 msgstr "No se pudo eliminar el usuario."
 
-#: app/blueprints/admin.py:738
+#: app/blueprints/admin.py:813
 msgid "Action not allowed"
 msgstr "Acción no permitida"
 
-#: app/blueprints/admin.py:743
+#: app/blueprints/admin.py:818
 msgid "Invalid ROR ID."
 msgstr "ROR ID inválido."
 
-#: app/blueprints/admin.py:748 app/blueprints/works.py:3231
-#: app/blueprints/works.py:4095
+#: app/blueprints/admin.py:823 app/blueprints/works.py:3242
+#: app/blueprints/works.py:4109
 msgid "Institution not found."
 msgstr "Institución no encontrada."
 
-#: app/blueprints/admin.py:755
+#: app/blueprints/admin.py:830
 #, python-format
 msgid "Active institution changed to: %(r)s"
 msgstr "Institución activa cambiada a: %(r)s"
 
-#: app/blueprints/admin.py:865 app/templates/admin/statistics.html:66
-msgid "P95 latency"
-msgstr "Latencia p95"
+#: app/blueprints/admin.py:1025 app/templates/admin/jobs.html:82
+msgid "System-wide"
+msgstr "Todo el sistema"
 
-#: app/blueprints/admin.py:870 app/blueprints/admin.py:875
-msgid "Average latency"
-msgstr "Latencia promedio"
+#: app/blueprints/admin.py:1026
+msgid "System process"
+msgstr "Proceso del sistema"
 
-#: app/blueprints/admin.py:920 app/templates/admin/statistics.html:108
+#: app/blueprints/admin.py:1039
+msgid "No steps recorded"
+msgstr "Sin etapas registradas"
+
+#: app/blueprints/admin.py:1064 app/blueprints/admin.py:1274
+#: app/templates/admin/jobs.html:96 app/templates/admin/statistics.html:108
 msgid "Last 24 hours"
 msgstr "Últimas 24 horas"
 
-#: app/blueprints/admin.py:921 app/templates/admin/statistics.html:109
+#: app/blueprints/admin.py:1065 app/blueprints/admin.py:1275
+#: app/templates/admin/jobs.html:97 app/templates/admin/statistics.html:109
 msgid "Last 7 days"
 msgstr "Últimos 7 días"
 
-#: app/blueprints/admin.py:922 app/templates/admin/statistics.html:110
+#: app/blueprints/admin.py:1066 app/blueprints/admin.py:1276
+#: app/templates/admin/jobs.html:98 app/templates/admin/statistics.html:110
 msgid "Last 30 days"
 msgstr "Últimos 30 días"
 
-#: app/blueprints/admin.py:923 app/templates/admin/statistics.html:111
+#: app/blueprints/admin.py:1067 app/blueprints/admin.py:1277
+#: app/templates/admin/jobs.html:99 app/templates/admin/statistics.html:111
 msgid "All time"
 msgstr "Todo el período"
 
-#: app/blueprints/admin.py:924 app/templates/admin/statistics.html:112
+#: app/blueprints/admin.py:1068 app/blueprints/admin.py:1278
+#: app/templates/admin/jobs.html:100 app/templates/admin/statistics.html:112
 msgid "Custom range"
 msgstr "Rango personalizado"
 
-#: app/blueprints/admin.py:927 app/templates/admin/statistics.html:119
+#: app/blueprints/admin.py:1219 app/templates/admin/statistics.html:66
+msgid "P95 latency"
+msgstr "Latencia p95"
+
+#: app/blueprints/admin.py:1224 app/blueprints/admin.py:1229
+msgid "Average latency"
+msgstr "Latencia promedio"
+
+#: app/blueprints/admin.py:1281 app/templates/admin/statistics.html:119
 msgid "Interactive requests"
 msgstr "Solicitudes interactivas"
 
-#: app/blueprints/admin.py:928 app/templates/admin/statistics.html:120
+#: app/blueprints/admin.py:1282 app/templates/admin/statistics.html:120
 #: app/templates/admin/statistics.html:191
 msgid "Background operations"
 msgstr "Procesos en segundo plano"
 
-#: app/blueprints/admin.py:929 app/templates/admin/statistics.html:121
+#: app/blueprints/admin.py:1283 app/templates/admin/statistics.html:121
 msgid "All requests"
 msgstr "Todas las solicitudes"
 
-#: app/blueprints/admin.py:935 app/templates/duplicates/index.html:98
+#: app/blueprints/admin.py:1289 app/templates/admin/jobs.html:52
+#: app/templates/duplicates/index.html:98
 #: app/templates/main/researcher_list.html:64
 msgid "Search"
 msgstr "Buscar"
 
-#: app/blueprints/admin.py:941 app/templates/admin/statistics.html:96
+#: app/blueprints/admin.py:1295 app/templates/admin/statistics.html:96
 #: app/templates/admin/statistics.html:252 app/templates/admin/users.html:239
 #: app/templates/admin/users.html:266 app/templates/admin/users.html:297
 #: app/templates/auth/_account_summary.html:16
-#: app/templates/help/index.html:292
+#: app/templates/help/index.html:299
 msgid "User"
 msgstr "Usuario"
 
-#: app/blueprints/admin.py:947 app/templates/admin/statistics.html:126
+#: app/blueprints/admin.py:1301 app/templates/admin/statistics.html:126
 #: app/templates/admin/statistics.html:254
 msgid "Method"
 msgstr "Método"
 
-#: app/blueprints/admin.py:953 app/templates/admin/statistics.html:139
+#: app/blueprints/admin.py:1307 app/templates/admin/statistics.html:139
 msgid "Success"
 msgstr "Éxito"
 
-#: app/blueprints/admin.py:954 app/templates/admin/statistics.html:140
+#: app/blueprints/admin.py:1308 app/templates/admin/statistics.html:140
 msgid "Redirects"
 msgstr "Redirecciones"
 
-#: app/blueprints/admin.py:955 app/blueprints/works.py:1880
+#: app/blueprints/admin.py:1309 app/blueprints/works.py:1880
 #: app/templates/admin/statistics.html:141
 #: app/templates/admin/statistics.html:426
 msgid "Errors"
 msgstr "Errores"
 
-#: app/blueprints/admin.py:958 app/templates/admin/statistics.html:136
+#: app/blueprints/admin.py:1312 app/templates/admin/_jobs_table.html:36
+#: app/templates/admin/jobs.html:59 app/templates/admin/statistics.html:136
 #: app/templates/admin/statistics.html:255
 #: app/templates/demo/authorized.html:16 app/templates/demo/projects.html:28
 #: app/templates/main/index.html:253 app/templates/main/index.html:262
@@ -432,11 +608,11 @@ msgstr "Errores"
 msgid "Status"
 msgstr "Estado"
 
-#: app/blueprints/admin.py:964 app/templates/admin/users.html:241
+#: app/blueprints/admin.py:1318 app/templates/admin/users.html:241
 msgid "Access"
 msgstr "Acceso"
 
-#: app/blueprints/admin.py:965
+#: app/blueprints/admin.py:1319
 msgid "Including anonymous"
 msgstr "Incluye anónimos"
 
@@ -569,27 +745,27 @@ msgstr "Identificador de Affiliation Manager actualizado."
 msgid "Internal database error while saving settings."
 msgstr "Error interno de base de datos al guardar la configuración."
 
-#: app/blueprints/cache_control.py:110 app/blueprints/works.py:3088
-#: app/blueprints/works.py:3589
+#: app/blueprints/cache_control.py:120 app/blueprints/works.py:3091
+#: app/blueprints/works.py:3603
 msgid "You do not have sufficient permissions to perform this action."
 msgstr "No tienes permisos suficientes para realizar esta acción."
 
-#: app/blueprints/cache_control.py:116
+#: app/blueprints/cache_control.py:126
 msgid "No active institution (ROR ID) selected. Please select one first."
 msgstr "No hay institución activa (ROR ID) seleccionada. Selecciona una primero."
 
-#: app/blueprints/cache_control.py:124
+#: app/blueprints/cache_control.py:134
 msgid "Authentication failed: Could not obtain a valid ORCID Member Token."
 msgstr ""
 "Fallo de autenticación: No se pudo obtener un Token de Miembro ORCID "
 "válido."
 
-#: app/blueprints/cache_control.py:127
+#: app/blueprints/cache_control.py:137
 #, python-format
 msgid "Invalid cache target specified: '%(target)s'."
 msgstr "Objetivo de caché especificado inválido: '%(target)s'."
 
-#: app/blueprints/cache_control.py:144
+#: app/blueprints/cache_control.py:154
 #, python-format
 msgid "Cache rebuild started in the background. Job ID: %(job)s"
 msgstr ""
@@ -649,7 +825,8 @@ msgid "Yes"
 msgstr "Sí"
 
 #: app/blueprints/duplicates.py:262 app/blueprints/main.py:830
-#: app/templates/help/index.html:294 app/templates/help/index.html:296
+#: app/templates/help/index.html:301 app/templates/help/index.html:303
+#: app/templates/help/index.html:304
 #: app/templates/works/openalex_global.html:624
 #: app/templates/works/openalex_global.html:755
 msgid "No"
@@ -1020,7 +1197,8 @@ msgstr "No se pudo generar el archivo Excel solicitado."
 msgid "Could not generate the requested file."
 msgstr "No se pudo generar el archivo solicitado."
 
-#: app/blueprints/export.py:134 app/templates/main/orcid_profile.html:106
+#: app/blueprints/export.py:134 app/templates/admin/_jobs_table.html:69
+#: app/templates/main/orcid_profile.html:106
 msgid "Created"
 msgstr "Creado"
 
@@ -1096,27 +1274,14 @@ msgstr "Evidencia de la relación"
 msgid "Inferred from local caches"
 msgstr "Inferida desde las cachés locales"
 
-#: app/blueprints/main.py:842 app/templates/duplicates/index.html:147
-#: app/templates/layout/sidebar.html:48 app/templates/main/metrics.html:119
-#: app/templates/main/orcid_profile.html:41
-#: app/templates/main/researcher_list.html:14
-#: app/templates/main/researcher_list.html:40
-#: app/templates/main/researcher_list.html:76
-#: app/templates/works/cache_status.html:35
-#: app/templates/works/cache_status.html:40
-#: app/templates/works/cache_status.html:112
-#: app/templates/works/cache_status.html:487
-#: app/templates/works/cache_status.html:533
-msgid "Researchers"
-msgstr "Investigadores"
-
 #: app/blueprints/main.py:862 app/blueprints/main.py:864
 #: app/blueprints/main.py:873 app/blueprints/main.py:875
 #: app/blueprints/main.py:928
 msgid "Unknown Researcher"
 msgstr "Investigador Desconocido"
 
-#: app/blueprints/main.py:941 app/templates/duplicates/index.html:68
+#: app/blueprints/main.py:941 app/templates/admin/_jobs_table.html:70
+#: app/templates/duplicates/index.html:68
 #: app/templates/works/cache_status.html:43
 #: app/templates/works/cache_status.html:56
 #: app/templates/works/cache_status.html:69
@@ -1190,7 +1355,8 @@ msgstr "Coincidentes"
 msgid "Not found"
 msgstr "No encontrado"
 
-#: app/blueprints/works.py:1881 app/templates/demo/authorized.html:30
+#: app/blueprints/works.py:1881 app/templates/admin/_jobs_table.html:3
+#: app/templates/demo/authorized.html:30
 #: app/templates/works/data_quality.html:117
 #: app/templates/works/openalex_works.html:30
 msgid "Pending"
@@ -1301,23 +1467,23 @@ msgstr "Desconocido"
 msgid "Closed"
 msgstr "Cerrado"
 
-#: app/blueprints/works.py:3093 app/blueprints/works.py:3317
-#: app/blueprints/works.py:3456 app/blueprints/works.py:3594
-#: app/blueprints/works.py:3635 app/blueprints/works.py:3678
-#: app/blueprints/works.py:3727 app/blueprints/works.py:3780
+#: app/blueprints/works.py:3096 app/blueprints/works.py:3328
+#: app/blueprints/works.py:3467 app/blueprints/works.py:3608
+#: app/blueprints/works.py:3649 app/blueprints/works.py:3692
+#: app/blueprints/works.py:3741 app/blueprints/works.py:3794
 msgid "No active institution context found."
 msgstr "No se encontró un contexto de institución activa."
 
-#: app/blueprints/works.py:3115
+#: app/blueprints/works.py:3118
 #, python-format
 msgid "Full synchronization started in the background. Job ID: %(job)s"
 msgstr "La sincronización completa comenzó en segundo plano. ID de tarea: %(job)s"
 
-#: app/blueprints/works.py:3134
+#: app/blueprints/works.py:3137
 msgid "No institutions available for synchronization."
 msgstr "No hay instituciones disponibles para sincronización."
 
-#: app/blueprints/works.py:3159
+#: app/blueprints/works.py:3162
 #, python-format
 msgid ""
 "All-institution synchronization started in the background for %(count)s "
@@ -1326,7 +1492,7 @@ msgstr ""
 "La sincronización de %(count)s instituciones comenzó en segundo plano. ID"
 " de tarea: %(job)s"
 
-#: app/blueprints/works.py:3249
+#: app/blueprints/works.py:3260
 #, python-format
 msgid ""
 "Full cache refresh started for %(institution)s. Researchers, profiles, "
@@ -1337,47 +1503,47 @@ msgstr ""
 " perfiles, publicaciones, financiamientos y datos OpenAlex se "
 "sincronizarán en segundo plano. ID de tarea: %(job)s"
 
-#: app/blueprints/works.py:3283
+#: app/blueprints/works.py:3294
 msgid "Funding cache updated."
 msgstr "Caché de financiamiento actualizada."
 
-#: app/blueprints/works.py:3288
+#: app/blueprints/works.py:3299
 msgid "Error updating fundings."
 msgstr "Error actualizando financiamientos."
 
-#: app/blueprints/works.py:3302
+#: app/blueprints/works.py:3313
 #, python-format
 msgid "Profiles updated: %s"
 msgstr "Perfiles actualizados: %s"
 
-#: app/blueprints/works.py:3304
+#: app/blueprints/works.py:3315
 msgid "Error updating profiles"
 msgstr "Error actualizando perfiles"
 
-#: app/blueprints/works.py:3488
+#: app/blueprints/works.py:3499
 #, python-format
 msgid "Researcher relationship backfill started. Job ID: %(job)s"
 msgstr ""
 "La reconstrucción de relaciones de investigadores comenzó. ID de tarea: "
 "%(job)s"
 
-#: app/blueprints/works.py:3511
+#: app/blueprints/works.py:3522
 #, python-format
 msgid "Canonical work rebuild started. Job ID: %(job)s"
 msgstr "La reconstrucción de publicaciones canónicas comenzó. ID de tarea: %(job)s"
 
-#: app/blueprints/works.py:3599 app/blueprints/works.py:3617
+#: app/blueprints/works.py:3613 app/blueprints/works.py:3631
 msgid "Invalid OpenAlex synchronization mode."
 msgstr "Modo de sincronización OpenAlex no válido."
 
-#: app/blueprints/works.py:3604
+#: app/blueprints/works.py:3618
 #, python-format
 msgid "OpenAlex synchronization was queued or is already running. Job ID: %(job)s"
 msgstr ""
 "La sincronización OpenAlex quedó en cola o ya está en ejecución. ID de "
 "tarea: %(job)s"
 
-#: app/blueprints/works.py:3622
+#: app/blueprints/works.py:3636
 #, python-format
 msgid ""
 "System-wide OpenAlex synchronization was queued or is already running. "
@@ -1386,41 +1552,41 @@ msgstr ""
 "La sincronización global de OpenAlex quedó en cola o ya está en "
 "ejecución. ID de tarea: %(job)s"
 
-#: app/blueprints/works.py:3826 app/blueprints/works.py:3906
+#: app/blueprints/works.py:3840 app/blueprints/works.py:3920
 msgid "Invalid export table."
 msgstr "Tabla de exportación inválida."
 
-#: app/blueprints/works.py:3997 app/blueprints/works.py:4101
-#: app/blueprints/works.py:4194
+#: app/blueprints/works.py:4011 app/blueprints/works.py:4115
+#: app/blueprints/works.py:4208
 msgid "The publication cache is currently empty."
 msgstr "La caché de publicaciones está vacía actualmente."
 
-#: app/blueprints/works.py:4020 app/blueprints/works.py:4112
-#: app/blueprints/works.py:4217
+#: app/blueprints/works.py:4034 app/blueprints/works.py:4126
+#: app/blueprints/works.py:4231
 msgid "The funding cache is empty."
 msgstr "La caché de financiamiento está vacía."
 
-#: app/blueprints/works.py:4039 app/blueprints/works.py:4123
+#: app/blueprints/works.py:4053 app/blueprints/works.py:4137
 msgid "No researcher association data available."
 msgstr "No hay datos disponibles de investigadores asociados."
 
-#: app/blueprints/works.py:4059 app/templates/works/cache_status.html:565
+#: app/blueprints/works.py:4073 app/templates/works/cache_status.html:565
 msgid "No institutional cache summary is available."
 msgstr "No hay un resumen de caché institucional disponible."
 
-#: app/blueprints/works.py:4155
+#: app/blueprints/works.py:4169
 msgid "No OpenAlex cache data available."
 msgstr "No hay datos de OpenAlex disponibles en la caché."
 
-#: app/blueprints/works.py:4162
+#: app/blueprints/works.py:4176
 msgid "Invalid dataset type."
 msgstr "Tipo de conjunto de datos inválido."
 
-#: app/blueprints/works.py:4172
+#: app/blueprints/works.py:4186
 msgid "No researcher cache data available."
 msgstr "No hay datos de investigadores disponibles en la caché."
 
-#: app/blueprints/works.py:4283
+#: app/blueprints/works.py:4297
 msgid "The OpenAlex cache is empty."
 msgstr "La caché OpenAlex está vacía."
 
@@ -1493,16 +1659,16 @@ msgstr "Español"
 msgid "Open user menu"
 msgstr "Abrir menú de usuario"
 
-#: app/templates/base.html:110 app/templates/help/index.html:299
+#: app/templates/base.html:110 app/templates/help/index.html:307
 msgid "Edit profile"
 msgstr "Editar perfil"
 
 #: app/templates/auth/change_password.html:14 app/templates/base.html:113
-#: app/templates/help/index.html:299
+#: app/templates/help/index.html:307
 msgid "Change password"
 msgstr "Cambiar contraseña"
 
-#: app/templates/base.html:119 app/templates/layout/sidebar.html:185
+#: app/templates/base.html:119 app/templates/layout/sidebar.html:194
 msgid "Sign out"
 msgstr "Cerrar sesión"
 
@@ -1510,8 +1676,8 @@ msgstr "Cerrar sesión"
 msgid "Primary navigation"
 msgstr "Navegación principal"
 
-#: app/templates/admin/statistics.html:25 app/templates/admin/users.html:87
-#: app/templates/auth/am_settings.html:13
+#: app/templates/admin/jobs.html:13 app/templates/admin/statistics.html:25
+#: app/templates/admin/users.html:87 app/templates/auth/am_settings.html:13
 #: app/templates/auth/change_password.html:13
 #: app/templates/auth/profile.html:13 app/templates/base.html:161
 #: app/templates/dashboard/index.html:14 app/templates/duplicates/index.html:13
@@ -1548,6 +1714,190 @@ msgstr "No se encontraron instituciones"
 #: app/templates/base.html:246
 msgid "Search institutions..."
 msgstr "Buscar instituciones..."
+
+#: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:30
+#: app/templates/admin/jobs.html:65
+msgid "Successful"
+msgstr "Exitosa"
+
+#: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:64
+msgid "Running"
+msgstr "En ejecución"
+
+#: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:63
+#: app/templates/works/cache_status.html:179
+msgid "Queued"
+msgstr "En cola"
+
+#: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:66
+msgid "Partial"
+msgstr "Parcial"
+
+#: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:68
+#: app/templates/works/cache_status.html:175
+msgid "Interrupted"
+msgstr "Interrumpida"
+
+#: app/templates/admin/_jobs_table.html:3
+msgid "Skipped"
+msgstr "Omitida"
+
+#: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:67
+#: app/templates/works/cache_status.html:173
+msgid "Failed"
+msgstr "Fallida"
+
+#: app/templates/admin/_jobs_table.html:5
+msgid "Heartbeat overdue"
+msgstr "Señal de actividad atrasada"
+
+#: app/templates/admin/_jobs_table.html:19
+msgid "Job history"
+msgstr "Historial de tareas"
+
+#: app/templates/admin/_jobs_table.html:20
+#, python-format
+msgid "Showing %(first)s–%(last)s of %(total)s jobs"
+msgstr "Mostrando %(first)s–%(last)s de %(total)s tareas"
+
+#: app/templates/admin/_jobs_table.html:20
+msgid "No matching jobs"
+msgstr "No hay tareas coincidentes"
+
+#: app/templates/admin/_jobs_table.html:22
+#: app/templates/admin/statistics.html:240 app/templates/admin/users.html:228
+msgid "Page"
+msgstr "Página"
+
+#: app/templates/admin/_jobs_table.html:22
+#: app/templates/admin/statistics.html:240 app/templates/admin/users.html:228
+msgid "of"
+msgstr "de"
+
+#: app/templates/admin/_jobs_table.html:29
+msgid "Background jobs matching the selected filters"
+msgstr "Tareas en segundo plano que coinciden con los filtros seleccionados"
+
+#: app/templates/admin/_jobs_table.html:31 app/templates/admin/jobs.html:72
+msgid "Job type"
+msgstr "Tipo de tarea"
+
+#: app/templates/admin/_jobs_table.html:33 app/templates/admin/jobs.html:87
+msgid "Requested by"
+msgstr "Solicitada por"
+
+#: app/templates/admin/_jobs_table.html:34
+msgid "Started"
+msgstr "Inicio"
+
+#: app/templates/admin/_jobs_table.html:35
+msgid "Progress"
+msgstr "Progreso"
+
+#: app/templates/admin/_jobs_table.html:37
+#: app/templates/admin/statistics.html:259
+#: app/templates/works/openalex_works.html:119
+msgid "Details"
+msgstr "Detalles"
+
+#: app/templates/admin/_jobs_table.html:50
+msgid "Not started"
+msgstr "No iniciada"
+
+#: app/templates/admin/_jobs_table.html:55
+msgid "Completed stages"
+msgstr "Etapas terminadas"
+
+#: app/templates/admin/_jobs_table.html:56
+msgid "Waiting for item totals"
+msgstr "Esperando el total de elementos"
+
+#: app/templates/admin/_jobs_table.html:56
+msgid "No item-level total was recorded"
+msgstr "No se registró un total de elementos"
+
+#: app/templates/admin/_jobs_table.html:60
+msgid "View job details"
+msgstr "Ver detalles de la tarea"
+
+#: app/templates/admin/_jobs_table.html:65
+msgid ""
+"This job is still marked as running, but its heartbeat is overdue. It may"
+" have been interrupted."
+msgstr ""
+"Esta tarea aún figura en ejecución, pero su señal de actividad está "
+"atrasada. Es posible que se haya interrumpido."
+
+#: app/templates/admin/_jobs_table.html:66
+msgid "Execution error"
+msgstr "Error de ejecución"
+
+#: app/templates/admin/_jobs_table.html:68
+msgid "Job ID"
+msgstr "ID de tarea"
+
+#: app/templates/admin/_jobs_table.html:70
+msgid "Last heartbeat"
+msgstr "Última señal de actividad"
+
+#: app/templates/admin/_jobs_table.html:71
+msgid "Finished"
+msgstr "Finalización"
+
+#: app/templates/admin/_jobs_table.html:71
+msgid "Not finished"
+msgstr "No finalizada"
+
+#: app/templates/admin/_jobs_table.html:72
+msgid "Latest message"
+msgstr "Último mensaje"
+
+#: app/templates/admin/_jobs_table.html:74
+msgid "Execution stages"
+msgstr "Etapas de ejecución"
+
+#: app/templates/admin/_jobs_table.html:78
+#: app/templates/works/cache_status.html:595
+#, python-format
+msgid "%(count)s records"
+msgstr "%(count)s registros"
+
+#: app/templates/admin/_jobs_table.html:80
+msgid "This job has no recorded stages."
+msgstr "Esta tarea no tiene etapas registradas."
+
+#: app/templates/admin/_jobs_table.html:90
+msgid "No background jobs found"
+msgstr "No se encontraron tareas en segundo plano"
+
+#: app/templates/admin/_jobs_table.html:90
+msgid "Change the filters or wait for a synchronization to be started."
+msgstr "Cambia los filtros o espera a que se inicie una sincronización."
+
+#: app/templates/admin/_jobs_table.html:94
+#: app/templates/admin/statistics.html:339 app/templates/admin/users.html:339
+msgid "Results per page"
+msgstr "Resultados por página"
+
+#: app/templates/admin/_jobs_table.html:94
+#: app/templates/admin/statistics.html:340 app/templates/admin/users.html:340
+#: app/templates/works/openalex_works.html:90
+msgid "Rows"
+msgstr "Filas"
+
+#: app/templates/admin/_jobs_table.html:95
+msgid "Job result pages"
+msgstr "Páginas de resultados de tareas"
+
+#: app/templates/admin/_jobs_table.html:96
+#: app/templates/admin/statistics.html:351 app/templates/admin/users.html:350
+msgid "Previous page"
+msgstr "Página anterior"
+
+#: app/templates/admin/_jobs_table.html:98
+#: app/templates/admin/statistics.html:371 app/templates/admin/users.html:370
+msgid "Next page"
+msgstr "Página siguiente"
 
 #: app/templates/admin/_user_modals.html:8
 msgid "Edit user"
@@ -1660,7 +2010,7 @@ msgstr "Roles asignados"
 #: app/templates/admin/_user_modals.html:115
 #: app/templates/admin/_user_modals.html:263
 #: app/templates/auth/_account_summary.html:12
-#: app/templates/help/index.html:292
+#: app/templates/help/index.html:299
 msgid "Administrator"
 msgstr "Administrador"
 
@@ -1675,7 +2025,7 @@ msgstr ""
 #: app/templates/admin/_user_modals.html:270 app/templates/admin/users.html:265
 #: app/templates/admin/users.html:296
 #: app/templates/auth/_account_summary.html:14
-#: app/templates/help/index.html:292
+#: app/templates/help/index.html:299
 msgid "Manager"
 msgstr "Gestor"
 
@@ -1738,11 +2088,159 @@ msgstr "Confirmar acción sobre la cuenta"
 msgid "Continue"
 msgstr "Continuar"
 
+#: app/templates/admin/jobs.html:3
+msgid "Background Jobs · Data ORCID-Chile"
+msgstr "Tareas en segundo plano · Data ORCID-Chile"
+
+#: app/templates/admin/jobs.html:7 app/templates/admin/jobs.html:15
+#: app/templates/layout/sidebar.html:181
+msgid "Background jobs"
+msgstr "Tareas en segundo plano"
+
+#: app/templates/admin/jobs.html:8
+msgid ""
+"Monitor synchronization progress, completed stages, heartbeats, and "
+"execution errors."
+msgstr ""
+"Supervisa el progreso de las sincronizaciones, las etapas terminadas, las "
+"señales de actividad y los errores de ejecución."
+
+#: app/templates/admin/jobs.html:14 app/templates/layout/sidebar.html:160
+msgid "Administration"
+msgstr "Administración"
+
+#: app/templates/admin/jobs.html:19
+msgid "Background job status summary"
+msgstr "Resumen del estado de las tareas en segundo plano"
+
+#: app/templates/admin/jobs.html:22
+msgid "Running now"
+msgstr "En ejecución"
+
+#: app/templates/admin/jobs.html:22
+msgid "Currently executing"
+msgstr "Ejecutándose actualmente"
+
+#: app/templates/admin/jobs.html:26
+msgid "Queued now"
+msgstr "En cola ahora"
+
+#: app/templates/admin/jobs.html:26
+msgid "Waiting for a worker"
+msgstr "Esperando un worker"
+
+#: app/templates/admin/jobs.html:34
+msgid "Needs attention"
+msgstr "Requieren atención"
+
+#: app/templates/admin/jobs.html:38
+msgid "Stale heartbeat"
+msgstr "Sin actividad reciente"
+
+#: app/templates/admin/jobs.html:38
+#, python-format
+msgid "More than %(count)s min"
+msgstr "Más de %(count)s min"
+
+#: app/templates/admin/jobs.html:44
+msgid "Job filters"
+msgstr "Filtros de tareas"
+
+#: app/templates/admin/jobs.html:45
+msgid ""
+"Active jobs are always included; historical outcomes use the selected "
+"creation period."
+msgstr ""
+"Las tareas activas siempre se incluyen; los resultados históricos usan el "
+"período de creación seleccionado."
+
+#: app/templates/admin/jobs.html:55
+msgid "Job ID, institution, user, or error..."
+msgstr "ID de tarea, institución, usuario o error..."
+
+#: app/templates/admin/jobs.html:61 app/templates/admin/statistics.html:138
+msgid "All statuses"
+msgstr "Todos los estados"
+
+#: app/templates/admin/jobs.html:62
+msgid "Active"
+msgstr "Activas"
+
+#: app/templates/admin/jobs.html:74
+msgid "All job types"
+msgstr "Todos los tipos de tarea"
+
+#: app/templates/admin/jobs.html:81 app/templates/admin/users.html:168
+#: app/templates/works/cache_status.html:110
+#: app/templates/works/cache_status.html:319
+#: app/templates/works/cache_status.html:381
+msgid "All institutions"
+msgstr "Todas las instituciones"
+
+#: app/templates/admin/jobs.html:89 app/templates/admin/statistics.html:98
+msgid "All users"
+msgstr "Todos los usuarios"
+
+#: app/templates/admin/jobs.html:94 app/templates/admin/statistics.html:106
+msgid "Period"
+msgstr "Período"
+
+#: app/templates/admin/jobs.html:104 app/templates/admin/statistics.html:146
+msgid "From date"
+msgstr "Fecha inicial"
+
+#: app/templates/admin/jobs.html:108 app/templates/admin/statistics.html:152
+msgid "To date"
+msgstr "Fecha final"
+
+#: app/templates/admin/jobs.html:113
+#, python-format
+msgid "Outcome cards count jobs created in %(period)s."
+msgstr "Las tarjetas de resultados cuentan las tareas creadas en %(period)s."
+
+#: app/templates/admin/jobs.html:115 app/templates/admin/statistics.html:177
+#: app/templates/duplicates/index.html:136 app/templates/main/metrics.html:112
+#: app/templates/main/researcher_list.html:70
+#: app/templates/works/openalex_analytics.html:259
+#: app/templates/works/openalex_global.html:333
+#: app/templates/works/openalex_works.html:97
+msgid "Reset"
+msgstr "Restablecer"
+
+#: app/templates/admin/jobs.html:116 app/templates/admin/statistics.html:180
+#: app/templates/admin/users.html:207 app/templates/main/metrics.html:112
+#: app/templates/works/openalex_analytics.html:262
+#: app/templates/works/openalex_global.html:336
+#: app/templates/works/openalex_global.html:711
+msgid "Apply filters"
+msgstr "Aplicar filtros"
+
+#: app/templates/admin/jobs.html:126
+msgid "Live monitoring"
+msgstr "Supervisión en vivo"
+
+#: app/templates/admin/jobs.html:127 app/templates/works/cache_status.html:230
+#, python-format
+msgid "Updated %(date)s"
+msgstr "Actualizado el %(date)s"
+
+#: app/templates/admin/jobs.html:129
+msgid "Refresh now"
+msgstr "Actualizar ahora"
+
+#: app/templates/admin/jobs.html:193
+msgid "Updated just now"
+msgstr "Actualizado hace un instante"
+
+#: app/templates/admin/jobs.html:195
+msgid "Automatic refresh failed. Try again."
+msgstr "La actualización automática falló. Inténtalo nuevamente."
+
 #: app/templates/admin/statistics.html:15
 msgid "Usage Statistics · Data ORCID-Chile"
 msgstr "Estadísticas de Uso · Data ORCID-Chile"
 
-#: app/templates/admin/statistics.html:19 app/templates/layout/sidebar.html:173
+#: app/templates/admin/statistics.html:19 app/templates/layout/sidebar.html:174
 msgid "System activity"
 msgstr "Actividad del sistema"
 
@@ -1805,14 +2303,6 @@ msgstr "Palabra clave de búsqueda"
 msgid "User, path, or IP..."
 msgstr "Usuario, ruta o IP..."
 
-#: app/templates/admin/statistics.html:98
-msgid "All users"
-msgstr "Todos los usuarios"
-
-#: app/templates/admin/statistics.html:106
-msgid "Period"
-msgstr "Período"
-
 #: app/templates/admin/statistics.html:117
 msgid "Request type"
 msgstr "Tipo de solicitud"
@@ -1820,18 +2310,6 @@ msgstr "Tipo de solicitud"
 #: app/templates/admin/statistics.html:128
 msgid "All methods"
 msgstr "Todos los métodos"
-
-#: app/templates/admin/statistics.html:138
-msgid "All statuses"
-msgstr "Todos los estados"
-
-#: app/templates/admin/statistics.html:146
-msgid "From date"
-msgstr "Fecha inicial"
-
-#: app/templates/admin/statistics.html:152
-msgid "To date"
-msgstr "Fecha final"
 
 #: app/templates/admin/statistics.html:160
 msgid "Include anonymous access"
@@ -1849,23 +2327,6 @@ msgstr "Quitar filtro %(filter)s"
 #: app/templates/admin/statistics.html:172
 msgid "No additional filters applied"
 msgstr "Sin filtros adicionales"
-
-#: app/templates/admin/statistics.html:177
-#: app/templates/duplicates/index.html:136 app/templates/main/metrics.html:112
-#: app/templates/main/researcher_list.html:70
-#: app/templates/works/openalex_analytics.html:259
-#: app/templates/works/openalex_global.html:333
-#: app/templates/works/openalex_works.html:97
-msgid "Reset"
-msgstr "Restablecer"
-
-#: app/templates/admin/statistics.html:180 app/templates/admin/users.html:207
-#: app/templates/main/metrics.html:112
-#: app/templates/works/openalex_analytics.html:262
-#: app/templates/works/openalex_global.html:336
-#: app/templates/works/openalex_global.html:711
-msgid "Apply filters"
-msgstr "Aplicar filtros"
 
 #: app/templates/admin/statistics.html:193
 #, python-format
@@ -1917,14 +2378,6 @@ msgstr "Mostrando %(first)s–%(last)s de %(total)s resultados"
 msgid "No matching results"
 msgstr "No hay resultados coincidentes"
 
-#: app/templates/admin/statistics.html:240 app/templates/admin/users.html:228
-msgid "Page"
-msgstr "Página"
-
-#: app/templates/admin/statistics.html:240 app/templates/admin/users.html:228
-msgid "of"
-msgstr "de"
-
 #: app/templates/admin/statistics.html:248
 msgid "Recent HTTP requests matching the selected filters"
 msgstr "Solicitudes HTTP recientes que coinciden con los filtros seleccionados"
@@ -1945,11 +2398,6 @@ msgstr "Latencia"
 #: app/templates/admin/statistics.html:322
 msgid "Client"
 msgstr "Cliente"
-
-#: app/templates/admin/statistics.html:259
-#: app/templates/works/openalex_works.html:119
-msgid "Details"
-msgstr "Detalles"
 
 #: app/templates/admin/statistics.html:270
 #: app/templates/admin/statistics.html:315
@@ -1990,26 +2438,9 @@ msgstr "Más detalles"
 msgid "No activity logs found for the selected filters."
 msgstr "No hay registros de actividad para los filtros seleccionados."
 
-#: app/templates/admin/statistics.html:339 app/templates/admin/users.html:339
-msgid "Results per page"
-msgstr "Resultados por página"
-
-#: app/templates/admin/statistics.html:340 app/templates/admin/users.html:340
-#: app/templates/works/openalex_works.html:90
-msgid "Rows"
-msgstr "Filas"
-
 #: app/templates/admin/statistics.html:347
 msgid "Request result pages"
 msgstr "Páginas de resultados de solicitudes"
-
-#: app/templates/admin/statistics.html:351 app/templates/admin/users.html:350
-msgid "Previous page"
-msgstr "Página anterior"
-
-#: app/templates/admin/statistics.html:371 app/templates/admin/users.html:370
-msgid "Next page"
-msgstr "Página siguiente"
 
 #: app/templates/admin/statistics.html:389
 msgid "Select a user"
@@ -2087,8 +2518,8 @@ msgid "User administration"
 msgstr "Administración de usuarios"
 
 #: app/templates/admin/users.html:81 app/templates/admin/users.html:88
-#: app/templates/admin/users.html:218 app/templates/help/index.html:296
-#: app/templates/layout/sidebar.html:167
+#: app/templates/admin/users.html:218 app/templates/help/index.html:303
+#: app/templates/layout/sidebar.html:168
 msgid "Institution accounts"
 msgstr "Cuentas de la institución"
 
@@ -2175,12 +2606,6 @@ msgstr "Gestores"
 #: app/templates/admin/users.html:161
 msgid "Standard users"
 msgstr "Usuarios estándar"
-
-#: app/templates/admin/users.html:168 app/templates/works/cache_status.html:110
-#: app/templates/works/cache_status.html:319
-#: app/templates/works/cache_status.html:381
-msgid "All institutions"
-msgstr "Todas las instituciones"
 
 #: app/templates/admin/users.html:176
 msgid "Account activity"
@@ -2312,7 +2737,7 @@ msgid "Affiliation Manager identifier · Data ORCID-Chile"
 msgstr "Identificador de Affiliation Manager · Data ORCID-Chile"
 
 #: app/templates/auth/am_settings.html:7 app/templates/auth/am_settings.html:14
-#: app/templates/layout/sidebar.html:134
+#: app/templates/layout/sidebar.html:135
 msgid "Affiliation Manager identifier"
 msgstr "Identificador de Affiliation Manager"
 
@@ -2979,11 +3404,6 @@ msgstr ""
 "Abre un grupo para revisar perfiles, actividad y evidencia de "
 "coincidencia."
 
-#: app/templates/duplicates/index.html:177
-#: app/templates/duplicates/index.html:296 app/templates/main/index.html:283
-msgid "Profiles"
-msgstr "Perfiles"
-
 #: app/templates/duplicates/index.html:184
 msgid "ORCID Profiles"
 msgstr "Perfiles ORCID"
@@ -3268,7 +3688,7 @@ msgid "Help center · Data ORCID-Chile"
 msgstr "Centro de ayuda · Data ORCID-Chile"
 
 #: app/templates/help/index.html:7 app/templates/help/index.html:14
-#: app/templates/layout/sidebar.html:150
+#: app/templates/layout/sidebar.html:151
 msgid "Help center"
 msgstr "Centro de ayuda"
 
@@ -3332,7 +3752,7 @@ msgstr "Métricas y metodología"
 msgid "Synchronization and exports"
 msgstr "Sincronización y exportaciones"
 
-#: app/templates/help/index.html:51 app/templates/help/index.html:277
+#: app/templates/help/index.html:51 app/templates/help/index.html:284
 msgid "Data dictionary"
 msgstr "Diccionario de datos"
 
@@ -3340,15 +3760,15 @@ msgstr "Diccionario de datos"
 msgid "Roles and governance"
 msgstr "Roles y gobernanza"
 
-#: app/templates/help/index.html:53 app/templates/help/index.html:306
+#: app/templates/help/index.html:53 app/templates/help/index.html:314
 msgid "Technical architecture"
 msgstr "Arquitectura técnica"
 
-#: app/templates/help/index.html:54 app/templates/help/index.html:331
+#: app/templates/help/index.html:54 app/templates/help/index.html:339
 msgid "Troubleshooting"
 msgstr "Solución de problemas"
 
-#: app/templates/help/index.html:55 app/templates/help/index.html:372
+#: app/templates/help/index.html:55 app/templates/help/index.html:380
 msgid "Version 2.0 notes"
 msgstr "Notas de la versión 2.0"
 
@@ -3683,7 +4103,7 @@ msgstr ""
 "sin respaldo o preparar un aviso neutral para el investigador. Solo el "
 "investigador y ORCID pueden resolver registros duplicados."
 
-#: app/templates/help/index.html:222 app/templates/help/index.html:284
+#: app/templates/help/index.html:222 app/templates/help/index.html:291
 #: app/templates/works/cache_status.html:212
 #: app/templates/works/cache_status.html:490
 msgid "OpenAlex coverage"
@@ -3791,10 +4211,10 @@ msgid ""
 " progressively longer before another automatic attempt, while an explicit"
 " full refresh bypasses that waiting period."
 msgstr ""
-"Las actualizaciones exclusivas de OpenAlex también se ejecutan en segundo "
-"plano. Los fallos transitorios esperan progresivamente más antes de otro "
-"intento automático, mientras que una actualización completa explícita omite "
-"ese período de espera."
+"Las actualizaciones exclusivas de OpenAlex también se ejecutan en segundo"
+" plano. Los fallos transitorios esperan progresivamente más antes de otro"
+" intento automático, mientras que una actualización completa explícita "
+"omite ese período de espera."
 
 #: app/templates/help/index.html:257
 msgid ""
@@ -3824,7 +4244,7 @@ msgstr ""
 "utilizados para descubrir autores; los resultados se deduplican por ORCID"
 " iD."
 
-#: app/templates/help/index.html:265 app/templates/layout/sidebar.html:86
+#: app/templates/help/index.html:265 app/templates/layout/sidebar.html:87
 #: app/templates/works/cache_status.html:187
 #: app/templates/works/cache_status.html:194
 #: app/templates/works/data_quality.html:47
@@ -3843,7 +4263,15 @@ msgstr "Cobertura de enriquecimiento OpenAlex"
 msgid "Review matched, unmatched, and pending works."
 msgstr "Revisa publicaciones vinculadas, no vinculadas y pendientes."
 
-#: app/templates/help/index.html:277
+#: app/templates/help/index.html:276
+msgid "Monitor background jobs"
+msgstr "Supervisar tareas en segundo plano"
+
+#: app/templates/help/index.html:276
+msgid "Review live progress, execution stages, heartbeats, and errors."
+msgstr "Revisa el progreso en vivo, las etapas, la actividad y los errores."
+
+#: app/templates/help/index.html:284
 msgid ""
 "The unit, source, and interpretation of the principal fields and "
 "indicators."
@@ -3851,55 +4279,55 @@ msgstr ""
 "La unidad, fuente e interpretación de los principales campos e "
 "indicadores."
 
-#: app/templates/help/index.html:278
+#: app/templates/help/index.html:285
 msgid "Term"
 msgstr "Término"
 
-#: app/templates/help/index.html:278
+#: app/templates/help/index.html:285
 msgid "Definition"
 msgstr "Definición"
 
-#: app/templates/help/index.html:278
+#: app/templates/help/index.html:285
 msgid "Source and limitation"
 msgstr "Fuente y limitación"
 
-#: app/templates/help/index.html:279
+#: app/templates/help/index.html:286
 msgid "ORCID work record"
 msgstr "Registro de trabajo ORCID"
 
-#: app/templates/help/index.html:279
+#: app/templates/help/index.html:286
 msgid "One visible work item from one ORCID profile."
 msgstr "Un trabajo visible proveniente de un perfil ORCID."
 
-#: app/templates/help/index.html:279
+#: app/templates/help/index.html:286
 msgid "May describe the same output as another ORCID record."
 msgstr "Puede describir la misma publicación que otro registro ORCID."
 
-#: app/templates/help/index.html:280
+#: app/templates/help/index.html:287
 msgid "Unique scholarly output"
 msgstr "Publicación académica única"
 
-#: app/templates/help/index.html:280
+#: app/templates/help/index.html:287
 msgid "Canonical work linked by DOI or a conservative title-and-year fallback."
 msgstr ""
 "Trabajo canónico vinculado por DOI o, de forma conservadora, por título y"
 " año."
 
-#: app/templates/help/index.html:280
+#: app/templates/help/index.html:287
 msgid "Fallback matches should be treated with more caution than DOI matches."
 msgstr ""
 "Las coincidencias alternativas deben interpretarse con mayor cautela que "
 "las coincidencias por DOI."
 
-#: app/templates/help/index.html:281
+#: app/templates/help/index.html:288
 msgid "Institution-output relationship"
 msgstr "Relación institución-publicación"
 
-#: app/templates/help/index.html:281
+#: app/templates/help/index.html:288
 msgid "One canonical output observed within one institutional cache."
 msgstr "Una publicación canónica observada dentro de una caché institucional."
 
-#: app/templates/help/index.html:281
+#: app/templates/help/index.html:288
 msgid ""
 "A global relationship count can exceed the number of globally unique "
 "outputs."
@@ -3907,11 +4335,11 @@ msgstr ""
 "El conteo global de relaciones puede superar el número de publicaciones "
 "globalmente únicas."
 
-#: app/templates/help/index.html:282
+#: app/templates/help/index.html:289
 msgid "Verified researcher relationship"
 msgstr "Relación verificada de investigador"
 
-#: app/templates/help/index.html:282
+#: app/templates/help/index.html:289
 msgid ""
 "An ORCID iD returned by a search using a verified ROR, GRID, or Ringgold "
 "identifier."
@@ -3919,15 +4347,15 @@ msgstr ""
 "Un ORCID iD devuelto por una búsqueda con un identificador ROR, GRID o "
 "Ringgold verificado."
 
-#: app/templates/help/index.html:282
+#: app/templates/help/index.html:289
 msgid "Can include current or historical public affiliations."
 msgstr "Puede incluir afiliaciones públicas actuales o históricas."
 
-#: app/templates/help/index.html:283
+#: app/templates/help/index.html:290
 msgid "Inferred researcher relationship"
 msgstr "Relación inferida de investigador"
 
-#: app/templates/help/index.html:283
+#: app/templates/help/index.html:290
 msgid ""
 "A relationship reconstructed from existing works, funding, or management-"
 "status caches."
@@ -3935,13 +4363,13 @@ msgstr ""
 "Una relación reconstruida a partir de las cachés existentes de trabajos, "
 "financiamientos o estados de gestión."
 
-#: app/templates/help/index.html:283
+#: app/templates/help/index.html:290
 msgid "Useful for continuity, but not equivalent to verified search evidence."
 msgstr ""
 "Útil para mantener continuidad, pero no equivale a evidencia de búsqueda "
 "verificada."
 
-#: app/templates/help/index.html:284
+#: app/templates/help/index.html:291
 msgid ""
 "Unique eligible DOI outputs with normalized OpenAlex metadata divided by "
 "all eligible DOI outputs."
@@ -3949,20 +4377,20 @@ msgstr ""
 "Publicaciones únicas elegibles con DOI y metadatos normalizados de "
 "OpenAlex, divididas por todas las publicaciones elegibles con DOI."
 
-#: app/templates/help/index.html:284
+#: app/templates/help/index.html:291
 msgid "OpenAlex and ORCID have independent update cycles."
 msgstr "OpenAlex y ORCID tienen ciclos de actualización independientes."
 
-#: app/templates/help/index.html:285
+#: app/templates/help/index.html:292
 #: app/templates/works/openalex_analytics.html:338
 msgid "FWCI"
 msgstr "FWCI"
 
-#: app/templates/help/index.html:285
+#: app/templates/help/index.html:292
 msgid "Field-weighted citation impact supplied by OpenAlex."
 msgstr "Impacto de citas ponderado por área proporcionado por OpenAlex."
 
-#: app/templates/help/index.html:285
+#: app/templates/help/index.html:292
 msgid ""
 "Interpret using OpenAlex methodology and the displayed coverage "
 "denominator."
@@ -3970,11 +4398,11 @@ msgstr ""
 "Interpretar según la metodología de OpenAlex y el denominador de "
 "cobertura mostrado."
 
-#: app/templates/help/index.html:286
+#: app/templates/help/index.html:293
 msgid "Year-to-date change"
 msgstr "Variación acumulada del año"
 
-#: app/templates/help/index.html:286
+#: app/templates/help/index.html:293
 msgid ""
 "Current completed months compared with the same months of the previous "
 "year."
@@ -3982,68 +4410,76 @@ msgstr ""
 "Meses completos del año actual comparados con los mismos meses del año "
 "anterior."
 
-#: app/templates/help/index.html:286
+#: app/templates/help/index.html:293
 msgid "Records without a usable month are excluded from this comparison."
 msgstr "Los registros sin un mes utilizable se excluyen de esta comparación."
 
-#: app/templates/help/index.html:291
+#: app/templates/help/index.html:298
 msgid "Roles, permissions, and data governance"
 msgstr "Roles, permisos y gobernanza de datos"
 
-#: app/templates/help/index.html:291
+#: app/templates/help/index.html:298
 msgid "Who can perform each operation and what operational data is retained."
 msgstr "Quién puede realizar cada operación y qué datos operativos se conservan."
 
-#: app/templates/help/index.html:292
+#: app/templates/help/index.html:299
 msgid "Capability"
 msgstr "Capacidad"
 
-#: app/templates/help/index.html:293
+#: app/templates/help/index.html:300
 msgid "View institutional analytics and exports"
 msgstr "Ver analítica y exportaciones institucionales"
 
-#: app/templates/help/index.html:293 app/templates/help/index.html:294
-#: app/templates/help/index.html:295
+#: app/templates/help/index.html:300 app/templates/help/index.html:301
+#: app/templates/help/index.html:302
 msgid "Assigned institution"
 msgstr "Institución asignada"
 
-#: app/templates/help/index.html:293
+#: app/templates/help/index.html:300
 msgid "Any selected institution"
 msgstr "Cualquier institución seleccionada"
 
-#: app/templates/help/index.html:294
+#: app/templates/help/index.html:301
 msgid "Start synchronization"
 msgstr "Iniciar sincronización"
 
-#: app/templates/help/index.html:294
+#: app/templates/help/index.html:301
 msgid "Any or all institutions"
 msgstr "Una o todas las instituciones"
 
-#: app/templates/help/index.html:295
+#: app/templates/help/index.html:302
 msgid "Review duplicate decisions"
 msgstr "Revisar decisiones sobre duplicados"
 
-#: app/templates/help/index.html:295
+#: app/templates/help/index.html:302
 msgid "Read only"
 msgstr "Sólo lectura"
 
-#: app/templates/help/index.html:295
+#: app/templates/help/index.html:302
 msgid "Any institution"
 msgstr "Cualquier institución"
 
-#: app/templates/help/index.html:296
+#: app/templates/help/index.html:303
 msgid "Manage accounts and system activity"
 msgstr "Gestionar cuentas y actividad del sistema"
 
-#: app/templates/help/index.html:296
+#: app/templates/help/index.html:303
 msgid "All accounts and activity"
 msgstr "Todas las cuentas y actividades"
 
-#: app/templates/help/index.html:298
+#: app/templates/help/index.html:304
+msgid "Monitor all background jobs"
+msgstr "Supervisar todas las tareas en segundo plano"
+
+#: app/templates/help/index.html:304
+msgid "Live and historical access"
+msgstr "Acceso en vivo e histórico"
+
+#: app/templates/help/index.html:306
 msgid "Privacy and operational logs"
 msgstr "Privacidad y registros operativos"
 
-#: app/templates/help/index.html:298
+#: app/templates/help/index.html:306
 msgid ""
 "ORCID metadata shown by the platform comes from public source records. "
 "Request logs can include user, institution, role, path, IP address, and "
@@ -4056,7 +4492,7 @@ msgstr ""
 " cumplir la política institucional de conservación, acceso, rectificación"
 " y eliminación."
 
-#: app/templates/help/index.html:298
+#: app/templates/help/index.html:306
 msgid ""
 "The default local retention period is 90 days and can be changed in the "
 "private runtime configuration. Administrators can apply it with the "
@@ -4066,23 +4502,23 @@ msgstr ""
 "modificarse en la configuración privada de ejecución. Los administradores"
 " pueden aplicarlo con el comando cleanup-tracking-logs."
 
-#: app/templates/help/index.html:299
+#: app/templates/help/index.html:307
 msgid "Update your name, position, and email."
 msgstr "Actualiza tu nombre, cargo y correo electrónico."
 
-#: app/templates/help/index.html:299
+#: app/templates/help/index.html:307
 msgid "Keep account credentials current."
 msgstr "Mantén actualizadas las credenciales de la cuenta."
 
-#: app/templates/help/index.html:307
+#: app/templates/help/index.html:315
 msgid "A maintainable overview of how the application is constructed."
 msgstr "Una visión mantenible de cómo está construida la aplicación."
 
-#: app/templates/help/index.html:311
+#: app/templates/help/index.html:319
 msgid "Application"
 msgstr "Aplicación"
 
-#: app/templates/help/index.html:311
+#: app/templates/help/index.html:319
 msgid ""
 "Routes are separated by authentication, administration, dashboards, data "
 "management, exports, and integrations."
@@ -4090,11 +4526,11 @@ msgstr ""
 "Las rutas se separan por autenticación, administración, paneles, gestión "
 "de datos, exportaciones e integraciones."
 
-#: app/templates/help/index.html:312
+#: app/templates/help/index.html:320
 msgid "Interface"
 msgstr "Interfaz"
 
-#: app/templates/help/index.html:312
+#: app/templates/help/index.html:320
 msgid ""
 "Server-rendered templates use shared layout components, Chart.js, "
 "DataTables, Font Awesome, and responsive CSS."
@@ -4102,11 +4538,11 @@ msgstr ""
 "Las plantillas renderizadas en servidor usan componentes compartidos, "
 "Chart.js, DataTables, Font Awesome y CSS responsivo."
 
-#: app/templates/help/index.html:313
+#: app/templates/help/index.html:321
 msgid "Persistence"
 msgstr "Persistencia"
 
-#: app/templates/help/index.html:313
+#: app/templates/help/index.html:321
 msgid ""
 "PostgreSQL stores operational metadata, canonical outputs, durable "
 "synchronization jobs, review decisions, and analytical caches. SQLite "
@@ -4116,11 +4552,11 @@ msgstr ""
 " de sincronización durables, decisiones de revisión y cachés analíticas. "
 "SQLite continúa disponible para pruebas aisladas."
 
-#: app/templates/help/index.html:314
+#: app/templates/help/index.html:322
 msgid "External services"
 msgstr "Servicios externos"
 
-#: app/templates/help/index.html:314
+#: app/templates/help/index.html:322
 msgid ""
 "HTTP clients include retry handling, rate-limit awareness, normalized "
 "identifiers, and conservative matching rules."
@@ -4128,11 +4564,11 @@ msgstr ""
 "Los clientes HTTP incluyen reintentos, control de límites, "
 "identificadores normalizados y reglas conservadoras de coincidencia."
 
-#: app/templates/help/index.html:315
+#: app/templates/help/index.html:323
 msgid "Exports"
 msgstr "Exportaciones"
 
-#: app/templates/help/index.html:315
+#: app/templates/help/index.html:323
 msgid ""
 "Tabular datasets are generated as CSV or Excel-compatible files from "
 "cached records."
@@ -4140,11 +4576,11 @@ msgstr ""
 "Los conjuntos tabulares se generan como CSV o archivos compatibles con "
 "Excel desde registros en caché."
 
-#: app/templates/help/index.html:316
+#: app/templates/help/index.html:324
 msgid "Localization"
 msgstr "Localización"
 
-#: app/templates/help/index.html:316
+#: app/templates/help/index.html:324
 msgid ""
 "English is the source language and Spanish translations are compiled from"
 " Babel catalogs."
@@ -4152,11 +4588,11 @@ msgstr ""
 "El inglés es el idioma fuente y las traducciones al español se compilan "
 "desde catálogos de Babel."
 
-#: app/templates/help/index.html:321
+#: app/templates/help/index.html:329
 msgid "Security model"
 msgstr "Modelo de seguridad"
 
-#: app/templates/help/index.html:322
+#: app/templates/help/index.html:330
 msgid ""
 "Passwords use bcrypt, state-changing forms use CSRF protection, sessions "
 "support secure cookie settings, and role checks restrict institutional "
@@ -4168,15 +4604,15 @@ msgstr ""
 "operaciones institucionales y administrativas. Los secretos deben estar "
 "en variables de entorno o configuración privada, nunca en el repositorio."
 
-#: app/templates/help/index.html:332
+#: app/templates/help/index.html:340
 msgid "Common situations and the first checks to perform."
 msgstr "Situaciones comunes y primeras comprobaciones."
 
-#: app/templates/help/index.html:337
+#: app/templates/help/index.html:345
 msgid "No researchers appear for an institution"
 msgstr "No aparecen investigadores para una institución"
 
-#: app/templates/help/index.html:337
+#: app/templates/help/index.html:345
 msgid ""
 "Confirm that the active institution has a ROR ID and verified legacy "
 "identifiers. Then review the latest synchronization result for an ORCID "
@@ -4186,11 +4622,11 @@ msgstr ""
 "históricos verificados. Luego revisa la última sincronización por errores"
 " de autenticación, búsqueda o límites de ORCID."
 
-#: app/templates/help/index.html:338
+#: app/templates/help/index.html:346
 msgid "Works or funding totals look incomplete"
 msgstr "Los totales de publicaciones o financiamientos parecen incompletos"
 
-#: app/templates/help/index.html:338
+#: app/templates/help/index.html:346
 msgid ""
 "Check the cache update time and the source ORCID profiles. Only visible "
 "source records can be synchronized, and some researchers may have no "
@@ -4200,11 +4636,11 @@ msgstr ""
 "pueden sincronizarse registros visibles y algunos investigadores pueden "
 "no tener actividad pública."
 
-#: app/templates/help/index.html:339
+#: app/templates/help/index.html:347
 msgid "OpenAlex coverage is low"
 msgstr "La cobertura OpenAlex es baja"
 
-#: app/templates/help/index.html:339
+#: app/templates/help/index.html:347
 msgid ""
 "Review how many ORCID works contain a DOI. Records without a DOI require "
 "a strict title match and may remain unmatched to avoid false "
@@ -4214,25 +4650,28 @@ msgstr ""
 "requieren una coincidencia estricta por título y pueden quedar sin "
 "vincular para evitar asociaciones falsas."
 
-#: app/templates/help/index.html:340
+#: app/templates/help/index.html:348
 msgid "A synchronization remains in progress"
 msgstr "Una sincronización permanece en curso"
 
-#: app/templates/help/index.html:340
+#: app/templates/help/index.html:348
 msgid ""
-"Open the synchronization view to inspect the durable job and its "
-"individual steps. If the heartbeat stops, the job is marked interrupted "
-"instead of remaining silently active."
+"Administrators can open Background jobs to inspect its durable state, "
+"item progress, and individual stages. A stale heartbeat warns that the "
+"process may have been interrupted; after an application restart, "
+"abandoned jobs and their open stages are closed as interrupted."
 msgstr ""
-"Abre la vista de sincronización para revisar la tarea durable y sus pasos"
-" individuales. Si se detiene su señal de actividad, la tarea se marca "
-"como interrumpida en lugar de permanecer activa silenciosamente."
+"Los administradores pueden abrir Tareas en segundo plano para revisar su "
+"estado persistente, el avance de elementos y las etapas individuales. Una "
+"señal de actividad atrasada advierte que el proceso podría haberse "
+"interrumpido; después de reiniciar la aplicación, las tareas abandonadas y "
+"sus etapas abiertas se cierran como interrumpidas."
 
-#: app/templates/help/index.html:341
+#: app/templates/help/index.html:349
 msgid "An export is empty"
 msgstr "Una exportación está vacía"
 
-#: app/templates/help/index.html:341
+#: app/templates/help/index.html:349
 msgid ""
 "Verify that the corresponding cache contains records for the active "
 "institution and that the selected institutional context has not changed."
@@ -4240,11 +4679,11 @@ msgstr ""
 "Verifica que la caché correspondiente contenga registros para la "
 "institución activa y que el contexto seleccionado no haya cambiado."
 
-#: app/templates/help/index.html:365
+#: app/templates/help/index.html:373
 msgid "ORCID resources and consortium guidance"
 msgstr "Recursos ORCID y orientación del consorcio"
 
-#: app/templates/help/index.html:365
+#: app/templates/help/index.html:373
 msgid ""
 "Member Portal roles, API credentials, Affiliation Manager, and external "
 "integration guides."
@@ -4252,11 +4691,11 @@ msgstr ""
 "Roles del Member Portal, credenciales API, Affiliation Manager y guías de"
 " integración externas."
 
-#: app/templates/help/index.html:367
+#: app/templates/help/index.html:375
 msgid "Open resources"
 msgstr "Abrir recursos"
 
-#: app/templates/help/index.html:372
+#: app/templates/help/index.html:380
 msgid ""
 "Major changes that affect interpretation, synchronization, and daily "
 "workflows."
@@ -4264,7 +4703,7 @@ msgstr ""
 "Cambios principales que afectan la interpretación, la sincronización y "
 "los flujos de trabajo diarios."
 
-#: app/templates/help/index.html:374
+#: app/templates/help/index.html:382
 msgid ""
 "A shared data-health state now drives the overview, top navigation, and "
 "synchronization view."
@@ -4272,7 +4711,7 @@ msgstr ""
 "Un estado compartido de salud de los datos ahora controla el resumen, la "
 "navegación superior y la vista de sincronización."
 
-#: app/templates/help/index.html:375
+#: app/templates/help/index.html:383
 msgid ""
 "Researcher relationships distinguish verified ORCID search evidence from "
 "cache-derived inference."
@@ -4280,7 +4719,7 @@ msgstr ""
 "Las relaciones de investigadores distinguen la evidencia verificada de "
 "búsqueda ORCID de las inferencias derivadas de la caché."
 
-#: app/templates/help/index.html:376
+#: app/templates/help/index.html:384
 msgid ""
 "Canonical outputs separate unique scholarly results from ORCID source "
 "records and institution-output relationships."
@@ -4289,7 +4728,7 @@ msgstr ""
 "los registros de origen ORCID y de las relaciones entre instituciones y "
 "publicaciones."
 
-#: app/templates/help/index.html:377
+#: app/templates/help/index.html:385
 msgid ""
 "Background synchronization jobs and their steps are durable and "
 "reviewable after the request finishes."
@@ -4297,7 +4736,16 @@ msgstr ""
 "Las tareas de sincronización en segundo plano y sus pasos son durables y "
 "se pueden revisar después de que finaliza la solicitud."
 
-#: app/templates/help/index.html:378
+#: app/templates/help/index.html:386
+msgid ""
+"Administrators have a live background-job monitor with filters, stage and"
+" item progress, heartbeat warnings, and execution errors."
+msgstr ""
+"Los administradores cuentan con un monitor en vivo de tareas en segundo "
+"plano, con filtros, avance por etapas y elementos, alertas de actividad y "
+"errores de ejecución."
+
+#: app/templates/help/index.html:387
 msgid ""
 "Duplicate decisions persist independently from the candidate-analysis "
 "cache."
@@ -4305,7 +4753,7 @@ msgstr ""
 "Las decisiones sobre duplicados persisten independientemente de la caché "
 "de análisis de candidatos."
 
-#: app/templates/help/index.html:379
+#: app/templates/help/index.html:388
 msgid ""
 "The data-quality center exposes coverage and known limitations before "
 "users export or compare data."
@@ -4313,7 +4761,7 @@ msgstr ""
 "El centro de calidad de datos muestra la cobertura y las limitaciones "
 "conocidas antes de exportar o comparar datos."
 
-#: app/templates/help/index.html:380
+#: app/templates/help/index.html:389
 msgid ""
 "Version 2.0 integrates OpenAlex through the normalized DOI of ORCID "
 "articles, adding citation, open-access, topic, authorship, and "
@@ -4323,7 +4771,7 @@ msgstr ""
 "artículos ORCID y agrega metadatos de citas, acceso abierto, temas, "
 "autorías e instituciones sin reemplazar el registro fuente de ORCID."
 
-#: app/templates/help/index.html:381
+#: app/templates/help/index.html:390
 msgid ""
 "Version 2.0 includes author discovery and download through the "
 "institution’s verified Ringgold identifier, with results deduplicated by "
@@ -4333,11 +4781,11 @@ msgstr ""
 "mediante el identificador Ringgold verificado de la institución, con "
 "resultados deduplicados por ORCID iD."
 
-#: app/templates/help/index.html:383
+#: app/templates/help/index.html:392
 msgid "Backfill status"
 msgstr "Estado de reconstrucción"
 
-#: app/templates/help/index.html:383
+#: app/templates/help/index.html:392
 msgid ""
 "Existing cache relationships and canonical outputs require a one-time "
 "rebuild. Until that job is complete, affected indicators remain partial "
@@ -4347,95 +4795,86 @@ msgstr ""
 "requieren una reconstrucción inicial. Hasta que la tarea finalice, los "
 "indicadores afectados se muestran como parciales y no como actualizados."
 
-#: app/templates/help/index.html:388
+#: app/templates/help/index.html:397
 msgid "No help topics matched your search"
 msgstr "Ningún tema de ayuda coincide con la búsqueda"
 
-#: app/templates/help/index.html:389
+#: app/templates/help/index.html:398
 msgid "Try a broader term such as ORCID, metadata, synchronization, or export."
 msgstr ""
 "Prueba un término más amplio como ORCID, metadatos, sincronización o "
 "exportación."
 
-#: app/templates/help/index.html:426
+#: app/templates/help/index.html:435
 #, python-format
 msgid "%(count)s help sections found"
 msgstr "Se encontraron %(count)s secciones de ayuda"
 
-#: app/templates/layout/sidebar.html:28
+#: app/templates/layout/sidebar.html:29
 msgid "Workspace"
 msgstr "Espacio de trabajo"
 
-#: app/templates/layout/sidebar.html:32 app/templates/main/metrics.html:119
+#: app/templates/layout/sidebar.html:33 app/templates/main/metrics.html:119
 #: app/templates/works/data_quality.html:61
 #: app/templates/works/openalex_analytics.html:301
 msgid "Overview"
 msgstr "Resumen"
 
-#: app/templates/layout/sidebar.html:40
+#: app/templates/layout/sidebar.html:41
 #: app/templates/works/cache_status.html:426
 msgid "Explore"
 msgstr "Explorar"
 
-#: app/templates/layout/sidebar.html:54 app/templates/main/metrics.html:78
+#: app/templates/layout/sidebar.html:55 app/templates/main/metrics.html:78
 msgid "ORCID analytics"
 msgstr "Analítica ORCID"
 
-#: app/templates/layout/sidebar.html:60
+#: app/templates/layout/sidebar.html:61
 #: app/templates/works/cache_status.html:429
 #: app/templates/works/openalex_analytics.html:70
 msgid "OpenAlex analytics"
 msgstr "Analítica OpenAlex"
 
-#: app/templates/layout/sidebar.html:67
+#: app/templates/layout/sidebar.html:68
 #: app/templates/works/openalex_global.html:129
 msgid "Institution comparison"
 msgstr "Comparación institucional"
 
-#: app/templates/layout/sidebar.html:78
+#: app/templates/layout/sidebar.html:79
 msgid "Manage data"
 msgstr "Gestionar datos"
 
-#: app/templates/layout/sidebar.html:92
+#: app/templates/layout/sidebar.html:93
 #: app/templates/works/data_quality.html:48
 msgid "Data quality"
 msgstr "Calidad de datos"
 
-#: app/templates/layout/sidebar.html:98
+#: app/templates/layout/sidebar.html:99
 msgid "Quality and duplicates"
 msgstr "Calidad y duplicados"
 
-#: app/templates/layout/sidebar.html:104 app/templates/main/index.html:295
-#: app/templates/works/openalex_works.html:7
-msgid "OpenAlex enrichment"
-msgstr "Enriquecimiento OpenAlex"
-
-#: app/templates/layout/sidebar.html:114
+#: app/templates/layout/sidebar.html:115
 msgid "Integrate"
 msgstr "Integrar"
 
-#: app/templates/layout/sidebar.html:122
+#: app/templates/layout/sidebar.html:123
 msgid "Read from the API"
 msgstr "Leer desde la API"
 
-#: app/templates/layout/sidebar.html:128
+#: app/templates/layout/sidebar.html:129
 #: app/templates/main/integration_guide.html:6
 msgid "Write to ORCID"
 msgstr "Escribir en ORCID"
 
-#: app/templates/layout/sidebar.html:140 app/templates/main/resources.html:6
+#: app/templates/layout/sidebar.html:141 app/templates/main/resources.html:6
 msgid "ORCID resources"
 msgstr "Recursos ORCID"
 
-#: app/templates/layout/sidebar.html:146
+#: app/templates/layout/sidebar.html:147
 msgid "Support"
 msgstr "Ayuda"
 
-#: app/templates/layout/sidebar.html:159
-msgid "Administration"
-msgstr "Administración"
-
-#: app/templates/layout/sidebar.html:167
+#: app/templates/layout/sidebar.html:168
 msgid "User management"
 msgstr "Gestión de usuarios"
 
@@ -5441,10 +5880,6 @@ msgstr "Descargar informe completo"
 msgid "DOI Coverage"
 msgstr "Cobertura de DOI"
 
-#: app/templates/main/orcid_profile.html:93
-msgid "items"
-msgstr "ítems"
-
 #: app/templates/main/orcid_profile.html:101
 msgid "Registry Data"
 msgstr "Datos del Registro"
@@ -6070,24 +6505,6 @@ msgstr "Descargar conjuntos de datos"
 msgid "%(dataset)s · %(institution)s"
 msgstr "%(dataset)s · %(institution)s"
 
-#: app/templates/works/cache_status.html:48
-#: app/templates/works/cache_status.html:53
-#: app/templates/works/cache_status.html:121
-#: app/templates/works/cache_status.html:395
-#: app/templates/works/cache_status.html:402
-#: app/templates/works/cache_status.html:590
-msgid "Scholarly works"
-msgstr "Trabajos académicos"
-
-#: app/templates/works/cache_status.html:61
-#: app/templates/works/cache_status.html:66
-#: app/templates/works/cache_status.html:130
-#: app/templates/works/cache_status.html:437
-#: app/templates/works/cache_status.html:444
-#: app/templates/works/cache_status.html:590
-msgid "Funding and grants"
-msgstr "Financiamientos y subvenciones"
-
 #: app/templates/works/cache_status.html:74
 #: app/templates/works/cache_status.html:79
 #: app/templates/works/cache_status.html:139
@@ -6148,21 +6565,9 @@ msgstr "Completada"
 msgid "Completed with issues"
 msgstr "Completada con observaciones"
 
-#: app/templates/works/cache_status.html:173
-msgid "Failed"
-msgstr "Fallida"
-
-#: app/templates/works/cache_status.html:175
-msgid "Interrupted"
-msgstr "Interrumpida"
-
 #: app/templates/works/cache_status.html:177
 msgid "In progress"
 msgstr "En curso"
-
-#: app/templates/works/cache_status.html:179
-msgid "Queued"
-msgstr "En cola"
 
 #: app/templates/works/cache_status.html:183
 msgid "Data Synchronization · Data ORCID-Chile"
@@ -6188,11 +6593,6 @@ msgstr "%(matched)s de %(total)s registros DOI encontrados"
 #: app/templates/works/cache_status.html:218
 msgid "No eligible article DOI records"
 msgstr "No hay DOI de artículos elegibles"
-
-#: app/templates/works/cache_status.html:230
-#, python-format
-msgid "Updated %(date)s"
-msgstr "Actualizado el %(date)s"
 
 #: app/templates/works/cache_status.html:232
 msgid "Not synchronized yet"
@@ -6458,10 +6858,6 @@ msgstr "Actividad más reciente del sistema y de la institución activa."
 msgid "Latest activity for the active institution."
 msgstr "Actividad más reciente de la institución activa."
 
-#: app/templates/works/cache_status.html:590
-msgid "Full institutional synchronization"
-msgstr "Sincronización institucional completa"
-
 #: app/templates/works/cache_status.html:595
 #, python-format
 msgid "%(count)s matches"
@@ -6471,21 +6867,6 @@ msgstr "%(count)s coincidencias"
 #, python-format
 msgid "%(current)s of %(total)s steps"
 msgstr "%(current)s de %(total)s pasos"
-
-#: app/templates/works/cache_status.html:595
-#, python-format
-msgid "%(count)s records"
-msgstr "%(count)s registros"
-
-#: app/templates/works/cache_status.html:596
-#, python-format
-msgid "%(count)s min"
-msgstr "%(count)s min"
-
-#: app/templates/works/cache_status.html:596
-#, python-format
-msgid "%(count)s sec"
-msgstr "%(count)s s"
 
 #: app/templates/works/cache_status.html:606
 msgid "No synchronization history"
@@ -8844,3 +9225,17 @@ msgstr "Paginación OpenAlex"
 #~ "%(fetched)s descargados, %(matched)s coincidentes,"
 #~ " %(not_found)s no encontrados, %(skipped)s "
 #~ "omitidos, %(errors)s errores."
+
+#~ msgid ""
+#~ "Open the synchronization view to inspect"
+#~ " the durable job and its individual"
+#~ " steps. If the heartbeat stops, the"
+#~ " job is marked interrupted instead of"
+#~ " remaining silently active."
+#~ msgstr ""
+#~ "Abre la vista de sincronización para "
+#~ "revisar la tarea durable y sus "
+#~ "pasos individuales. Si se detiene su "
+#~ "señal de actividad, la tarea se "
+#~ "marca como interrumpida en lugar de "
+#~ "permanecer activa silenciosamente."

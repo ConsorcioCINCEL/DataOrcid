@@ -1,0 +1,101 @@
+{% macro status_badge(status, stale=false) -%}
+  {% set css = 'is-success' if status == 'success' else 'is-running' if status == 'running' else 'is-queued' if status == 'queued' else 'is-partial' if status == 'partial' else 'is-interrupted' if status == 'interrupted' else 'is-skipped' if status == 'skipped' else 'is-pending' if status == 'pending' else 'is-failed' %}
+  {% set label = _('Successful') if status == 'success' else _('Running') if status == 'running' else _('Queued') if status == 'queued' else _('Partial') if status == 'partial' else _('Interrupted') if status == 'interrupted' else _('Skipped') if status == 'skipped' else _('Pending') if status == 'pending' else _('Failed') %}
+  <span class="job-status-badge {{ css }}"><i class="fas {% if status == 'success' %}fa-check-circle{% elif status == 'running' %}fa-spinner fa-spin{% elif status == 'queued' %}fa-hourglass-start{% elif status == 'partial' %}fa-exclamation-circle{% elif status == 'interrupted' %}fa-pause-circle{% elif status == 'skipped' %}fa-forward{% elif status == 'pending' %}fa-clock{% else %}fa-times-circle{% endif %}" aria-hidden="true"></i>{{ label }}</span>
+  {% if stale %}<span class="job-stale-badge"><i class="fas fa-heartbeat" aria-hidden="true"></i>{{ _('Heartbeat overdue') }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro sort_heading(label, key, css='') -%}
+  {% set active = sort_key == key %}
+  {% set next_direction = 'asc' if not active or sort_direction == 'desc' else 'desc' %}
+  <th class="{{ css }}" {% if active %}aria-sort="{{ 'ascending' if sort_direction == 'asc' else 'descending' }}"{% endif %}>
+    <a class="activity-sort-link" href="{{ jobs_url(sort=key, dir=next_direction, page=1) }}"><span>{{ label }}</span><i class="fas {% if active and sort_direction == 'asc' %}fa-sort-up{% elif active %}fa-sort-down{% else %}fa-sort{% endif %}" aria-hidden="true"></i></a>
+  </th>
+{%- endmacro %}
+
+<section class="card card-outline card-primary shadow-sm jobs-table-card" aria-labelledby="jobHistoryTitle">
+  <div class="card-header d-flex align-items-center border-0">
+    <div>
+      <h2 id="jobHistoryTitle" class="card-title text-bold mb-0"><i class="fas fa-tasks mr-2" aria-hidden="true"></i>{{ _('Job history') }}</h2>
+      <p class="activity-card-subtitle mb-0">{% if pagination.total %}{{ _('Showing %(first)s–%(last)s of %(total)s jobs', first=pagination.first, last=pagination.last, total=pagination.total) }}{% else %}{{ _('No matching jobs') }}{% endif %}</p>
+    </div>
+    <div class="app-card-tools"><span class="badge badge-light border">{{ _('Page') }} {{ pagination.page }} {{ _('of') }} {{ pagination.pages or 1 }}</span></div>
+  </div>
+
+  {% if jobs %}
+  <div class="card-body p-0">
+    <div class="table-responsive jobs-table-scroll">
+      <table class="table table-hover mb-0 jobs-table">
+        <caption class="sr-only">{{ _('Background jobs matching the selected filters') }}</caption>
+        <thead class="bg-light text-muted"><tr>
+          {{ sort_heading(_('Job type'), 'type') }}
+          {{ sort_heading(_('Institution'), 'institution') }}
+          <th>{{ _('Requested by') }}</th>
+          {{ sort_heading(_('Started'), 'started') }}
+          <th>{{ _('Progress') }}</th>
+          {{ sort_heading(_('Status'), 'status', 'text-center') }}
+          <th class="text-right"><span class="sr-only">{{ _('Details') }}</span></th>
+        </tr></thead>
+        <tbody>
+          {% for job in jobs %}
+          <tr class="job-summary-row {% if job.is_stale %}is-stale{% endif %}">
+            <td>
+              <strong class="job-type-name">{{ job.type_label }}</strong>
+              <span class="job-technical-name">{{ job.name }}</span>
+              <code title="{{ job.id }}">{{ job.short_id }}</code>
+            </td>
+            <td><strong>{{ job.institution }}</strong>{% if job.ror_id %}<code>{{ job.ror_id }}</code>{% endif %}</td>
+            <td><span class="job-requester"><i class="fas fa-user-circle" aria-hidden="true"></i>{{ job.requester }}</span></td>
+            <td class="text-nowrap">
+              {% if job.started_at %}<time datetime="{{ job.started_at.isoformat() }}">{{ job.started_at|datetimeformat }}</time>{% else %}<span class="text-muted">{{ _('Not started') }}</span>{% endif %}
+              <small>{{ job.duration }}</small>
+            </td>
+            <td class="job-progress-cell">
+              <div class="job-progress-heading"><span>{{ job.current_step }}</span><strong>{{ job.step_current }}/{{ job.step_total }}</strong></div>
+              <div class="job-progress-track" role="progressbar" aria-label="{{ _('Completed stages') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ job.step_percent }}"><span style="width: {{ job.step_percent }}%"></span></div>
+              {% if job.items_total %}<small>{{ '{:,}'.format(job.items_current) }} / {{ '{:,}'.format(job.items_total) }} {{ job.progress_unit }} <b>{{ '%.0f%%'|format(job.items_percent) }}</b></small>{% elif job.status in ('queued', 'running') %}<small>{{ _('Waiting for item totals') }}</small>{% else %}<small>{{ _('No item-level total was recorded') }}</small>{% endif %}
+            </td>
+            <td class="text-center"><div class="job-status-stack">{{ status_badge(job.status, job.is_stale) }}</div></td>
+            <td class="text-right">
+              <button type="button" class="app-icon-action" data-toggle="collapse" data-target="#jobDetails{{ job.id }}" aria-expanded="false" aria-controls="jobDetails{{ job.id }}" aria-label="{{ _('View job details') }}"><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+            </td>
+          </tr>
+          <tr id="jobDetails{{ job.id }}" class="collapse job-detail-row">
+            <td colspan="7">
+              {% if job.is_stale %}<div class="job-detail-warning"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i>{{ _('This job is still marked as running, but its heartbeat is overdue. It may have been interrupted.') }}</div>{% endif %}
+              {% if job.error %}<div class="job-detail-error"><strong>{{ _('Execution error') }}</strong><p>{{ job.error }}</p></div>{% endif %}
+              <dl class="job-detail-meta">
+                <div><dt>{{ _('Job ID') }}</dt><dd><code>{{ job.id }}</code></dd></div>
+                <div><dt>{{ _('Created') }}</dt><dd>{{ job.created_at|datetimeformat if job.created_at else '—' }}</dd></div>
+                <div><dt>{{ _('Last heartbeat') }}</dt><dd>{{ job.heartbeat_at|datetimeformat if job.heartbeat_at else _('Not available') }}</dd></div>
+                <div><dt>{{ _('Finished') }}</dt><dd>{{ job.finished_at|datetimeformat if job.finished_at else _('Not finished') }}</dd></div>
+                {% if job.message %}<div class="job-detail-meta-wide"><dt>{{ _('Latest message') }}</dt><dd>{{ job.message }}</dd></div>{% endif %}
+              </dl>
+              <div class="job-step-list" aria-label="{{ _('Execution stages') }}">
+                {% for step in job.steps %}
+                <article class="job-step is-{{ step.status }}">
+                  <span class="job-step-marker" aria-hidden="true"><i class="fas {% if step.status == 'success' %}fa-check{% elif step.status == 'running' %}fa-spinner fa-spin{% elif step.status == 'failed' %}fa-times{% elif step.status == 'skipped' %}fa-forward{% else %}fa-clock{% endif %}"></i></span>
+                  <div><strong>{{ step.label }}</strong><small>{{ status_badge(step.status) }}{% if step.duration %}<span>{{ step.duration }}</span>{% endif %}{% if step.records_count %}<span>{{ _('%(count)s records', count=step.records_count) }}</span>{% endif %}</small>{% if step.error %}<p>{{ step.error }}</p>{% endif %}</div>
+                </article>
+                {% else %}<p class="text-muted mb-0">{{ _('This job has no recorded stages.') }}</p>{% endfor %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card-body activity-empty-state"><i class="fas fa-tasks" aria-hidden="true"></i><strong>{{ _('No background jobs found') }}</strong><p>{{ _('Change the filters or wait for a synchronization to be started.') }}</p></div>
+  {% endif %}
+
+  <div class="card-footer bg-white activity-pagination-footer">
+    <div class="activity-page-size" aria-label="{{ _('Results per page') }}"><span>{{ _('Rows') }}</span>{% for size in per_page_options %}<a class="btn btn-xs {% if per_page == size %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ jobs_url(per_page=size, page=1) }}">{{ size }}</a>{% endfor %}</div>
+    <nav aria-label="{{ _('Job result pages') }}"><ul class="pagination pagination-sm justify-content-center mb-0">
+      <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">{% if pagination.has_prev %}<a class="page-link" href="{{ jobs_url(page=pagination.prev_num) }}" aria-label="{{ _('Previous page') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>{% else %}<span class="page-link" aria-disabled="true"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>{% endif %}</li>
+      {% for page_number in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}{% if page_number %}<li class="page-item {% if page_number == pagination.page %}active{% endif %}">{% if page_number == pagination.page %}<span class="page-link" aria-current="page">{{ page_number }}</span>{% else %}<a class="page-link" href="{{ jobs_url(page=page_number) }}">{{ page_number }}</a>{% endif %}</li>{% else %}<li class="page-item disabled"><span class="page-link" aria-hidden="true">…</span></li>{% endif %}{% endfor %}
+      <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">{% if pagination.has_next %}<a class="page-link" href="{{ jobs_url(page=pagination.next_num) }}" aria-label="{{ _('Next page') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>{% else %}<span class="page-link" aria-disabled="true"><i class="fas fa-chevron-right" aria-hidden="true"></i></span>{% endif %}</li>
+    </ul></nav>
+  </div>
+</section>

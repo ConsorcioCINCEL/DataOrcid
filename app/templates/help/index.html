@@ -270,6 +270,13 @@
             <span><strong>{{ _('OpenAlex enrichment coverage') }}</strong><small>{{ _('Review matched, unmatched, and pending works.') }}</small></span>
             <i class="fas fa-arrow-right" aria-hidden="true"></i>
           </a>
+          {% if session.get('is_admin') %}
+          <a href="{{ url_for('admin.jobs') }}" class="help-link-card">
+            <i class="fas fa-tasks" aria-hidden="true"></i>
+            <span><strong>{{ _('Monitor background jobs') }}</strong><small>{{ _('Review live progress, execution stages, heartbeats, and errors.') }}</small></span>
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+          </a>
+          {% endif %}
         </div>
       </section>
 
@@ -294,6 +301,7 @@
           <tr><th>{{ _('Start synchronization') }}</th><td>{{ _('No') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any or all institutions') }}</td></tr>
           <tr><th>{{ _('Review duplicate decisions') }}</th><td>{{ _('Read only') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any institution') }}</td></tr>
           <tr><th>{{ _('Manage accounts and system activity') }}</th><td>{{ _('No') }}</td><td>{{ _('Institution accounts') }}</td><td>{{ _('All accounts and activity') }}</td></tr>
+          <tr><th>{{ _('Monitor all background jobs') }}</th><td>{{ _('No') }}</td><td>{{ _('No') }}</td><td>{{ _('Live and historical access') }}</td></tr>
         </tbody></table></div>
         <div class="help-callout is-warning"><i class="fas fa-shield-alt" aria-hidden="true"></i><div><strong>{{ _('Privacy and operational logs') }}</strong><p>{{ _('ORCID metadata shown by the platform comes from public source records. Request logs can include user, institution, role, path, IP address, and user-agent information and should follow the organization’s retention, access, correction, and deletion policy.') }}</p><p>{{ _('The default local retention period is 90 days and can be changed in the private runtime configuration. Administrators can apply it with the cleanup-tracking-logs command.') }}</p></div></div>
         <div class="help-link-grid"><a class="help-link-card" href="{{ url_for('auth.profile') }}"><i class="fas fa-user" aria-hidden="true"></i><span><strong>{{ _('Edit profile') }}</strong><small>{{ _('Update your name, position, and email.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a><a class="help-link-card" href="{{ url_for('auth.change_password') }}"><i class="fas fa-key" aria-hidden="true"></i><span><strong>{{ _('Change password') }}</strong><small>{{ _('Keep account credentials current.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a></div>
@@ -337,7 +345,7 @@
             (_('No researchers appear for an institution'), _('Confirm that the active institution has a ROR ID and verified legacy identifiers. Then review the latest synchronization result for an ORCID authentication, search, or rate-limit error.')),
             (_('Works or funding totals look incomplete'), _('Check the cache update time and the source ORCID profiles. Only visible source records can be synchronized, and some researchers may have no public activity.')),
             (_('OpenAlex coverage is low'), _('Review how many ORCID works contain a DOI. Records without a DOI require a strict title match and may remain unmatched to avoid false associations.')),
-            (_('A synchronization remains in progress'), _('Open the synchronization view to inspect the durable job and its individual steps. If the heartbeat stops, the job is marked interrupted instead of remaining silently active.')),
+            (_('A synchronization remains in progress'), _('Administrators can open Background jobs to inspect its durable state, item progress, and individual stages. A stale heartbeat warns that the process may have been interrupted; after an application restart, abandoned jobs and their open stages are closed as interrupted.')),
             (_('An export is empty'), _('Verify that the corresponding cache contains records for the active institution and that the selected institutional context has not changed.'))
           ] %}
           {% for question, answer in issues %}
@@ -375,6 +383,7 @@
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Researcher relationships distinguish verified ORCID search evidence from cache-derived inference.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Canonical outputs separate unique scholarly results from ORCID source records and institution-output relationships.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Background synchronization jobs and their steps are durable and reviewable after the request finishes.') }}</li>
+          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Administrators have a live background-job monitor with filters, stage and item progress, heartbeat warnings, and execution errors.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Duplicate decisions persist independently from the candidate-analysis cache.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The data-quality center exposes coverage and known limitations before users export or compare data.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Version 2.0 integrates OpenAlex through the normalized DOI of ORCID articles, adding citation, open-access, topic, authorship, and institutional metadata without replacing the ORCID source record.') }}</li>

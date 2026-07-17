@@ -2966,7 +2966,7 @@ def _run_full_sync_for_ror(
     from ..models import WorkCacheRun, FundingCacheRun
     from ..services.cache_service import build_full_cache_for_ror
     from ..services.openalex_service import sync_openalex_works
-    from ..services.background_jobs import update_background_job, update_job_step
+    from ..services.background_jobs import update_job_progress, update_job_step
 
     result = {
         "ror_id": ror_id,
@@ -3039,8 +3039,11 @@ def _run_full_sync_for_ror(
             "articles_only": True,
         }
         if job_id:
-            sync_kwargs["progress"] = lambda summary: update_background_job(
+            sync_kwargs["progress"] = lambda summary: update_job_progress(
                 job_id,
+                summary["fetched_count"] + summary["skipped_count"],
+                summary["dois_found"],
+                "candidates",
                 message=(
                     f"OpenAlex: {summary['fetched_count'] + summary['skipped_count']} "
                     f"of {summary['dois_found']} candidates processed."
@@ -3171,7 +3174,7 @@ def _run_all_institution_sync(
     job_id: str | None = None,
 ) -> dict:
     """Run every institution sequentially while persisting per-scope progress."""
-    from ..services.background_jobs import update_job_step
+    from ..services.background_jobs import update_job_progress, update_job_step
 
     totals = {
         "institutions": 0,
@@ -3182,10 +3185,10 @@ def _run_all_institution_sync(
         "openalex": 0,
         "failed": 0,
     }
-    for institution in institutions:
+    valid_institutions = [institution for institution in institutions if institution.get("ror_id")]
+    update_job_progress(job_id, 0, len(valid_institutions), "institutions")
+    for index, institution in enumerate(valid_institutions, start=1):
         ror_id = institution.get("ror_id")
-        if not ror_id:
-            continue
         step_name = f"institution:{ror_id}"
         update_job_step(job_id, step_name, "running")
         try:
@@ -3215,6 +3218,14 @@ def _run_all_institution_sync(
             db.session.rollback()
             totals["failed"] += 1
             update_job_step(job_id, step_name, "failed", error=str(exc))
+        finally:
+            update_job_progress(
+                job_id,
+                index,
+                len(valid_institutions),
+                "institutions",
+                message=f"Processed institution {index} of {len(valid_institutions)}.",
+            )
     return totals
 
 
@@ -3518,7 +3529,7 @@ def _run_openalex_sync(
     job_id: str | None = None,
 ) -> dict:
     """Run one durable OpenAlex synchronization job and report partial results."""
-    from ..services.background_jobs import update_background_job, update_job_step
+    from ..services.background_jobs import update_job_progress, update_job_step
     from ..services.openalex_service import sync_openalex_title_matches, sync_openalex_works
 
     update_job_step(job_id, "openalex", "running")
@@ -3527,8 +3538,11 @@ def _run_openalex_sync(
         if not job_id:
             return
         processed = summary["fetched_count"] + summary["skipped_count"]
-        update_background_job(
+        update_job_progress(
             job_id,
+            processed,
+            summary["dois_found"],
+            "candidates",
             message=f"OpenAlex: {processed} of {summary['dois_found']} candidates processed.",
         )
 

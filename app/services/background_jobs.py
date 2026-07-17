@@ -104,6 +104,32 @@ def update_background_job(job_id: str, **values) -> None:
     db.session.commit()
 
 
+def update_job_progress(
+    job_id: str | None,
+    current: int,
+    total: int,
+    unit: str,
+    *,
+    message: str | None = None,
+) -> None:
+    """Persist item-level progress independently from completed job steps."""
+    if not job_id:
+        return
+    job = db.session.get(SyncJob, job_id)
+    if not job:
+        return
+
+    total = max(int(total or 0), 0)
+    current = max(int(current or 0), 0)
+    job.items_total = total
+    job.items_current = min(current, total) if total else current
+    job.progress_unit = (unit or "items")[:32]
+    if message is not None:
+        job.message = message
+    job.heartbeat_at = utc_now()
+    db.session.commit()
+
+
 def update_job_step(
     job_id: str | None,
     name: str,
@@ -134,7 +160,8 @@ def update_job_step(
     step.status = status
     if status == "running" and not step.started_at:
         step.started_at = now
-    if status in {"success", "failed", "skipped"}:
+    terminal_statuses = {"success", "failed", "skipped", "interrupted"}
+    if status in terminal_statuses:
         step.finished_at = now
     if records_count is not None:
         step.records_count = int(records_count)
@@ -144,7 +171,7 @@ def update_job_step(
     if job:
         completed = SyncJobStep.query.filter(
             SyncJobStep.sync_job_id == job_id,
-            SyncJobStep.status.in_({"success", "failed", "skipped"}),
+            SyncJobStep.status.in_(terminal_statuses),
         ).count()
         total = SyncJobStep.query.filter_by(sync_job_id=job_id).count()
         job.progress_current = completed
@@ -161,10 +188,24 @@ def recover_interrupted_jobs(stale_minutes: int = 30) -> int:
         SyncJob.heartbeat_at.isnot(None),
         SyncJob.heartbeat_at < cutoff,
     ).all()
+    interrupted_at = utc_now()
     for job in rows:
         job.status = "interrupted"
         job.error = "The application stopped receiving job heartbeats."
-        job.finished_at = utc_now()
+        job.finished_at = interrupted_at
+        steps = SyncJobStep.query.filter(
+            SyncJobStep.sync_job_id == job.id,
+            SyncJobStep.status.in_({"pending", "running"}),
+        ).all()
+        for step in steps:
+            if step.status == "running":
+                step.status = "interrupted"
+                step.error = job.error
+            else:
+                step.status = "skipped"
+            step.finished_at = interrupted_at
+        if steps:
+            job.progress_current = SyncJobStep.query.filter_by(sync_job_id=job.id).count()
     if rows:
         db.session.commit()
     return len(rows)
@@ -179,6 +220,16 @@ def _run_job(app, job_id: str, func: Callable[..., Any], args: tuple, kwargs: di
                 started_at=utc_now(),
                 message="Background job started.",
             )
+            first_step = (
+                SyncJobStep.query
+                .filter_by(sync_job_id=job_id, status="pending")
+                .order_by(SyncJobStep.position.asc())
+                .first()
+            )
+            if first_step:
+                first_step.status = "running"
+                first_step.started_at = utc_now()
+                db.session.commit()
             call_kwargs = dict(kwargs)
             if "job_id" in inspect.signature(func).parameters and "job_id" not in call_kwargs:
                 call_kwargs["job_id"] = job_id
@@ -213,6 +264,23 @@ def _run_job(app, job_id: str, func: Callable[..., Any], args: tuple, kwargs: di
         except Exception as exc:
             db.session.rollback()
             logger.exception("Background job %s failed: %s", job_id, exc)
+            failed_at = utc_now()
+            open_steps = SyncJobStep.query.filter(
+                SyncJobStep.sync_job_id == job_id,
+                SyncJobStep.status.in_({"pending", "running"}),
+            ).all()
+            for step in open_steps:
+                if step.status == "running":
+                    step.status = "failed"
+                    step.error = str(exc)
+                else:
+                    step.status = "skipped"
+                step.finished_at = failed_at
+            if open_steps:
+                job = db.session.get(SyncJob, job_id)
+                if job:
+                    job.progress_current = SyncJobStep.query.filter_by(sync_job_id=job_id).count()
+                db.session.commit()
             update_background_job(
                 job_id,
                 status="failed",

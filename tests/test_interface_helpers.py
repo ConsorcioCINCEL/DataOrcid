@@ -3,6 +3,8 @@
 import unittest
 from unittest.mock import Mock, patch
 
+from flask import render_template_string
+
 from app import create_app, locale_url, plain_text
 from app.services import orcid_service
 
@@ -69,6 +71,18 @@ class InterfaceHelperTest(unittest.TestCase):
             response.headers["Referrer-Policy"],
         )
         self.assertIn("camera=()", response.headers["Permissions-Policy"])
+
+    def test_chart_exports_offer_compact_mobile_download_menu(self):
+        with self.app.test_request_context():
+            html = render_template_string(
+                "{% from 'components/ui.html' import chart_exports %}"
+                "{{ chart_exports('testChart') }}"
+            )
+
+        self.assertEqual(2, html.count("app-chart-export-desktop"))
+        self.assertIn("app-chart-export-mobile", html)
+        self.assertIn('id="chartExportMenutestChart"', html)
+        self.assertEqual(4, html.count('data-chart-id="testChart"'))
 
     def test_legacy_cache_dashboard_redirects_to_the_canonical_view(self):
         client = self.app.test_client()

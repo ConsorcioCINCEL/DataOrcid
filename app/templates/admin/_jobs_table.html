@@ -51,7 +51,7 @@
               <small>{{ job.duration }}</small>
             </td>
             <td class="job-progress-cell">
-              <div class="job-progress-heading"><span>{{ job.current_step }}</span><strong>{{ job.step_current }}/{{ job.step_total }}</strong></div>
+              <div class="job-progress-heading"><span title="{{ job.current_step }}">{{ job.current_step }}</span><strong>{{ job.step_current }}/{{ job.step_total }}</strong></div>
               <div class="job-progress-track" role="progressbar" aria-label="{{ _('Completed stages') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ job.step_percent }}"><span style="width: {{ job.step_percent }}%"></span></div>
               {% if job.items_total %}<small>{{ '{:,}'.format(job.items_current) }} / {{ '{:,}'.format(job.items_total) }} {{ job.progress_unit }} <b>{{ '%.0f%%'|format(job.items_percent) }}</b></small>{% elif job.status in ('queued', 'running') %}<small>{{ _('Waiting for item totals') }}</small>{% else %}<small>{{ _('No item-level total was recorded') }}</small>{% endif %}
             </td>
@@ -75,7 +75,7 @@
                 {% for step in job.steps %}
                 <article class="job-step is-{{ step.status }}">
                   <span class="job-step-marker" aria-hidden="true"><i class="fas {% if step.status == 'success' %}fa-check{% elif step.status == 'running' %}fa-spinner fa-spin{% elif step.status == 'failed' %}fa-times{% elif step.status == 'skipped' %}fa-forward{% else %}fa-clock{% endif %}"></i></span>
-                  <div><strong>{{ step.label }}</strong><small>{{ status_badge(step.status) }}{% if step.duration %}<span>{{ step.duration }}</span>{% endif %}{% if step.records_count %}<span>{{ _('%(count)s records', count=step.records_count) }}</span>{% endif %}</small>{% if step.error %}<p>{{ step.error }}</p>{% endif %}</div>
+                  <div><strong>{{ step.label }}</strong><small>{{ status_badge(step.status) }}{% if step.duration %}<span>{{ step.duration }}</span>{% endif %}{% if step.records_count %}<span class="job-step-record-count{% if step.duration %} has-duration{% endif %}">{{ _('%(count)s records', count=step.records_count) }}</span>{% endif %}</small>{% if step.error %}<p>{{ step.error }}</p>{% endif %}</div>
                 </article>
                 {% else %}<p class="text-muted mb-0">{{ _('This job has no recorded stages.') }}</p>{% endfor %}
               </div>

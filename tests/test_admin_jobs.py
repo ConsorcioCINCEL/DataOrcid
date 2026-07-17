@@ -7,7 +7,7 @@ from unittest.mock import patch
 from flask import Flask
 
 from app import babel, db
-from app.blueprints.admin import bp_admin
+from app.blueprints.admin import _job_step_label, bp_admin
 from app.models import SyncJob, SyncJobStep, User, utc_now
 from app.services.background_jobs import recover_interrupted_jobs, update_job_progress
 
@@ -197,6 +197,15 @@ class AdminJobsDashboardTest(unittest.TestCase):
             self.assertEqual(100, job.items_total)
             self.assertEqual("candidates", job.progress_unit)
             self.assertEqual(1, job.progress_current)
+
+    def test_institution_steps_include_the_registry_name(self):
+        self.assertEqual(
+            "Test University · 01test123",
+            _job_step_label(
+                "institution:01test123",
+                {"01test123": "Test University"},
+            ),
+        )
 
     def test_stale_recovery_closes_running_steps(self):
         with self.app.app_context():

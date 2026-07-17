@@ -18,7 +18,7 @@
 {% macro chart_exports(chart_id) -%}
 <div class="app-chart-export-actions" role="group" aria-label="{{ _('Download chart image') }}">
   <button type="button"
-          class="app-icon-action js-chart-export"
+          class="app-icon-action app-chart-export-desktop js-chart-export"
           data-chart-id="{{ chart_id }}"
           data-chart-format="png"
           aria-label="{{ _('Download chart as PNG') }}"
@@ -26,13 +26,42 @@
     <i class="fas fa-file-image" aria-hidden="true"></i>
   </button>
   <button type="button"
-          class="app-icon-action js-chart-export"
+          class="app-icon-action app-chart-export-desktop js-chart-export"
           data-chart-id="{{ chart_id }}"
           data-chart-format="svg"
           aria-label="{{ _('Download chart as SVG') }}"
           title="{{ _('Download chart as SVG') }}">
     <i class="fas fa-vector-square" aria-hidden="true"></i>
   </button>
+  <div class="dropdown app-chart-export-mobile">
+    <button type="button"
+            class="app-icon-action dropdown-toggle"
+            id="chartExportMenu{{ chart_id }}"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-label="{{ _('Download chart image') }}"
+            title="{{ _('Download chart image') }}">
+      <i class="fas fa-download" aria-hidden="true"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-right app-chart-export-menu"
+         aria-labelledby="chartExportMenu{{ chart_id }}">
+      <button type="button"
+              class="dropdown-item js-chart-export"
+              data-chart-id="{{ chart_id }}"
+              data-chart-format="png">
+        <i class="fas fa-file-image" aria-hidden="true"></i>
+        <span>{{ _('Download chart as PNG') }}</span>
+      </button>
+      <button type="button"
+              class="dropdown-item js-chart-export"
+              data-chart-id="{{ chart_id }}"
+              data-chart-format="svg">
+        <i class="fas fa-vector-square" aria-hidden="true"></i>
+        <span>{{ _('Download chart as SVG') }}</span>
+      </button>
+    </div>
+  </div>
 </div>
 {%- endmacro %}
 

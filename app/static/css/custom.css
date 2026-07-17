@@ -2058,6 +2058,37 @@ h1, h2, h3, h4, h5, h6,
     gap: 0.3rem;
 }
 
+.app-chart-export-mobile {
+    display: none;
+}
+
+.app-chart-export-mobile > .dropdown-toggle::after {
+    display: none;
+}
+
+.app-chart-export-menu {
+    border-color: var(--app-border);
+    border-radius: 6px;
+    min-width: 13rem;
+    padding: 0.35rem;
+}
+
+.app-chart-export-menu .dropdown-item {
+    align-items: center;
+    border-radius: 4px;
+    color: #46515d;
+    display: flex;
+    font-size: 0.8rem;
+    gap: 0.55rem;
+    padding: 0.55rem 0.65rem;
+}
+
+.app-chart-export-menu .dropdown-item i {
+    color: var(--app-blue);
+    text-align: center;
+    width: 1rem;
+}
+
 .app-shell .card-header.d-flex::after {
     display: none;
 }
@@ -3375,6 +3406,38 @@ html:has(.app-auth-page) {
     .app-icon-action {
         height: 2.75rem;
         width: 2.75rem;
+    }
+
+    .app-chart-export-actions > .app-chart-export-desktop {
+        display: none;
+    }
+
+    .app-chart-export-mobile {
+        display: inline-flex;
+    }
+
+    .dashboard-chart-panel .dashboard-panel-header .app-card-tools {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.55rem;
+        width: 100%;
+    }
+
+    .dashboard-chart-panel .dashboard-segmented-control {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .dashboard-chart-panel .dashboard-segmented-control button {
+        min-width: 0;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+
+    .dashboard-chart-panel .app-chart-export-actions {
+        justify-content: flex-end;
+        width: 100%;
     }
 
     .app-page-actions .breadcrumb-item:nth-last-child(n + 3) {
@@ -6464,10 +6527,13 @@ code,
 }
 
 .job-progress-heading span {
-    max-width: 190px;
+    display: -webkit-box;
+    line-height: 1.25;
+    max-width: 210px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .job-progress-track {
@@ -6595,6 +6661,7 @@ code,
 .job-step > div { min-width: 0; }
 .job-step strong { display: block; font-size: 0.76rem; }
 .job-step small { align-items: center; display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
+.job-step-record-count.has-duration::before { content: "·"; margin-right: 0.35rem; }
 .job-step p { color: #8f2034; font-size: 0.7rem; margin: 0.35rem 0 0; overflow-wrap: anywhere; }
 
 @media (max-width: 1399.98px) {

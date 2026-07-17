@@ -235,7 +235,10 @@ def _job_type_label(job_type: str | None) -> str:
     return labels.get(job_type or "", (job_type or _("Unknown job")).replace("_", " ").title())
 
 
-def _job_step_label(step_name: str | None) -> str:
+def _job_step_label(
+    step_name: str | None,
+    institution_lookup: dict[str, str] | None = None,
+) -> str:
     labels = {
         "researchers": _("Researchers"),
         "profiles": _("Profiles"),
@@ -247,7 +250,12 @@ def _job_step_label(step_name: str | None) -> str:
     }
     name = step_name or ""
     if name.startswith("institution:"):
-        return _("Institution %(ror)s", ror=name.split(":", 1)[1])
+        raw_ror = name.split(":", 1)[1]
+        ror_id = normalize_ror_id(raw_ror) or raw_ror
+        institution_name = (institution_lookup or {}).get(ror_id)
+        if institution_name:
+            return f"{institution_name} · {ror_id}"
+        return _("Institution %(ror)s", ror=ror_id)
     return labels.get(name, name.replace("_", " ").title() or _("Unspecified step"))
 
 
@@ -1006,7 +1014,7 @@ def _job_dashboard_context() -> dict:
             )
             step_rows.append({
                 "name": step.name,
-                "label": _job_step_label(step.name),
+                "label": _job_step_label(step.name, institution_lookup),
                 "status": step.status,
                 "records_count": int(step.records_count or 0),
                 "error": step.error,
@@ -1036,7 +1044,11 @@ def _job_dashboard_context() -> dict:
             "step_current": step_current,
             "step_total": step_total,
             "step_percent": step_percent,
-            "current_step": _job_step_label(current_step.name) if current_step else _("No steps recorded"),
+            "current_step": (
+                _job_step_label(current_step.name, institution_lookup)
+                if current_step
+                else _("No steps recorded")
+            ),
             "items_current": item_current,
             "items_total": item_total,
             "items_percent": item_percent,

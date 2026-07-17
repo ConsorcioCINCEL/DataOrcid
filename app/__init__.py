@@ -3,9 +3,11 @@
 import os
 import toml
 import datetime as dt
+import html
+import re
 from pathlib import Path
 from zoneinfo import ZoneInfo
-from flask import Flask, session, request, g
+from flask import Flask, session, request, g, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_babel import Babel
@@ -16,6 +18,7 @@ migrate = Migrate()
 babel = Babel()
 csrf = CSRFProtect()
 CHILE_TIMEZONE = ZoneInfo("America/Santiago")
+APP_VERSION = "2.0"
 
 
 def get_locale() -> str:
@@ -27,7 +30,7 @@ def get_locale() -> str:
     """
     from flask import current_app
     
-    supported = current_app.config.get('LANGUAGES', ['es', 'en'])
+    supported = current_app.config.get('LANGUAGES', ['en', 'es'])
     
     lang_arg = request.args.get('lang')
     if lang_arg in supported:
@@ -35,7 +38,7 @@ def get_locale() -> str:
         if session.get('user_id'):
             try:
                 from .models import User
-                user = User.query.get(session['user_id'])
+                user = db.session.get(User, session['user_id'])
                 if user:
                     user.locale = lang_arg
                     db.session.commit()
@@ -49,14 +52,14 @@ def get_locale() -> str:
     if session.get('user_id'):
         try:
              from .models import User
-             user = User.query.get(session['user_id'])
+             user = db.session.get(User, session['user_id'])
              if user and user.locale in supported:
                  session['locale'] = user.locale
                  return user.locale
         except Exception:
             pass
 
-    return current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
+    return current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
 
 
 def datetimeformat(value, format: str = "%Y-%m-%d %H:%M") -> str:
@@ -100,6 +103,29 @@ def timestamp_to_date(value) -> str:
         return "N/A"
 
 
+def plain_text(value) -> str:
+    """Return external metadata as readable text without embedded markup."""
+    if value is None:
+        return ""
+    decoded = html.unescape(str(value))
+    without_tags = re.sub(r"<[^>]*>", "", decoded)
+    return re.sub(r"\s+", " ", without_tags).strip()
+
+
+def locale_url(language: str) -> str:
+    """Build a language-switch URL while preserving route and query context."""
+    if not request.endpoint:
+        return request.path
+
+    values = dict(request.view_args or {})
+    for key, items in request.args.lists():
+        if key == "lang":
+            continue
+        values[key] = items if len(items) > 1 else items[0]
+    values["lang"] = language
+    return url_for(request.endpoint, **values)
+
+
 def create_app() -> Flask:
     """Create and configure the Flask application."""
     app = Flask(__name__)
@@ -128,10 +154,18 @@ def create_app() -> Flask:
     app.config["SESSION_COOKIE_HTTPONLY"] = flask_sec.get("session_cookie_httponly", True)
     app.config["SESSION_COOKIE_SAMESITE"] = flask_sec.get("session_cookie_samesite", "Lax")
     
-    app.config["APP_BASE_URL"] = config_data.get("app", {}).get("base_url", "").rstrip("/")
+    app_cfg = config_data.get("app", {})
+    app.config["APP_BASE_URL"] = app_cfg.get("base_url", "").rstrip("/")
+    app.config["APP_VERSION"] = str(app_cfg.get("version") or APP_VERSION)
+    cache_cfg = config_data.get("cache", {})
+    tracking_cfg = config_data.get("tracking", {})
+    jobs_cfg = config_data.get("jobs", {})
+    app.config["CACHE_STALE_DAYS"] = int(cache_cfg.get("stale_days", 30))
+    app.config["TRACKING_RETENTION_DAYS"] = int(tracking_cfg.get("retention_days", 90))
+    app.config["JOB_STALE_MINUTES"] = int(jobs_cfg.get("stale_minutes", 30))
 
-    app.config["LANGUAGES"] = config_data.get("languages", {}).get("supported", ["es", "en"])
-    app.config["BABEL_DEFAULT_LOCALE"] = config_data.get("languages", {}).get("default", "es")
+    app.config["LANGUAGES"] = config_data.get("languages", {}).get("supported", ["en", "es"])
+    app.config["BABEL_DEFAULT_LOCALE"] = config_data.get("languages", {}).get("default", "en")
     app.config["BABEL_DEFAULT_TIMEZONE"] = "America/Santiago"
 
     orcid_cfg = config_data.get("orcid", {})
@@ -155,6 +189,7 @@ def create_app() -> Flask:
         ORCID_MEMBER_URL=member_url,
         ORCID_SEARCH_URL=search_url,
         ORCID_PUBLIC_URL=public_url,
+        ORCID_PROFILE_CACHE_TTL=int(orcid_cfg.get("profile_cache_ttl", 900)),
         # Backward-compatible aliases for older modules and deployments.
         ORCID_BASE_URL_MEMBER=member_url,
         ORCID_BASE_URL_PUBLIC=public_url,
@@ -170,7 +205,7 @@ def create_app() -> Flask:
         OPENALEX_STALE_DAYS=int(openalex_cfg.get("stale_days", 30)),
         OPENALEX_WORKERS=int(os.environ.get("OPENALEX_WORKERS") or openalex_cfg.get("workers", 4)),
         OPENALEX_TITLE_WORKERS=int(os.environ.get("OPENALEX_TITLE_WORKERS") or openalex_cfg.get("title_workers", 2)),
-        OPENALEX_ANALYTICS_CACHE_TTL=int(openalex_cfg.get("analytics_cache_ttl", 900)),
+        OPENALEX_ANALYTICS_CACHE_TTL=int(openalex_cfg.get("analytics_cache_ttl", 86400)),
     )
 
     datasets_cfg = config_data.get("paths", {}).get("datasets_dir", "app/datasets")
@@ -198,8 +233,11 @@ def create_app() -> Flask:
         try:
             # Only global admins can switch institutional context.
             if session.get("logged_in") and session.get("is_admin"):
-                from .services.institution_registry_service import get_institution_options
-                institutions = get_institution_options()
+                institutions = getattr(g, "institution_options", None)
+                if institutions is None:
+                    from .services.institution_registry_service import get_institution_options
+                    institutions = get_institution_options()
+                    g.institution_options = institutions
                 seen_rors = {item["ror_id"] for item in institutions}
 
                 my_ror = session.get("ror_id")
@@ -213,14 +251,15 @@ def create_app() -> Flask:
 
         return {
             "current_year": dt.datetime.now().year,
-            "institutions": institutions
+            "institutions": institutions,
+            "locale_url": locale_url,
         }
 
     EXCLUDED_LOG_PATHS = ("/static/", "/favicon.ico", "/robots.txt", "/health")
 
     @app.before_request
     def track_request_start():
-        g._start_time = dt.datetime.utcnow()
+        g._start_time = dt.datetime.now(dt.timezone.utc)
 
     @app.after_request
     def track_request_end(response):
@@ -229,18 +268,40 @@ def create_app() -> Flask:
 
         Static and health-check routes are excluded to avoid database noise.
         """
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+
         try:
-            if request.path.startswith(EXCLUDED_LOG_PATHS):
+            if app.config.get("TESTING") or request.path.startswith(EXCLUDED_LOG_PATHS):
                 return response
             
             duration = None
             if hasattr(g, "_start_time"):
-                duration = (dt.datetime.utcnow() - g._start_time).total_seconds() * 1000
+                duration = (dt.datetime.now(dt.timezone.utc) - g._start_time).total_seconds() * 1000
 
             from .models import TrackingLog
+            role = (
+                "admin"
+                if session.get("is_admin")
+                else "manager"
+                if session.get("is_manager")
+                else "user"
+                if session.get("logged_in")
+                else "anonymous"
+            )
             log_entry = TrackingLog(
                 user_id=session.get("user_id"),
                 username=session.get("username"),
+                institution_ror=(
+                    session.get("admin_selected_ror")
+                    if session.get("is_admin")
+                    else session.get("ror_id")
+                ),
+                role=role,
+                action=request.endpoint,
+                job_id=request.values.get("job_id"),
                 method=request.method,
                 path=request.path,
                 status_code=response.status_code,
@@ -260,6 +321,7 @@ def create_app() -> Flask:
     csrf.init_app(app)
     app.jinja_env.filters["datetimeformat"] = datetimeformat
     app.jinja_env.filters["timestamp_to_date"] = timestamp_to_date
+    app.jinja_env.filters["plain_text"] = plain_text
 
     with app.app_context():
         # Register every model before create_all() checks the database schema.
@@ -273,27 +335,34 @@ def create_app() -> Flask:
             db.session.rollback()
             app.logger.warning("Institution registry seed failed: %s", exc)
 
+        try:
+            from .services.background_jobs import recover_interrupted_jobs
+            recover_interrupted_jobs(app.config["JOB_STALE_MINUTES"])
+        except Exception as exc:
+            db.session.rollback()
+            app.logger.warning("Interrupted job recovery failed: %s", exc)
+
         from .blueprints.main import bp_main
         from .blueprints.cache_control import bp_cache
         from .blueprints.admin import bp_admin
         from .blueprints.auth import bp_auth
         from .blueprints.works import bp_works
-        from .blueprints.fundings import bp_fund
         from .blueprints.export import bp_export
         from .blueprints.dashboard import bp_dash
         from .blueprints.api_misc import bp_api
         from .blueprints.duplicates import bp_duplicates
+        from .blueprints.help import bp_help
 
         app.register_blueprint(bp_main)
         app.register_blueprint(bp_cache)
         app.register_blueprint(bp_admin)
         app.register_blueprint(bp_auth)
         app.register_blueprint(bp_works)
-        app.register_blueprint(bp_fund)
         app.register_blueprint(bp_export)
         app.register_blueprint(bp_dash)
         app.register_blueprint(bp_api)
         app.register_blueprint(bp_duplicates)
+        app.register_blueprint(bp_help)
 
         try:
             from .commands import register_commands

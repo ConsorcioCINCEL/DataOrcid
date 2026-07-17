@@ -13,6 +13,7 @@ from urllib.parse import quote
 
 import requests
 from flask import current_app
+from sqlalchemy import func
 
 from .. import db
 from ..models import (
@@ -22,6 +23,7 @@ from ..models import (
     OpenAlexWorkMetadata,
     OpenAlexWorkRawCache,
     WorkCache,
+    utc_now,
 )
 
 logger = logging.getLogger(__name__)
@@ -319,7 +321,7 @@ def extract_work_metadata(payload: dict, doi: str) -> dict:
         "primary_topic_field": field.get("display_name"),
         "primary_topic_domain": domain.get("display_name"),
         "raw_updated_date": _parse_openalex_datetime(payload.get("updated_date")),
-        "fetched_at": datetime.utcnow(),
+        "fetched_at": utc_now(),
     }
 
 
@@ -407,7 +409,7 @@ def should_refresh_raw(raw_row: OpenAlexWorkRawCache | None, stale_days: int, fo
         return False
     if not raw_row.fetched_at:
         return True
-    return raw_row.fetched_at < datetime.utcnow() - timedelta(days=stale_days)
+    return raw_row.fetched_at < utc_now() - timedelta(days=stale_days)
 
 
 def _openalex_worker_count(workers: int | None = None) -> int:
@@ -446,7 +448,7 @@ def sync_work_by_doi(
 
     client = client or OpenAlexClient.from_current_app()
     result = client.fetch_work_by_doi(normalized_doi)
-    now = datetime.utcnow()
+    now = utc_now()
 
     if not raw_row:
         raw_row = OpenAlexWorkRawCache(doi_normalized=normalized_doi)
@@ -497,7 +499,7 @@ def sync_work_by_title(
 
     client = client or OpenAlexClient.from_current_app()
     result = client.search_works_by_title(title)
-    now = datetime.utcnow()
+    now = utc_now()
 
     if not raw_row:
         raw_row = OpenAlexWorkRawCache(doi_normalized=cache_key)
@@ -625,7 +627,8 @@ def _replace_work_dimensions(doi_normalized: str, payload: dict) -> tuple[int, i
     openalex_id = _short_openalex_id(payload.get("id"))
     institution_map = {}
     author_rows = []
-    now = datetime.utcnow()
+    author_keys = set()
+    now = utc_now()
 
     for authorship in payload.get("authorships") or []:
         author = authorship.get("author") or {}
@@ -652,21 +655,29 @@ def _replace_work_dimensions(doi_normalized: str, payload: dict) -> tuple[int, i
         has_chile_affiliation = "CL" in countries
 
         if has_chile_affiliation:
-            author_rows.append(OpenAlexWorkAuthor(
-                doi_normalized=doi_normalized,
-                openalex_id=openalex_id,
-                author_id=_short_openalex_id(author.get("id")),
-                author_name=author.get("display_name"),
-                orcid=_normalize_orcid(author.get("orcid") or authorship.get("raw_orcid")),
-                raw_author_name=authorship.get("raw_author_name"),
-                author_position=authorship.get("author_position"),
-                is_corresponding=bool(authorship.get("is_corresponding")),
-                has_chile_affiliation=has_chile_affiliation,
-                countries=countries or None,
-                institution_rors=institution_rors or None,
-                institution_names=institution_names or None,
-                created_at=now,
-            ))
+            author_id = _short_openalex_id(author.get("id"))
+            author_orcid = _normalize_orcid(author.get("orcid") or authorship.get("raw_orcid"))
+            author_key = author_id or author_orcid or (
+                (author.get("display_name") or authorship.get("raw_author_name") or "").strip().lower(),
+                authorship.get("author_position"),
+            )
+            if author_key not in author_keys:
+                author_keys.add(author_key)
+                author_rows.append(OpenAlexWorkAuthor(
+                    doi_normalized=doi_normalized,
+                    openalex_id=openalex_id,
+                    author_id=author_id,
+                    author_name=author.get("display_name"),
+                    orcid=author_orcid,
+                    raw_author_name=authorship.get("raw_author_name"),
+                    author_position=authorship.get("author_position"),
+                    is_corresponding=bool(authorship.get("is_corresponding")),
+                    has_chile_affiliation=has_chile_affiliation,
+                    countries=countries or None,
+                    institution_rors=institution_rors or None,
+                    institution_names=institution_names or None,
+                    created_at=now,
+                ))
 
         for institution in institutions:
             institution_id = _short_openalex_id(institution.get("id"))
@@ -753,11 +764,62 @@ def rebuild_openalex_dimensions(
             progress(processed, author_rows, institution_rows, last_id)
 
     db.session.commit()
+    integrity = repair_openalex_integrity()
     return {
         "processed": processed,
         "author_rows": author_rows,
         "institution_rows": institution_rows,
+        "integrity": integrity,
     }
+
+
+def repair_openalex_integrity() -> dict:
+    """Remove orphaned and duplicate OpenAlex dimension rows."""
+    orphan_authors = OpenAlexWorkAuthor.query.filter(
+        ~db.session.query(OpenAlexWorkMetadata.id)
+        .filter(OpenAlexWorkMetadata.doi_normalized == OpenAlexWorkAuthor.doi_normalized)
+        .exists()
+    ).delete(synchronize_session=False)
+    orphan_institutions = OpenAlexWorkInstitution.query.filter(
+        ~db.session.query(OpenAlexWorkMetadata.id)
+        .filter(OpenAlexWorkMetadata.doi_normalized == OpenAlexWorkInstitution.doi_normalized)
+        .exists()
+    ).delete(synchronize_session=False)
+
+    duplicate_authors = _delete_duplicate_dimension_rows(
+        OpenAlexWorkAuthor,
+        (OpenAlexWorkAuthor.doi_normalized, OpenAlexWorkAuthor.author_id),
+        OpenAlexWorkAuthor.author_id.isnot(None),
+    )
+    duplicate_institutions = _delete_duplicate_dimension_rows(
+        OpenAlexWorkInstitution,
+        (OpenAlexWorkInstitution.doi_normalized, OpenAlexWorkInstitution.institution_id),
+        OpenAlexWorkInstitution.institution_id.isnot(None),
+    )
+    db.session.commit()
+    return {
+        "orphan_authors_removed": int(orphan_authors or 0),
+        "orphan_institutions_removed": int(orphan_institutions or 0),
+        "duplicate_authors_removed": duplicate_authors,
+        "duplicate_institutions_removed": duplicate_institutions,
+    }
+
+
+def _delete_duplicate_dimension_rows(model, group_columns, eligibility) -> int:
+    duplicate_groups = (
+        db.session.query(*group_columns, func.min(model.id).label("keep_id"))
+        .filter(eligibility)
+        .group_by(*group_columns)
+        .having(func.count(model.id) > 1)
+        .all()
+    )
+    removed = 0
+    for group in duplicate_groups:
+        filters = [column == value for column, value in zip(group_columns, group[:-1])]
+        removed += model.query.filter(*filters, model.id != group.keep_id).delete(
+            synchronize_session=False
+        )
+    return removed
 
 
 def collect_work_dois(ror_id: str | None = None, articles_only: bool = True) -> tuple[int, list[dict]]:
@@ -937,7 +999,7 @@ def sync_openalex_works(
         run.error_count = summary["error_count"]
         run.skipped_count = summary["skipped_count"]
         run.error = summary["error"]
-        run.finished_at = datetime.utcnow()
+        run.finished_at = utc_now()
         db.session.add(run)
         db.session.commit()
 
@@ -1016,7 +1078,7 @@ def sync_openalex_title_matches(
         run.error_count = summary["error_count"]
         run.skipped_count = summary["skipped_count"]
         run.error = summary["error"]
-        run.finished_at = datetime.utcnow()
+        run.finished_at = utc_now()
         db.session.add(run)
         db.session.commit()
 

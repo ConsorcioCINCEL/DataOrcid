@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 _CACHED_TOKEN: Optional[str] = None
 _TOKEN_EXPIRY: float = 0
 _TOKEN_LOCK = threading.Lock()
+_PROFILE_CACHE: dict[tuple[str, str], tuple[float, Dict]] = {}
+_PROFILE_CACHE_LOCK = threading.Lock()
 
 
 class OrcidSearchError(RuntimeError):
@@ -302,16 +304,37 @@ def fetch_single_profile(orcid_id: str, base_url: str, token: str) -> Dict:
     return {}
 
 
-def get_full_orcid_profile(orcid_id: str) -> Dict:
-    """Fetch a single ORCID profile using the configured Member API."""
+def get_full_orcid_profile(orcid_id: str, force_refresh: bool = False) -> Dict:
+    """Return a short-lived cached ORCID profile from the configured Member API."""
     member_url = current_app.config.get('ORCID_MEMBER_URL')
-    token = get_client_credentials_token()
-    
-    if not member_url or not token:
-        logger.error("Configuration Error: Missing Member API URL or Token.")
+    if not member_url:
+        logger.error("Configuration Error: Missing Member API URL.")
         return {}
 
-    return fetch_single_profile(orcid_id, member_url, token)
+    normalized_orcid = (orcid_id or "").strip()
+    cache_key = (member_url.rstrip("/"), normalized_orcid)
+    now = time.monotonic()
+    ttl = max(int(current_app.config.get("ORCID_PROFILE_CACHE_TTL", 900)), 0)
+
+    if not force_refresh and ttl:
+        with _PROFILE_CACHE_LOCK:
+            cached = _PROFILE_CACHE.get(cache_key)
+            if cached and cached[0] > now:
+                return cached[1]
+
+    token = get_client_credentials_token()
+    if not token:
+        logger.error("Configuration Error: Missing ORCID API token.")
+        return {}
+
+    profile = fetch_single_profile(normalized_orcid, member_url, token)
+    if profile and ttl:
+        with _PROFILE_CACHE_LOCK:
+            _PROFILE_CACHE[cache_key] = (now + ttl, profile)
+            expired_keys = [key for key, value in _PROFILE_CACHE.items() if value[0] <= now]
+            for key in expired_keys:
+                _PROFILE_CACHE.pop(key, None)
+    return profile
 
 
 def get_all_profiles_concurrently(orcid_ids: List[str], max_workers: int = 10) -> Dict[str, Dict]:

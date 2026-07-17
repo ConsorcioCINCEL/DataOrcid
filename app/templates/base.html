@@ -1,13 +1,19 @@
+{% from 'components/ui.html' import flash_messages %}
 <!DOCTYPE html>
-<html lang="{{ session.get('locale') or 'es' }}">
+<html lang="{{ session.get('locale') or 'en' }}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}DataOrcid Chile{% endblock %}</title>
+  <title>{% block title %}Data ORCID-Chile{% endblock %}</title>
 
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@200;300;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+  {% if session.get('logged_in') and session.get('is_admin') %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+  {% endif %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
   
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -16,33 +22,28 @@
 </head>
 
 {% set logged_in = session.get('logged_in') %}
-<body class="hold-transition {% if logged_in %}sidebar-mini layout-fixed{% else %}layout-top-nav{% endif %}">
+<body class="hold-transition {% if logged_in %}sidebar-mini layout-fixed app-shell{% else %}layout-top-nav{% endif %}">
+<a class="app-skip-link" href="#main-content">{{ _('Skip to main content') }}</a>
 <div class="wrapper">
 
   {% if logged_in %}
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <ul class="navbar-nav">
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light app-topbar" aria-label="{{ _('Application toolbar') }}">
+    <ul class="navbar-nav align-items-center">
       <li class="nav-item">
-        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-      </li>
-      <li class="nav-item d-none d-sm-inline-block">
-        <a href="{{ url_for('main.index') }}" class="nav-link">{{ _('Home') }}</a>
+        <a class="nav-link app-menu-toggle" data-widget="pushmenu" href="#" role="button" aria-label="{{ _('Toggle navigation') }}">
+          <i class="fas fa-bars" aria-hidden="true"></i>
+        </a>
       </li>
     </ul>
 
-    {# --- INSTITUTION CONTEXT & STATUS --- #}
-    <div class="d-flex align-items-center ml-3">
+    {# Institution context #}
+    <div class="app-institution-context">
         {% if session.get('is_admin') %}
-            {# Admin: Show Selector #}
-            <form method="post" id="formSelectROR" class="form-inline">
+            <form method="post" id="formSelectROR" class="app-institution-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <div class="input-group input-group-sm">
-                <div class="input-group-prepend">
-                    <span class="input-group-text bg-light" title="{{ _('Switch Institution') }}">
-                        <i class="fas fa-university text-primary"></i>
-                    </span>
-                </div>
-                <select class="form-control" id="rorSelector" style="min-width: 200px; max-width: 300px;">
+              <i class="fas fa-university" aria-hidden="true"></i>
+              <label class="sr-only" for="rorSelector">{{ _('Switch institution') }}</label>
+              <select class="form-control" id="rorSelector">
                   {% if institutions %}
                     {% for inst in institutions %}
                       <option value="{{ inst.ror_id }}" {% if inst.ror_id == session.get('admin_selected_ror') %}selected{% endif %}>
@@ -52,71 +53,91 @@
                   {% else %}
                     <option value="">{{ _('Loading...') }}</option>
                   {% endif %}
-                </select>
-              </div>
+              </select>
             </form>
         {% else %}
-            {# Standard User: Show Static Name #}
-            <div class="d-flex align-items-center bg-light rounded px-3 py-1 border shadow-sm">
-                <i class="fas fa-university text-primary mr-2"></i>
-                <span class="font-weight-bold text-dark text-truncate" style="max-width: 350px;">
+            <div class="app-institution-name">
+                <i class="fas fa-university" aria-hidden="true"></i>
+                <span>
                     {{ session.get('institution_name') or _('My Institution') }}
                 </span>
             </div>
         {% endif %}
-
-        {% if last_works_update %}
-            <span class="navbar-text ml-3 small text-muted d-none d-md-inline-block" title="{{ _('Last data synchronization') }}">
-                <i class="far fa-clock mr-1"></i> {{ _('Updated:') }} {{ last_works_update|datetimeformat }}
-            </span>
-        {% endif %}
     </div>
 
-    <ul class="navbar-nav ml-auto">
+    <ul class="navbar-nav ml-auto align-items-center app-topbar-actions">
+      {% if global_data_health and global_data_health.has_data %}
+      <li class="nav-item d-none d-lg-flex app-topbar-status {{ global_data_health_ui.css }}" title="{{ _('Institutional data status') }}">
+        <i class="{{ global_data_health_ui.icon }}" aria-hidden="true"></i>
+        <span>
+          {% if global_data_health.state == 'current' %}{{ _('Data up to date') }}
+          {% elif global_data_health.state == 'stale' %}{{ _('Update recommended') }}
+          {% elif global_data_health.state == 'running' %}{{ _('Synchronizing data') }}
+          {% elif global_data_health.state == 'partial' %}{{ _('Partial data') }}
+          {% elif global_data_health.state == 'failed' %}{{ _('Data needs attention') }}
+          {% else %}{{ _('Synchronization pending') }}{% endif %}
+        </span>
+      </li>
+      {% endif %}
       <li class="nav-item dropdown">
-        <a class="nav-link" data-toggle="dropdown" href="#">
-          <i class="fas fa-globe text-primary"></i>
-          <span class="ml-1 text-uppercase font-weight-bold small">{{ session.get('locale') or 'es' }}</span>
+        <a class="nav-link app-topbar-language" data-toggle="dropdown" href="#" aria-label="{{ _('Change language') }}">
+          <i class="fas fa-globe" aria-hidden="true"></i>
+          <span>{{ (session.get('locale') or 'en')|upper }}</span>
+          <i class="fas fa-chevron-down app-dropdown-caret" aria-hidden="true"></i>
         </a>
-        <div class="dropdown-menu dropdown-menu-right p-0">
-          <a href="{{ url_for(request.endpoint, lang='es', **(request.view_args or {})) }}" 
-             class="dropdown-item {% if (session.get('locale') or 'es') == 'es' %}active{% endif %}">
-             🇪🇸 Español
+        <div class="dropdown-menu dropdown-menu-right app-dropdown-menu">
+          <a href="{{ locale_url('en') }}"
+             class="dropdown-item {% if (session.get('locale') or 'en') == 'en' %}active{% endif %}">
+             {{ _('English') }}
           </a>
-          <a href="{{ url_for(request.endpoint, lang='en', **(request.view_args or {})) }}" 
-             class="dropdown-item {% if session.get('locale') == 'en' %}active{% endif %}">
-             🇺🇸 English
+          <a href="{{ locale_url('es') }}"
+             class="dropdown-item {% if session.get('locale') == 'es' %}active{% endif %}">
+             {{ _('Spanish') }}
           </a>
         </div>
       </li>
 
-      <li class="nav-item">
-        <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}" title="{{ _('Logout') }}">
-          <i class="fas fa-sign-out-alt"></i>
+      <li class="nav-item dropdown">
+        <a class="nav-link app-user-menu" data-toggle="dropdown" href="#" aria-label="{{ _('Open user menu') }}">
+          <i class="far fa-user-circle app-user-icon" aria-hidden="true"></i>
+          <span class="app-user-name d-none d-md-inline" title="{{ session.get('username') }}">
+            {{ session.get('display_name') or session.get('first_name') or session.get('username') }}
+          </span>
+          <i class="fas fa-chevron-down app-dropdown-caret" aria-hidden="true"></i>
         </a>
+        <div class="dropdown-menu dropdown-menu-right app-dropdown-menu app-user-dropdown">
+          <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+            <i class="fas fa-user-edit" aria-hidden="true"></i> {{ _('Edit profile') }}
+          </a>
+          <a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
+            <i class="fas fa-key" aria-hidden="true"></i> {{ _('Change password') }}
+          </a>
+          <div class="dropdown-divider"></div>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="dropdown-item text-danger" type="submit">
+              <i class="fas fa-sign-out-alt" aria-hidden="true"></i> {{ _('Sign out') }}
+            </button>
+          </form>
+        </div>
       </li>
     </ul>
   </nav>
 
-  <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="{{ url_for('main.index') }}" class="brand-link text-center">
-      <span class="brand-text font-weight-light">DataOrcid-<strong>Chile</strong></span>
+  <aside class="main-sidebar sidebar-dark-primary sidebar-no-expand app-sidebar">
+    <a href="{{ url_for('main.index') }}" class="brand-link app-brand" aria-label="Data ORCID-Chile">
+      <span class="app-brand-full" aria-hidden="true">
+        <span class="app-brand-wordmark">
+          <span class="app-brand-data">DATA</span><span class="app-brand-orcid">ORCID</span>
+        </span>
+        <span class="app-brand-country">Chile</span>
+      </span>
+      <span class="app-brand-compact" aria-hidden="true"><span>D</span><strong>O</strong></span>
     </a>
 
     <div class="sidebar">
-      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-        <div class="image">
-          <div class="bg-primary img-circle elevation-2 d-flex align-items-center justify-content-center" style="width:34px; height:34px;">
-            <i class="fas fa-user"></i>
-          </div>
-        </div>
-        <div class="info">
-          <a href="{{ url_for('auth.change_password') }}" class="d-block small">{{ session.get('username') }}</a>
-        </div>
-      </div>
-
-      <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+      <nav class="app-sidebar-nav" aria-label="{{ _('Primary navigation') }}">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" data-accordion="true">
             {% include "layout/sidebar.html" %}
         </ul>
       </nav>
@@ -125,33 +146,27 @@
   {% endif %}
 
   <div class="content-wrapper">
+    <main id="main-content" tabindex="-1">
     {% if logged_in %}
     <div class="content-header">
       <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
+        <div class="app-page-header">
+          <div class="app-page-heading">
             {% block header_title %}{% endblock %}
           </div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
+          <div class="app-page-actions">
+            {% block header_actions %}
+            <ol class="breadcrumb">
               {% block breadcrumb %}
                 <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
               {% endblock %}
             </ol>
+            {% endblock %}
           </div>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=True) %}
-          {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ 'danger' if category in ['error','danger'] else category }} alert-dismissible fade show shadow-sm" role="alert">
-              {{ message }}
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            {% endfor %}
-          {% endif %}
+          {{ flash_messages(messages) }}
         {% endwith %}
       </div>
     </div>
@@ -162,13 +177,14 @@
         {% block content %}{% endblock %}
       </div>
     </section>
+    </main>
   </div>
 
-  <footer class="main-footer text-sm">
+  <footer class="main-footer text-sm app-footer">
     <div class="float-right d-none d-sm-block">
-        <b>Version</b> 1.2.0
+        <b>{{ _('Version') }}</b> {{ config.get('APP_VERSION', '2.0') }}
     </div>
-    <strong>Copyright &copy; 2026 <a href="#">Data ORCID-Chile</a>.</strong>
+    <strong>&copy; 2026 <a href="{{ url_for('main.index') }}">Data ORCID-Chile</a>.</strong>
     
     <span class="text-muted ml-md-4 pl-md-4 border-left d-block d-md-inline-block mt-2 mt-md-0">
         <i class="fas fa-headset mr-1 text-secondary"></i>
@@ -181,10 +197,57 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+{% if logged_in and session.get('is_admin') %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endif %}
 
 <script>
   $(function () {
-    $('#rorSelector').on('change', function() {
+    const $rorSelector = $('#rorSelector');
+
+    $('[data-app-chart-help]').popover({
+      container: 'body',
+      html: true,
+      template: '<div class="popover app-chart-help-popover" role="tooltip"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
+    });
+
+    $('.table-responsive').each(function () {
+      if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'region');
+      if (!this.hasAttribute('aria-label')) {
+        this.setAttribute('aria-label', {{ _('Scrollable data table') | tojson }});
+      }
+    });
+
+    $('.app-sidebar-group').each(function () {
+      const group = this;
+      const link = group.querySelector(':scope > .nav-link');
+      if (!link) return;
+      const updateExpandedState = function () {
+        link.setAttribute('aria-expanded', group.classList.contains('menu-open') ? 'true' : 'false');
+      };
+      updateExpandedState();
+      new MutationObserver(updateExpandedState).observe(group, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    });
+
+    if ($rorSelector.length && $.fn.select2) {
+      $rorSelector.select2({
+        width: '100%',
+        minimumResultsForSearch: 7,
+        language: {
+          noResults: function () { return {{ _('No institutions found') | tojson }}; }
+        }
+      });
+
+      $rorSelector.on('select2:open', function () {
+        $('.select2-search__field').attr('placeholder', {{ _('Search institutions...') | tojson }});
+      });
+    }
+
+    $rorSelector.on('change', function() {
       const rorId = $(this).val();
       if (!rorId) return;
       
@@ -198,5 +261,6 @@
 </script>
 
 {% block scripts %}{% endblock %}
+<script src="{{ url_for('static', filename='js/chart_exports.js') }}"></script>
 </body>
 </html>

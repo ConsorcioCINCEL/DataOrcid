@@ -1,9 +1,13 @@
 {% extends 'base.html' %}
+{% from 'components/ui.html' import chart_exports %}
 
 {% block title %}{{ _('Metrics Dashboard · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-<h1 class="m-0 text-dark">{{ _('ORCID Metrics Dashboard') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('ORCID metrics dashboard') }}</h1>
+  <p>{{ _('Review the principal indicators available for the active institution.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -13,53 +17,34 @@
 
 {% block content %}
 {# ======= Summary Widgets ======= #}
-<div class="row">
-    <div class="col-md-3 col-sm-6 col-12">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-primary"><i class="fas fa-book"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ _('Total Works') }}</span>
-                <span class="info-box-number" id="widget-total-works">0</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 col-12">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-success"><i class="fas fa-hand-holding-usd"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ _('Total Fundings') }}</span>
-                <span class="info-box-number" id="widget-total-fund">0</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 col-12">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-info"><i class="fas fa-user-graduate"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ _('Active Researchers') }}</span>
-                <span class="info-box-number">{{ researcher_count or 0 }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 col-12">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-warning"><i class="fas fa-calendar-check"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ _('Last Update') }}</span>
-                <span class="info-box-number small">{{ last_works_update|datetimeformat if last_works_update else '—' }}</span>
-            </div>
-        </div>
-    </div>
-</div>
+<section class="app-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Metrics') }}">
+    <article class="app-kpi">
+        <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-book"></i></span>
+        <div><span class="app-kpi-label">{{ _('Total Works') }}</span><strong id="widget-total-works">0</strong></div>
+    </article>
+    <article class="app-kpi">
+        <span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-hand-holding-usd"></i></span>
+        <div><span class="app-kpi-label">{{ _('Total Fundings') }}</span><strong id="widget-total-fund">0</strong></div>
+    </article>
+    <article class="app-kpi">
+        <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-user-graduate"></i></span>
+        <div><span class="app-kpi-label">{{ _('Active Researchers') }}</span><strong>{{ researcher_count or 0 }}</strong></div>
+    </article>
+    <article class="app-kpi">
+        <span class="app-kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+        <div><span class="app-kpi-label">{{ _('Last Update') }}</span><strong class="small">{{ last_works_update|datetimeformat if last_works_update else '—' }}</strong></div>
+    </article>
+</section>
 
 {# ======= Charts Row 1: Production Trends ======= #}
 <div class="row">
     <div class="col-lg-8">
         <div class="card card-outline card-primary shadow-sm">
-            <div class="card-header border-0">
+            <div class="card-header border-0 d-flex align-items-center justify-content-between">
                 <h3 class="card-title font-weight-bold">
                     <i class="fas fa-chart-line mr-2"></i> {{ _('Institutional Production Trend') }}
                 </h3>
+                {{ chart_exports('chartProductionYear') }}
             </div>
             <div class="card-body">
                 <div style="height: 300px;">
@@ -70,10 +55,11 @@
     </div>
     <div class="col-lg-4">
         <div class="card card-outline card-primary shadow-sm">
-            <div class="card-header border-0">
+            <div class="card-header border-0 d-flex align-items-center justify-content-between">
                 <h3 class="card-title font-weight-bold">
                     <i class="fas fa-chart-pie mr-2"></i> {{ _('Work Types') }}
                 </h3>
+                {{ chart_exports('chartWorkTypes') }}
             </div>
             <div class="card-body">
                 <div style="height: 300px;">
@@ -88,10 +74,11 @@
 <div class="row">
     <div class="col-lg-6">
         <div class="card shadow-sm h-100">
-            <div class="card-header bg-white">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
                 <h3 class="card-title font-weight-bold">
                     <i class="fas fa-donate mr-2"></i> {{ _('Funding by Year') }}
                 </h3>
+                {{ chart_exports('chartFundingYear') }}
             </div>
             <div class="card-body">
                 <div style="height: 250px;">
@@ -132,6 +119,8 @@
 
 <script>
 $(function() {
+    Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+    Chart.defaults.color = '#5d6875';
     const CIN_ORANGE = '#EF5A2F';
     const CIN_BLUE   = '#2a69b8';
     const palette    = [CIN_ORANGE, CIN_BLUE, '#17a2b8', '#6610f2', '#e83e8c', '#fd7e14', '#20c997', '#ffc107'];

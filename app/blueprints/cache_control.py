@@ -1,14 +1,14 @@
 """Admin web endpoints for Member API cache rebuilds."""
 
 import logging
-import datetime as dt
 from flask import Blueprint, redirect, url_for, session, current_app, request
 from flask_babel import _
 
 from .. import db
 from ..decorators import login_required
-from ..models import WorkCacheRun, FundingCacheRun
+from ..models import FundingCacheRun, WorkCacheRun, utc_now
 from ..services.cache_service import build_works_cache_for_ror, build_fundings_cache_for_ror
+from ..services.background_jobs import submit_background_job
 from ..services.orcid_service import get_client_credentials_token
 from ..utils.session_helpers import get_active_ror_id
 from ..utils.flashes import flash_err, flash_success
@@ -61,7 +61,7 @@ def _log_run_web(model_class, ror_id, status, count, error_msg=None):
         error_msg (str, optional): Detailed error message trace if failed.
     """
     try:
-        execution_time = dt.datetime.utcnow()
+        execution_time = utc_now()
         run = model_class(
             ror_id=ror_id,
             status=status,
@@ -75,6 +75,25 @@ def _log_run_web(model_class, ror_id, status, count, error_msg=None):
     except Exception as exc:
         db.session.rollback()
         logger.error("Failed to save execution log for ROR %s: %s", ror_id, exc)
+
+
+def _run_member_cache_rebuild(target: str, ror_id: str, base_url: str, headers: dict) -> None:
+    """Run a member API cache rebuild outside the request lifecycle."""
+    try:
+        if target == 'works':
+            count = build_works_cache_for_ror(ror_id, base_url, headers)
+            _log_run_web(WorkCacheRun, ror_id, 'success', count)
+        elif target == 'fundings':
+            count = build_fundings_cache_for_ror(ror_id, base_url, headers)
+            _log_run_web(FundingCacheRun, ror_id, 'success', count)
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception("Cache rebuild failed for target %s and ROR %s", target, ror_id)
+        log_model = WorkCacheRun if target == 'works' else FundingCacheRun
+        _log_run_web(log_model, ror_id, 'failed', 0, str(exc))
+        raise
+
+
 @bp_cache.route('/rebuild/<target>', methods=['POST'])
 @login_required
 def rebuild_cache(target):
@@ -104,32 +123,24 @@ def rebuild_cache(target):
     if not base_url or not headers:
         flash_err(_("Authentication failed: Could not obtain a valid ORCID Member Token."))
         return redirect(request.referrer or url_for('main.index'))
-    count = 0
-    try:
-        if target == 'works':
-            # Calls the optimized multithreaded service
-            count = build_works_cache_for_ror(ror_id, base_url, headers)
-            _log_run_web(WorkCacheRun, ror_id, 'success', count)
-            flash_success(_("Works cache successfully rebuilt: %(count)s records updated.", count=count))
-            
-        elif target == 'fundings':
-            # Calls the optimized multithreaded service
-            count = build_fundings_cache_for_ror(ror_id, base_url, headers)
-            _log_run_web(FundingCacheRun, ror_id, 'success', count)
-            flash_success(_("Funding cache successfully rebuilt: %(count)s records updated.", count=count))
-            
-        else:
-            flash_err(_("Invalid cache target specified: '%(target)s'.", target=target))
+    if target not in {'works', 'fundings'}:
+        flash_err(_("Invalid cache target specified: '%(target)s'.", target=target))
+        return redirect(request.referrer or url_for('main.index'))
 
-    except Exception as exc:
-        db.session.rollback()
-        logger.exception("Cache rebuild failed for target %s and ROR %s", target, ror_id)
-        
-        error_str = str(exc)
-        flash_err(_("Critical error during cache rebuild: %(error)s", error=error_str))
-        
-        # Log failure state to DB for admin review
-        log_model = WorkCacheRun if target == 'works' else FundingCacheRun
-        _log_run_web(log_model, ror_id, 'failed', 0, error_str)
+    app_obj = current_app._get_current_object()
+    job_id = submit_background_job(
+        app_obj,
+        f"member-cache-{target}-{ror_id}",
+        _run_member_cache_rebuild,
+        target,
+        ror_id,
+        base_url,
+        headers,
+        job_type=f"member_{target}_sync",
+        ror_id=ror_id,
+        requested_by_user_id=session.get("user_id"),
+        steps=[target],
+    )
+    flash_success(_("Cache rebuild started in the background. Job ID: %(job)s", job=job_id))
 
     return redirect(request.referrer or url_for('main.index'))

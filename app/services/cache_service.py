@@ -24,6 +24,7 @@ from .institution_registry_service import (
 )
 from .orcid_service import get_all_profiles_concurrently, list_orcids_for_institution
 from .ror_service import fetch_grid_from_ror
+from .data_trust_service import refresh_affiliation_evidence
 
 logger = logging.getLogger(__name__)
 ISSN_RE = re.compile(r"^\d{4}-?\d{3}[\dXx]$")
@@ -226,6 +227,13 @@ def _persist_discovered_researchers(ror_id: str, researchers: list[dict]) -> int
         association.matched_by_ror = bool(matches.get("ror"))
         association.matched_by_grid = bool(matches.get("grid"))
         association.matched_by_ringgold = bool(matches.get("ringgold"))
+        association.evidence_type = "verified_search"
+        association.evidence_sources = [
+            scheme
+            for scheme in ("ror", "grid", "ringgold")
+            if matches.get(scheme)
+        ]
+        association.is_verified = True
         association.is_active = True
         association.profile_status = "pending"
         association.profile_error = None
@@ -394,6 +402,12 @@ def _build_cache_for_ror(
                     association.profile_updated_at = now
 
                 _update_researcher_from_profile(orcid, profile, researcher_cache)
+                refresh_affiliation_evidence(
+                    institution_id,
+                    ror_id,
+                    orcid,
+                    profile,
+                )
                 status_buffer.append(
                     _extract_status_from_profile(profile, ror_id, orcid, trusted_ids)
                 )
@@ -428,6 +442,15 @@ def _build_cache_for_ror(
         db.session.rollback()
         _mark_pending_associations_failed(institution_id, str(exc))
         raise
+
+    if include_works:
+        # The source cache is already committed at this point. A canonical-layer
+        # failure must fail the job, but must not relabel successfully refreshed
+        # ORCID profiles as failed.
+        from .canonical_work_service import rebuild_canonical_works
+
+        canonical_summary = rebuild_canonical_works(ror_id)
+        result["unique_works"] = canonical_summary["unique_outputs"]
 
     logger.info(
         "Finished cache build for %s: %d researchers, %d profiles, %d works, %d fundings.",

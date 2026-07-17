@@ -1,0 +1,30 @@
+<aside class="card profile-summary-card" aria-label="{{ _('Account summary') }}">
+  <div class="card-body">
+    <div class="profile-avatar" aria-hidden="true">
+      {{ (user.first_name or user.username or '?')[:1]|upper }}{{ (user.last_name or '')[:1]|upper }}
+    </div>
+    <div class="profile-summary-copy">
+      <h2>{{ user.full_name }}</h2>
+      <p>{{ user.position or _('Position not specified') }}</p>
+    </div>
+    <div class="profile-role-tags" aria-label="{{ _('Account access') }}">
+      {% if user.is_admin %}
+      <span class="badge badge-primary">{{ _('Administrator') }}</span>
+      {% elif user.is_manager %}
+      <span class="badge badge-info">{{ _('Manager') }}</span>
+      {% else %}
+      <span class="badge badge-secondary">{{ _('User') }}</span>
+      {% endif %}
+    </div>
+    <dl class="profile-account-details">
+      <div>
+        <dt>{{ _('Institution') }}</dt>
+        <dd>{{ user.institution_name or _('Not assigned') }}</dd>
+      </div>
+      <div>
+        <dt>{{ _('Sign-in identifier') }}</dt>
+        <dd title="{{ user.username }}">{{ user.username }}</dd>
+      </div>
+    </dl>
+  </div>
+</aside>

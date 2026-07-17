@@ -1,7 +1,6 @@
 """Flask CLI commands for cache rebuilds and profile metadata sync."""
 
 import logging
-import datetime as dt
 import click
 from flask.cli import with_appcontext
 from flask import current_app
@@ -22,7 +21,7 @@ def register_commands(app):
         """Rebuild works and/or funding caches for one or all institutions."""
         # Keep imports local so CLI registration does not trigger service imports early.
         from . import db
-        from .models import WorkCacheRun, FundingCacheRun
+        from .models import FundingCacheRun, WorkCacheRun, utc_now
         from .services.cache_service import (
             build_full_cache_for_ror,
             build_fundings_cache_for_ror,
@@ -86,7 +85,7 @@ def register_commands(app):
             try:
                 if not ror_id: return
 
-                execution_time = dt.datetime.utcnow()
+                execution_time = utc_now()
                 run_log = model_class(
                     ror_id=ror_id,
                     status=status,
@@ -295,4 +294,68 @@ def register_commands(app):
         click.echo(
             "Processed: {processed} | Author rows: {author_rows} | "
             "Institution rows: {institution_rows}".format(**summary)
+        )
+
+    @app.cli.command("rebuild-data-trust")
+    @click.option("--ror", default=None, help="Target one ROR ID; omit it to process every institution.")
+    @click.option("--skip-associations", is_flag=True, help="Do not rebuild inferred researcher relationships.")
+    @click.option("--skip-works", is_flag=True, help="Do not rebuild canonical scholarly outputs.")
+    @with_appcontext
+    def rebuild_data_trust_command(ror, skip_associations, skip_works):
+        """Rebuild provenance-aware researcher links and canonical works."""
+        from .services.canonical_work_service import rebuild_canonical_works
+        from .services.data_trust_service import backfill_inferred_associations
+
+        if skip_associations and skip_works:
+            raise click.UsageError("At least one rebuild must remain enabled.")
+        if not skip_associations:
+            click.echo("Rebuilding inferred institutional researcher relationships...")
+            summary = backfill_inferred_associations(ror)
+            click.echo(
+                "Relationships: {associations} | Created: {created} | Updated: {updated}".format(
+                    **summary
+                )
+            )
+        if not skip_works:
+            click.echo("Rebuilding canonical scholarly outputs...")
+            summary = rebuild_canonical_works(ror)
+            click.echo(
+                "Source records: {source_records} | Unique outputs: {unique_outputs} | "
+                "DOI-backed: {doi_outputs}".format(**summary)
+            )
+        click.echo("Data trust layers rebuilt successfully.")
+
+    @app.cli.command("cleanup-tracking-logs")
+    @click.option("--days", default=None, type=click.IntRange(min=1), help="Override the configured retention period.")
+    @click.option("--dry-run", is_flag=True, help="Count eligible rows without deleting them.")
+    @with_appcontext
+    def cleanup_tracking_logs_command(days, dry_run):
+        """Delete usage logs older than the configured retention period."""
+        from datetime import timedelta
+
+        from . import db
+        from .models import TrackingLog, utc_now
+
+        retention_days = days or int(current_app.config.get("TRACKING_RETENTION_DAYS", 90))
+        cutoff = utc_now() - timedelta(days=retention_days)
+        query = TrackingLog.query.filter(TrackingLog.timestamp < cutoff)
+        count = query.count()
+        if not dry_run and count:
+            query.delete(synchronize_session=False)
+            db.session.commit()
+        verb = "Would delete" if dry_run else "Deleted"
+        click.echo(f"{verb} {count} tracking log row(s) older than {retention_days} days.")
+
+    @app.cli.command("repair-openalex-integrity")
+    @with_appcontext
+    def repair_openalex_integrity_command():
+        """Remove orphaned and duplicate OpenAlex dimension rows."""
+        from .services.openalex_service import repair_openalex_integrity
+
+        summary = repair_openalex_integrity()
+        click.echo(
+            "Orphan authors: {orphan_authors_removed} | Orphan institutions: "
+            "{orphan_institutions_removed} | Duplicate authors: "
+            "{duplicate_authors_removed} | Duplicate institutions: "
+            "{duplicate_institutions_removed}".format(**summary)
         )

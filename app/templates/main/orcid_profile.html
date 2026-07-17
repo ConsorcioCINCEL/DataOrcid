@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'components/ui.html' import chart_info %}
 
 {# --- UI Macros --- #}
 {% macro safe_val(v) -%}{{ v if v not in [None, 'None', ''] else '—' }}{%- endmacro %}
@@ -26,10 +27,13 @@
 {% endfor %}
 {% set doi_percent = (works_with_doi|length / total_works * 100)|round(1) if total_works > 0 else 0 %}
 
-{% block title %}{{ _('Researcher Profile') }} · {{ safe_val(orcid_id) }}{% endblock %}
+{% block title %}{{ _('Researcher Profile') }} · {{ safe_val(orcid_id) }} · Data ORCID-Chile{% endblock %}
 
 {% block header_title %}
-  <h1 class="m-0 text-dark">{{ _('Researcher Portfolio') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('Researcher portfolio') }}</h1>
+  <p>{{ _('Review public ORCID profile details, identifiers, works, and funding records.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -39,43 +43,36 @@
 {% endblock %}
 
 {% block content %}
-<style>
-  .chart-container { position: relative; height: 240px; width: 100%; }
-  .activity-scroll { max-height: 750px; overflow-y: auto; padding-right: 10px; scrollbar-width: thin; }
-  .activity-card { border-left: 3px solid #dee2e6; transition: all 0.2s ease; margin-bottom: 1rem; border-radius: 0 4px 4px 0; }
-  .activity-card:hover { border-left-color: #2a69b8; background-color: #f8f9fa; transform: translateX(2px); }
-  .card-header-clean { background: #fff; border-bottom: 1px solid rgba(0,0,0,.05); }
-  .btn-orcid-brand { color: #A6CE39 !important; border-color: #A6CE39; font-weight: 600; }
-  .btn-orcid-brand:hover { background: #A6CE39; color: #fff !important; }
-  .doi-badge { background: rgba(42, 105, 184, 0.1); color: #2a69b8; font-weight: bold; border: 1px solid rgba(42, 105, 184, 0.2); }
-</style>
 
 {# ======= TOP HEADER CARD ======= #}
-<div class="card shadow-sm border-0 mb-4">
+<div class="card researcher-profile-hero mb-4">
     <div class="card-body p-3">
         <div class="d-flex flex-column flex-md-row align-items-center justify-content-between">
             <div class="d-flex align-items-center">
-                <div class="bg-primary elevation-2 rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 60px; height: 60px;">
+                <div class="researcher-profile-avatar mr-3" aria-hidden="true">
                     <i class="fas fa-user-graduate fa-2x text-white"></i>
                 </div>
                 <div>
-                    <h3 class="mb-0 font-weight-bold text-dark">
+                    <h2 class="researcher-profile-name">
                         {{ safe_val(name.get('given-names', {}).get('value')) }}
                         {{ safe_val(name.get('family-name', {}).get('value')) }}
-                    </h3>
+                    </h2>
                     <div class="text-muted">
                         <i class="fab fa-orcid text-success mr-1"></i> 
-                        <a href="https://orcid.org/{{ orcid_id }}" target="_blank" class="text-muted">orcid.org/{{ orcid_id }}</a>
+                        <a href="https://orcid.org/{{ orcid_id }}" target="_blank" rel="noopener" class="text-muted">orcid.org/{{ orcid_id }}</a>
                     </div>
                 </div>
             </div>
             
-            <div class="mt-3 mt-md-0 d-flex">
-                <a href="{{ url_for('export.download_excel', orcid_id=orcid_id) }}" class="btn btn-success font-weight-bold shadow-sm mr-2">
-                    <i class="fas fa-file-excel mr-1"></i> {{ _('Download Full Report') }}
+            <div class="researcher-profile-actions mt-3 mt-md-0 d-flex">
+                <a href="{{ url_for('main.orcid_profile', orcid_id=orcid_id, refresh=1) }}" class="btn btn-outline-primary font-weight-bold mr-2">
+                    <i class="fas fa-sync-alt mr-1" aria-hidden="true"></i> {{ _('Refresh from ORCID') }}
                 </a>
-                <a href="https://orcid.org/{{ orcid_id }}" target="_blank" class="btn btn-outline-dark btn-orcid-brand shadow-sm">
-                    <img src="https://orcid.org/assets/vectors/orcid.logo.icon.svg" width="16" class="mr-1"> ORCID.org
+                <a href="{{ url_for('export.download_excel', orcid_id=orcid_id) }}" class="btn btn-success font-weight-bold shadow-sm mr-2">
+                    <i class="fas fa-file-excel mr-1" aria-hidden="true"></i> {{ _('Download full report') }}
+                </a>
+                <a href="https://orcid.org/{{ orcid_id }}" target="_blank" rel="noopener" class="btn btn-orcid-brand shadow-sm">
+                    <i class="fab fa-orcid mr-1" aria-hidden="true"></i> ORCID.org
                 </a>
             </div>
         </div>
@@ -86,15 +83,17 @@
     {# ======= SIDEBAR: IDENTITY & DOI KPI ======= #}
     <div class="col-lg-4">
         {# DOI Coverage KPI #}
-        <div class="info-box shadow-sm mb-4">
-            <span class="info-box-icon bg-primary"><i class="fas fa-fingerprint"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('DOI Coverage') }}</span>
-                <span class="info-box-number" style="font-size: 1.5rem;">{{ doi_percent }}%</span>
-                <div class="progress"><div class="progress-bar bg-primary" style="width: {{ doi_percent }}%"></div></div>
-                <span class="progress-description small text-muted">{{ works_with_doi|length }} / {{ total_works }} {{ _('items') }}</span>
+        <section class="app-kpi-strip mb-4" style="--app-kpi-columns: 1" aria-label="{{ _('DOI Coverage') }}">
+            <article class="app-kpi">
+            <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-fingerprint"></i></span>
+            <div>
+                <span class="app-kpi-label">{{ _('DOI Coverage') }}</span>
+                <strong>{{ doi_percent }}%</strong>
+                <div class="progress" role="progressbar" aria-label="{{ _('DOI Coverage') }}" aria-valuenow="{{ doi_percent }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: {{ doi_percent }}%"></div></div>
+                <small>{{ works_with_doi|length }} / {{ total_works }} {{ _('items') }}</small>
             </div>
-        </div>
+            </article>
+        </section>
 
         {# Registry Metadata #}
         <div class="card shadow-sm mb-4">
@@ -118,8 +117,8 @@
             <div class="card-header card-header-clean py-2">
                 <h3 class="card-title font-weight-bold small text-uppercase text-muted"><i class="fas fa-book-open mr-2"></i> {{ _('Biography') }}</h3>
             </div>
-            <div class="card-body small text-justify text-muted" style="max-height: 250px; overflow-y: auto;">
-                {{ bio_text | safe }}
+            <div class="card-body researcher-profile-biography small text-muted" tabindex="0">
+                {{ bio_text | plain_text }}
             </div>
         </div>
         {% endif %}
@@ -135,13 +134,13 @@
             <div class="card-body pt-3">
                 {% for x in external_i %}
                 <div class="mb-2 border-bottom pb-1">
-                    <span class="text-muted d-block" style="font-size: 10px; font-weight: 800; text-uppercase;">{{ x.get('external-id-type') }}</span>
+                    <span class="researcher-profile-meta-label">{{ x.get('external-id-type') }}</span>
                     <span class="font-weight-bold small">{{ x.get('external-id-value') }}</span>
                 </div>
                 {% endfor %}
                 {% if other_n %}
                     <div class="mt-3">
-                        <span class="text-muted d-block mb-1" style="font-size: 10px; font-weight: 800; text-uppercase;">{{ _('Also known as') }}</span>
+                        <span class="researcher-profile-meta-label mb-1">{{ _('Also known as') }}</span>
                         {% for on in other_n %}<span class="badge badge-light border mr-1 mb-1">{{ on.get('content') }}</span>{% endfor %}
                     </div>
                 {% endif %}
@@ -154,33 +153,61 @@
     <div class="col-lg-8">
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header p-2 bg-white">
-                <ul class="nav nav-pills small font-weight-bold" id="profileTabs">
-                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#analytics"><i class="fas fa-chart-bar mr-1"></i> {{ _('Visual Summary') }}</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#timeline"><i class="fas fa-stream mr-1"></i> {{ _('Full Timeline') }}</a></li>
+                <ul class="nav nav-pills small font-weight-bold" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation"><a class="nav-link active" id="analyticsTab" data-toggle="tab" href="#analytics" role="tab" aria-controls="analytics" aria-selected="true"><i class="fas fa-chart-bar mr-1" aria-hidden="true"></i> {{ _('Visual summary') }}</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" id="institutionTab" data-toggle="tab" href="#institutionContext" role="tab" aria-controls="institutionContext" aria-selected="false"><i class="fas fa-university mr-1" aria-hidden="true"></i> {{ _('Institutional context') }}</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" id="timelineTab" data-toggle="tab" href="#timeline" role="tab" aria-controls="timeline" aria-selected="false"><i class="fas fa-stream mr-1" aria-hidden="true"></i> {{ _('Full timeline') }}</a></li>
                 </ul>
             </div>
             <div class="card-body">
                 <div class="tab-content">
                     {# TAB: ANALYTICS #}
-                    <div class="tab-pane fade show active" id="analytics">
+                    <div class="tab-pane fade show active" id="analytics" role="tabpanel" aria-labelledby="analyticsTab">
                         <div class="row">
                             {% if total_works > 0 %}
                             <div class="col-md-6 mb-4">
-                                <h6 class="text-center font-weight-bold text-muted small mb-3 text-uppercase">{{ _('Works by Type') }}</h6>
-                                <div class="chart-container"><canvas id="chartWorksByType"></canvas></div>
+                                <section class="researcher-chart-panel" aria-labelledby="profileWorksTypeTitle">
+                                    <div class="researcher-chart-heading">
+                                        <h3 id="profileWorksTypeTitle">{{ _('Works by Type') }}</h3>
+                                        {{ chart_info(
+                                            _('Distribution of the public work summaries visible in this ORCID profile.'),
+                                            _('Counts each visible ORCID work summary by its source work type. Missing types are grouped as other; this profile view does not deduplicate canonical outputs.'),
+                                            'top'
+                                        ) }}
+                                    </div>
+                                    <div class="chart-container"><canvas id="chartWorksByType" role="img" aria-label="{{ _('Works by Type') }}"></canvas></div>
+                                </section>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <h6 class="text-center font-weight-bold text-muted small mb-3 text-uppercase">{{ _('Production Timeline') }}</h6>
-                                <div class="chart-container"><canvas id="chartWorksByYear"></canvas></div>
+                                <section class="researcher-chart-panel" aria-labelledby="profileWorksTimelineTitle">
+                                    <div class="researcher-chart-heading">
+                                        <h3 id="profileWorksTimelineTitle">{{ _('Production Timeline') }}</h3>
+                                        {{ chart_info(
+                                            _('Annual volume of the public work summaries visible in this ORCID profile.'),
+                                            _('Counts visible ORCID work summaries by publication year and excludes records without a valid numeric year. The most recent year may still be incomplete.'),
+                                            'top'
+                                        ) }}
+                                    </div>
+                                    <div class="chart-container"><canvas id="chartWorksByYear" role="img" aria-label="{{ _('Production Timeline') }}"></canvas></div>
+                                </section>
                             </div>
                             {% endif %}
 
-                            <div class="col-12 mt-4"><hr></div>
-                            <div class="col-md-6 offset-md-3 mb-4 text-center">
-                                <h6 class="font-weight-bold text-muted small mb-3 text-uppercase">{{ _('Funding Distribution') }}</h6>
-                                <div class="chart-container" id="fundingContainer">
-                                    <canvas id="chartFundingsByType"></canvas>
-                                </div>
+                            <div class="col-12 mt-2"><hr></div>
+                            <div class="col-md-6 offset-md-3 mb-4">
+                                <section class="researcher-chart-panel" aria-labelledby="profileFundingTypeTitle">
+                                    <div class="researcher-chart-heading">
+                                        <h3 id="profileFundingTypeTitle">{{ _('Funding Distribution') }}</h3>
+                                        {{ chart_info(
+                                            _('Distribution of the public funding summaries visible in this ORCID profile.'),
+                                            _('Counts each visible ORCID funding summary by its source funding type. Missing types are grouped as other; amounts and grant relationships are not inferred.'),
+                                            'top'
+                                        ) }}
+                                    </div>
+                                    <div class="chart-container" id="fundingContainer">
+                                        <canvas id="chartFundingsByType" role="img" aria-label="{{ _('Funding Distribution') }}"></canvas>
+                                    </div>
+                                </section>
                             </div>
 
                             {% if total_works == 0 %}
@@ -192,8 +219,50 @@
                         </div>
                     </div>
 
+                    <div class="tab-pane fade" id="institutionContext" role="tabpanel" aria-labelledby="institutionTab">
+                        <section class="app-kpi-strip mb-4" style="--app-kpi-columns: 3" aria-label="{{ _('Institutional context') }}">
+                            <article class="app-kpi"><span class="app-kpi-icon is-blue"><i class="fas fa-book"></i></span><div><span class="app-kpi-label">{{ _('Unique scholarly outputs') }}</span><strong>{{ local_context.unique_outputs }}</strong><small>{{ local_context.source_work_records }} {{ _('source ORCID records') }}</small></div></article>
+                            <article class="app-kpi"><span class="app-kpi-icon is-green"><i class="fas fa-hand-holding-usd"></i></span><div><span class="app-kpi-label">{{ _('Funding records') }}</span><strong>{{ local_context.funding_records }}</strong><small>{{ _('Records in the active institutional scope') }}</small></div></article>
+                            <article class="app-kpi"><span class="app-kpi-icon is-orange"><i class="fas fa-link"></i></span><div><span class="app-kpi-label">{{ _('Institutional relationships') }}</span><strong>{{ local_context.relationships|length }}</strong><small>{{ _('Verified and inferred links are shown separately') }}</small></div></article>
+                        </section>
+
+                        <h3 class="h6 font-weight-bold">{{ _('Relationship evidence') }}</h3>
+                        {% if local_context.relationships %}
+                        <div class="table-responsive mb-4">
+                            <table class="table table-sm app-data-table">
+                                <thead><tr><th>{{ _('Institution') }}</th><th>{{ _('Evidence') }}</th><th>{{ _('Last observed') }}</th></tr></thead>
+                                <tbody>
+                                {% for relationship in local_context.relationships %}
+                                    <tr>
+                                        <td><strong>{{ relationship.institution }}</strong><br><small class="text-muted">ROR: {{ relationship.ror_id }}</small></td>
+                                        <td>{% if relationship.verified %}<span class="badge badge-success">{{ _('Verified') }}</span>{% else %}<span class="badge badge-warning">{{ _('Inferred') }}</span>{% endif %}<br><small class="text-muted">{{ relationship.evidence_type }}</small></td>
+                                        <td>{{ relationship.last_seen_at|datetimeformat if relationship.last_seen_at else '—' }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                            <p class="text-muted">{{ _('No institutional relationship is available in the active scope.') }}</p>
+                        {% endif %}
+
+                        <h3 class="h6 font-weight-bold">{{ _('Public ORCID affiliation history') }}</h3>
+                        {% if local_context.affiliations %}
+                            <div class="list-group list-group-flush">
+                            {% for affiliation in local_context.affiliations %}
+                                <div class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                                    <div><strong>{{ affiliation.role_title or affiliation.organization_name or _('Affiliation record') }}</strong><br><small class="text-muted">{{ affiliation.department_name or affiliation.organization_name or '—' }}</small></div>
+                                    <div class="text-right"><span class="badge {{ 'badge-success' if affiliation.is_current else 'badge-light border' }}">{{ _('Current') if affiliation.is_current else _('Historical') }}</span><br><small class="text-muted">{{ affiliation.start_year or '—' }} – {{ affiliation.end_year or _('Present') }}</small></div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">{{ _('No matching public affiliation history has been normalized yet.') }}</p>
+                        {% endif %}
+                    </div>
+
                     {# TAB: TIMELINE #}
-                    <div class="tab-pane fade" id="timeline">
+                    <div class="tab-pane fade" id="timeline" role="tabpanel" aria-labelledby="timelineTab">
                         <div class="activity-scroll">
                             {% for s_key, s_label, s_icon, s_color in [
                                 ('employments', _('Employment'), 'briefcase', 'primary'),
@@ -231,7 +300,7 @@
                                             <div class="font-weight-bold text-dark small">
                                                 {{ safe_val((item.get('title') or {}).get('title', {}).get('value') or item.get('role-title')) }}
                                             </div>
-                                            <div class="text-muted" style="font-size: 0.7rem;">
+                                                <div class="researcher-activity-meta text-muted">
                                                 <i class="fas fa-university mr-1"></i> {{ safe_val((item.get('organization') or {}).get('name')) }}
                                                 {% set start = (item.get('start-date') or {}).get('year', {}).get('value') %}
                                                 {% if start %}
@@ -242,7 +311,7 @@
                                             </div>
                                             {% if s_key == 'works' %}
                                                 {% for eid in ((item.get('external-ids') or {}).get('external-id') | default([], true)) if eid.get('external-id-type') == 'doi' %}
-                                                    <a href="https://doi.org/{{ eid.get('external-id-value') }}" target="_blank" class="badge doi-badge mt-1" style="font-size: 10px;">DOI: {{ eid.get('external-id-value') }}</a>
+                                                    <a href="https://doi.org/{{ eid.get('external-id-value') }}" target="_blank" rel="noopener" class="badge doi-badge mt-1">DOI: {{ eid.get('external-id-value') }}</a>
                                                 {% endfor %}
                                             {% endif %}
                                         </div>
@@ -265,6 +334,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script>
     $(function() {
+      Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+      Chart.defaults.color = '#5d6875';
       const COLORS = ['#2a69b8', '#EF5A2F', '#17a2b8', '#ffc107', '#28a745', '#6c757d', '#e83e8c'];
       const rawData = {{ data.get('activities', {}) | tojson | safe }};
       const safeGet = (obj, path) => path.split('.').reduce((acc, part) => acc && acc[part], obj);

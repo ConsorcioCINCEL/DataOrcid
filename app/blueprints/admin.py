@@ -3,12 +3,15 @@
 import logging
 import secrets
 import string
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
 from flask import (
     Blueprint, render_template, request, redirect,
-    url_for, session, current_app
+    url_for, session, current_app, g
 )
 from flask_babel import _
-from sqlalchemy import case, func, or_
+from sqlalchemy import case, func, not_, or_
 
 from .. import db
 from ..models import User, TrackingLog
@@ -23,6 +26,183 @@ from ..services.institution_registry_service import get_institution_by_ror, get_
 
 bp_admin = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
+
+_STATISTICS_PERIODS = {"24h", "7d", "30d", "all", "custom"}
+_STATISTICS_KINDS = {"interactive", "background", "all"}
+_STATISTICS_PER_PAGE = {25, 50, 100}
+_USER_ROLES = {"all", "admin", "manager", "user"}
+_USER_ACTIVITY_STATES = {"all", "active", "inactive", "never"}
+_USER_SORT_OPTIONS = {"created", "name", "institution", "activity"}
+_USER_PER_PAGE = {25, 50, 100}
+
+
+def _background_request_condition():
+    """Identify completed synchronization, build, and export requests."""
+    return or_(
+        TrackingLog.path.like("/openalex/sync%"),
+        TrackingLog.path.like("/cache/%build%"),
+        TrackingLog.path.like("/download/%"),
+        TrackingLog.path.like("%/export/%"),
+    )
+
+
+def _statistics_period_bounds(
+    period: str,
+    date_from: str = "",
+    date_to: str = "",
+    now_utc: datetime | None = None,
+) -> tuple[str, datetime | None, datetime | None, str, str]:
+    """Return normalized UTC-naive bounds for the activity time filter."""
+    period = period if period in _STATISTICS_PERIODS else "7d"
+    now_utc = now_utc or datetime.now(timezone.utc)
+    if now_utc.tzinfo is None:
+        now_utc = now_utc.replace(tzinfo=timezone.utc)
+
+    if period == "24h":
+        return period, (now_utc - timedelta(hours=24)).replace(tzinfo=None), None, "", ""
+    if period == "7d":
+        return period, (now_utc - timedelta(days=7)).replace(tzinfo=None), None, "", ""
+    if period == "30d":
+        return period, (now_utc - timedelta(days=30)).replace(tzinfo=None), None, "", ""
+    if period == "all":
+        return period, None, None, "", ""
+
+    try:
+        start_date = datetime.strptime(date_from, "%Y-%m-%d").date()
+        end_date = datetime.strptime(date_to, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return "7d", (now_utc - timedelta(days=7)).replace(tzinfo=None), None, "", ""
+
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date
+
+    local_tz = ZoneInfo(current_app.config.get("BABEL_DEFAULT_TIMEZONE", "America/Santiago"))
+    start_local = datetime(start_date.year, start_date.month, start_date.day, tzinfo=local_tz)
+    end_local = datetime(end_date.year, end_date.month, end_date.day, tzinfo=local_tz) + timedelta(days=1)
+    return (
+        period,
+        start_local.astimezone(timezone.utc).replace(tzinfo=None),
+        end_local.astimezone(timezone.utc).replace(tzinfo=None),
+        start_date.isoformat(),
+        end_date.isoformat(),
+    )
+
+
+def _percentile(values: list[float], quantile: float) -> float:
+    """Return a linearly interpolated percentile for non-PostgreSQL tests and deployments."""
+    if not values:
+        return 0.0
+    ordered = sorted(float(value) for value in values)
+    position = (len(ordered) - 1) * quantile
+    lower = int(position)
+    upper = min(lower + 1, len(ordered) - 1)
+    weight = position - lower
+    return ordered[lower] * (1 - weight) + ordered[upper] * weight
+
+
+def _latency_distribution(query) -> dict:
+    """Return median, p95, and maximum duration for a filtered request query."""
+    duration_query = query.with_entities(TrackingLog.duration_ms).filter(
+        TrackingLog.duration_ms.isnot(None)
+    )
+    if db.engine.dialect.name == "postgresql":
+        durations = duration_query.subquery()
+        median, p95, maximum = (
+            db.session.query(
+                func.percentile_cont(0.5).within_group(durations.c.duration_ms),
+                func.percentile_cont(0.95).within_group(durations.c.duration_ms),
+                func.max(durations.c.duration_ms),
+            )
+            .select_from(durations)
+            .one()
+        )
+        return {
+            "median": float(median or 0),
+            "p95": float(p95 or 0),
+            "maximum": float(maximum or 0),
+        }
+
+    values = [float(row[0]) for row in duration_query.all() if row[0] is not None]
+    return {
+        "median": _percentile(values, 0.5),
+        "p95": _percentile(values, 0.95),
+        "maximum": max(values, default=0.0),
+    }
+
+
+def _request_summary(query) -> dict:
+    """Build count, user, error, and latency metrics for a filtered request query."""
+    summary_rows = query.with_entities(
+        TrackingLog.username.label("username"),
+        TrackingLog.status_code.label("status_code"),
+    ).subquery()
+    total, unique_users, errors = (
+        db.session.query(
+            func.count(),
+            func.count(func.distinct(summary_rows.c.username)),
+            func.coalesce(func.sum(case((summary_rows.c.status_code >= 400, 1), else_=0)), 0),
+        )
+        .select_from(summary_rows)
+        .one()
+    )
+    total = int(total or 0)
+    errors = int(errors or 0)
+    return {
+        "total_requests": total,
+        "unique_users": int(unique_users or 0),
+        "error_requests": errors,
+        "error_rate": round((errors / total * 100), 1) if total else 0.0,
+        **_latency_distribution(query),
+    }
+
+
+def _format_latency(value: float | int | None) -> str:
+    """Format milliseconds with a readable, adaptive unit."""
+    milliseconds = float(value or 0)
+    if milliseconds < 1000:
+        return f"{milliseconds:.0f} ms"
+    if milliseconds < 60000:
+        return f"{milliseconds / 1000:.1f} s"
+    if milliseconds < 3600000:
+        return f"{milliseconds / 60000:.1f} min"
+    return f"{milliseconds / 3600000:.1f} h"
+
+
+def _user_agent_summary(value: str | None) -> str:
+    """Return a compact browser, platform, and device label."""
+    agent = value or ""
+    if "Werkzeug/" in agent:
+        return "Werkzeug · API client"
+    if "Edg/" in agent:
+        browser = "Edge"
+    elif "Chrome/" in agent:
+        browser = "Chrome"
+    elif "Firefox/" in agent:
+        browser = "Firefox"
+    elif "Safari/" in agent:
+        browser = "Safari"
+    elif agent.lower().startswith("curl/"):
+        browser = "curl"
+    else:
+        browser = (agent.split("/", 1)[0] or _("Unknown client")).strip()
+
+    if "Android" in agent:
+        platform = "Android"
+    elif any(token in agent for token in ("iPhone", "iPad", "iOS")):
+        platform = "iOS"
+    elif "Windows" in agent:
+        platform = "Windows"
+    elif "Mac OS" in agent or "Macintosh" in agent:
+        platform = "macOS"
+    elif "Linux" in agent:
+        platform = "Linux"
+    else:
+        platform = "API" if browser in {"Werkzeug", "curl"} else _("Unknown platform")
+
+    device = _("Mobile") if "Mobile" in agent else _("Desktop")
+    if browser in {"Werkzeug", "curl"}:
+        device = _("API client")
+    return f"{browser} · {platform} · {device}"
 def _require_admin_or_manager() -> bool:
     """
     Verifies if the current session belongs to an Admin or Manager.
@@ -49,6 +229,17 @@ def generate_temp_password(length: int = 12) -> str:
     """
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+def _users_return_url() -> str:
+    """Return a safe user-list URL while preserving the current filters and page."""
+    candidate = (request.form.get('return_to') or '').strip()
+    users_path = url_for('admin.users_list')
+    if candidate and candidate.split('?', 1)[0] == users_path:
+        return candidate
+    return users_path
+
+
 @bp_admin.route('/users')
 @login_required
 def users_list():
@@ -63,11 +254,26 @@ def users_list():
     if not _require_admin_or_manager():
         return redirect(url_for('main.index'))
 
-    # Search Logic
+    is_admin = bool(session.get('is_admin'))
     query_param = (request.args.get('q') or '').strip()
+    selected_role = (request.args.get('role') or 'all').strip().lower()
+    selected_role = selected_role if selected_role in _USER_ROLES else 'all'
+    selected_activity = (request.args.get('activity') or 'all').strip().lower()
+    selected_activity = selected_activity if selected_activity in _USER_ACTIVITY_STATES else 'all'
+    selected_sort = (request.args.get('sort') or 'created').strip().lower()
+    selected_sort = selected_sort if selected_sort in _USER_SORT_OPTIONS else 'created'
+    selected_institution = normalize_ror_id(request.args.get('institution')) or ''
+    page = max(request.args.get('page', 1, type=int), 1)
+    requested_per_page = request.args.get('per_page', 25, type=int)
+    per_page = requested_per_page if requested_per_page in _USER_PER_PAGE else 25
+
+    scope_filters = []
+    if not is_admin:
+        scope_filters.append(User.ror_id == session.get('ror_id'))
+
     users_query = User.query
-    if not session.get('is_admin'):
-        users_query = users_query.filter(User.ror_id == session.get('ror_id'))
+    if scope_filters:
+        users_query = users_query.filter(*scope_filters)
 
     if query_param:
         search_filter = f"%{query_param}%"
@@ -80,7 +286,79 @@ def users_list():
             )
         )
 
-    users = users_query.order_by(User.created_at.desc()).all()
+    if selected_role == 'admin':
+        users_query = users_query.filter(User.is_admin.is_(True))
+    elif selected_role == 'manager':
+        users_query = users_query.filter(User.is_manager.is_(True))
+    elif selected_role == 'user':
+        users_query = users_query.filter(
+            User.is_admin.is_(False),
+            User.is_manager.is_(False),
+        )
+
+    if selected_institution:
+        users_query = users_query.filter(User.ror_id == selected_institution)
+
+    active_cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
+    seen_usernames = (
+        db.session.query(TrackingLog.username)
+        .filter(TrackingLog.username.isnot(None), TrackingLog.username != '')
+        .distinct()
+    )
+    active_usernames = (
+        db.session.query(TrackingLog.username)
+        .filter(
+            TrackingLog.username.isnot(None),
+            TrackingLog.username != '',
+            TrackingLog.timestamp >= active_cutoff,
+        )
+        .distinct()
+    )
+
+    if selected_activity == 'active':
+        users_query = users_query.filter(User.username.in_(active_usernames))
+    elif selected_activity == 'inactive':
+        users_query = users_query.filter(
+            User.username.in_(seen_usernames),
+            not_(User.username.in_(active_usernames)),
+        )
+    elif selected_activity == 'never':
+        users_query = users_query.filter(not_(User.username.in_(seen_usernames)))
+
+    if selected_sort == 'name':
+        users_query = users_query.order_by(
+            func.lower(User.last_name).asc(),
+            func.lower(User.first_name).asc(),
+            func.lower(User.username).asc(),
+        )
+    elif selected_sort == 'institution':
+        users_query = users_query.order_by(
+            func.lower(User.institution_name).asc(),
+            func.lower(User.username).asc(),
+        )
+    elif selected_sort == 'activity':
+        last_activity = (
+            db.session.query(
+                TrackingLog.username.label('activity_username'),
+                func.max(TrackingLog.timestamp).label('last_seen'),
+            )
+            .filter(TrackingLog.username.isnot(None), TrackingLog.username != '')
+            .group_by(TrackingLog.username)
+            .subquery()
+        )
+        users_query = users_query.outerjoin(
+            last_activity,
+            last_activity.c.activity_username == User.username,
+        ).order_by(
+            case((last_activity.c.last_seen.is_(None), 1), else_=0),
+            last_activity.c.last_seen.desc(),
+            func.lower(User.username).asc(),
+        )
+    else:
+        users_query = users_query.order_by(User.created_at.desc(), User.id.desc())
+
+    pagination = users_query.paginate(page=page, per_page=per_page, error_out=False)
+    users = pagination.items
     usernames = [user.username for user in users]
     activity_rows = []
     if usernames:
@@ -98,18 +376,67 @@ def users_list():
         username: {"last_seen": last_seen, "request_count": request_count}
         for username, last_seen, request_count in activity_rows
     }
-    institution_metadata = {
-        item["ror_id"]: item
-        for item in get_institution_options()
-        if item.get("ror_id")
+
+    summary_row = (
+        db.session.query(
+            func.count(User.id),
+            func.coalesce(func.sum(case((User.is_admin.is_(True), 1), else_=0)), 0),
+            func.coalesce(func.sum(case((User.is_manager.is_(True), 1), else_=0)), 0),
+            func.coalesce(
+                func.sum(case((User.username.in_(active_usernames), 1), else_=0)),
+                0,
+            ),
+        )
+        .filter(*scope_filters)
+        .one()
+    )
+    summary = {
+        'total': int(summary_row[0] or 0),
+        'admins': int(summary_row[1] or 0),
+        'managers': int(summary_row[2] or 0),
+        'active': int(summary_row[3] or 0),
     }
+
+    institution_options = []
+    if is_admin:
+        institution_options = get_institution_options()
+        # Reuse this request-scoped data in the global institution selector.
+        g.institution_options = institution_options
+
+    base_url_params = {
+        'q': query_param,
+        'role': selected_role,
+        'activity': selected_activity,
+        'institution': selected_institution,
+        'sort': selected_sort,
+        'per_page': per_page,
+        'page': page,
+    }
+
+    def users_url(**overrides):
+        params = {**base_url_params, **overrides}
+        clean_params = {
+            key: value
+            for key, value in params.items()
+            if value not in (None, '', 'all')
+        }
+        return url_for('admin.users_list', **clean_params)
     
     return render_template(
         'admin/users.html',
         users=users,
+        pagination=pagination,
         q=query_param,
+        selected_role=selected_role,
+        selected_activity=selected_activity,
+        selected_institution=selected_institution,
+        selected_sort=selected_sort,
+        per_page=per_page,
+        per_page_options=sorted(_USER_PER_PAGE),
+        summary=summary,
         activity_by_user=activity_by_user,
-        institution_metadata=institution_metadata,
+        institution_options=institution_options,
+        users_url=users_url,
     )
 
 
@@ -131,7 +458,7 @@ def users_new():
     username = (request.form.get('username') or '').strip()
     if not username:
         flash_err(_('The "Username" field is required.'))
-        return redirect(url_for('admin.users_list'))
+        return redirect(_users_return_url())
 
     # Extract and sanitize form data
     email = (request.form.get('email') or '').strip() or username
@@ -148,7 +475,7 @@ def users_new():
     # Roles and Preferences
     is_admin = bool(request.form.get('is_admin'))
     is_manager = bool(request.form.get('is_manager'))
-    locale = request.form.get('locale') or 'es'
+    locale = request.form.get('locale') or 'en'
 
     # Automatic GRID lookup via ROR service (Data Healing)
     if ror_id and not grid_id:
@@ -160,7 +487,7 @@ def users_new():
     # Duplicate Check
     if User.query.filter_by(username=username).first():
         flash_err(_('A user with username "%(u)s" already exists.', u=username))
-        return redirect(url_for('admin.users_list'))
+        return redirect(_users_return_url())
 
     # Credential Generation
     temp_password = (request.form.get('password') or '').strip() or generate_temp_password()
@@ -193,7 +520,7 @@ def users_new():
         logger.exception("CRITICAL: Failed to create user: %s", exc)
         flash_err(_('Could not create user. Check logs.'))
 
-    return redirect(url_for('admin.users_list'))
+    return redirect(_users_return_url())
 
 
 @bp_admin.route('/users/<int:user_id>/reset-password', methods=['POST'])
@@ -207,7 +534,7 @@ def users_reset_password(user_id: int):
     Args:
         user_id (int): The primary key of the user to reset.
     """
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     new_pwd = generate_temp_password()
 
     try:
@@ -219,7 +546,7 @@ def users_reset_password(user_id: int):
         logger.exception("Error resetting password for %s: %s", user.username, exc)
         flash_err(_("Could not reset password."))
 
-    return redirect(url_for('admin.users_list'))
+    return redirect(_users_return_url())
 
 
 @bp_admin.route('/users/<int:user_id>/send-creds', methods=['POST'])
@@ -230,12 +557,12 @@ def users_send_creds(user_id: int):
     Resets user password and sends the new credentials via email.
     The email content is automatically translated based on the current locale.
     """
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     recipient = (user.email or user.username)
 
     if not recipient or '@' not in recipient:
         flash_err(_("User does not have a valid email."))
-        return redirect(url_for('admin.users_list'))
+        return redirect(_users_return_url())
 
     temp_pwd = generate_temp_password()
     user.set_password(temp_pwd)
@@ -282,7 +609,7 @@ def users_send_creds(user_id: int):
         logger.error("Email Delivery Failed to %s: %s", recipient, error)
         flash_err(_("Could not send email."))
 
-    return redirect(url_for('admin.users_list'))
+    return redirect(_users_return_url())
 
 
 @bp_admin.route('/users/<int:user_id>/update', methods=['POST'])
@@ -296,10 +623,24 @@ def users_update(user_id: int):
     Args:
         user_id (int): The ID of the user to update.
     """
-    user = User.query.get_or_404(user_id)
-    
+    user = db.get_or_404(User, user_id)
+
+    username = (request.form.get('username') or '').strip()
+    if not username:
+        flash_err(_('The "Username" field is required.'))
+        return redirect(_users_return_url())
+
+    duplicate = User.query.filter(
+        func.lower(User.username) == username.lower(),
+        User.id != user.id,
+    ).first()
+    if duplicate:
+        flash_err(_('A user with username "%(u)s" already exists.', u=username))
+        return redirect(_users_return_url())
+
     # Extract data from form
-    user.email = (request.form.get('email') or '').strip() or user.username
+    user.username = username
+    user.email = (request.form.get('email') or '').strip() or username
     user.first_name = (request.form.get('first_name') or '').strip()
     user.last_name = (request.form.get('last_name') or '').strip()
     user.position = (request.form.get('position') or '').strip()
@@ -315,7 +656,7 @@ def users_update(user_id: int):
     # Security Safeguard: Admins cannot remove their own admin role
     if user.id == session.get('user_id') and not want_admin:
         flash_err(_('You cannot remove admin role from your own account.'))
-        return redirect(url_for('admin.users_list'))
+        return redirect(_users_return_url())
 
     # GRID ID Healing (if missing but ROR is present)
     if user.ror_id and not user.grid_id:
@@ -334,6 +675,14 @@ def users_update(user_id: int):
             if user.id == session.get('user_id'):
                 session['locale'] = locale
 
+        if user.id == session.get('user_id'):
+            session['username'] = user.username
+            session['first_name'] = user.first_name
+            session['institution_name'] = user.institution_name
+            session['ror_id'] = user.ror_id
+            session['is_admin'] = bool(user.is_admin)
+            session['is_manager'] = bool(user.is_manager)
+
         db.session.commit()
         flash_ok(_('User "%(u)s" updated successfully.', u=user.username))
     except Exception as exc:
@@ -341,7 +690,7 @@ def users_update(user_id: int):
         logger.exception("Error updating user %s: %s", user.username, exc)
         flash_err(_('Could not update user.'))
 
-    return redirect(url_for('admin.users_list'))
+    return redirect(_users_return_url())
 
 
 @bp_admin.route('/users/<int:user_id>/delete', methods=['POST'])
@@ -352,12 +701,16 @@ def users_delete(user_id: int):
     Permanently deletes a user from the database. 
     Hardcoded protection prevents deletion of the root 'admin' system account.
     """
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
+
+    if user.id == session.get('user_id'):
+        flash_err(_('You cannot delete your own account.'))
+        return redirect(_users_return_url())
     
     # Root Protection
     if user.username == 'admin':
         flash_err(_('You cannot delete the main admin account.'))
-        return redirect(url_for('admin.users_list'))
+        return redirect(_users_return_url())
 
     try:
         db.session.delete(user)
@@ -368,7 +721,7 @@ def users_delete(user_id: int):
         logger.exception("Error deleting user %s: %s", user.username, exc)
         flash_err(_("Could not delete user."))
 
-    return redirect(url_for('admin.users_list'))
+    return redirect(_users_return_url())
 
 
 @bp_admin.route('/set-ror/<ror_id>', methods=['POST'])
@@ -406,22 +759,60 @@ def set_ror(ror_id: str):
 @bp_admin.route("/statistics")
 @login_required
 def statistics():
-    """
-    Renders system usage statistics and tracking logs.
-    Includes pagination and filtering by User, IP, or Request Path.
-    """
+    """Render filterable activity, performance trends, and request details."""
     if not _require_admin_or_manager():
         return redirect(url_for('main.index'))
 
-    # Pagination and Filtering Params
     page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 25, type=int)
+    if per_page not in _STATISTICS_PER_PAGE:
+        per_page = 25
+
     search_query = request.args.get("q", "").strip()
     selected_user = request.args.get("user", "").strip()
     show_anonymous = request.args.get("show_anonymous", "0") == "1"
     selected_method = request.args.get("method", "").strip().upper()
     selected_status = request.args.get("status", "").strip()
+    selected_kind = request.args.get("kind", "interactive").strip().lower()
+    if selected_kind not in _STATISTICS_KINDS:
+        selected_kind = "interactive"
+
+    selected_period, period_start, period_end, date_from, date_to = _statistics_period_bounds(
+        request.args.get("period", "7d").strip().lower(),
+        request.args.get("date_from", "").strip(),
+        request.args.get("date_to", "").strip(),
+    )
+
+    sort_key = request.args.get("sort", "timestamp").strip().lower()
+    sort_direction = request.args.get("dir", "desc").strip().lower()
+    sort_columns = {
+        "timestamp": TrackingLog.timestamp,
+        "user": TrackingLog.username,
+        "path": TrackingLog.path,
+        "method": TrackingLog.method,
+        "status": TrackingLog.status_code,
+        "latency": TrackingLog.duration_ms,
+    }
+    if sort_key not in sort_columns:
+        sort_key = "timestamp"
+    if sort_direction not in {"asc", "desc"}:
+        sort_direction = "desc"
+
+    def statistics_url(**updates):
+        params = request.args.to_dict(flat=False)
+        for key, value in updates.items():
+            if value is None or value == "" or value == []:
+                params.pop(key, None)
+            else:
+                params[key] = value
+        return url_for("admin.statistics", **params)
 
     log_query = TrackingLog.query
+
+    if period_start is not None:
+        log_query = log_query.filter(TrackingLog.timestamp >= period_start)
+    if period_end is not None:
+        log_query = log_query.filter(TrackingLog.timestamp < period_end)
 
     if not show_anonymous:
         log_query = log_query.filter(TrackingLog.username.isnot(None), TrackingLog.username != "")
@@ -444,36 +835,79 @@ def statistics():
         log_query = log_query.filter(
             (TrackingLog.username.ilike(search_filter)) |
             (TrackingLog.path.ilike(search_filter)) |
-                (TrackingLog.ip.ilike(search_filter))
+            (TrackingLog.ip.ilike(search_filter))
         )
 
-    summary_subquery = log_query.with_entities(
-        TrackingLog.username.label("username"),
-        TrackingLog.status_code.label("status_code"),
-        TrackingLog.method.label("method"),
-        TrackingLog.duration_ms.label("duration_ms"),
-    ).subquery()
-    total_requests, unique_users, error_requests, post_requests, average_latency = (
-        db.session.query(
-            func.count(),
-            func.count(func.distinct(summary_subquery.c.username)),
-            func.coalesce(func.sum(case((summary_subquery.c.status_code >= 400, 1), else_=0)), 0),
-            func.coalesce(func.sum(case((summary_subquery.c.method == "POST", 1), else_=0)), 0),
-            func.coalesce(func.avg(summary_subquery.c.duration_ms), 0),
-        )
-        .select_from(summary_subquery)
-        .one()
+    background_condition = _background_request_condition()
+    background_query = log_query.filter(background_condition)
+    interactive_query = log_query.filter(
+        or_(TrackingLog.path.is_(None), not_(background_condition))
     )
-    summary = {
-        "total_requests": int(total_requests or 0),
-        "unique_users": int(unique_users or 0),
-        "error_requests": int(error_requests or 0),
-        "post_requests": int(post_requests or 0),
-        "average_latency": float(average_latency or 0),
+    if selected_kind == "background":
+        scoped_query = background_query
+    elif selected_kind == "all":
+        scoped_query = log_query
+    else:
+        scoped_query = interactive_query
+
+    summary = _request_summary(scoped_query)
+    background_summary = _request_summary(background_query)
+
+    granularity = "hour" if selected_period == "24h" else "day"
+    if selected_period == "custom" and period_start and period_end:
+        if period_end - period_start <= timedelta(days=2):
+            granularity = "hour"
+
+    dialect = db.engine.dialect.name
+    if dialect == "postgresql":
+        bucket_expression = func.date_trunc(granularity, TrackingLog.timestamp)
+        trend_latency_expression = func.percentile_cont(0.95).within_group(TrackingLog.duration_ms)
+        trend_latency_label = _("P95 latency")
+    elif dialect in {"mysql", "mariadb"}:
+        date_format = "%Y-%m-%d %H:00" if granularity == "hour" else "%Y-%m-%d"
+        bucket_expression = func.date_format(TrackingLog.timestamp, date_format)
+        trend_latency_expression = func.avg(TrackingLog.duration_ms)
+        trend_latency_label = _("Average latency")
+    else:
+        date_format = "%Y-%m-%d %H:00" if granularity == "hour" else "%Y-%m-%d"
+        bucket_expression = func.strftime(date_format, TrackingLog.timestamp)
+        trend_latency_expression = func.avg(TrackingLog.duration_ms)
+        trend_latency_label = _("Average latency")
+
+    trend_rows = (
+        scoped_query.with_entities(
+            bucket_expression.label("bucket"),
+            func.count(TrackingLog.id).label("requests"),
+            func.coalesce(
+                func.sum(case((TrackingLog.status_code >= 400, 1), else_=0)),
+                0,
+            ).label("errors"),
+            trend_latency_expression.label("latency"),
+        )
+        .group_by(bucket_expression)
+        .order_by(bucket_expression.asc())
+        .all()
+    )
+    trend = {
+        "labels": [
+            row.bucket.strftime("%Y-%m-%d %H:00" if granularity == "hour" else "%Y-%m-%d")
+            if hasattr(row.bucket, "strftime") else str(row.bucket)
+            for row in trend_rows
+        ],
+        "requests": [int(row.requests or 0) for row in trend_rows],
+        "errors": [int(row.errors or 0) for row in trend_rows],
+        "latency": [round(float(row.latency or 0), 1) for row in trend_rows],
+        "latency_label": trend_latency_label,
     }
 
-    pagination = log_query.order_by(TrackingLog.timestamp.desc()).paginate(
-        page=page, per_page=25, error_out=False
+    order_column = sort_columns[sort_key]
+    primary_order = order_column.asc() if sort_direction == "asc" else order_column.desc()
+    order_clauses = [primary_order]
+    if sort_key != "timestamp":
+        order_clauses.append(TrackingLog.timestamp.desc())
+
+    pagination = scoped_query.order_by(*order_clauses).paginate(
+        page=page, per_page=per_page, error_out=False
     )
     
     distinct_users = db.session.query(TrackingLog.username).filter(
@@ -481,6 +915,56 @@ def statistics():
         TrackingLog.username != "",
     ).distinct().order_by(TrackingLog.username.asc()).all()
     user_list = [u[0] for u in distinct_users if u[0]]
+
+    period_labels = {
+        "24h": _("Last 24 hours"),
+        "7d": _("Last 7 days"),
+        "30d": _("Last 30 days"),
+        "all": _("All time"),
+        "custom": _("Custom range"),
+    }
+    kind_labels = {
+        "interactive": _("Interactive requests"),
+        "background": _("Background operations"),
+        "all": _("All requests"),
+    }
+
+    active_filters = []
+    if search_query:
+        active_filters.append({
+            "label": _("Search"),
+            "value": search_query,
+            "url": statistics_url(q=None, page=1),
+        })
+    if selected_user:
+        active_filters.append({
+            "label": _("User"),
+            "value": selected_user,
+            "url": statistics_url(user=None, page=1),
+        })
+    if selected_method:
+        active_filters.append({
+            "label": _("Method"),
+            "value": selected_method,
+            "url": statistics_url(method=None, page=1),
+        })
+    if selected_status:
+        status_labels = {
+            "success": _("Success"),
+            "redirect": _("Redirects"),
+            "error": _("Errors"),
+        }
+        active_filters.append({
+            "label": _("Status"),
+            "value": status_labels.get(selected_status, selected_status),
+            "url": statistics_url(status=None, page=1),
+        })
+    if show_anonymous:
+        active_filters.append({
+            "label": _("Access"),
+            "value": _("Including anonymous"),
+            "url": statistics_url(show_anonymous=None, page=1),
+        })
 
     return render_template(
         "admin/statistics.html",
@@ -492,5 +976,21 @@ def statistics():
         show_anonymous=show_anonymous,
         selected_method=selected_method,
         selected_status=selected_status,
+        selected_kind=selected_kind,
+        selected_period=selected_period,
+        period_label=period_labels[selected_period],
+        kind_label=kind_labels[selected_kind],
+        date_from=date_from,
+        date_to=date_to,
+        per_page=per_page,
+        per_page_options=sorted(_STATISTICS_PER_PAGE),
+        sort_key=sort_key,
+        sort_direction=sort_direction,
         summary=summary,
+        background_summary=background_summary,
+        trend=trend,
+        active_filters=active_filters,
+        statistics_url=statistics_url,
+        format_latency=_format_latency,
+        user_agent_summary=_user_agent_summary,
     )

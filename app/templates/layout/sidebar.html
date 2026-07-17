@@ -1,135 +1,188 @@
+{% set explore_endpoints = [
+  'main.researcher_list',
+  'main.orcid_profile',
+  'main.metrics_panel',
+  'works.openalex_analytics',
+  'works.openalex_global'
+] %}
+{% set data_endpoints = [
+  'works.cache_works_status',
+  'works.data_quality',
+  'works.openalex_works'
+] %}
+{% set integration_endpoints = [
+  'main.integration_pull',
+  'main.integration_guide',
+  'main.resources',
+  'auth.am_settings'
+] %}
+{% set administration_endpoints = [
+  'admin.users_list',
+  'admin.statistics'
+] %}
+{% set explore_active = request.endpoint in explore_endpoints %}
+{% set data_active = request.endpoint in data_endpoints or (request.endpoint and request.endpoint.startswith('duplicates.')) %}
+{% set integration_active = request.endpoint in integration_endpoints %}
+{% set administration_active = request.endpoint in administration_endpoints %}
+
+<li class="nav-header">{{ _('Workspace') }}</li>
 <li class="nav-item">
-    <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
-        <i class="nav-icon fas fa-tachometer-alt"></i>
-        <p>{{ _('Dashboard') }}</p>
-    </a>
+  <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+    <i class="nav-icon fas fa-th-large" aria-hidden="true"></i>
+    <p>{{ _('Overview') }}</p>
+  </a>
 </li>
 
-{% if session.get('is_admin') or session.get('is_manager') %}
-    <li class="nav-header text-uppercase small font-weight-bold" style="opacity: 0.7; color: #adb5bd;">
-        <i class="fas fa-shield-alt mr-1"></i> {{ _('Administration') }}
-    </li>
-
-    {% if session.get('is_admin') %}
+<li class="nav-item has-treeview app-sidebar-group {% if explore_active %}menu-open{% endif %}">
+  <a href="#" class="nav-link {% if explore_active %}app-sidebar-parent-active{% endif %}" role="button" aria-expanded="{{ 'true' if explore_active else 'false' }}">
+    <i class="nav-icon fas fa-chart-bar" aria-hidden="true"></i>
+    <p>
+      {{ _('Explore') }}
+      <i class="right fas fa-angle-left" aria-hidden="true"></i>
+    </p>
+  </a>
+  <ul class="nav nav-treeview">
     <li class="nav-item">
-        <a href="{{ url_for('admin.users_list') }}" class="nav-link {% if 'users' in request.endpoint %}active{% endif %}">
-            <i class="nav-icon fas fa-users-cog"></i>
-            <p>{{ _('User Management') }}</p>
-        </a>
+      <a href="{{ url_for('main.researcher_list') }}" class="nav-link {% if request.endpoint == 'main.researcher_list' %}active{% endif %}">
+        <i class="fas fa-user-graduate nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Researchers') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('main.metrics_panel') }}" class="nav-link {% if request.endpoint == 'main.metrics_panel' %}active{% endif %}">
+        <i class="fas fa-chart-line nav-icon" aria-hidden="true"></i>
+        <p>{{ _('ORCID analytics') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('works.openalex_analytics') }}" class="nav-link {% if request.endpoint == 'works.openalex_analytics' %}active{% endif %}">
+        <i class="fas fa-project-diagram nav-icon" aria-hidden="true"></i>
+        <p>{{ _('OpenAlex analytics') }}</p>
+      </a>
+    </li>
+    {% if session.get('is_admin') or session.get('is_manager') %}
+    <li class="nav-item">
+      <a href="{{ url_for('works.openalex_global') }}" class="nav-link {% if request.endpoint == 'works.openalex_global' %}active{% endif %}">
+        <i class="fas fa-layer-group nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Institution comparison') }}</p>
+      </a>
     </li>
     {% endif %}
+  </ul>
+</li>
 
+<li class="nav-item has-treeview app-sidebar-group {% if data_active %}menu-open{% endif %}">
+  <a href="#" class="nav-link {% if data_active %}app-sidebar-parent-active{% endif %}" role="button" aria-expanded="{{ 'true' if data_active else 'false' }}">
+    <i class="nav-icon fas fa-database" aria-hidden="true"></i>
+    <p>
+      {{ _('Manage data') }}
+      <i class="right fas fa-angle-left" aria-hidden="true"></i>
+    </p>
+  </a>
+  <ul class="nav nav-treeview">
     <li class="nav-item">
-        <a href="{{ url_for('admin.statistics') }}" class="nav-link {% if 'statistics' in request.endpoint %}active{% endif %}">
-            <i class="nav-icon fas fa-chart-line"></i>
-            <p>{{ _('System Usage Logs') }}</p>
-        </a>
+      <a href="{{ url_for('works.cache_works_status') }}" class="nav-link {% if request.endpoint == 'works.cache_works_status' %}active{% endif %}">
+        <i class="fas fa-sync-alt nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Synchronization and datasets') }}</p>
+      </a>
     </li>
-
-{% endif %}
-
-<li class="nav-header text-uppercase small font-weight-bold" style="opacity: 0.8; color: var(--cincel-secondary);">
-    <i class="fas fa-database mr-1"></i> {{ _('Institutional Data') }}
+    <li class="nav-item">
+      <a href="{{ url_for('works.data_quality') }}" class="nav-link {% if request.endpoint == 'works.data_quality' %}active{% endif %}">
+        <i class="fas fa-shield-alt nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Data quality') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('duplicates.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('duplicates.') %}active{% endif %}">
+        <i class="fas fa-user-check nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Quality and duplicates') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('works.openalex_works') }}" class="nav-link {% if request.endpoint == 'works.openalex_works' %}active{% endif %}">
+        <i class="fas fa-link nav-icon" aria-hidden="true"></i>
+        <p>{{ _('OpenAlex enrichment') }}</p>
+      </a>
+    </li>
+  </ul>
 </li>
 
+<li class="nav-item has-treeview app-sidebar-group {% if integration_active %}menu-open{% endif %}">
+  <a href="#" class="nav-link {% if integration_active %}app-sidebar-parent-active{% endif %}" role="button" aria-expanded="{{ 'true' if integration_active else 'false' }}">
+    <i class="nav-icon fas fa-plug" aria-hidden="true"></i>
+    <p>
+      {{ _('Integrate') }}
+      <i class="right fas fa-angle-left" aria-hidden="true"></i>
+    </p>
+  </a>
+  <ul class="nav nav-treeview">
+    <li class="nav-item">
+      <a href="{{ url_for('main.integration_pull') }}" class="nav-link {% if request.endpoint == 'main.integration_pull' %}active{% endif %}">
+        <i class="fas fa-code nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Read from the API') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('main.integration_guide') }}" class="nav-link {% if request.endpoint == 'main.integration_guide' %}active{% endif %}">
+        <i class="fas fa-terminal nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Write to ORCID') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('auth.am_settings') }}" class="nav-link {% if request.endpoint == 'auth.am_settings' %}active{% endif %}">
+        <i class="fas fa-key nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Affiliation Manager identifier') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('main.resources') }}" class="nav-link {% if request.endpoint == 'main.resources' %}active{% endif %}">
+        <i class="fas fa-book-open nav-icon" aria-hidden="true"></i>
+        <p>{{ _('ORCID resources') }}</p>
+      </a>
+    </li>
+  </ul>
+</li>
+
+<li class="nav-header">{{ _('Support') }}</li>
 <li class="nav-item">
-    <a href="{{ url_for('main.metrics_panel') }}" class="nav-link {% if request.endpoint == 'main.metrics_panel' %}active{% endif %}">
-        <i class="nav-icon fas fa-chart-pie"></i>
-        <p>{{ _('ORCID Analytics') }}</p>
-    </a>
+  <a href="{{ url_for('help.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('help.') %}active{% endif %}">
+    <i class="nav-icon far fa-question-circle" aria-hidden="true"></i>
+    <p>{{ _('Help center') }}</p>
+  </a>
 </li>
 
-<li class="nav-item">
-    <a href="{{ url_for('works.cache_works_status') }}" class="nav-link {% if request.endpoint == 'works.cache_works_status' %}active{% endif %}">
-        <i class="nav-icon fas fa-cloud-download-alt"></i>
-        <p>{{ _('Data Downloads') }}</p>
-    </a>
-</li>
-
-{% set openalex_endpoints = ['works.openalex_works', 'works.openalex_analytics', 'works.openalex_global'] %}
-{% set openalex_active = request.endpoint in openalex_endpoints %}
-<li class="nav-item has-treeview openalex-sidebar-group {% if openalex_active %}menu-open{% endif %}">
-    <a href="#" class="nav-link {% if openalex_active %}openalex-parent-active{% endif %}">
-        <i class="nav-icon fas fa-project-diagram"></i>
-        <p>
-            {{ _('OpenAlex') }}
-            <i class="right fas fa-angle-left"></i>
-        </p>
-    </a>
-    <ul class="nav nav-treeview">
-        <li class="nav-item">
-            <a href="{{ url_for('works.openalex_works') }}" class="nav-link {% if request.endpoint == 'works.openalex_works' %}active{% endif %}">
-                <i class="fas fa-stream nav-icon"></i>
-                <p>{{ _('Enrichment') }}</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ url_for('works.openalex_analytics') }}" class="nav-link {% if request.endpoint == 'works.openalex_analytics' %}active{% endif %}">
-                <i class="fas fa-chart-line nav-icon"></i>
-                <p>{{ _('Institution analytics') }}</p>
-            </a>
-        </li>
 {% if session.get('is_admin') or session.get('is_manager') %}
-        <li class="nav-item">
-            <a href="{{ url_for('works.openalex_global') }}" class="nav-link {% if request.endpoint == 'works.openalex_global' %}active{% endif %}">
-                <i class="fas fa-layer-group nav-icon"></i>
-                <p>{{ _('Global comparison') }}</p>
-            </a>
-        </li>
+<li class="nav-item has-treeview app-sidebar-group {% if administration_active %}menu-open{% endif %}">
+  <a href="#" class="nav-link {% if administration_active %}app-sidebar-parent-active{% endif %}" role="button" aria-expanded="{{ 'true' if administration_active else 'false' }}">
+    <i class="nav-icon fas fa-cog" aria-hidden="true"></i>
+    <p>
+      {{ _('Administration') }}
+      <i class="right fas fa-angle-left" aria-hidden="true"></i>
+    </p>
+  </a>
+  <ul class="nav nav-treeview">
+    <li class="nav-item">
+      <a href="{{ url_for('admin.users_list') }}" class="nav-link {% if request.endpoint == 'admin.users_list' %}active{% endif %}">
+        <i class="fas fa-users-cog nav-icon" aria-hidden="true"></i>
+        <p>{% if session.get('is_admin') %}{{ _('User management') }}{% else %}{{ _('Institution accounts') }}{% endif %}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('admin.statistics') }}" class="nav-link {% if request.endpoint == 'admin.statistics' %}active{% endif %}">
+        <i class="fas fa-history nav-icon" aria-hidden="true"></i>
+        <p>{{ _('System activity') }}</p>
+      </a>
+    </li>
+  </ul>
+</li>
 {% endif %}
-    </ul>
-</li>
 
-<li class="nav-item">
-    <a href="{{ url_for('main.researcher_list') }}" class="nav-link {% if request.endpoint == 'main.researcher_list' %}active{% endif %}">
-        <i class="nav-icon fas fa-user-graduate"></i>
-        <p>{{ _('Researchers List') }}</p>
-    </a>
-</li>
-
-<li class="nav-item">
-    <a href="{{ url_for('duplicates.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('duplicates.') %}active{% endif %}">
-        <i class="nav-icon fas fa-user-friends"></i>
-        <p>{{ _('Duplicate Profiles') }}</p>
-    </a>
-</li>
-
-<li class="nav-header text-uppercase small font-weight-bold" style="opacity: 0.8; color: var(--cincel-primary);">
-    <i class="fas fa-tools mr-1"></i> {{ _('Integration Tools') }}
-</li>
-
-<li class="nav-item">
-    <a href="{{ url_for('main.integration_pull') }}" class="nav-link {% if request.endpoint == 'main.integration_pull' %}active{% endif %}">
-        <i class="nav-icon fas fa-code"></i>
-        <p>{{ _('API Read (Pull)') }}</p>
-    </a>
-</li>
-
-<li class="nav-item">
-    <a href="{{ url_for('main.integration_guide') }}" class="nav-link {% if request.endpoint == 'main.integration_guide' %}active{% endif %}">
-        <i class="nav-icon fas fa-terminal"></i>
-        <p>{{ _('API Write (Push)') }}</p>
-    </a>
-</li>
-
-<li class="nav-item">
-    <a href="{{ url_for('auth.am_settings') }}" class="nav-link {% if request.endpoint == 'auth.am_settings' %}active{% endif %}">
-        <i class="nav-icon fas fa-id-badge"></i>
-        <p>{{ _('AM Settings') }}</p>
-    </a>
-</li>
-
-<li class="nav-item">
-    <a href="{{ url_for('main.resources') }}" class="nav-link {% if request.endpoint == 'main.resources' %}active{% endif %}">
-        <i class="nav-icon fas fa-book"></i>
-        <p>{{ _('Knowledge Base') }}</p>
-    </a>
-</li>
-
-<li class="nav-header border-top mt-2 pt-2"></li>
-<li class="nav-item">
-    <a href="{{ url_for('auth.logout') }}" class="nav-link text-danger">
-        <i class="nav-icon fas fa-sign-out-alt"></i>
-        <p>{{ _('Sign Out') }}</p>
-    </a>
+<li class="nav-item app-sidebar-signout">
+  <form method="post" action="{{ url_for('auth.logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="nav-link btn btn-link text-left w-100">
+      <i class="nav-icon fas fa-sign-out-alt" aria-hidden="true"></i>
+      <p>{{ _('Sign out') }}</p>
+    </button>
+  </form>
 </li>

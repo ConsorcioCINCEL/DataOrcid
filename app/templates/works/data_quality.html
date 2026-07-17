@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Data Quality · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<div class="app-section-heading">
+  <h1>{{ _('Institutional data quality') }}</h1>
+  <p>{{ _('Understand coverage, provenance, canonical outputs, and cross-module limitations before using the data.') }}</p>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+{% if can_manage %}
+<div class="dropdown">
+  <button class="btn btn-outline-primary dropdown-toggle" type="button" id="qualityActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <i class="fas fa-tools mr-1" aria-hidden="true"></i>{{ _('Data maintenance') }}
+  </button>
+  <div class="dropdown-menu dropdown-menu-right app-dropdown-menu cache-operation-menu" aria-labelledby="qualityActions">
+    <form method="post" action="{{ url_for('works.data_quality_backfill_associations') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="dropdown-item" type="submit"><i class="fas fa-users mr-2" aria-hidden="true"></i>{{ _('Backfill researcher relationships') }}</button>
+    </form>
+    <form method="post" action="{{ url_for('works.data_quality_rebuild_canonical_works') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="dropdown-item" type="submit"><i class="fas fa-book mr-2" aria-hidden="true"></i>{{ _('Rebuild canonical outputs') }}</button>
+    </form>
+    {% if session.get('is_admin') %}
+    <div class="dropdown-divider"></div>
+    <form method="post" action="{{ url_for('works.data_quality_backfill_associations') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="scope" value="all">
+      <button class="dropdown-item" type="submit"><i class="fas fa-globe mr-2" aria-hidden="true"></i>{{ _('Backfill all institutions') }}</button>
+    </form>
+    <form method="post" action="{{ url_for('works.data_quality_rebuild_canonical_works') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="scope" value="all">
+      <button class="dropdown-item" type="submit"><i class="fas fa-globe-americas mr-2" aria-hidden="true"></i>{{ _('Rebuild all canonical outputs') }}</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('works.cache_works_status') }}">{{ _('Synchronization and datasets') }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Data quality') }}</li>
+{% endblock %}
+
+{% block content %}
+<section class="app-kpi-strip quality-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Data quality indicators') }}">
+  <article class="app-kpi"><span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-link"></i></span><div><span class="app-kpi-label">{{ _('Verified relationships') }}</span><strong>{{ report.researchers.verified_percent }}%</strong><small>{{ _('%(verified)s of %(total)s researchers', verified=report.researchers.verified, total=report.researchers.relationships) }}</small></div></article>
+  <article class="app-kpi"><span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-book"></i></span><div><span class="app-kpi-label">{{ _('Unique outputs') }}</span><strong>{{ report.canonical.unique_outputs }}</strong><small>{{ _('%(records)s ORCID records · %(excess)s additional records', records=report.canonical.source_records, excess=report.canonical.excess_records) }}</small></div></article>
+  <article class="app-kpi"><span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-project-diagram"></i></span><div><span class="app-kpi-label">{{ _('OpenAlex DOI coverage') }}</span><strong>{{ report.openalex.coverage_percent }}%</strong><small>{{ _('%(matched)s of %(total)s unique DOIs', matched=report.openalex.enriched_dois, total=report.openalex.eligible_dois) }}</small></div></article>
+  <article class="app-kpi"><span class="app-kpi-icon is-amber" aria-hidden="true"><i class="fas fa-award"></i></span><div><span class="app-kpi-label">{{ _('Funding identifiers') }}</span><strong>{{ report.fundings.grant_percent }}%</strong><small>{{ _('Records with a grant number') }}</small></div></article>
+</section>
+
+<nav class="app-review-tabs quality-tabs" aria-label="{{ _('Data quality sections') }}">
+  {% for key, label, icon in [
+    ('overview', _('Overview'), 'fas fa-chart-pie'),
+    ('researchers', _('Researcher evidence'), 'fas fa-users'),
+    ('funding', _('Funding context'), 'fas fa-hand-holding-usd'),
+    ('integrity', _('Technical integrity'), 'fas fa-shield-alt')
+  ] %}
+  <a class="app-review-tab {% if section == key %}active{% endif %}" href="{{ url_for('works.data_quality', section=key) }}" {% if section == key %}aria-current="page"{% endif %}><i class="{{ icon }}" aria-hidden="true"></i><span>{{ label }}</span></a>
+  {% endfor %}
+</nav>
+
+{% if section == 'overview' %}
+<div class="quality-grid">
+  <section class="card quality-panel" aria-labelledby="qualityWorksTitle">
+    <div class="card-header"><h2 id="qualityWorksTitle" class="card-title">{{ _('Works and canonical outputs') }}</h2></div>
+    <div class="card-body quality-metric-list">
+      <div><span>{{ _('ORCID work records') }}</span><strong>{{ report.works.records }}</strong></div>
+      <div><span>{{ _('Unique scholarly outputs') }}</span><strong>{{ report.canonical.unique_outputs }}</strong></div>
+      <div><span>{{ _('Records with DOI') }}</span><strong>{{ report.works.doi_percent }}%</strong></div>
+      <div><span>{{ _('Records with publication year') }}</span><strong>{{ report.works.year_percent }}%</strong></div>
+      <div><span>{{ _('Additional records per canonical output') }}</span><strong>{{ report.works.excess_percent }}%</strong></div>
+    </div>
+  </section>
+  <section class="card quality-panel" aria-labelledby="qualityFundingTitle">
+    <div class="card-header"><h2 id="qualityFundingTitle" class="card-title">{{ _('Funding completeness') }}</h2></div>
+    <div class="card-body quality-metric-list">
+      <div><span>{{ _('Funding records') }}</span><strong>{{ report.fundings.records }}</strong></div>
+      <div><span>{{ _('With grant number') }}</span><strong>{{ report.fundings.grant_percent }}%</strong></div>
+      <div><span>{{ _('With amount and currency') }}</span><strong>{{ report.fundings.amount_percent }}%</strong></div>
+    </div>
+    <div class="card-footer text-muted">{{ _('Missing source fields are reported as coverage gaps; they are not treated as parser defects without source verification.') }}</div>
+  </section>
+</div>
+{% elif section == 'researchers' %}
+<section class="card quality-panel" aria-labelledby="researcherEvidenceTitle">
+  <div class="card-header"><h2 id="researcherEvidenceTitle" class="card-title">{{ _('Researcher relationship evidence') }}</h2><p>{{ _('Verified and inferred relationships remain separate throughout the application.') }}</p></div>
+  <div class="card-body quality-metric-list is-wide">
+    <div><span>{{ _('All institutional relationships') }}</span><strong>{{ report.researchers.relationships }}</strong></div>
+    <div><span>{{ _('Verified through institution search') }}</span><strong>{{ report.researchers.verified }}</strong></div>
+    <div><span>{{ _('Inferred from existing caches') }}</span><strong>{{ report.researchers.inferred }}</strong></div>
+    <div><span>{{ _('Current public affiliation records') }}</span><strong>{{ report.researchers.current_affiliations }}</strong></div>
+    <div><span>{{ _('Historical public affiliation records') }}</span><strong>{{ report.researchers.historical_affiliations }}</strong></div>
+  </div>
+  <div class="card-footer"><a href="{{ url_for('main.researcher_list', match='inferred') }}">{{ _('Review inferred relationships') }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a></div>
+</section>
+{% elif section == 'funding' %}
+<section class="card quality-panel" aria-labelledby="fundingContextTitle">
+  <div class="card-header"><h2 id="fundingContextTitle" class="card-title">{{ _('Researchers with funding and outputs') }}</h2><p>{{ _('This is an activity overlap, not evidence that a grant caused or funded a specific output.') }}</p></div>
+  <div class="card-body p-0">
+    {% if report.funding_context.top_rows %}
+    <div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>{{ _('ORCID iD') }}</th><th class="text-right">{{ _('Unique outputs') }}</th><th class="text-right">{{ _('Funding records') }}</th></tr></thead><tbody>{% for row in report.funding_context.top_rows %}<tr><td><a href="{{ url_for('main.orcid_profile', orcid_id=row.orcid) }}">{{ row.orcid }}</a></td><td class="text-right">{{ row.unique_outputs }}</td><td class="text-right">{{ row.funding_records }}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}<div class="app-empty-state"><i class="fas fa-info-circle" aria-hidden="true"></i><strong>{{ _('No overlapping activity available') }}</strong><p>{{ _('Canonical outputs and funding records are required for this comparison.') }}</p></div>{% endif %}
+  </div>
+  <div class="card-footer text-muted">{{ _('%(count)s researchers have both types of cached activity.', count=report.funding_context.researchers_with_both) }}</div>
+</section>
+{% else %}
+<div class="quality-grid">
+  <section class="card quality-panel" aria-labelledby="openalexIntegrityTitle"><div class="card-header"><h2 id="openalexIntegrityTitle" class="card-title">{{ _('OpenAlex child integrity') }}</h2></div><div class="card-body quality-metric-list"><div><span>{{ _('Author rows without metadata parent') }}</span><strong>{{ report.openalex.orphan_authors }}</strong></div><div><span>{{ _('Institution rows without metadata parent') }}</span><strong>{{ report.openalex.orphan_institutions }}</strong></div></div></section>
+  <section class="card quality-panel" aria-labelledby="reviewIntegrityTitle"><div class="card-header"><h2 id="reviewIntegrityTitle" class="card-title">{{ _('Duplicate review workflow') }}</h2></div><div class="card-body quality-metric-list"><div><span>{{ _('Pending') }}</span><strong>{{ report.reviews.pending }}</strong></div><div><span>{{ _('Confirmed duplicate') }}</span><strong>{{ report.reviews.confirmed }}</strong></div><div><span>{{ _('False positive') }}</span><strong>{{ report.reviews.false_positive }}</strong></div><div><span>{{ _('Resolved') }}</span><strong>{{ report.reviews.resolved }}</strong></div></div><div class="card-footer"><a href="{{ url_for('duplicates.index') }}">{{ _('Open duplicate review') }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a></div></section>
+</div>
+{% endif %}
+{% endblock %}

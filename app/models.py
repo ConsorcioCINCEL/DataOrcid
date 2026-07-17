@@ -31,7 +31,7 @@ class User(db.Model):
     # Used to identify records written by the institution's Affiliation Manager.
     am_client_id = db.Column(db.String(40), nullable=True)
 
-    locale = db.Column(db.String(5), default='es', nullable=True)
+    locale = db.Column(db.String(5), default='en', nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
 
     def set_password(self, password: str) -> None:
@@ -193,6 +193,25 @@ class DuplicateProfileCache(db.Model):
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
 
+class DuplicateProfileReview(db.Model):
+    """Persistent human decision attached to a stable duplicate candidate key."""
+    __tablename__ = "duplicate_profile_review"
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_key = db.Column(db.String(64), unique=True, index=True, nullable=False)
+    ror_id = db.Column(db.String(32), index=True, nullable=False)
+    normalized_name = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(24), default="pending", index=True, nullable=False)
+    selected_orcid = db.Column(db.String(32), nullable=True)
+    assigned_user_id = db.Column(db.Integer, nullable=True, index=True)
+    reviewed_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    notes = db.Column(db.Text, nullable=True)
+    candidate_snapshot = db.Column(db.JSON, nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
 class OpenAlexWorkRawCache(db.Model):
     """Raw OpenAlex work payloads keyed by normalized DOI."""
     __tablename__ = "openalex_work_raw_cache"
@@ -206,8 +225,8 @@ class OpenAlexWorkRawCache(db.Model):
     raw_json = db.Column(db.JSON, nullable=True)
     oa_updated_date = db.Column(db.DateTime, nullable=True)
     error = db.Column(db.Text, nullable=True)
-    fetched_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    fetched_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class OpenAlexWorkMetadata(db.Model):
@@ -237,9 +256,9 @@ class OpenAlexWorkMetadata(db.Model):
     primary_topic_field = db.Column(db.String(255), nullable=True)
     primary_topic_domain = db.Column(db.String(255), nullable=True)
     raw_updated_date = db.Column(db.DateTime, nullable=True)
-    fetched_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    fetched_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class OpenAlexWorkAuthor(db.Model):
@@ -263,7 +282,7 @@ class OpenAlexWorkAuthor(db.Model):
     countries = db.Column(db.JSON, nullable=True)
     institution_rors = db.Column(db.JSON, nullable=True)
     institution_names = db.Column(db.JSON, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class OpenAlexWorkInstitution(db.Model):
@@ -286,7 +305,7 @@ class OpenAlexWorkInstitution(db.Model):
     institution_type = db.Column(db.String(64), nullable=True)
     author_count = db.Column(db.Integer, default=0, nullable=False)
     has_corresponding_author = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class OpenAlexSyncRun(db.Model):
@@ -304,8 +323,50 @@ class OpenAlexSyncRun(db.Model):
     error_count = db.Column(db.Integer, default=0, nullable=False)
     skipped_count = db.Column(db.Integer, default=0, nullable=False)
     error = db.Column(db.Text, nullable=True)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    started_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     finished_at = db.Column(db.DateTime, nullable=True)
+
+
+class CanonicalWork(db.Model):
+    """Source-independent scholarly output keyed by DOI or title/year fallback."""
+    __tablename__ = "canonical_work"
+
+    id = db.Column(db.Integer, primary_key=True)
+    canonical_key = db.Column(db.String(80), unique=True, index=True, nullable=False)
+    doi_normalized = db.Column(db.String(255), index=True, nullable=True)
+    title = db.Column(db.Text, nullable=True)
+    title_normalized = db.Column(db.Text, nullable=True)
+    publication_year = db.Column(db.Integer, index=True, nullable=True)
+    record_count = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class WorkRecordLink(db.Model):
+    """Link one cached ORCID work record to its canonical scholarly output."""
+    __tablename__ = "work_record_link"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "ror_id",
+            "orcid",
+            "source_record_key",
+            name="uq_work_record_link_source",
+        ),
+        db.Index("ix_work_record_link_ror_canonical", "ror_id", "canonical_work_id"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    canonical_work_id = db.Column(
+        db.Integer,
+        db.ForeignKey("canonical_work.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    work_cache_id = db.Column(db.Integer, nullable=True, index=True)
+    ror_id = db.Column(db.String(32), nullable=False, index=True)
+    orcid = db.Column(db.String(32), nullable=False, index=True)
+    source_record_key = db.Column(db.String(96), nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class InstitutionRegistry(db.Model):
@@ -365,6 +426,9 @@ class InstitutionResearcher(db.Model):
     matched_by_ror = db.Column(db.Boolean, default=False, nullable=False)
     matched_by_grid = db.Column(db.Boolean, default=False, nullable=False)
     matched_by_ringgold = db.Column(db.Boolean, default=False, nullable=False)
+    evidence_type = db.Column(db.String(24), default="verified_search", nullable=False, index=True)
+    evidence_sources = db.Column(db.JSON, nullable=True)
+    is_verified = db.Column(db.Boolean, default=True, nullable=False, index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
     profile_status = db.Column(db.String(16), default="pending", nullable=False)
     profile_error = db.Column(db.Text, nullable=True)
@@ -377,6 +441,38 @@ class InstitutionResearcher(db.Model):
     )
 
 
+class ResearcherAffiliationEvidence(db.Model):
+    """Normalized public ORCID affiliation evidence used by researcher views."""
+    __tablename__ = "researcher_affiliation_evidence"
+    __table_args__ = (
+        db.Index(
+            "ix_affiliation_evidence_institution_orcid",
+            "institution_id",
+            "orcid",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    institution_id = db.Column(
+        db.Integer,
+        db.ForeignKey("institution_registry.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    orcid = db.Column(db.String(32), nullable=False, index=True)
+    source_section = db.Column(db.String(40), nullable=False)
+    organization_name = db.Column(db.Text, nullable=True)
+    role_title = db.Column(db.Text, nullable=True)
+    department_name = db.Column(db.Text, nullable=True)
+    start_year = db.Column(db.Integer, nullable=True)
+    end_year = db.Column(db.Integer, nullable=True)
+    source_client_id = db.Column(db.String(64), nullable=True)
+    organization_identifiers = db.Column(db.JSON, nullable=True)
+    evidence_type = db.Column(db.String(24), default="public_orcid", nullable=False)
+    is_current = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    observed_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
 class TrackingLog(db.Model):
     """HTTP request audit log used by the admin statistics view."""
     __tablename__ = "tracking_logs"
@@ -384,6 +480,10 @@ class TrackingLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=True, index=True)
     username = db.Column(db.String(80), nullable=True)
+    institution_ror = db.Column(db.String(32), nullable=True, index=True)
+    role = db.Column(db.String(24), nullable=True, index=True)
+    action = db.Column(db.String(80), nullable=True, index=True)
+    job_id = db.Column(db.String(36), nullable=True, index=True)
 
     method = db.Column(db.String(10))
     path = db.Column(db.String(300))
@@ -392,3 +492,47 @@ class TrackingLog(db.Model):
     user_agent = db.Column(db.String(255))
     duration_ms = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
+class SyncJob(db.Model):
+    """Durable status for a user-triggered background synchronization job."""
+    __tablename__ = "sync_job"
+
+    id = db.Column(db.String(36), primary_key=True)
+    name = db.Column(db.String(160), nullable=False)
+    job_type = db.Column(db.String(40), nullable=False, index=True)
+    ror_id = db.Column(db.String(32), nullable=True, index=True)
+    requested_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    status = db.Column(db.String(24), default="queued", nullable=False, index=True)
+    progress_current = db.Column(db.Integer, default=0, nullable=False)
+    progress_total = db.Column(db.Integer, default=0, nullable=False)
+    message = db.Column(db.Text, nullable=True)
+    result_json = db.Column(db.JSON, nullable=True)
+    error = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    started_at = db.Column(db.DateTime, nullable=True)
+    finished_at = db.Column(db.DateTime, nullable=True)
+    heartbeat_at = db.Column(db.DateTime, nullable=True)
+
+
+class SyncJobStep(db.Model):
+    """Durable progress step within a synchronization job."""
+    __tablename__ = "sync_job_step"
+    __table_args__ = (
+        db.UniqueConstraint("sync_job_id", "name", name="uq_sync_job_step_name"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    sync_job_id = db.Column(
+        db.String(36),
+        db.ForeignKey("sync_job.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = db.Column(db.String(80), nullable=False)
+    position = db.Column(db.Integer, default=0, nullable=False)
+    status = db.Column(db.String(24), default="pending", nullable=False, index=True)
+    records_count = db.Column(db.Integer, default=0, nullable=False)
+    error = db.Column(db.Text, nullable=True)
+    started_at = db.Column(db.DateTime, nullable=True)
+    finished_at = db.Column(db.DateTime, nullable=True)

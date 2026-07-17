@@ -164,7 +164,10 @@ def get_institution_options() -> list[dict]:
                 "source": "users",
             },
         )
-        if institution_name:
+        # Keep the canonical registry name when the ROR already exists there.
+        # User-owned names are only authoritative for institutions that are not
+        # yet represented in the registry.
+        if institution_name and current.get("source") == "users":
             current["name"] = institution_name
         if grid_id:
             current["grid_ids"] = _merge_values(current.get("grid_ids", []), [grid_id])

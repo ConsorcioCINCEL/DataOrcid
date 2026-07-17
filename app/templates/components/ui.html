@@ -1,0 +1,72 @@
+{% macro export_links(csv_url, xlsx_url, label=None) -%}
+<div class="app-export-actions" role="group" aria-label="{{ label or _('Export table') }}">
+  <a href="{{ csv_url }}"
+     class="app-icon-action is-csv"
+     aria-label="{{ _('Download CSV') }}"
+     title="{{ _('Download CSV') }}">
+    <i class="fas fa-file-csv" aria-hidden="true"></i>
+  </a>
+  <a href="{{ xlsx_url }}"
+     class="app-icon-action is-xlsx"
+     aria-label="{{ _('Download Excel') }}"
+     title="{{ _('Download Excel') }}">
+    <i class="fas fa-file-excel" aria-hidden="true"></i>
+  </a>
+</div>
+{%- endmacro %}
+
+{% macro chart_exports(chart_id) -%}
+<div class="app-chart-export-actions" role="group" aria-label="{{ _('Download chart image') }}">
+  <button type="button"
+          class="app-icon-action js-chart-export"
+          data-chart-id="{{ chart_id }}"
+          data-chart-format="png"
+          aria-label="{{ _('Download chart as PNG') }}"
+          title="{{ _('Download chart as PNG') }}">
+    <i class="fas fa-file-image" aria-hidden="true"></i>
+  </button>
+  <button type="button"
+          class="app-icon-action js-chart-export"
+          data-chart-id="{{ chart_id }}"
+          data-chart-format="svg"
+          aria-label="{{ _('Download chart as SVG') }}"
+          title="{{ _('Download chart as SVG') }}">
+    <i class="fas fa-vector-square" aria-hidden="true"></i>
+  </button>
+</div>
+{%- endmacro %}
+
+{% macro chart_info(description, methodology, placement='left') -%}
+<button type="button"
+        class="btn btn-xs btn-outline-info app-chart-help-button"
+        data-toggle="popover"
+        data-app-chart-help
+        data-container="body"
+        data-placement="{{ placement }}"
+        data-trigger="focus"
+        data-html="true"
+        data-boundary="window"
+        title="<span class='app-chart-help-title'><i class='fas fa-info-circle' aria-hidden='true'></i>{{ _('How to read this')|e }}</span>"
+        data-content="<div class='app-chart-help-section'><span class='app-chart-help-label'><i class='fas fa-eye' aria-hidden='true'></i>{{ _('What it shows')|e }}</span><p>{{ description|e }}</p></div><div class='app-chart-help-section'><span class='app-chart-help-label'><i class='fas fa-ruler-combined' aria-hidden='true'></i>{{ _('Methodology')|e }}</span><p>{{ methodology|e }}</p></div>"
+        aria-label="{{ _('How to read this') }}">
+  <i class="fas fa-info-circle" aria-hidden="true"></i>
+</button>
+{%- endmacro %}
+
+{% macro flash_messages(messages) -%}
+{% if messages %}
+<div class="app-flash-stack" aria-live="polite" aria-atomic="true">
+  {% for category, message in messages %}
+    {% set level = 'danger' if category in ['error', 'danger'] else 'warning' if category == 'warning' else 'success' if category == 'success' else 'info' %}
+    {% set icon = 'fas fa-times-circle' if level == 'danger' else 'fas fa-exclamation-triangle' if level == 'warning' else 'fas fa-check-circle' if level == 'success' else 'fas fa-info-circle' %}
+    <div class="app-flash app-flash--{{ level }} alert-dismissible fade show" role="alert">
+      <span class="app-flash-icon" aria-hidden="true"><i class="{{ icon }}"></i></span>
+      <div class="app-flash-message">{{ message }}</div>
+      <button type="button" class="app-flash-close" data-dismiss="alert" aria-label="{{ _('Close') }}">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+{%- endmacro %}

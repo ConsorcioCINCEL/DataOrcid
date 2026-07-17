@@ -3,7 +3,6 @@
 from io import BytesIO
 import pandas as pd
 import logging
-from datetime import datetime as dt
 from flask import (
     Blueprint, request, redirect, url_for,
     send_file, current_app, render_template
@@ -43,7 +42,7 @@ def _last_cache_run_fundings(ror_id: str):
     Returns:
         FundingCacheRun: The database model instance or None.
     """
-    from ..models import FundingCacheRun
+    from ..models import FundingCacheRun, utc_now
     return (
         FundingCacheRun.query
         .filter_by(ror_id=ror_id, status='success')
@@ -71,7 +70,7 @@ def cache_fundings_build():
     if not ror_id:
         flash_err(_('No ROR ID found in session.'))
         return redirect(url_for('main.index'))
-    run = FundingCacheRun(ror_id=ror_id, status='running', started_at=dt.utcnow())
+    run = FundingCacheRun(ror_id=ror_id, status='running', started_at=utc_now())
     db.session.add(run)
     db.session.commit()
 
@@ -93,7 +92,7 @@ def cache_fundings_build():
         run.error = str(e)
         flash_err(_('Error building funding cache. Check logs.'))
     finally:
-        run.finished_at = dt.utcnow()
+        run.finished_at = utc_now()
         db.session.commit()
 
     # Redirect back to the status dashboard (usually shared with Works status)

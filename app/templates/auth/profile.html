@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('My Profile · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<div class="app-section-heading">
+  <h1>{{ _('My profile') }}</h1>
+  <p>{{ _('Update the personal details associated with your account.') }}</p>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active">{{ _('My profile') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="profile-settings-layout">
+  {% include 'auth/_account_summary.html' %}
+
+  <section class="card profile-form-card" aria-labelledby="profileFormTitle">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title" id="profileFormTitle">
+          <i class="far fa-address-card" aria-hidden="true"></i>
+          {{ _('Personal details') }}
+        </h3>
+        <p>{{ _('Keep your contact and professional information up to date.') }}</p>
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('auth.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="first_name">{{ _('First name') }}</label>
+            <input type="text" class="form-control" id="first_name" name="first_name"
+                   value="{{ form_data.first_name }}" maxlength="120" autocomplete="given-name">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="last_name">{{ _('Last name') }}</label>
+            <input type="text" class="form-control" id="last_name" name="last_name"
+                   value="{{ form_data.last_name }}" maxlength="120" autocomplete="family-name">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">{{ _('Email address') }}</label>
+          <input type="email" class="form-control" id="email" name="email"
+                 value="{{ form_data.email }}" maxlength="255" autocomplete="email"
+                 aria-describedby="emailHelp">
+          <small class="form-text text-muted" id="emailHelp">
+            {{ _('Used for account notifications and password recovery.') }}
+          </small>
+        </div>
+
+        <div class="form-group mb-0">
+          <label for="position">{{ _('Position or job title') }}</label>
+          <input type="text" class="form-control" id="position" name="position"
+                 value="{{ form_data.position }}" maxlength="180" autocomplete="organization-title"
+                 placeholder="{{ _('For example, Research Director') }}">
+        </div>
+      </div>
+
+      <div class="card-footer profile-form-actions">
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">{{ _('Cancel') }}</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save" aria-hidden="true"></i>
+          {{ _('Save changes') }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

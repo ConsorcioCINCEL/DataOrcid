@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
+{% from 'components/ui.html' import export_links %}
 {% block title %}{{ _('Researcher Directory · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-  <h1 class="m-0 text-dark">{{ _('Researcher Directory') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('Researcher directory') }}</h1>
+  <p>{{ _('Find affiliated researchers, review profile quality, and compare cached activity.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -10,100 +14,132 @@
   <li class="breadcrumb-item active">{{ _('Researchers') }}</li>
 {% endblock %}
 
-{% block extra_css %}
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap4.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
-  <style>
-    .table thead th { border-bottom: 0; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; color: #6c757d; }
-    .truncate { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .badge-am { background-color: #28a74515; color: #28a745; border: 1px solid #28a74530; font-weight: 800; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
-  </style>
-{% endblock %}
+{% macro page_url(page_number) %}{{ url_for('main.researcher_list', q=filters.q, am=filters.am, match=filters.match, sort=filters.sort, dir=filters.dir, per_page=pagination.per_page, page=page_number) }}{% endmacro %}
+
+{% macro sort_url(sort_key, default_direction='asc') -%}
+  {%- set next_direction = 'desc' if filters.sort == sort_key and filters.dir == 'asc' else ('asc' if filters.sort == sort_key else default_direction) -%}
+  {{- url_for('main.researcher_list', q=filters.q, am=filters.am, match=filters.match, sort=sort_key, dir=next_direction, per_page=pagination.per_page, page=1) -}}
+{%- endmacro %}
+
+{% macro sortable_header(label, sort_key, align='', default_direction='asc') %}
+  {% set active = filters.sort == sort_key %}
+  <th scope="col" class="{{ align }}" aria-sort="{{ ('ascending' if filters.dir == 'asc' else 'descending') if active else 'none' }}">
+    <a class="researcher-sort-link {% if active %}is-active{% endif %}"
+       href="{{ sort_url(sort_key, default_direction) }}"
+       aria-label="{{ _('Sort by %(column)s', column=label) }}"
+       title="{{ _('Sort by %(column)s', column=label) }}">
+      <span>{{ label }}</span>
+      <i class="fas {% if not active %}fa-sort{% elif filters.dir == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}" aria-hidden="true"></i>
+    </a>
+  </th>
+{% endmacro %}
 
 {% block content %}
-<div class="card card-outline card-primary shadow-sm">
-  <div class="card-header border-0 d-flex align-items-center">
-    <h3 class="card-title font-weight-bold">
-      <i class="fas fa-user-graduate mr-2 text-primary"></i> {{ _('Affiliated Researchers') }}
-    </h3>
-    <div class="card-tools ml-auto">
-      <button onclick="window.location.reload()" class="btn btn-tool" title="{{ _('Refresh') }}">
-        <i class="fas fa-sync-alt"></i>
-      </button>
+<section class="app-kpi-strip researcher-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Researcher metrics') }}">
+  {% for label, value, icon, color, detail in [
+    (_('Researchers'), summary.total, 'fas fa-users', 'is-orange', _('%(count)s inferred relationships', count=summary.inferred)),
+    (_('Managed by AM'), summary.managed, 'fas fa-user-check', 'is-green', ''),
+    (_('Profiles with names'), summary.complete, 'fas fa-id-card', 'is-amber', ''),
+    (_('Verified associations'), summary.associated, 'fas fa-link', 'is-neutral', _('Confirmed by institutional identifiers'))
+  ] %}
+  <article class="app-kpi"><span class="app-kpi-icon {{ color }}" aria-hidden="true"><i class="{{ icon }}"></i></span><div><span class="app-kpi-label">{{ label }}</span><strong>{{ value }}</strong>{% if detail %}<small>{{ detail }}</small>{% endif %}</div></article>
+  {% endfor %}
+</section>
+
+<div class="card researcher-filter-card">
+  <div class="card-header researcher-directory-header">
+    <div><h2 class="card-title text-bold mb-1">{{ _('Researcher directory') }}</h2><p>{{ _('Search and refine the synchronized institutional directory.') }}</p></div>
+    <div class="app-card-tools researcher-directory-actions">
+      <button class="btn btn-sm btn-outline-primary d-md-none" type="button" data-toggle="collapse" data-target="#researcherFilters" aria-expanded="{{ 'true' if has_active_filters else 'false' }}" aria-controls="researcherFilters"><i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>{{ _('Show filters') }}</button>
+      {{ export_links(
+        url_for('main.researcher_list_export', format='csv', q=filters.q, am=filters.am, match=filters.match, sort=filters.sort, dir=filters.dir),
+        url_for('main.researcher_list_export', format='xlsx', q=filters.q, am=filters.am, match=filters.match, sort=filters.sort, dir=filters.dir)
+      ) }}
+      <a href="{{ url_for('works.cache_works_status') }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>{{ _('Synchronization') }}</a>
     </div>
   </div>
+  <div id="researcherFilters" class="collapse {% if has_active_filters %}show{% endif %} d-md-block">
+    <div class="card-body"><form method="get" class="researcher-filter-grid">
+      <div class="researcher-filter-search">
+        <label for="researcherSearch">{{ _('Search') }}</label>
+        <div class="input-group"><div class="input-group-prepend"><span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span></div><input id="researcherSearch" name="q" type="search" class="form-control" value="{{ filters.q }}" placeholder="{{ _('Name, ORCID iD, or email') }}"></div>
+      </div>
+      <div><label for="researcherAm">{{ _('Affiliation Manager') }}</label><select id="researcherAm" name="am" class="form-control"><option value="all">{{ _('Any status') }}</option><option value="managed" {% if filters.am == 'managed' %}selected{% endif %}>{{ _('Managed') }}</option><option value="unmanaged" {% if filters.am == 'unmanaged' %}selected{% endif %}>{{ _('Not managed') }}</option></select></div>
+      <div><label for="researcherMatch">{{ _('Relationship evidence') }}</label><select id="researcherMatch" name="match" class="form-control"><option value="all">{{ _('Any evidence') }}</option><option value="verified" {% if filters.match == 'verified' %}selected{% endif %}>{{ _('Verified') }}</option><option value="inferred" {% if filters.match == 'inferred' %}selected{% endif %}>{{ _('Inferred') }}</option><option value="ror" {% if filters.match == 'ror' %}selected{% endif %}>ROR</option><option value="grid" {% if filters.match == 'grid' %}selected{% endif %}>GRID</option><option value="ringgold" {% if filters.match == 'ringgold' %}selected{% endif %}>Ringgold</option></select></div>
+      <input type="hidden" name="per_page" value="{{ pagination.per_page }}">
+      <div class="researcher-filter-actions"><button class="btn btn-primary" type="submit"><i class="fas fa-filter mr-1" aria-hidden="true"></i>{{ _('Apply') }}</button><a class="btn btn-outline-secondary" href="{{ url_for('main.researcher_list') }}" title="{{ _('Reset') }}"><i class="fas fa-undo" aria-hidden="true"></i><span class="sr-only">{{ _('Reset') }}</span></a></div>
+    </form></div>
+  </div>
+</div>
 
-  <div class="card-body">
-    <table id="researchersTable" class="table table-hover w-100">
-      <thead class="bg-light">
-        <tr>
-          <th class="text-center" style="width: 50px;">{{ _('AM') }}</th>
-          <th>ORCID iD</th>
-          <th>{{ _('First Names') }}</th>
-          <th>{{ _('Last Names') }}</th>
-          <th>{{ _('Email') }}</th>
-          <th>{{ _('Institutions') }}</th>
-          <th>{{ _('Matched by') }}</th>
-        </tr>
-      </thead>
+<div class="app-list-heading researcher-results-heading">
+  <div><h2>{{ _('Researchers') }}</h2><p>{% if filters.q %}{{ _('Results for “%(query)s”', query=filters.q) }}{% else %}{{ _('Open a profile to review its public ORCID information.') }}{% endif %}</p></div>
+  <div class="researcher-result-controls"><span>{{ _('Showing %(start)s–%(end)s of %(total)s', start=pagination.start, end=pagination.end, total=pagination.total) }}</span><label for="researcherPageSize" class="sr-only">{{ _('Rows per page') }}</label><select id="researcherPageSize" class="form-control form-control-sm" aria-label="{{ _('Rows per page') }}" onchange="window.location.href=this.value">{% for size in [10, 25, 50] %}<option value="{{ url_for('main.researcher_list', q=filters.q, am=filters.am, match=filters.match, sort=filters.sort, dir=filters.dir, per_page=size) }}" {% if pagination.per_page == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select></div>
+</div>
+
+{% if not researchers %}
+<div class="alert alert-info"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('No researchers match the current filters.') }}</div>
+{% else %}
+<div class="card researcher-results-card d-none d-lg-block">
+  <div class="table-responsive">
+    <table class="table table-hover researcher-directory-table mb-0">
+      <thead><tr>{{ sortable_header(_('Researcher'), 'name') }}{{ sortable_header(_('Affiliation Manager'), 'managed', default_direction='desc') }}{{ sortable_header(_('Relationship evidence'), 'relationship', default_direction='desc') }}{{ sortable_header(_('Works'), 'works', 'text-right', 'desc') }}{{ sortable_header(_('Fundings'), 'fundings', 'text-right', 'desc') }}<th scope="col" class="text-right"><span class="sr-only">{{ _('Open profile') }}</span></th></tr></thead>
       <tbody>
-        {% for r in researchers %}
-          {% set orcid_id = r.get('orcid-id') %}
-          <tr>
-            <td class="text-center align-middle">
-              {% if r.is_managed %}
-                  <span class="badge-am" title="{{ _('Managed via Affiliation Manager') }}">AM</span>
-              {% else %}
-                  <span class="text-muted opacity-25 small">—</span>
-              {% endif %}
-            </td>
-            <td class="align-middle">
-              <a href="{{ url_for('main.orcid_profile', orcid_id=orcid_id) }}" class="text-primary font-weight-bold">
-                <i class="fab fa-orcid text-success mr-1"></i> {{ orcid_id }}
-              </a>
-            </td>
-            <td class="align-middle truncate">{{ r.get('given-names') or '—' }}</td>
-            <td class="align-middle truncate">{{ r.get('family-names') or '—' }}</td>
-            <td class="align-middle truncate small">
-              {% set email = r.get('email') %}
-              {% if email %}{{ email if email is string else email|join(', ') }}{% else %}<i class="text-muted">{{ _('Not public') }}</i>{% endif %}
-            </td>
-            <td class="align-middle truncate small">
-              {% set inst = r.get('institution-name') %}
-              {% if inst %}{{ inst if inst is string else inst|join(' / ') }}{% else %}—{% endif %}
-            </td>
-            <td class="align-middle small">
-              {% set matches = r.get('matched_identifiers') or {} %}
-              {% if matches.get('ror') %}<span class="badge badge-primary mr-1">ROR</span>{% endif %}
-              {% if matches.get('grid') %}<span class="badge badge-secondary mr-1">GRID</span>{% endif %}
-              {% if matches.get('ringgold') %}<span class="badge badge-info">Ringgold</span>{% endif %}
-            </td>
-          </tr>
+        {% for researcher in researchers %}
+        <tr>
+          <td><strong>{{ researcher['display-name'] }}</strong><div><a href="{{ url_for('main.orcid_profile', orcid_id=researcher['orcid-id']) }}" class="small"><i class="fab fa-orcid text-success mr-1" aria-hidden="true"></i>{{ researcher['orcid-id'] }}</a>{% if researcher.email %}<span class="small text-muted ml-3">{{ researcher.email }}</span>{% endif %}</div></td>
+          <td>{% if researcher.is_managed %}<span class="badge badge-success">{{ _('Managed') }}</span>{% else %}<span class="badge badge-light border">{{ _('Not managed') }}</span>{% endif %}</td>
+          <td>{% if researcher.association_verified %}{% for source in researcher.matched_by %}<span class="badge badge-light border mr-1">{{ source|upper }}</span>{% endfor %}<span class="badge badge-success">{{ _('Verified') }}</span>{% else %}<span class="badge badge-warning">{{ _('Inferred from cache') }}</span>{% endif %}</td>
+          <td class="text-right"><strong>{{ researcher.works_count }}</strong></td>
+          <td class="text-right"><strong>{{ researcher.fundings_count }}</strong></td>
+          <td class="text-right"><a href="{{ url_for('main.orcid_profile', orcid_id=researcher['orcid-id']) }}" class="btn btn-sm btn-light" aria-label="{{ _('Open profile for %(name)s', name=researcher['display-name']) }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a></td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-  {{ super() }}
-  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<div class="researcher-mobile-list d-lg-none">
+  {% for researcher in researchers %}
+  <article class="researcher-mobile-card">
+    <div class="researcher-mobile-identity"><span class="researcher-avatar"><i class="fas fa-user" aria-hidden="true"></i></span><div><strong>{{ researcher['display-name'] }}</strong><a href="{{ url_for('main.orcid_profile', orcid_id=researcher['orcid-id']) }}"><i class="fab fa-orcid text-success mr-1" aria-hidden="true"></i>{{ researcher['orcid-id'] }}</a></div></div>
+    <div class="researcher-mobile-status">{% if researcher.is_managed %}<span class="badge badge-success">{{ _('Managed') }}</span>{% else %}<span class="badge badge-light border">{{ _('Not managed') }}</span>{% endif %}{% if researcher.association_verified %}<span class="badge badge-success">{{ _('Verified') }}</span>{% else %}<span class="badge badge-warning">{{ _('Inferred') }}</span>{% endif %}{% for source in researcher.matched_by %}<span class="badge badge-light border">{{ source|upper }}</span>{% endfor %}</div>
+    <dl><div><dt>{{ _('Works') }}</dt><dd>{{ researcher.works_count }}</dd></div><div><dt>{{ _('Fundings') }}</dt><dd>{{ researcher.fundings_count }}</dd></div></dl>
+    <a href="{{ url_for('main.orcid_profile', orcid_id=researcher['orcid-id']) }}" class="researcher-mobile-link">{{ _('View ORCID profile') }}<i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
 
-<script>
-$(document).ready(function() {
-  $('#researchersTable').DataTable({
-    responsive: true, pageLength: 25, order: [[3, 'asc']],
-    language: { url: '{{ "https://cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json" if session.get("locale") == "es" else "" }}' },
-    dom: "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'f>>t<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-    buttons: [{ extend: 'excelHtml5', text: '<i class="fas fa-file-download mr-1"></i> {{ _("Export Excel") }}', className: 'btn btn-success btn-sm' }]
-  });
-});
-</script>
+{% if pagination.pages > 1 %}
+<nav class="openalex-pagination researcher-pagination" aria-label="{{ _('Researcher pagination') }}">
+  <span>{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      {% if pagination.has_prev %}
+      <a class="page-link" href="{{ page_url(pagination.prev_page) }}" rel="prev" aria-label="{{ _('Previous') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+      {% else %}
+      <span class="page-link" aria-disabled="true"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>
+      {% endif %}
+    </li>
+    {% for page_number in pagination.page_numbers %}
+      {% if page_number is none %}
+      <li class="page-item disabled" aria-hidden="true"><span class="page-link">…</span></li>
+      {% elif page_number == pagination.page %}
+      <li class="page-item active"><span class="page-link" aria-current="page">{{ page_number }}</span></li>
+      {% else %}
+      <li class="page-item"><a class="page-link" href="{{ page_url(page_number) }}" aria-label="{{ _('Page %(page)s of %(pages)s', page=page_number, pages=pagination.pages) }}">{{ page_number }}</a></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      {% if pagination.has_next %}
+      <a class="page-link" href="{{ page_url(pagination.next_page) }}" rel="next" aria-label="{{ _('Next') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+      {% else %}
+      <span class="page-link" aria-disabled="true"><i class="fas fa-chevron-right" aria-hidden="true"></i></span>
+      {% endif %}
+    </li>
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}

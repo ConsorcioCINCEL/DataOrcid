@@ -1,0 +1,46 @@
+{% from 'components/ui.html' import flash_messages %}
+<!DOCTYPE html>
+<html lang="{{ session.get('locale') or 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Data ORCID-Chile{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@200;300;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body class="app-auth-page">
+  <a class="app-skip-link" href="#auth-content">{{ _('Skip to main content') }}</a>
+  <main class="app-auth-shell" id="auth-content" tabindex="-1">
+    <a class="app-auth-brand" href="{{ url_for('auth.login') }}" aria-label="Data ORCID-Chile">
+      <span class="app-auth-brand-wordmark" aria-hidden="true">
+        <span class="app-auth-brand-data">DATA</span><span class="app-auth-brand-orcid">ORCID</span>
+      </span>
+      <span class="app-auth-brand-country">Chile</span>
+    </a>
+
+    <section class="app-auth-card" aria-labelledby="auth-page-title">
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {{ flash_messages(messages) }}
+      {% endwith %}
+      {% block auth_content %}{% endblock %}
+    </section>
+
+    <nav class="app-auth-language" aria-label="{{ _('Change language') }}">
+      <a href="{{ locale_url('en') }}" class="{% if (session.get('locale') or 'en') == 'en' %}active{% endif %}" lang="en">English</a>
+      <span aria-hidden="true">·</span>
+      <a href="{{ locale_url('es') }}" class="{% if session.get('locale') == 'es' %}active{% endif %}" lang="es">Español</a>
+    </nav>
+    {% block auth_support %}{% endblock %}
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

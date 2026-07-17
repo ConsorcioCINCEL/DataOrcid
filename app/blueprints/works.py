@@ -6,22 +6,25 @@ import hashlib
 import json
 import logging
 import math
+import os
+import tempfile
 import time
 from collections import OrderedDict
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta, timezone
 from io import BytesIO, StringIO
+from pathlib import Path
 from threading import RLock
 
 import pandas as pd
 from flask import (
-    Blueprint, request, redirect, url_for,
+    Blueprint, g, request, redirect, url_for,
     Response, send_file, current_app, render_template, session, stream_with_context
 )
 from flask_babel import _
 from sqlalchemy import String, and_, case, cast, func, literal, or_, select
 
-from .. import db
-from ..decorators import admin_required, login_required, staff_required
+from .. import db, plain_text
+from ..decorators import admin_required, login_required, normalize_ror_id, staff_required
 from ..utils.flashes import flash_err, flash_ok
 from ..utils.session_helpers import get_active_ror_id
 
@@ -30,8 +33,12 @@ logger = logging.getLogger(__name__)
 
 _OPENALEX_GLOBAL_ANALYTICS_CACHE = OrderedDict()
 _OPENALEX_GLOBAL_ANALYTICS_CACHE_LOCK = RLock()
-_OPENALEX_GLOBAL_ANALYTICS_CACHE_MAX_SIZE = 40
-_OPENALEX_GLOBAL_ANALYTICS_CACHE_TTL = 900
+_OPENALEX_INSTITUTION_ANALYTICS_CACHE = OrderedDict()
+_OPENALEX_INSTITUTION_ANALYTICS_CACHE_LOCK = RLock()
+_OPENALEX_ANALYTICS_CACHE_MAX_SIZE = 40
+_OPENALEX_ANALYTICS_CACHE_TTL = 86400
+_OPENALEX_PERSISTENT_CACHE_VERSION = 1
+_OPENALEX_PERSISTENT_CACHE_MAX_FILES = 120
 
 
 def _format_datetime(value):
@@ -120,10 +127,23 @@ def _chunks(items: list, size: int = 500):
 
 
 def _openalex_normalized_doi_expr(model):
+    """Build a DOI normalization expression supported by PostgreSQL and SQLite."""
     trimmed = func.lower(func.trim(model.doi))
-    without_url = func.regexp_replace(trimmed, r"^https?://(dx\.)?doi\.org/", "")
-    without_prefix = func.regexp_replace(without_url, r"^doi:\s*", "")
-    return func.rtrim(without_prefix, ".")
+    without_url = func.replace(
+        func.replace(
+            func.replace(
+                func.replace(trimmed, "https://dx.doi.org/", ""),
+                "http://dx.doi.org/",
+                "",
+            ),
+            "https://doi.org/",
+            "",
+        ),
+        "http://doi.org/",
+        "",
+    )
+    without_prefix = func.replace(without_url, "doi:", "")
+    return func.rtrim(func.trim(without_prefix), ".")
 
 
 def _openalex_cache_key_expr(model):
@@ -146,7 +166,7 @@ def _page_params(default_per_page: int = 100) -> tuple[int, int]:
     except (TypeError, ValueError):
         per_page = default_per_page
 
-    return page, min(max(per_page, 25), 250)
+    return page, min(max(per_page, 10), 250)
 
 
 def _table_page_params(prefix: str, default_per_page: int = 25, max_per_page: int = 100) -> tuple[int, int]:
@@ -228,11 +248,11 @@ def _association_summary(counter: dict, limit: int = 3) -> dict:
     }
 
 
-def _openalex_global_cache_ttl() -> int:
+def _openalex_analytics_cache_ttl() -> int:
     try:
-        return max(int(current_app.config.get("OPENALEX_ANALYTICS_CACHE_TTL", _OPENALEX_GLOBAL_ANALYTICS_CACHE_TTL)), 0)
+        return max(int(current_app.config.get("OPENALEX_ANALYTICS_CACHE_TTL", _OPENALEX_ANALYTICS_CACHE_TTL)), 0)
     except (TypeError, ValueError):
-        return _OPENALEX_GLOBAL_ANALYTICS_CACHE_TTL
+        return _OPENALEX_ANALYTICS_CACHE_TTL
 
 
 def _signature_row(model, timestamp_column) -> dict:
@@ -243,72 +263,223 @@ def _signature_row(model, timestamp_column) -> dict:
     }
 
 
-def _openalex_global_data_signature() -> dict:
+def _openalex_data_signature(ror_id: str | None = None) -> dict:
     from ..models import OpenAlexWorkAuthor, OpenAlexWorkInstitution, OpenAlexWorkMetadata, WorkCache
 
+    work_query = db.session.query(func.count(WorkCache.id), func.max(WorkCache.created_at))
+    if ror_id:
+        work_query = work_query.filter(WorkCache.ror_id == ror_id)
+    work_count, work_latest = work_query.one()
+
     return {
-        "works": _signature_row(WorkCache, WorkCache.created_at),
+        "works": {
+            "count": int(work_count or 0),
+            "latest": work_latest.isoformat() if work_latest else "",
+        },
         "metadata": _signature_row(OpenAlexWorkMetadata, OpenAlexWorkMetadata.updated_at),
         "authors": _signature_row(OpenAlexWorkAuthor, OpenAlexWorkAuthor.created_at),
         "institutions": _signature_row(OpenAlexWorkInstitution, OpenAlexWorkInstitution.created_at),
     }
 
 
-def _openalex_global_request_cache_key(filters: dict) -> str:
+def _openalex_analytics_request_cache_key(namespace: str, filters: dict, ror_id: str | None = None) -> str:
     request_args = {
         key: request.args.getlist(key)
         for key in sorted(request.args.keys())
-        if key not in {"lang", "refresh_cache"}
+        if key not in {"lang", "refresh_cache", "section", "tab"}
     }
     payload = {
+        "namespace": namespace,
+        "ror_id": ror_id,
         "filters": filters,
         "request_args": request_args,
-        "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "es"),
-        "data_signature": _openalex_global_data_signature(),
+        "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "en"),
+        "data_signature": _openalex_data_signature(ror_id),
     }
     encoded = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _openalex_global_analytics_with_cache(filters: dict) -> dict:
-    ttl = _openalex_global_cache_ttl()
-    bypass_cache = request.args.get("refresh_cache") == "1" or ttl <= 0
-    now = time.monotonic()
-    cache_key = None if bypass_cache else _openalex_global_request_cache_key(filters)
+def _openalex_persistent_cache_path(namespace: str, cache_key: str) -> Path:
+    cache_dir = Path(current_app.instance_path) / "openalex-analytics-cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir / f"{namespace}-{cache_key}.json"
 
-    if cache_key:
-        with _OPENALEX_GLOBAL_ANALYTICS_CACHE_LOCK:
-            cached = _OPENALEX_GLOBAL_ANALYTICS_CACHE.get(cache_key)
+
+def _read_openalex_persistent_cache(namespace: str, cache_key: str, ttl: int) -> dict | None:
+    path = _openalex_persistent_cache_path(namespace, cache_key)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        stored_at = float(payload.get("stored_at", 0))
+        if payload.get("version") != _OPENALEX_PERSISTENT_CACHE_VERSION:
+            return None
+        if time.time() - stored_at > ttl:
+            return None
+        analytics = payload.get("analytics")
+        if not isinstance(analytics, dict):
+            return None
+        return {
+            "analytics": analytics,
+            "stored_at": stored_at,
+            "generated_at": payload.get("generated_at") or dt.now(timezone.utc).isoformat(),
+        }
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _prune_openalex_persistent_cache(cache_dir: Path) -> None:
+    try:
+        cache_files = sorted(
+            cache_dir.glob("*.json"),
+            key=lambda item: item.stat().st_mtime,
+            reverse=True,
+        )
+        for path in cache_files[_OPENALEX_PERSISTENT_CACHE_MAX_FILES:]:
+            path.unlink(missing_ok=True)
+    except OSError:
+        logger.debug("Could not prune the persistent OpenAlex analytics cache.", exc_info=True)
+
+
+def _write_openalex_persistent_cache(
+    namespace: str,
+    cache_key: str,
+    analytics: dict,
+    generated_at: str,
+) -> None:
+    path = _openalex_persistent_cache_path(namespace, cache_key)
+    payload = {
+        "version": _OPENALEX_PERSISTENT_CACHE_VERSION,
+        "stored_at": time.time(),
+        "generated_at": generated_at,
+        "analytics": analytics,
+    }
+    temporary_path = None
+    try:
+        descriptor, temporary_path = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+        )
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
+        os.replace(temporary_path, path)
+        _prune_openalex_persistent_cache(path.parent)
+    except (OSError, TypeError, ValueError):
+        logger.warning("Could not persist the OpenAlex analytics cache.", exc_info=True)
+        if temporary_path:
+            try:
+                Path(temporary_path).unlink(missing_ok=True)
+            except OSError:
+                pass
+
+
+def _openalex_analytics_with_cache(
+    namespace: str,
+    filters: dict,
+    builder,
+    memory_cache: OrderedDict,
+    cache_lock: RLock,
+    ror_id: str | None = None,
+) -> dict:
+    ttl = _openalex_analytics_cache_ttl()
+    refresh_cache = request.args.get("refresh_cache") == "1"
+    now = time.monotonic()
+    cache_key = _openalex_analytics_request_cache_key(namespace, filters, ror_id) if ttl > 0 else None
+
+    if cache_key and not refresh_cache:
+        with cache_lock:
+            cached = memory_cache.get(cache_key)
             if cached and now - cached["stored_at"] <= ttl:
-                _OPENALEX_GLOBAL_ANALYTICS_CACHE.move_to_end(cache_key)
+                memory_cache.move_to_end(cache_key)
                 analytics = copy.deepcopy(cached["analytics"])
                 analytics["cache"] = {
                     "hit": True,
+                    "layer": "memory",
                     "generated_at": cached["generated_at"],
                     "ttl_seconds": ttl,
                 }
                 return analytics
             if cached:
-                _OPENALEX_GLOBAL_ANALYTICS_CACHE.pop(cache_key, None)
+                memory_cache.pop(cache_key, None)
 
-    analytics = _openalex_global_analytics(filters)
-    generated_at = dt.utcnow().isoformat()
+        persistent = _read_openalex_persistent_cache(namespace, cache_key, ttl)
+        if persistent:
+            with cache_lock:
+                memory_cache[cache_key] = {
+                    "analytics": copy.deepcopy(persistent["analytics"]),
+                    "stored_at": now,
+                    "generated_at": persistent["generated_at"],
+                }
+                while len(memory_cache) > _OPENALEX_ANALYTICS_CACHE_MAX_SIZE:
+                    memory_cache.popitem(last=False)
+            analytics = persistent["analytics"]
+            analytics["cache"] = {
+                "hit": True,
+                "layer": "persistent",
+                "generated_at": persistent["generated_at"],
+                "ttl_seconds": ttl,
+            }
+            return analytics
+
+    analytics = builder(filters)
+    generated_at = dt.now(timezone.utc).isoformat()
 
     if cache_key:
-        with _OPENALEX_GLOBAL_ANALYTICS_CACHE_LOCK:
-            _OPENALEX_GLOBAL_ANALYTICS_CACHE[cache_key] = {
-                "analytics": copy.deepcopy(analytics),
+        cached_analytics = copy.deepcopy(analytics)
+        cached_analytics.pop("cache", None)
+        with cache_lock:
+            memory_cache[cache_key] = {
+                "analytics": cached_analytics,
                 "stored_at": now,
                 "generated_at": generated_at,
             }
-            while len(_OPENALEX_GLOBAL_ANALYTICS_CACHE) > _OPENALEX_GLOBAL_ANALYTICS_CACHE_MAX_SIZE:
-                _OPENALEX_GLOBAL_ANALYTICS_CACHE.popitem(last=False)
+            while len(memory_cache) > _OPENALEX_ANALYTICS_CACHE_MAX_SIZE:
+                memory_cache.popitem(last=False)
+        _write_openalex_persistent_cache(namespace, cache_key, cached_analytics, generated_at)
 
     analytics["cache"] = {
         "hit": False,
+        "layer": "database",
         "generated_at": generated_at,
         "ttl_seconds": ttl,
     }
+    return analytics
+
+
+def _openalex_institution_analytics_with_cache(ror_id: str, filters: dict) -> dict:
+    return _openalex_analytics_with_cache(
+        "institution",
+        filters,
+        lambda current_filters: _openalex_analytics(ror_id, current_filters),
+        _OPENALEX_INSTITUTION_ANALYTICS_CACHE,
+        _OPENALEX_INSTITUTION_ANALYTICS_CACHE_LOCK,
+        ror_id=ror_id,
+    )
+
+
+def _openalex_global_analytics_with_cache(filters: dict) -> dict:
+    requested_tab = (filters.get("tab") or "overview").strip().lower()
+    if requested_tab not in {"overview", "universities", "production", "institution_authors", "articles"}:
+        requested_tab = "overview"
+
+    # Overview, university, and article tabs use the same global aggregate.
+    # Cache them as one dataset and apply the selected presentation tab after
+    # retrieval so navigating between those sections does not rerun the query.
+    cache_filters = dict(filters)
+    cache_filters["tab"] = (
+        requested_tab
+        if requested_tab in {"production", "institution_authors"}
+        else "overview"
+    )
+    analytics = _openalex_analytics_with_cache(
+        "global",
+        cache_filters,
+        _openalex_global_analytics,
+        _OPENALEX_GLOBAL_ANALYTICS_CACHE,
+        _OPENALEX_GLOBAL_ANALYTICS_CACHE_LOCK,
+    )
+    analytics["active_tab"] = requested_tab
+    analytics.setdefault("filters", {})["tab"] = requested_tab
     return analytics
 
 
@@ -375,8 +546,225 @@ def _researcher_pairs(ror_id: str | None = None):
     return sorted(pairs)
 
 
+def _researcher_pair_union(ror_id: str | None = None):
+    """Build the union of institution/researcher pairs across local sources."""
+    from ..models import (
+        FundingCache,
+        InstitutionRegistry,
+        InstitutionResearcher,
+        ResearcherStatus,
+        WorkCache,
+    )
+
+    association_query = db.session.query(
+        InstitutionRegistry.ror_id.label("ror_id"),
+        InstitutionResearcher.orcid.label("orcid"),
+    ).join(
+        InstitutionResearcher,
+        InstitutionResearcher.institution_id == InstitutionRegistry.id,
+    ).filter(
+        InstitutionRegistry.is_active.is_(True),
+        InstitutionResearcher.is_active.is_(True),
+    )
+
+    source_queries = [
+        db.session.query(
+            WorkCache.ror_id.label("ror_id"),
+            WorkCache.orcid.label("orcid"),
+        ).filter(
+            WorkCache.ror_id.isnot(None),
+            WorkCache.ror_id != "",
+            WorkCache.orcid.isnot(None),
+            WorkCache.orcid != "",
+        ),
+        db.session.query(
+            FundingCache.ror_id.label("ror_id"),
+            FundingCache.orcid.label("orcid"),
+        ).filter(
+            FundingCache.ror_id.isnot(None),
+            FundingCache.ror_id != "",
+            FundingCache.orcid.isnot(None),
+            FundingCache.orcid != "",
+        ),
+        db.session.query(
+            ResearcherStatus.ror_id.label("ror_id"),
+            ResearcherStatus.orcid.label("orcid"),
+        ).filter(
+            ResearcherStatus.ror_id.isnot(None),
+            ResearcherStatus.ror_id != "",
+            ResearcherStatus.orcid.isnot(None),
+            ResearcherStatus.orcid != "",
+        ),
+    ]
+
+    if ror_id:
+        association_query = association_query.filter(InstitutionRegistry.ror_id == ror_id)
+        source_queries = [query.filter_by(ror_id=ror_id) for query in source_queries]
+
+    return association_query.union(*source_queries)
+
+
 def _researcher_count(ror_id: str | None = None) -> int:
-    return len(_researcher_pairs(ror_id))
+    """Count unique institution/researcher pairs without loading them in Python."""
+    combined = _researcher_pair_union(ror_id).subquery()
+    return int(db.session.query(func.count()).select_from(combined).scalar() or 0)
+
+
+def _institution_cache_summaries(institutions: list[dict] | None = None) -> list[dict]:
+    """Return cache counts and freshness for every known institution."""
+    from ..models import (
+        FundingCache,
+        FundingCacheRun,
+        OpenAlexSyncRun,
+        OpenAlexWorkMetadata,
+        WorkCache,
+        WorkCacheRun,
+    )
+    from ..services.institution_registry_service import get_institution_options
+
+    institutions = institutions if institutions is not None else get_institution_options()
+    ror_ids = [item.get("ror_id") for item in institutions if item.get("ror_id")]
+    if not ror_ids:
+        return []
+
+    def grouped_counts(model) -> dict[str, int]:
+        return {
+            ror_id: int(count or 0)
+            for ror_id, count in (
+                db.session.query(model.ror_id, func.count(model.id))
+                .filter(model.ror_id.in_(ror_ids))
+                .group_by(model.ror_id)
+                .all()
+            )
+        }
+
+    def latest_success(model) -> dict[str, dt]:
+        return dict(
+            db.session.query(model.ror_id, func.max(model.finished_at))
+            .filter(
+                model.ror_id.in_(ror_ids),
+                model.status == "success",
+                model.finished_at.isnot(None),
+            )
+            .group_by(model.ror_id)
+            .all()
+        )
+
+    work_counts = grouped_counts(WorkCache)
+    funding_counts = grouped_counts(FundingCache)
+
+    researcher_pairs = _researcher_pair_union().subquery()
+    researcher_counts = {
+        ror_id: int(count or 0)
+        for ror_id, count in (
+            db.session.query(researcher_pairs.c.ror_id, func.count())
+            .filter(researcher_pairs.c.ror_id.in_(ror_ids))
+            .group_by(researcher_pairs.c.ror_id)
+            .all()
+        )
+    }
+
+    normalized_doi = _openalex_normalized_doi_expr(WorkCache).label("doi_normalized")
+    institution_dois = (
+        db.session.query(WorkCache.ror_id.label("ror_id"), normalized_doi)
+        .filter(
+            WorkCache.ror_id.in_(ror_ids),
+            WorkCache.type == "journal-article",
+            WorkCache.doi.isnot(None),
+            WorkCache.doi != "",
+        )
+        .distinct()
+        .subquery()
+    )
+    openalex_coverage = {
+        ror_id: {
+            "candidates": int(candidates or 0),
+            "matched": int(matched or 0),
+        }
+        for ror_id, candidates, matched in (
+            db.session.query(
+                institution_dois.c.ror_id,
+                func.count(),
+                func.count(OpenAlexWorkMetadata.id),
+            )
+            .outerjoin(
+                OpenAlexWorkMetadata,
+                OpenAlexWorkMetadata.doi_normalized == institution_dois.c.doi_normalized,
+            )
+            .group_by(institution_dois.c.ror_id)
+            .all()
+        )
+    }
+
+    work_updates = latest_success(WorkCacheRun)
+    funding_updates = latest_success(FundingCacheRun)
+    openalex_updates = latest_success(OpenAlexSyncRun)
+    running_rors = {
+        row[0]
+        for model in (WorkCacheRun, FundingCacheRun)
+        for row in (
+            db.session.query(model.ror_id)
+            .filter(
+                model.ror_id.in_(ror_ids),
+                model.status.in_(("pending", "running")),
+            )
+            .distinct()
+            .all()
+        )
+    }
+    stale_days = max(int(current_app.config.get("CACHE_STALE_DAYS", 30)), 1)
+    stale_before = dt.now(timezone.utc).replace(tzinfo=None) - timedelta(days=stale_days)
+
+    summaries = []
+    for institution in institutions:
+        ror_id = institution.get("ror_id")
+        if not ror_id:
+            continue
+        coverage = openalex_coverage.get(ror_id, {"candidates": 0, "matched": 0})
+        candidates = coverage["candidates"]
+        matched = coverage["matched"]
+        updates = [
+            value
+            for value in (
+                work_updates.get(ror_id),
+                funding_updates.get(ror_id),
+                openalex_updates.get(ror_id),
+            )
+            if value
+        ]
+        required_updates = [work_updates.get(ror_id), funding_updates.get(ror_id)]
+        last_update = max(updates) if updates else None
+        works = work_counts.get(ror_id, 0)
+        fundings = funding_counts.get(ror_id, 0)
+        researchers = researcher_counts.get(ror_id, 0)
+        has_data = any((works, fundings, researchers, candidates))
+
+        if ror_id in running_rors:
+            health = "running"
+        elif not has_data:
+            health = "empty"
+        elif any(value is None for value in required_updates):
+            health = "attention"
+        elif min(required_updates) < stale_before:
+            health = "stale"
+        else:
+            health = "ready"
+
+        summaries.append({
+            "ror_id": ror_id,
+            "name": institution.get("name") or ror_id,
+            "researchers": researchers,
+            "works": works,
+            "fundings": fundings,
+            "openalex_candidates": candidates,
+            "openalex_matched": matched,
+            "openalex_percent": round((matched / candidates * 100), 1) if candidates else 0,
+            "last_update": last_update,
+            "health": health,
+            "has_data": has_data,
+        })
+
+    return sorted(summaries, key=lambda item: item["name"].casefold())
 
 
 def _build_researchers_dataframe(ror_id: str | None = None) -> pd.DataFrame:
@@ -593,7 +981,7 @@ def _openalex_export_row(raw, metadata, include_raw_json: bool = True) -> dict:
         'raw_fetched_at': _format_datetime(raw.fetched_at),
         'raw_created_at': _format_datetime(raw.created_at),
         'raw_oa_updated_date': _format_datetime(raw.oa_updated_date),
-        'title': metadata.title if metadata else None,
+        'title': plain_text(metadata.title) if metadata else None,
         'publication_year': metadata.publication_year if metadata else None,
         'publication_date': metadata.publication_date if metadata else None,
         'type': metadata.type if metadata else None,
@@ -806,6 +1194,7 @@ def _openalex_cache_summary(ror_id: str) -> dict:
         "not_found_dois": not_found,
         "error_dois": errors,
         "pending_dois": max(candidate_dois - processed, 0),
+        "unmatched_dois": max(candidate_dois - matched - max(candidate_dois - processed, 0) - errors, 0),
         "title_candidate_works": no_doi_title_candidates + doi_not_found_title_candidates,
         "no_doi_title_candidates": no_doi_title_candidates,
         "doi_not_found_title_candidates": doi_not_found_title_candidates,
@@ -819,7 +1208,10 @@ def _openalex_work_rows(
     ror_id: str,
     coverage: str = "all",
     page: int = 1,
-    per_page: int = 100,
+    per_page: int = 25,
+    search: str = "",
+    sort: str = "citations",
+    direction: str = "desc",
 ) -> tuple[list[dict], dict, dict]:
     """Join local ORCID articles with OpenAlex metadata by DOI or local work key."""
     from ..models import OpenAlexWorkMetadata, OpenAlexWorkRawCache, WorkCache
@@ -860,20 +1252,74 @@ def _openalex_work_rows(
     if coverage == "enriched":
         query = query.filter(OpenAlexWorkMetadata.id.isnot(None))
     elif coverage == "missing":
-        query = query.filter(OpenAlexWorkRawCache.id.is_(None))
+        query = query.filter(
+            WorkCache.doi.isnot(None),
+            func.trim(WorkCache.doi) != "",
+            OpenAlexWorkRawCache.id.is_(None),
+        )
+    elif coverage == "not_found":
+        query = query.filter(OpenAlexWorkRawCache.status.in_(("not_found", "error")))
+    elif coverage == "no_doi":
+        query = query.filter(or_(WorkCache.doi.is_(None), func.trim(WorkCache.doi) == ""))
+
+    search = (search or "").strip()
+    if search:
+        pattern = f"%{search}%"
+        query = query.filter(or_(
+            WorkCache.title.ilike(pattern),
+            WorkCache.doi.ilike(pattern),
+            WorkCache.orcid.ilike(pattern),
+            WorkCache.journal_title.ilike(pattern),
+            OpenAlexWorkMetadata.source_name.ilike(pattern),
+            OpenAlexWorkMetadata.primary_topic_field.ilike(pattern),
+            OpenAlexWorkMetadata.primary_topic_domain.ilike(pattern),
+            OpenAlexWorkMetadata.openalex_id.ilike(pattern),
+        ))
 
     total_rows = query.count()
-    query = query.order_by(WorkCache.pub_year.desc(), WorkCache.title.asc())
+    pagination = _pagination_dict(page, per_page, total_rows)
+    page = pagination["page"]
+
+    status_sort = case(
+        (OpenAlexWorkMetadata.id.isnot(None), 0),
+        (OpenAlexWorkRawCache.status == "error", 3),
+        (OpenAlexWorkRawCache.status == "not_found", 2),
+        else_=1,
+    )
+    sort_columns = {
+        "title": WorkCache.title,
+        "year": WorkCache.pub_year,
+        "citations": OpenAlexWorkMetadata.cited_by_count,
+        "open_access": OpenAlexWorkMetadata.is_oa,
+        "source": OpenAlexWorkMetadata.source_name,
+        "status": status_sort,
+    }
+    sort = sort if sort in sort_columns else "citations"
+    direction = direction if direction in {"asc", "desc"} else "desc"
+    sort_column = sort_columns[sort]
+    null_rank = case((sort_column.is_(None), 1), else_=0)
+    primary_order = sort_column.asc() if direction == "asc" else sort_column.desc()
+    query = query.order_by(null_rank.asc(), primary_order, WorkCache.title.asc(), WorkCache.id.asc())
     result_rows = query.offset((page - 1) * per_page).limit(per_page).all()
 
     rows = []
     for row in result_rows:
         raw_status = row.raw_status or "pending"
         openalex_id = row.openalex_id
-        has_doi = bool(row.doi)
+        has_doi = bool(row.doi and row.doi.strip())
+        if openalex_id:
+            status_key = "matched"
+        elif raw_status == "not_found":
+            status_key = "not_found"
+        elif raw_status == "error":
+            status_key = "error"
+        elif not has_doi:
+            status_key = "no_doi"
+        else:
+            status_key = "pending"
         rows.append({
             "work_cache_id": row.work_cache_id,
-            "title": row.title or "",
+            "title": plain_text(row.title),
             "orcid": row.orcid,
             "type": row.type or "",
             "pub_year": row.pub_year or "",
@@ -883,6 +1329,7 @@ def _openalex_work_rows(
             "openalex_cache_key": row.openalex_cache_key,
             "has_doi": has_doi,
             "matched": bool(openalex_id),
+            "status_key": status_key,
             "raw_status": raw_status,
             "raw_error": row.raw_error or "",
             "openalex_id": openalex_id or "",
@@ -896,13 +1343,29 @@ def _openalex_work_rows(
             "primary_topic_domain": row.primary_topic_domain or "",
         })
 
+    has_doi_condition = and_(WorkCache.doi.isnot(None), func.trim(WorkCache.doi) != "")
+    coverage_row = (
+        db.session.query(
+            func.count(WorkCache.id),
+            func.coalesce(func.sum(case((OpenAlexWorkMetadata.id.isnot(None), 1), else_=0)), 0),
+            func.coalesce(func.sum(case((and_(has_doi_condition, OpenAlexWorkRawCache.id.is_(None)), 1), else_=0)), 0),
+            func.coalesce(func.sum(case((OpenAlexWorkRawCache.status.in_(("not_found", "error")), 1), else_=0)), 0),
+            func.coalesce(func.sum(case((~has_doi_condition, 1), else_=0)), 0),
+        )
+        .select_from(WorkCache)
+        .outerjoin(OpenAlexWorkRawCache, OpenAlexWorkRawCache.doi_normalized == _openalex_cache_key_expr(WorkCache))
+        .outerjoin(OpenAlexWorkMetadata, OpenAlexWorkMetadata.doi_normalized == _openalex_cache_key_expr(WorkCache))
+        .filter(WorkCache.ror_id == ror_id, WorkCache.type == "journal-article")
+        .one()
+    )
+
     summary.update({
         "total_article_works": summary["article_works"],
         "total_doi_works": summary["article_doi_works"],
         "unique_dois": summary["candidate_dois"],
         "enriched_unique_dois": summary["matched_openalex_keys"],
         "processed_unique_dois": summary["processed_dois"],
-        "coverage_percent": round((summary["matched_openalex_keys"] / summary["article_works"] * 100), 1) if summary["article_works"] else 0,
+        "coverage_percent": round((coverage_row[1] / coverage_row[0] * 100), 1) if coverage_row[0] else 0,
         "total_rows": total_rows,
         "total_citations": (
             db.session.query(func.coalesce(func.sum(OpenAlexWorkMetadata.cited_by_count), 0))
@@ -931,20 +1394,15 @@ def _openalex_work_rows(
             .scalar()
             or 0
         ),
+        "coverage_counts": {
+            "all": int(coverage_row[0] or 0),
+            "enriched": int(coverage_row[1] or 0),
+            "missing": int(coverage_row[2] or 0),
+            "not_found": int(coverage_row[3] or 0),
+            "no_doi": int(coverage_row[4] or 0),
+        },
     })
 
-    pagination = {
-        "page": page,
-        "per_page": per_page,
-        "total_rows": total_rows,
-        "pages": max(math.ceil(total_rows / per_page), 1) if total_rows else 1,
-        "has_prev": page > 1,
-        "has_next": page * per_page < total_rows,
-        "prev_page": max(page - 1, 1),
-        "next_page": page + 1,
-        "start": ((page - 1) * per_page + 1) if total_rows else 0,
-        "end": min(page * per_page, total_rows),
-    }
     return rows, summary, pagination
 
 
@@ -1379,6 +1837,42 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         .limit(10)
         .all()
     )
+    top_cited = [
+        {
+            "title": row.title,
+            "openalex_id": row.openalex_id,
+            "publication_year": row.publication_year,
+            "type": row.type,
+            "source_name": row.source_name,
+            "cited_by_count": row.cited_by_count,
+            "fwci": row.fwci,
+            "is_oa": row.is_oa,
+            "oa_status": row.oa_status,
+            "primary_topic_field": row.primary_topic_field,
+            "primary_topic_domain": row.primary_topic_domain,
+        }
+        for row in top_cited
+    ]
+    top_institutions = [
+        {
+            "institution_name": row.institution_name,
+            "ror_id": row.ror_id,
+            "country_code": row.country_code,
+            "works_count": row.works_count,
+            "author_links": row.author_links,
+        }
+        for row in institution_rows
+    ]
+    top_authors = [
+        {
+            "author_name": row.author_name,
+            "author_id": row.author_id,
+            "orcid": row.orcid,
+            "has_chile_affiliation": row.has_chile_affiliation,
+            "works_count": row.works_count,
+        }
+        for row in author_rows
+    ]
 
     coverage_counts = {
         _("Matched"): summary["matched_dois"],
@@ -1519,8 +2013,8 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             "author_values": [row.works_count for row in author_rows],
         },
         "top_cited": top_cited,
-        "top_institutions": institution_rows,
-        "top_authors": author_rows,
+        "top_institutions": top_institutions,
+        "top_authors": top_authors,
     }
 
 
@@ -2350,7 +2844,7 @@ def _has_cache_fundings(ror_id: str) -> bool:
 
 def _last_cache_run_fundings(ror_id: str):
     """Retrieves the last successful Fundings synchronization log."""
-    from ..models import FundingCacheRun
+    from ..models import FundingCacheRun, utc_now
     return (
         FundingCacheRun.query
         .filter_by(ror_id=ror_id, status='success')
@@ -2359,10 +2853,100 @@ def _last_cache_run_fundings(ror_id: str):
     )
 
 
-def _run_full_sync_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
-    """Run one profile download pass and populate every institutional cache."""
+def _recent_sync_runs(ror_id: str, limit: int = 6) -> list[dict]:
+    """Return recent institutional cache runs in a shared presentation shape."""
+    from ..models import FundingCacheRun, OpenAlexSyncRun, SyncJob, WorkCacheRun
+
+    run_groups = (
+        (
+            "works",
+            WorkCacheRun.query.filter_by(ror_id=ror_id)
+            .order_by(WorkCacheRun.started_at.desc())
+            .limit(limit)
+            .all(),
+        ),
+        (
+            "fundings",
+            FundingCacheRun.query.filter_by(ror_id=ror_id)
+            .order_by(FundingCacheRun.started_at.desc())
+            .limit(limit)
+            .all(),
+        ),
+        (
+            "openalex",
+            OpenAlexSyncRun.query.filter_by(ror_id=ror_id)
+            .order_by(OpenAlexSyncRun.started_at.desc())
+            .limit(limit)
+            .all(),
+        ),
+    )
+
+    runs = []
+    for kind, rows in run_groups:
+        for row in rows:
+            started_at = row.started_at
+            finished_at = row.finished_at
+            duration_seconds = None
+            if started_at and finished_at:
+                duration_seconds = max(int((finished_at - started_at).total_seconds()), 0)
+
+            if kind == "openalex":
+                records = row.matched_count or row.fetched_count or row.works_seen or 0
+                errors = row.error_count or 0
+            else:
+                records = row.rows_count or 0
+                errors = 1 if row.error else 0
+
+            runs.append({
+                "id": row.id,
+                "kind": kind,
+                "status": (row.status or "pending").lower(),
+                "started_at": started_at,
+                "finished_at": finished_at,
+                "timestamp": finished_at or started_at,
+                "duration_seconds": duration_seconds,
+                "records": int(records),
+                "errors": int(errors),
+            })
+
+    for job in (
+        SyncJob.query.filter_by(ror_id=ror_id)
+        .order_by(SyncJob.created_at.desc())
+        .limit(limit)
+        .all()
+    ):
+        runs.append({
+            "id": job.id,
+            "kind": "full",
+            "status": (job.status or "queued").lower(),
+            "started_at": job.started_at,
+            "finished_at": job.finished_at,
+            "timestamp": job.finished_at or job.started_at or job.created_at,
+            "duration_seconds": (
+                max(int((job.finished_at - job.started_at).total_seconds()), 0)
+                if job.started_at and job.finished_at
+                else None
+            ),
+            "records": int(job.progress_current or 0),
+            "records_total": int(job.progress_total or 0),
+            "errors": 1 if job.error else 0,
+        })
+
+    runs.sort(key=lambda item: item["timestamp"] or dt.min, reverse=True)
+    return runs[:limit]
+
+
+def _run_full_sync_for_ror(
+    ror_id: str,
+    base_url: str,
+    headers: dict,
+    job_id: str | None = None,
+) -> dict:
+    """Refresh ORCID data and every eligible OpenAlex article for one institution."""
     from ..models import WorkCacheRun, FundingCacheRun
     from ..services.cache_service import build_full_cache_for_ror
+    from ..services.openalex_service import sync_openalex_works
+    from ..services.background_jobs import update_job_step
 
     result = {
         "ror_id": ror_id,
@@ -2370,14 +2954,27 @@ def _run_full_sync_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
         "works": 0,
         "fundings": 0,
         "profiles": 0,
+        "openalex": {
+            "works_seen": 0,
+            "fetched_count": 0,
+            "matched_count": 0,
+            "not_found_count": 0,
+            "error_count": 0,
+            "skipped_count": 0,
+            "status": "pending",
+            "error": None,
+        },
         "errors": [],
     }
 
-    run_w = WorkCacheRun(ror_id=ror_id, status='running', started_at=dt.utcnow())
-    run_f = FundingCacheRun(ror_id=ror_id, status='running', started_at=dt.utcnow())
+    started_at = dt.now(timezone.utc).replace(tzinfo=None)
+    run_w = WorkCacheRun(ror_id=ror_id, status='running', started_at=started_at)
+    run_f = FundingCacheRun(ror_id=ror_id, status='running', started_at=started_at)
     db.session.add(run_w)
     db.session.add(run_f)
     db.session.commit()
+    for step_name in ("researchers", "profiles", "works", "fundings", "canonical_works"):
+        update_job_step(job_id, step_name, "running" if step_name == "researchers" else "pending")
     try:
         cache_result = build_full_cache_for_ror(ror_id, base_url, headers)
         result.update(cache_result)
@@ -2385,6 +2982,16 @@ def _run_full_sync_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
         run_w.rows_count = result["works"]
         run_f.status = 'success'
         run_f.rows_count = result["fundings"]
+        update_job_step(job_id, "researchers", "success", records_count=result["researchers"])
+        update_job_step(job_id, "profiles", "success", records_count=result["profiles"])
+        update_job_step(job_id, "works", "success", records_count=result["works"])
+        update_job_step(job_id, "fundings", "success", records_count=result["fundings"])
+        update_job_step(
+            job_id,
+            "canonical_works",
+            "success",
+            records_count=result.get("unique_works", 0),
+        )
     except Exception as exc:
         db.session.rollback()
         logger.exception("Full metadata sync failed for ROR %s: %s", ror_id, exc)
@@ -2393,12 +3000,47 @@ def _run_full_sync_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
         run_w.error = str(exc)
         run_f.status = 'failed'
         run_f.error = str(exc)
+        for step_name in ("researchers", "profiles", "works", "fundings", "canonical_works"):
+            update_job_step(job_id, step_name, "failed", error=str(exc))
     finally:
-        run_w.finished_at = dt.utcnow()
-        run_f.finished_at = dt.utcnow()
+        finished_at = dt.now(timezone.utc).replace(tzinfo=None)
+        run_w.finished_at = finished_at
+        run_f.finished_at = finished_at
         db.session.add(run_w)
         db.session.add(run_f)
         db.session.commit()
+
+    update_job_step(job_id, "openalex", "running")
+    try:
+        openalex_result = sync_openalex_works(
+            ror_id=ror_id,
+            force_refresh=True,
+            stale_days=0,
+            articles_only=True,
+        )
+        result["openalex"].update(openalex_result)
+        if openalex_result.get("status") == "failed":
+            result["errors"].append("OpenAlex")
+            update_job_step(
+                job_id,
+                "openalex",
+                "failed",
+                records_count=openalex_result.get("matched_count", 0),
+                error=openalex_result.get("error"),
+            )
+        else:
+            update_job_step(
+                job_id,
+                "openalex",
+                "success",
+                records_count=openalex_result.get("matched_count", 0),
+            )
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception("OpenAlex sync failed during full refresh for ROR %s: %s", ror_id, exc)
+        result["openalex"].update({"status": "failed", "error": str(exc)})
+        result["errors"].append("OpenAlex")
+        update_job_step(job_id, "openalex", "failed", error=str(exc))
 
     return result
 
@@ -2409,7 +3051,7 @@ def cache_full_build():
     """
     Discover researchers through every verified institution identifier and use
     one profile download pass to rebuild researcher, work, funding, and status
-    metadata.
+    metadata before refreshing every eligible OpenAlex article.
     """
     if not (session.get('is_admin') or session.get('is_manager')):
         flash_err(_("You do not have sufficient permissions to perform this action."))
@@ -2424,18 +3066,24 @@ def cache_full_build():
     base_url = current_app.config.get('ORCID_SEARCH_URL', 'https://pub.orcid.org/v3.0/')
     headers = {'Accept': 'application/json'}
 
-    result = _run_full_sync_for_ror(ror_id, base_url, headers)
+    from ..services.background_jobs import submit_background_job
 
-    if not result["errors"]:
-        flash_ok(_(
-            'Full synchronization complete: %(r)s researchers, %(w)s works, %(f)s fundings, and %(p)s profiles downloaded.',
-            r=result["researchers"],
-            w=result["works"],
-            f=result["fundings"],
-            p=result["profiles"],
-        ))
-    else:
-        flash_err(_('Sync completed with errors in: %(err)s. Check logs.', err=", ".join(result["errors"])))
+    job_id = submit_background_job(
+        current_app._get_current_object(),
+        f"full-cache-{ror_id}",
+        _run_full_sync_for_ror,
+        ror_id,
+        base_url,
+        headers,
+        job_type="full_institution_sync",
+        ror_id=ror_id,
+        requested_by_user_id=session.get("user_id"),
+        steps=["researchers", "profiles", "works", "fundings", "canonical_works", "openalex"],
+    )
+    flash_ok(_(
+        'Full synchronization started in the background. Job ID: %(job)s',
+        job=job_id,
+    ))
 
     return redirect(url_for('works.cache_works_status'))
 
@@ -2443,7 +3091,7 @@ def cache_full_build():
 @bp_works.route('/cache/full/build-all', methods=['POST'])
 @login_required
 def cache_full_build_all():
-    """Run the full metadata cache synchronization for every known institution."""
+    """Queue complete ORCID and OpenAlex synchronization for every institution."""
     if not session.get('is_admin'):
         flash_err(_("Access restricted to administrators."))
         return redirect(url_for('works.cache_works_status'))
@@ -2458,32 +3106,122 @@ def cache_full_build_all():
     base_url = current_app.config.get('ORCID_SEARCH_URL', 'https://pub.orcid.org/v3.0/')
     headers = {'Accept': 'application/json'}
 
-    totals = {"researchers": 0, "works": 0, "fundings": 0, "profiles": 0, "failed": 0}
+    from ..services.background_jobs import submit_background_job
+
+    steps = [
+        f"institution:{institution['ror_id']}"
+        for institution in institutions
+        if institution.get("ror_id")
+    ]
+    job_id = submit_background_job(
+        current_app._get_current_object(),
+        "full-cache-all-institutions",
+        _run_all_institution_sync,
+        institutions,
+        base_url,
+        headers,
+        job_type="full_system_sync",
+        requested_by_user_id=session.get("user_id"),
+        steps=steps,
+    )
+    flash_ok(_(
+        "All-institution synchronization started in the background for %(count)s institutions. Job ID: %(job)s",
+        count=len(steps),
+        job=job_id,
+    ))
+
+    return redirect(url_for('works.cache_works_status'))
+
+
+def _run_all_institution_sync(
+    institutions: list[dict],
+    base_url: str,
+    headers: dict,
+    job_id: str | None = None,
+) -> dict:
+    """Run every institution sequentially while persisting per-scope progress."""
+    from ..services.background_jobs import update_job_step
+
+    totals = {
+        "institutions": 0,
+        "researchers": 0,
+        "works": 0,
+        "fundings": 0,
+        "profiles": 0,
+        "openalex": 0,
+        "failed": 0,
+    }
     for institution in institutions:
         ror_id = institution.get("ror_id")
         if not ror_id:
             continue
-
-        result = _run_full_sync_for_ror(ror_id, base_url, headers)
-        totals["researchers"] += result["researchers"]
-        totals["works"] += result["works"]
-        totals["fundings"] += result["fundings"]
-        totals["profiles"] += result["profiles"]
-        if result["errors"]:
+        step_name = f"institution:{ror_id}"
+        update_job_step(job_id, step_name, "running")
+        try:
+            result = _run_full_sync_for_ror(ror_id, base_url, headers)
+            totals["institutions"] += 1
+            totals["researchers"] += result["researchers"]
+            totals["works"] += result["works"]
+            totals["fundings"] += result["fundings"]
+            totals["profiles"] += result["profiles"]
+            totals["openalex"] += result["openalex"]["matched_count"]
+            if result["errors"]:
+                totals["failed"] += 1
+                update_job_step(
+                    job_id,
+                    step_name,
+                    "failed",
+                    error=", ".join(result["errors"]),
+                )
+            else:
+                update_job_step(
+                    job_id,
+                    step_name,
+                    "success",
+                    records_count=result["researchers"],
+                )
+        except Exception as exc:
+            db.session.rollback()
             totals["failed"] += 1
+            update_job_step(job_id, step_name, "failed", error=str(exc))
+    return totals
 
-    if totals["failed"]:
-        flash_err(_(
-            "All-institution synchronization completed with %(failed)s institution errors. Totals: %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles.",
-            failed=totals["failed"], r=totals["researchers"], w=totals["works"], f=totals["fundings"], p=totals["profiles"],
-        ))
-    else:
-        flash_ok(_(
-            "All-institution synchronization complete: %(count)s institutions, %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s profiles.",
-            count=len(institutions), r=totals["researchers"], w=totals["works"], f=totals["fundings"], p=totals["profiles"],
-        ))
 
-    return redirect(url_for('works.cache_works_status'))
+@bp_works.route('/cache/staff/institution/<ror_id>/build', methods=['POST'])
+@staff_required
+def cache_staff_institution_build(ror_id: str):
+    """Queue a full cache refresh for one institution from the staff overview."""
+    from ..services.background_jobs import submit_background_job
+    from ..services.institution_registry_service import get_institution_by_ror
+
+    ror_id = normalize_ror_id(ror_id)
+    institution = get_institution_by_ror(ror_id) if ror_id else None
+    if not institution:
+        flash_err(_('Institution not found.'))
+        return redirect(url_for('works.cache_works_status', scope='system'))
+
+    base_url = current_app.config.get('ORCID_SEARCH_URL', 'https://pub.orcid.org/v3.0/')
+    headers = {'Accept': 'application/json'}
+    job_id = submit_background_job(
+        current_app._get_current_object(),
+        f"full-cache-{ror_id}",
+        _run_full_sync_for_ror,
+        ror_id,
+        base_url,
+        headers,
+        job_type="full_institution_sync",
+        ror_id=ror_id,
+        requested_by_user_id=session.get("user_id"),
+        steps=["researchers", "profiles", "works", "fundings", "canonical_works", "openalex"],
+    )
+    flash_ok(_(
+        'Full cache refresh started for %(institution)s. Researchers, profiles, works, funding, and OpenAlex will be synchronized in the background. Job ID: %(job)s',
+        institution=institution.get('name') or ror_id,
+        job=job_id,
+    ))
+    return redirect(url_for('works.cache_works_status', scope='system'))
+
+
 # INDIVIDUAL OPERATIONS (Legacy / Specific)
 
 @bp_works.route('/cache/works/build', methods=['POST'])
@@ -2503,7 +3241,7 @@ def cache_fundings_build():
     from ..services.cache_service import build_fundings_cache_for_ror
     ror_id = get_active_ror_id()
     
-    run = FundingCacheRun(ror_id=ror_id, status='running', started_at=dt.utcnow())
+    run = FundingCacheRun(ror_id=ror_id, status='running', started_at=utc_now())
     db.session.add(run)
     db.session.commit()
     try:
@@ -2518,7 +3256,7 @@ def cache_fundings_build():
         run.error = str(e)
         flash_err(_('Error updating fundings.'))
     finally:
-        run.finished_at = dt.utcnow()
+        run.finished_at = utc_now()
         db.session.commit()
     return redirect(url_for('works.cache_works_status'))
 
@@ -2541,26 +3279,111 @@ def cache_works_status():
     Renders the Data Management Dashboard.
     Displays last run times, record counts, and action buttons for sync/export.
     """
-    from ..models import FundingCache, OpenAlexWorkRawCache, ResearcherCache, WorkCache
+    from ..models import FundingCache, WorkCache
 
     ror_id = get_active_ror_id()
     if not ror_id:
         flash_err(_('No active institution context found.'))
         return redirect(url_for('main.index'))
 
-    # Gather Statistics
-    last_run_works = _last_cache_run_works(ror_id)
-    w_count = db.session.query(WorkCache.id).filter_by(ror_id=ror_id).count()
+    is_admin = bool(session.get('is_admin'))
+    is_manager = bool(session.get('is_manager'))
+    is_staff = is_admin or is_manager
+    cache_scope = "system" if is_staff and request.args.get("scope") == "system" else "institution"
+    institution_summaries = []
+    institution_pagination = _pagination_dict(1, 10, 0)
+    institution_query = (request.args.get("institution_q") or "").strip()
+    institution_sort = (request.args.get("institution_sort") or "name").strip().lower()
+    institution_direction = (request.args.get("institution_dir") or "asc").strip().lower()
+    if institution_sort not in {"name", "researchers", "works", "fundings", "openalex", "updated"}:
+        institution_sort = "name"
+    if institution_direction not in {"asc", "desc"}:
+        institution_direction = "asc"
 
-    last_run_fundings = _last_cache_run_fundings(ror_id)
-    f_count = db.session.query(FundingCache.id).filter_by(ror_id=ror_id).count()
-    
+    current_works_count = db.session.query(func.count(WorkCache.id)).filter_by(ror_id=ror_id).scalar() or 0
+    current_fundings_count = db.session.query(func.count(FundingCache.id)).filter_by(ror_id=ror_id).scalar() or 0
     p_count = _researcher_count(ror_id)
-    admin_researcher_count = _researcher_count() if session.get('is_admin') else 0
-    admin_works_count = db.session.query(WorkCache.id).count() if session.get('is_admin') else 0
-    admin_fundings_count = db.session.query(FundingCache.id).count() if session.get('is_admin') else 0
-    admin_openalex_count = db.session.query(OpenAlexWorkRawCache.id).count() if session.get('is_admin') else 0
+
+    if cache_scope == "system":
+        from ..services.institution_registry_service import get_institution_options
+
+        institution_options = get_institution_options()
+        if is_admin:
+            # Reuse the exact option list rendered by the top institution selector.
+            g.institution_options = institution_options
+        all_summaries = _institution_cache_summaries(institution_options)
+        if institution_query:
+            normalized_query = institution_query.casefold()
+            all_summaries = [
+                item for item in all_summaries
+                if normalized_query in f"{item['name']} {item['ror_id']}".casefold()
+            ]
+
+        sort_keys = {
+            "name": lambda item: item["name"].casefold(),
+            "researchers": lambda item: item["researchers"],
+            "works": lambda item: item["works"],
+            "fundings": lambda item: item["fundings"],
+            "openalex": lambda item: item["openalex_percent"],
+            "updated": lambda item: item["last_update"] or dt.min,
+        }
+        all_summaries.sort(
+            key=sort_keys[institution_sort],
+            reverse=institution_direction == "desc",
+        )
+        try:
+            institution_page = max(int(request.args.get("institution_page", 1)), 1)
+        except (TypeError, ValueError):
+            institution_page = 1
+        try:
+            institution_per_page = int(request.args.get("institution_per_page", 10))
+        except (TypeError, ValueError):
+            institution_per_page = 10
+        if institution_per_page not in {10, 25, 50}:
+            institution_per_page = 10
+        institution_pagination = _pagination_dict(
+            institution_page,
+            institution_per_page,
+            len(all_summaries),
+        )
+        start = (institution_pagination["page"] - 1) * institution_pagination["per_page"]
+        end = start + institution_pagination["per_page"]
+        institution_summaries = all_summaries[start:end]
+
+    w_count = int(current_works_count or 0)
+    f_count = int(current_fundings_count or 0)
+    last_run_works = _last_cache_run_works(ror_id)
+    last_run_fundings = _last_cache_run_fundings(ror_id)
+    admin_works_count = (
+        db.session.query(func.count(WorkCache.id)).scalar() or 0
+        if is_admin
+        else 0
+    )
     openalex_summary = _openalex_cache_summary(ror_id)
+    recent_runs = _recent_sync_runs(ror_id)
+
+    from ..services.canonical_work_service import canonical_work_counts
+    from ..services.data_health_service import institution_data_health
+
+    cache_health = institution_data_health(ror_id)
+    canonical_summary = canonical_work_counts(ror_id)
+    from ..services.institution_registry_service import get_institution_by_ror
+
+    active_institution = get_institution_by_ror(ror_id)
+    active_institution_name = (
+        (active_institution or {}).get("name")
+        or session.get("institution_name")
+        or ror_id
+    )
+
+    def cache_status_url(**updates):
+        params = request.args.to_dict(flat=False)
+        for key, value in updates.items():
+            if value is None or value == "" or value == []:
+                params.pop(key, None)
+            else:
+                params[key] = value
+        return url_for("works.cache_works_status", **params)
 
     return render_template(
         'works/cache_status.html',
@@ -2571,12 +3394,88 @@ def cache_works_status():
         last_run_fundings=last_run_fundings,
         count_fundings=f_count,
         count_profiles=p_count,
-        admin_researcher_count=admin_researcher_count,
         admin_works_count=admin_works_count,
-        admin_fundings_count=admin_fundings_count,
-        admin_openalex_count=admin_openalex_count,
         openalex_summary=openalex_summary,
+        recent_runs=recent_runs,
+        institution_summaries=institution_summaries,
+        institution_pagination=institution_pagination,
+        institution_query=institution_query,
+        institution_sort=institution_sort,
+        institution_direction=institution_direction,
+        cache_scope=cache_scope,
+        cache_status_url=cache_status_url,
+        cache_health=cache_health,
+        canonical_summary=canonical_summary,
+        active_ror_id=ror_id,
+        active_institution_name=active_institution_name,
     )
+
+
+@bp_works.route('/data-quality')
+@login_required
+def data_quality():
+    """Show provenance, completeness, canonical output, and safe cross-module signals."""
+    from ..services.data_quality_service import institution_quality_report
+
+    ror_id = get_active_ror_id()
+    if not ror_id:
+        flash_err(_('No active institution context found.'))
+        return redirect(url_for('main.index'))
+    section = (request.args.get("section") or "overview").strip().lower()
+    if section not in {"overview", "researchers", "funding", "integrity"}:
+        section = "overview"
+    return render_template(
+        'works/data_quality.html',
+        report=institution_quality_report(ror_id),
+        section=section,
+        can_manage=bool(session.get('is_admin') or session.get('is_manager')),
+    )
+
+
+@bp_works.route('/data-quality/backfill-associations', methods=['POST'])
+@staff_required
+def data_quality_backfill_associations():
+    """Queue a traceable cache-derived institution/researcher backfill."""
+    from ..services.background_jobs import submit_background_job
+    from ..services.data_trust_service import backfill_inferred_associations
+
+    ror_id = get_active_ror_id()
+    scope_ror = None if session.get('is_admin') and request.form.get('scope') == 'all' else ror_id
+    job_id = submit_background_job(
+        current_app._get_current_object(),
+        f"association-backfill-{scope_ror or 'all'}",
+        backfill_inferred_associations,
+        scope_ror,
+        job_type="association_backfill",
+        ror_id=scope_ror,
+        requested_by_user_id=session.get("user_id"),
+        steps=["association_backfill"],
+    )
+    flash_ok(_('Researcher relationship backfill started. Job ID: %(job)s', job=job_id))
+    return redirect(url_for('works.data_quality'))
+
+
+@bp_works.route('/data-quality/rebuild-canonical-works', methods=['POST'])
+@staff_required
+def data_quality_rebuild_canonical_works():
+    """Queue canonical work reconstruction for the active or global scope."""
+    from ..services.background_jobs import submit_background_job
+    from ..services.canonical_work_service import rebuild_canonical_works
+
+    ror_id = get_active_ror_id()
+    scope_ror = None if session.get('is_admin') and request.form.get('scope') == 'all' else ror_id
+    job_id = submit_background_job(
+        current_app._get_current_object(),
+        f"canonical-work-rebuild-{scope_ror or 'all'}",
+        rebuild_canonical_works,
+        scope_ror,
+        job_type="canonical_work_rebuild",
+        ror_id=scope_ror,
+        requested_by_user_id=session.get("user_id"),
+        steps=["canonical_works"],
+    )
+    flash_ok(_('Canonical work rebuild started. Job ID: %(job)s', job=job_id))
+    return redirect(url_for('works.data_quality'))
 
 
 @bp_works.route('/openalex/sync', methods=['POST'])
@@ -2698,15 +3597,25 @@ def openalex_works():
         return redirect(url_for('main.index'))
 
     coverage = request.args.get("coverage", "all")
-    if coverage not in {"all", "enriched", "missing"}:
+    if coverage not in {"all", "enriched", "missing", "not_found", "no_doi"}:
         coverage = "all"
 
-    page, per_page = _page_params()
+    page, per_page = _page_params(default_per_page=10)
+    search = request.args.get("q", "").strip()
+    sort = request.args.get("sort", "citations")
+    if sort not in {"title", "year", "citations", "open_access", "source", "status"}:
+        sort = "citations"
+    direction = request.args.get("dir", "desc").lower()
+    if direction not in {"asc", "desc"}:
+        direction = "desc"
     rows, summary, pagination = _openalex_work_rows(
         ror_id,
         coverage=coverage,
         page=page,
         per_page=per_page,
+        search=search,
+        sort=sort,
+        direction=direction,
     )
     return render_template(
         'works/openalex_works.html',
@@ -2714,6 +3623,9 @@ def openalex_works():
         summary=summary,
         pagination=pagination,
         coverage=coverage,
+        query=search,
+        sort=sort,
+        direction=direction,
         ror_id=ror_id,
     )
 
@@ -2728,12 +3640,23 @@ def openalex_works_export():
         return redirect(url_for('main.index'))
 
     coverage = request.args.get("coverage", "all")
-    if coverage not in {"all", "enriched", "missing"}:
+    if coverage not in {"all", "enriched", "missing", "not_found", "no_doi"}:
         coverage = "all"
 
-    rows, _summary, _pagination = _openalex_work_rows(ror_id, coverage=coverage, page=1, per_page=100000)
+    search = request.args.get("q", "").strip()
+    sort = request.args.get("sort", "citations")
+    direction = request.args.get("dir", "desc").lower()
+    rows, _summary, _pagination = _openalex_work_rows(
+        ror_id,
+        coverage=coverage,
+        page=1,
+        per_page=100000,
+        search=search,
+        sort=sort,
+        direction=direction,
+    )
     data_frame = pd.DataFrame([{
-        "title": row["title"],
+        "title": plain_text(row["title"]),
         "orcid": row["orcid"],
         "type": row["type"],
         "publication_year": row["pub_year"],
@@ -2773,7 +3696,18 @@ def openalex_analytics():
         "affiliation": _request_list_arg("affiliation"),
         "metrics": _request_list_arg("metric"),
     }
-    analytics = _openalex_analytics(ror_id, analytics_filters)
+    section = request.args.get("section", "overview")
+    if section not in {"overview", "collaboration", "topics", "impact"}:
+        section = "overview"
+    analytics = _openalex_institution_analytics_with_cache(ror_id, analytics_filters)
+
+    def query_url(**updates):
+        params = request.args.to_dict(flat=False)
+        params.update({key: value for key, value in updates.items() if value is not None})
+        for key, value in list(params.items()):
+            if value is None or value == "" or value == []:
+                params.pop(key)
+        return url_for("works.openalex_analytics", **params)
 
     def export_url(table_key: str, export_format: str):
         params = request.args.to_dict(flat=False)
@@ -2786,6 +3720,13 @@ def openalex_analytics():
     return render_template(
         'works/openalex_analytics.html',
         analytics=analytics,
+        section=section,
+        query_url=query_url,
+        has_active_filters=bool(
+            analytics_filters["year_from"] or analytics_filters["year_to"]
+            or analytics_filters["type"] or analytics_filters["oa_status"]
+            or analytics_filters["affiliation"]
+        ),
         ror_id=ror_id,
         export_url=export_url,
     )
@@ -2811,35 +3752,35 @@ def openalex_analytics_export(table_key: str):
 
     if table_key == "top_cited":
         rows = [{
-            "title": row.title,
-            "openalex_id": row.openalex_id,
-            "publication_year": row.publication_year,
-            "type": row.type,
-            "source": row.source_name,
-            "citations": row.cited_by_count,
-            "fwci": row.fwci,
-            "is_open_access": row.is_oa,
-            "oa_status": row.oa_status,
-            "topic_field": row.primary_topic_field,
-            "topic_domain": row.primary_topic_domain,
+            "title": plain_text(row["title"]),
+            "openalex_id": row["openalex_id"],
+            "publication_year": row["publication_year"],
+            "type": row["type"],
+            "source": row["source_name"],
+            "citations": row["cited_by_count"],
+            "fwci": row["fwci"],
+            "is_open_access": row["is_oa"],
+            "oa_status": row["oa_status"],
+            "topic_field": row["primary_topic_field"],
+            "topic_domain": row["primary_topic_domain"],
         } for row in analytics["top_cited"]]
         sheet_name = "Top cited"
     elif table_key == "authors":
         rows = [{
-            "author": row.author_name,
-            "author_id": row.author_id,
-            "orcid": row.orcid,
-            "has_chile_affiliation": row.has_chile_affiliation,
-            "articles": row.works_count,
+            "author": row["author_name"],
+            "author_id": row["author_id"],
+            "orcid": row["orcid"],
+            "has_chile_affiliation": row["has_chile_affiliation"],
+            "articles": row["works_count"],
         } for row in analytics["top_authors"]]
         sheet_name = "Authors"
     elif table_key == "institutions":
         rows = [{
-            "institution": row.institution_name,
-            "ror_id": row.ror_id,
-            "country": row.country_code,
-            "articles": row.works_count,
-            "author_links": row.author_links,
+            "institution": row["institution_name"],
+            "ror_id": row["ror_id"],
+            "country": row["country_code"],
+            "articles": row["works_count"],
+            "author_links": row["author_links"],
         } for row in analytics["top_institutions"]]
         sheet_name = "Institutions"
     else:
@@ -2902,6 +3843,10 @@ def openalex_global():
     return render_template(
         'works/openalex_global.html',
         analytics=analytics,
+        has_active_filters=bool(
+            analytics_filters["year_from"] or analytics_filters["year_to"]
+            or analytics_filters["type"] or analytics_filters["oa_status"]
+        ),
         query_url=query_url,
         table_url=table_url,
         export_url=export_url,
@@ -3066,10 +4011,123 @@ def download_researchers_cache():
         return redirect(url_for('works.cache_works_status'))
 
 
+@bp_works.route('/download/staff/institutions/cache-summary')
+@staff_required
+def download_institution_cache_summary():
+    """Export the staff-facing cache summary for every known institution."""
+    summaries = _institution_cache_summaries()
+    if not summaries:
+        flash_err(_('No institutional cache summary is available.'))
+        return redirect(url_for('works.cache_works_status'))
+
+    rows = [{
+        "institution": item["name"],
+        "ror_id": item["ror_id"],
+        "researchers": item["researchers"],
+        "works": item["works"],
+        "fundings": item["fundings"],
+        "openalex_matched": item["openalex_matched"],
+        "openalex_candidates": item["openalex_candidates"],
+        "openalex_coverage_percent": item["openalex_percent"],
+        "last_update": _format_datetime(item["last_update"]),
+        "cache_status": item["health"],
+    } for item in summaries]
+    return _send_dataframe_export(
+        pd.DataFrame(rows),
+        'institution_cache_summary',
+        'Institution summary',
+    )
+
+
+@bp_works.route('/download/staff/institution/<ror_id>/<dataset_key>')
+@staff_required
+def download_staff_institution_cache(ror_id: str, dataset_key: str):
+    """Export one institutional dataset without changing the active context."""
+    from ..models import (
+        FundingCache,
+        OpenAlexWorkMetadata,
+        OpenAlexWorkRawCache,
+        WorkCache,
+    )
+    from ..services.institution_registry_service import get_institution_by_ror
+
+    ror_id = normalize_ror_id(ror_id)
+    if not ror_id or not get_institution_by_ror(ror_id):
+        flash_err(_('Institution not found.'))
+        return redirect(url_for('works.cache_works_status'))
+
+    if dataset_key == 'works':
+        records = WorkCache.query.filter_by(ror_id=ror_id).all()
+        if not records:
+            flash_err(_('The publication cache is currently empty.'))
+            return redirect(url_for('works.cache_works_status'))
+        return _send_dataframe_export(
+            _build_works_dataframe(records),
+            f'orcid_works_cache_{ror_id}',
+            'Works',
+        )
+
+    if dataset_key == 'fundings':
+        records = FundingCache.query.filter_by(ror_id=ror_id).all()
+        if not records:
+            flash_err(_('The funding cache is empty.'))
+            return redirect(url_for('works.cache_works_status'))
+        return _send_dataframe_export(
+            _build_fundings_dataframe(records),
+            f'orcid_fundings_cache_{ror_id}',
+            'Fundings',
+        )
+
+    if dataset_key == 'researchers':
+        data_frame = _build_researchers_dataframe(ror_id)
+        if data_frame.empty:
+            flash_err(_('No researcher association data available.'))
+            return redirect(url_for('works.cache_works_status'))
+        return _send_dataframe_export(
+            data_frame,
+            f'orcid_researchers_{ror_id}',
+            'Researchers',
+        )
+
+    if dataset_key == 'openalex':
+        cache_key = _openalex_cache_key_expr(WorkCache).label('openalex_cache_key')
+        cache_keys = (
+            db.session.query(cache_key)
+            .filter(
+                WorkCache.ror_id == ror_id,
+                WorkCache.type == 'journal-article',
+            )
+            .distinct()
+            .subquery()
+        )
+        records_query = (
+            db.session.query(OpenAlexWorkRawCache, OpenAlexWorkMetadata)
+            .join(
+                cache_keys,
+                OpenAlexWorkRawCache.doi_normalized == cache_keys.c.openalex_cache_key,
+            )
+            .outerjoin(
+                OpenAlexWorkMetadata,
+                OpenAlexWorkMetadata.doi_normalized == OpenAlexWorkRawCache.doi_normalized,
+            )
+            .order_by(OpenAlexWorkRawCache.doi_normalized.asc())
+        )
+        if records_query.first() is None:
+            flash_err(_('No OpenAlex cache data available.'))
+            return redirect(url_for('works.cache_works_status'))
+        return _send_openalex_export(
+            records_query,
+            f'openalex_articles_{ror_id}',
+        )
+
+    flash_err(_('Invalid dataset type.'))
+    return redirect(url_for('works.cache_works_status'))
+
+
 @bp_works.route('/download/admin/researchers/cache')
-@admin_required
+@staff_required
 def download_all_researchers_admin():
-    """Export every institution-researcher pair known in local caches."""
+    """Export every institution-researcher pair for staff users."""
     data_frame = _build_researchers_dataframe()
     if data_frame.empty:
         flash_err(_('No researcher cache data available.'))
@@ -3082,14 +4140,14 @@ def download_all_researchers_admin():
             'Researchers',
         )
     except Exception as exc:
-        logger.exception("ADMIN RESEARCHERS EXPORT ERROR: %s", exc)
+        logger.exception("STAFF RESEARCHERS EXPORT ERROR: %s", exc)
         return redirect(url_for('works.cache_works_status'))
 
 
 @bp_works.route('/download/admin/all-works/cache')
-@admin_required
+@staff_required
 def download_all_works_admin():
-    """Export cached works for all institutions."""
+    """Export cached works for all institutions to staff users."""
     from ..models import WorkCache
 
     records = WorkCache.query.order_by(WorkCache.ror_id, WorkCache.orcid, WorkCache.id).all()
@@ -3105,14 +4163,14 @@ def download_all_works_admin():
             'Works',
         )
     except Exception as exc:
-        logger.exception("ADMIN WORKS EXPORT ERROR: %s", exc)
+        logger.exception("STAFF WORKS EXPORT ERROR: %s", exc)
         return redirect(url_for('works.cache_works_status'))
 
 
 @bp_works.route('/download/admin/all-fundings/cache')
-@admin_required
+@staff_required
 def download_all_fundings_admin():
-    """Export cached fundings for all institutions."""
+    """Export cached fundings for all institutions to staff users."""
     from ..models import FundingCache
 
     records = FundingCache.query.order_by(FundingCache.ror_id, FundingCache.orcid, FundingCache.id).all()
@@ -3128,14 +4186,14 @@ def download_all_fundings_admin():
             'Fundings',
         )
     except Exception as exc:
-        logger.exception("ADMIN FUNDINGS EXPORT ERROR: %s", exc)
+        logger.exception("STAFF FUNDINGS EXPORT ERROR: %s", exc)
         return redirect(url_for('works.cache_works_status'))
 
 
 @bp_works.route('/download/admin/openalex/cache')
-@admin_required
+@staff_required
 def download_openalex_admin():
-    """Export cached OpenAlex work metadata for all institutions."""
+    """Export cached OpenAlex work metadata for all institutions to staff users."""
     from ..models import OpenAlexWorkMetadata, OpenAlexWorkRawCache
     from sqlalchemy.orm import load_only
 
@@ -3189,5 +4247,5 @@ def download_openalex_admin():
     try:
         return _send_openalex_export(records_query)
     except Exception as exc:
-        logger.exception("ADMIN OPENALEX EXPORT ERROR: %s", exc)
+        logger.exception("STAFF OPENALEX EXPORT ERROR: %s", exc)
         return redirect(url_for('works.cache_works_status'))

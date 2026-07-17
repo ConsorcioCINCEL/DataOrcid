@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
 import hashlib
 import json
 import re
@@ -15,6 +14,7 @@ from sqlalchemy import func
 from .. import db
 from ..models import (
     DuplicateProfileCache,
+    DuplicateProfileReview,
     FundingCache,
     InstitutionRegistry,
     InstitutionResearcher,
@@ -22,7 +22,24 @@ from ..models import (
     ResearcherStatus,
     User,
     WorkCache,
+    utc_now,
 )
+
+
+DUPLICATE_REVIEW_STATUSES = {"pending", "notified", "dismissed", "resolved"}
+DUPLICATE_DISMISSAL_REASONS = {
+    "different_people",
+    "insufficient_evidence",
+    "incorrect_shared_work",
+    "ambiguous_affiliation",
+    "other",
+}
+_LEGACY_REVIEW_STATUS_ALIASES = {
+    # A historical confirmation did not prove that the researcher was
+    # contacted, so it returns to the action queue under the safer semantics.
+    "confirmed": "pending",
+    "false_positive": "dismissed",
+}
 
 
 def normalize_name(value: str | None) -> str:
@@ -48,17 +65,19 @@ def build_duplicate_report(
     allowed_rors = {ror for ror in (ror_ids or []) if ror}
     population = _load_researcher_population(allowed_rors or None)
     if not population:
-        return _empty_report()
+        return _attach_reviews(_empty_report())
 
     scope_key = _scope_key(allowed_rors or None)
     dependency = _dependency_signature(allowed_rors or None, population)
     cached_report = _load_cached_report(scope_key, dependency["hash"], force_refresh)
     if cached_report:
-        return _apply_report_filters(cached_report, search, min_confidence)
+        return _attach_reviews(
+            _apply_report_filters(cached_report, search, min_confidence)
+        )
 
     report = _build_uncached_report(allowed_rors or None, population)
     _store_cached_report(scope_key, dependency, report)
-    return _apply_report_filters(report, search, min_confidence)
+    return _attach_reviews(_apply_report_filters(report, search, min_confidence))
 
 
 def clear_duplicate_report_cache(ror_ids: Iterable[str] | None = None) -> int:
@@ -126,6 +145,7 @@ def _build_uncached_report(allowed_rors: set[str] | None, population: set[tuple[
 
         groups.append({
             "group_id": f"DUP-{index:04d}",
+            "group_key": _stable_group_key(ror_id, name_key),
             "ror_id": ror_id,
             "institution_name": institution,
             "normalized_name": name_key,
@@ -195,6 +215,10 @@ def flatten_duplicate_rows(groups: list[dict]) -> list[dict]:
         for profile in group["profiles"]:
             rows.append({
                 "group_id": group["group_id"],
+                "review_status": (group.get("review") or {}).get("status", "pending"),
+                "dismissal_reason": (group.get("review") or {}).get("dismissal_reason", ""),
+                "review_notes": (group.get("review") or {}).get("notes", ""),
+                "reviewed_at": (group.get("review") or {}).get("reviewed_at", ""),
                 "institution_name": group["institution_name"],
                 "ror_id": group["ror_id"],
                 "candidate_name": group["display_name"],
@@ -217,6 +241,86 @@ def flatten_duplicate_rows(groups: list[dict]) -> list[dict]:
     return rows
 
 
+def save_duplicate_review(
+    group: dict,
+    *,
+    status: str,
+    reviewer_user_id: int | None,
+    notes: str | None = None,
+    dismissal_reason: str | None = None,
+    notice_message: str | None = None,
+    selected_orcid: str | None = None,
+) -> DuplicateProfileReview:
+    """Create or update an operational case without declaring an ORCID merge."""
+    status = _canonical_review_status(status)
+    if status not in DUPLICATE_REVIEW_STATUSES:
+        raise ValueError("Invalid duplicate review status.")
+
+    reason = (dismissal_reason or "").strip()
+    if status == "dismissed" and reason not in DUPLICATE_DISMISSAL_REASONS:
+        raise ValueError("A valid dismissal reason is required.")
+
+    group_key = group.get("group_key") or _stable_group_key(
+        group["ror_id"],
+        group["normalized_name"],
+    )
+    review = DuplicateProfileReview.query.filter_by(group_key=group_key).first()
+    if not review:
+        review = DuplicateProfileReview(
+            group_key=group_key,
+            ror_id=group["ror_id"],
+            normalized_name=group["normalized_name"],
+        )
+        db.session.add(review)
+
+    review.status = status
+    review.notes = (notes or "").strip() or None
+    # The deprecated argument and column are retained for backwards
+    # compatibility only. The application does not have authority to select a
+    # primary ORCID record.
+    del selected_orcid
+    review.selected_orcid = None
+    review.reviewed_by_user_id = reviewer_user_id
+    review.reviewed_at = utc_now() if status != "pending" else None
+    previous_snapshot = review.candidate_snapshot if isinstance(review.candidate_snapshot, dict) else {}
+    candidate_snapshot = {
+        "display_name": group.get("display_name"),
+        "confidence": group.get("confidence"),
+        "profiles": [profile.get("orcid") for profile in group.get("profiles", [])],
+        "evidence_keys": group.get("evidence_keys", []),
+        "dismissal_reason": reason if status == "dismissed" else None,
+    }
+    stored_notice = (notice_message or "").strip()
+    if stored_notice:
+        candidate_snapshot["notice_message"] = stored_notice
+    elif previous_snapshot.get("notice_message"):
+        candidate_snapshot["notice_message"] = previous_snapshot["notice_message"]
+    review.candidate_snapshot = candidate_snapshot
+    db.session.commit()
+    return review
+
+
+def filter_duplicate_report_by_status(report: dict, case_status: str) -> dict:
+    """Filter attached review cases while keeping the full workflow counts."""
+    if case_status == "all":
+        return report
+    if case_status == "open":
+        accepted = {"pending", "notified"}
+    elif case_status in DUPLICATE_REVIEW_STATUSES:
+        accepted = {case_status}
+    else:
+        accepted = {"pending", "notified"}
+
+    filtered_groups = [
+        group for group in report.get("groups", [])
+        if (group.get("review") or {}).get("status", "pending") in accepted
+    ]
+    filtered = _assemble_report(filtered_groups)
+    filtered["cache"] = report.get("cache", {})
+    filtered["review_summary"] = report.get("review_summary", {})
+    return filtered
+
+
 def _empty_report() -> dict:
     return {
         "groups": [],
@@ -232,6 +336,60 @@ def _empty_report() -> dict:
             "candidate_fundings": 0,
         },
     }
+
+
+def _attach_reviews(report: dict) -> dict:
+    """Attach current human decisions without storing them inside analysis cache."""
+    groups = report.get("groups", [])
+    for group in groups:
+        group.setdefault(
+            "group_key",
+            _stable_group_key(group["ror_id"], group["normalized_name"]),
+        )
+    keys = [group["group_key"] for group in groups]
+    reviews = {
+        row.group_key: row
+        for row in DuplicateProfileReview.query.filter(
+            DuplicateProfileReview.group_key.in_(keys)
+        ).all()
+    } if keys else {}
+    review_counts = defaultdict(int)
+    for group in groups:
+        group_key = group.get("group_key") or _stable_group_key(
+            group["ror_id"],
+            group["normalized_name"],
+        )
+        group["group_key"] = group_key
+        review = reviews.get(group_key)
+        snapshot = review.candidate_snapshot if review and isinstance(review.candidate_snapshot, dict) else {}
+        status = _canonical_review_status(review.status) if review else "pending"
+        review_payload = {
+            "status": status,
+            "notes": review.notes if review else "",
+            "dismissal_reason": snapshot.get("dismissal_reason") or "",
+            "notice_message": snapshot.get("notice_message") or "",
+            "reviewed_at": _datetime_value(review.reviewed_at) if review else "",
+            "reviewed_by_user_id": review.reviewed_by_user_id if review else None,
+        }
+        group["review"] = review_payload
+        review_counts[review_payload["status"]] += 1
+    report["review_summary"] = {
+        "pending": review_counts["pending"],
+        "notified": review_counts["notified"],
+        "dismissed": review_counts["dismissed"],
+        "resolved": review_counts["resolved"],
+    }
+    return report
+
+
+def _canonical_review_status(status: str | None) -> str:
+    value = (status or "pending").strip()
+    return _LEGACY_REVIEW_STATUS_ALIASES.get(value, value)
+
+
+def _stable_group_key(ror_id: str, normalized_name: str) -> str:
+    raw = f"{ror_id}|{normalized_name}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def _load_researcher_population(allowed_rors: set[str] | None) -> set[tuple[str, str]]:
@@ -363,14 +521,14 @@ def _store_cached_report(scope_key: str, dependency: dict, report: dict) -> None
     stored_report["cache"] = {
         "hit": False,
         "scope_key": scope_key,
-        "generated_at": _datetime_value(datetime.utcnow()),
+        "generated_at": _datetime_value(utc_now()),
         "dependency_hash": dependency["hash"],
     }
 
     cache_row.dependency_hash = dependency["hash"]
     cache_row.report_json = stored_report
     cache_row.source_summary = dependency["summary"]
-    cache_row.generated_at = datetime.utcnow()
+    cache_row.generated_at = utc_now()
     db.session.commit()
     report["cache"] = stored_report["cache"]
 

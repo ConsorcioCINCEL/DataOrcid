@@ -1,6 +1,10 @@
 """Authentication, password recovery, and account settings routes."""
 
 import logging
+import re
+import threading
+import time
+from urllib.parse import urlsplit
 from flask import (
     Blueprint, render_template, request, redirect,
     url_for, session, current_app
@@ -16,6 +20,58 @@ from ..utils.emailer import send_email
 
 bp_auth = Blueprint("auth", __name__, url_prefix="/auth")
 logger = logging.getLogger(__name__)
+_RATE_LIMIT_LOCK = threading.Lock()
+_RATE_LIMIT_BUCKETS: dict[str, list[float]] = {}
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+$")
+
+
+def _safe_redirect_target(target: str | None) -> str | None:
+    """Return a local redirect target or None when the target is unsafe."""
+    if not target:
+        return None
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc:
+        return None
+    return target if target.startswith("/") else None
+
+
+def _client_ip() -> str:
+    """Return the best available client IP for local rate limiting."""
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    return (forwarded_for.split(",", 1)[0].strip() or request.remote_addr or "unknown")[:50]
+
+
+def _is_rate_limited(action: str, limit: int, window_seconds: int) -> bool:
+    """Apply a small process-local rate limit for sensitive auth actions."""
+    now = time.time()
+    cutoff = now - window_seconds
+    key = f"{action}:{_client_ip()}"
+    with _RATE_LIMIT_LOCK:
+        attempts = [ts for ts in _RATE_LIMIT_BUCKETS.get(key, []) if ts >= cutoff]
+        blocked = len(attempts) >= limit
+        attempts.append(now)
+        _RATE_LIMIT_BUCKETS[key] = attempts
+        return blocked
+
+
+def _clear_rate_limit(action: str) -> None:
+    """Clear a client's failed-attempt history after successful authentication."""
+    key = f"{action}:{_client_ip()}"
+    with _RATE_LIMIT_LOCK:
+        _RATE_LIMIT_BUCKETS.pop(key, None)
+
+
+def make_password_reset_token(user: User) -> str:
+    """Create a reset token bound to the user's current password hash."""
+    serializer = _get_serializer()
+    return serializer.dumps({'uid': user.id, 'pwd': (user.password_hash or '')[-12:]})
+
+
+def make_password_reset_url(user: User) -> str:
+    """Create an absolute password reset URL suitable for email delivery."""
+    return _get_absolute_url('auth.reset_password', token=make_password_reset_token(user))
+
+
 def _get_serializer() -> URLSafeTimedSerializer:
     """
     Creates a secure serializer for generating time-sensitive tokens.
@@ -53,6 +109,8 @@ def _get_absolute_url(endpoint: str, **values) -> str:
     
     # Fallback: Let Flask construct the external URL based on the request context
     return url_for(endpoint, _external=True, **values)
+
+
 @bp_auth.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     """
@@ -64,6 +122,10 @@ def forgot_password():
     - Tokens expire after 24 hours.
     """
     if request.method == 'POST':
+        if _is_rate_limited("forgot-password", limit=5, window_seconds=900):
+            flash_err(_("Too many attempts. Please try again later."))
+            return redirect(url_for('auth.login'))
+
         identifier = (request.form.get('email') or '').strip()
         user = None
 
@@ -75,10 +137,7 @@ def forgot_password():
 
         if user:
             try:
-                serializer = _get_serializer()
-                # Embed user ID in the token payload
-                token = serializer.dumps({'uid': user.id})
-                reset_url = _get_absolute_url('auth.reset_password', token=token)
+                reset_url = make_password_reset_url(user)
 
                 email_html = f"""
                 <p>Hello {user.first_name or user.username},</p>
@@ -122,10 +181,13 @@ def reset_password(token: str):
     try:
         # Validate signature and check expiration (86400 seconds = 24 hours)
         data = serializer.loads(token, max_age=86400)
-        user = User.query.get(data.get('uid'))
+        user = db.session.get(User, data.get('uid'))
         
         if not user:
             flash_err(_("Invalid or non-existent user."))
+            return redirect(url_for('auth.login'))
+        if data.get('pwd') and data.get('pwd') != (user.password_hash or '')[-12:]:
+            flash_err(_("Invalid token."))
             return redirect(url_for('auth.login'))
             
     except (SignatureExpired, BadSignature) as exc:
@@ -150,31 +212,44 @@ def reset_password(token: str):
         return redirect(url_for('auth.reset_password', token=token))
 
     return render_template('auth/reset_password.html', token=token)
+
+
 @bp_auth.route('/login', methods=['GET', 'POST'])
 def login():
     """
     Handles user authentication and session initialization.
     Redirects authenticated users to the dashboard or their previous page.
     """
+    next_url = _safe_redirect_target(request.args.get('next')) or url_for('main.index')
     if session.get('logged_in'):
-        return redirect(request.args.get('next') or url_for('main.index'))
+        return redirect(next_url)
 
     if request.method == 'POST':
+        if _is_rate_limited("login", limit=10, window_seconds=900):
+            flash_err(_("Too many login attempts. Please try again later."))
+            return render_template('auth/login.html'), 429
+
         username = (request.form.get('username') or "").strip()
         password = request.form.get('password') or ""
         user = User.query.filter_by(username=username).first()
 
         if user and user.check_password(password):
             # Populate Session Data
+            _clear_rate_limit("login")
+            session.permanent = request.form.get('remember') == 'on'
             session.update({
                 'user_id': user.id,
                 'username': user.username,
                 'first_name': user.first_name,
+                'last_name': user.last_name,
+                'position': user.position,
+                'email': user.email,
+                'display_name': user.full_name,
                 'is_admin': bool(user.is_admin),
                 'is_manager': bool(user.is_manager),
                 'institution_name': user.institution_name,
                 'ror_id': user.ror_id,
-                'locale': user.locale or 'es', 
+                'locale': user.locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'en'),
                 'logged_in': True,
             })
 
@@ -183,14 +258,15 @@ def login():
                 session['admin_selected_ror'] = user.ror_id
 
             logger.info("User %s logged in successfully.", user.username)
-            return redirect(request.args.get('next') or url_for('main.index'))
+            return redirect(next_url)
 
         flash_err(_("Invalid username or password."))
 
     return render_template('auth/login.html')
 
 
-@bp_auth.route('/logout')
+@bp_auth.route('/logout', methods=['POST'])
+@login_required
 def logout():
     """
     Terminates the user session and redirects to login.
@@ -198,6 +274,72 @@ def logout():
     session.clear()
     flash_success(_("Session closed successfully."))
     return redirect(url_for('auth.login'))
+
+
+@bp_auth.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """Allow authenticated users to update their own personal details."""
+    user = db.session.get(User, session.get('user_id'))
+    if not user:
+        session.clear()
+        return redirect(url_for('auth.login'))
+
+    form_data = {
+        'first_name': user.first_name or '',
+        'last_name': user.last_name or '',
+        'position': user.position or '',
+        'email': user.email or '',
+    }
+
+    if request.method == 'POST':
+        form_data = {
+            field: (request.form.get(field) or '').strip()
+            for field in ('first_name', 'last_name', 'position', 'email')
+        }
+        field_limits = {
+            'first_name': (120, _("First name must be 120 characters or fewer.")),
+            'last_name': (120, _("Last name must be 120 characters or fewer.")),
+            'position': (180, _("Position must be 180 characters or fewer.")),
+            'email': (255, _("Email must be 255 characters or fewer.")),
+        }
+        validation_error = next(
+            (
+                message
+                for field, (limit, message) in field_limits.items()
+                if len(form_data[field]) > limit
+            ),
+            None,
+        )
+
+        if validation_error:
+            flash_err(validation_error)
+        elif form_data['email'] and not _EMAIL_PATTERN.fullmatch(form_data['email']):
+            flash_err(_("Enter a valid email address."))
+        else:
+            user.first_name = form_data['first_name'] or None
+            user.last_name = form_data['last_name'] or None
+            user.position = form_data['position'] or None
+            user.email = form_data['email'] or None
+            try:
+                db.session.commit()
+                session.update({
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'position': user.position,
+                    'email': user.email,
+                    'display_name': user.full_name,
+                })
+                flash_success(_("Profile updated successfully."))
+                return redirect(url_for('auth.profile'))
+            except Exception as exc:
+                db.session.rollback()
+                logger.exception("Could not update profile for user %s: %s", user.username, exc)
+                flash_err(_("Could not update your profile."))
+
+    return render_template('auth/profile.html', user=user, form_data=form_data)
+
+
 @bp_auth.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -205,7 +347,7 @@ def change_password():
     Allows an authenticated user to change their own password.
     Requires validation of the current password before applying changes.
     """
-    user = User.query.get(session.get('user_id'))
+    user = db.session.get(User, session.get('user_id'))
     if not user:
         return redirect(url_for('auth.login'))
 
@@ -226,7 +368,7 @@ def change_password():
             flash_success(_("Password updated successfully."))
             return redirect(url_for('main.index'))
 
-    return render_template('auth/change_password.html')
+    return render_template('auth/change_password.html', user=user)
 
 
 @bp_auth.route('/am-settings', methods=['GET', 'POST'])
@@ -236,7 +378,7 @@ def am_settings():
     Configuration page for the ORCID Affiliation Manager (AM).
     Allows managers to set their specific 'APP-ID' for institutional integrations.
     """
-    user = User.query.get(session.get('user_id'))
+    user = db.session.get(User, session.get('user_id'))
     if not user:
         return redirect(url_for('auth.login'))
 
@@ -250,7 +392,7 @@ def am_settings():
             user.am_client_id = am_id if am_id else None
             try:
                 db.session.commit()
-                flash_success(_("Affiliation Manager settings updated."))
+                flash_success(_("Affiliation Manager identifier updated."))
             except Exception as exc:
                 db.session.rollback()
                 logger.exception("Error saving AM ID for user %s: %s", user.username, exc)

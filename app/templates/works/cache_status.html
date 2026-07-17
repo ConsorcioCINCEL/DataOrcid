@@ -1,593 +1,704 @@
 {% extends 'base.html' %}
+
+{% macro export_actions(csv_url, excel_url, dataset, large_export=false) %}
+  <div class="cache-export-actions" aria-label="{{ _('Download options for %(dataset)s', dataset=dataset) }}">
+    <a href="{{ csv_url }}"
+       class="app-icon-action is-csv cache-export-action{% if large_export %} js-large-export{% endif %}"
+       aria-label="{{ _('Download %(dataset)s as CSV', dataset=dataset) }}"
+       title="{{ _('Download CSV') }}">
+      <i class="fas fa-file-csv" aria-hidden="true"></i>
+    </a>
+    <a href="{{ excel_url }}"
+       class="app-icon-action is-xlsx cache-export-action{% if large_export %} js-large-export{% endif %}"
+       aria-label="{{ _('Download %(dataset)s as Excel', dataset=dataset) }}"
+       title="{{ _('Download Excel') }}">
+      <i class="fas fa-file-excel" aria-hidden="true"></i>
+    </a>
+  </div>
+{% endmacro %}
+
+{% macro institution_download_menu(institution, suffix) %}
+  <div class="dropdown cache-institution-download">
+    <button class="app-icon-action cache-institution-download-toggle" type="button"
+            id="institutionDownloads{{ institution.ror_id }}{{ suffix }}"
+            data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false"
+            aria-label="{{ _('Download datasets for %(institution)s', institution=institution.name) }}"
+            title="{{ _('Download datasets') }}"
+            {% if not institution.has_data %}disabled{% endif %}>
+      <i class="fas fa-download" aria-hidden="true"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-right cache-institution-download-menu"
+         aria-labelledby="institutionDownloads{{ institution.ror_id }}{{ suffix }}">
+      <h3 class="dropdown-header">{{ institution.name }}</h3>
+
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-user-graduate" aria-hidden="true"></i>{{ _('Researchers') }}</span>
+        {% if institution.researchers %}
+          {{ export_actions(
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='researchers'),
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='researchers', format='excel'),
+            _('%(dataset)s · %(institution)s', dataset=_('Researchers'), institution=institution.name)
+          ) }}
+        {% else %}
+          <small>{{ _('Not available') }}</small>
+        {% endif %}
+      </div>
+
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-book-open" aria-hidden="true"></i>{{ _('Scholarly works') }}</span>
+        {% if institution.works %}
+          {{ export_actions(
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='works'),
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='works', format='excel'),
+            _('%(dataset)s · %(institution)s', dataset=_('Scholarly works'), institution=institution.name)
+          ) }}
+        {% else %}
+          <small>{{ _('Not available') }}</small>
+        {% endif %}
+      </div>
+
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-hand-holding-usd" aria-hidden="true"></i>{{ _('Funding and grants') }}</span>
+        {% if institution.fundings %}
+          {{ export_actions(
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='fundings'),
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='fundings', format='excel'),
+            _('%(dataset)s · %(institution)s', dataset=_('Funding and grants'), institution=institution.name)
+          ) }}
+        {% else %}
+          <small>{{ _('Not available') }}</small>
+        {% endif %}
+      </div>
+
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-project-diagram" aria-hidden="true"></i>{{ _('OpenAlex') }}</span>
+        {% if institution.openalex_matched %}
+          {{ export_actions(
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='openalex'),
+            url_for('works.download_staff_institution_cache', ror_id=institution.ror_id, dataset_key='openalex', format='excel'),
+            _('%(dataset)s · %(institution)s', dataset=_('OpenAlex'), institution=institution.name)
+          ) }}
+        {% else %}
+          <small>{{ _('Not available') }}</small>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro institution_row_actions(institution, suffix) %}
+  <div class="cache-institution-row-actions">
+    <button class="app-icon-action cache-institution-sync-action js-institution-sync" type="button"
+            data-sync-url="{{ url_for('works.cache_staff_institution_build', ror_id=institution.ror_id) }}"
+            data-institution="{{ institution.name }}"
+            aria-label="{{ _('Refresh cache for %(institution)s', institution=institution.name) }}"
+            title="{{ _('Refresh cache') }}">
+      <i class="fas fa-sync-alt" aria-hidden="true"></i>
+    </button>
+    {{ institution_download_menu(institution, suffix) }}
+  </div>
+{% endmacro %}
+
+{% macro global_download_menu() %}
+  <div class="dropdown cache-global-download">
+    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="globalCacheDownloads"
+            data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+      <i class="fas fa-download mr-1" aria-hidden="true"></i>{{ _('Global downloads') }}
+    </button>
+    <div class="dropdown-menu dropdown-menu-right cache-institution-download-menu cache-global-download-menu"
+         aria-labelledby="globalCacheDownloads">
+      <h3 class="dropdown-header">{{ _('All institutions') }}</h3>
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-user-graduate" aria-hidden="true"></i>{{ _('Researchers') }}</span>
+        {{ export_actions(
+          url_for('works.download_all_researchers_admin'),
+          url_for('works.download_all_researchers_admin', format='excel'),
+          _('Researchers from all institutions'),
+          true
+        ) }}
+      </div>
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-book-open" aria-hidden="true"></i>{{ _('Scholarly works') }}</span>
+        {{ export_actions(
+          url_for('works.download_all_works_admin'),
+          url_for('works.download_all_works_admin', format='excel'),
+          _('Scholarly works from all institutions'),
+          true
+        ) }}
+      </div>
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-hand-holding-usd" aria-hidden="true"></i>{{ _('Funding and grants') }}</span>
+        {{ export_actions(
+          url_for('works.download_all_fundings_admin'),
+          url_for('works.download_all_fundings_admin', format='excel'),
+          _('Funding records from all institutions'),
+          true
+        ) }}
+      </div>
+      <div class="cache-institution-download-row">
+        <span><i class="fas fa-project-diagram" aria-hidden="true"></i>{{ _('OpenAlex') }}</span>
+        {{ export_actions(
+          url_for('works.download_openalex_admin'),
+          url_for('works.download_openalex_admin', format='excel'),
+          _('OpenAlex records from all institutions'),
+          true
+        ) }}
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro cache_health_badge(state) %}
+  {% if state == 'running' %}
+    <span class="cache-health-badge is-running"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>{{ _('Synchronization in progress') }}</span>
+  {% elif state == 'current' %}
+    <span class="cache-health-badge is-ready"><i class="fas fa-check-circle" aria-hidden="true"></i>{{ _('Up to date') }}</span>
+  {% elif state == 'stale' %}
+    <span class="cache-health-badge is-stale"><i class="fas fa-clock" aria-hidden="true"></i>{{ _('Update recommended') }}</span>
+  {% elif state == 'partial' %}
+    <span class="cache-health-badge is-attention"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>{{ _('Partially synchronized') }}</span>
+  {% elif state == 'failed' %}
+    <span class="cache-health-badge is-failed"><i class="fas fa-times-circle" aria-hidden="true"></i>{{ _('Synchronization needs attention') }}</span>
+  {% else %}
+    <span class="cache-health-badge is-empty"><i class="fas fa-database" aria-hidden="true"></i>{{ _('No cached data') }}</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro run_status_badge(status) %}
+  {% if status == 'success' %}
+    <span class="cache-run-status is-success"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Completed') }}</span>
+  {% elif status == 'partial' %}
+    <span class="cache-run-status is-partial"><i class="fas fa-exclamation" aria-hidden="true"></i>{{ _('Completed with issues') }}</span>
+  {% elif status == 'failed' %}
+    <span class="cache-run-status is-failed"><i class="fas fa-times" aria-hidden="true"></i>{{ _('Failed') }}</span>
+  {% elif status == 'interrupted' %}
+    <span class="cache-run-status is-interrupted"><i class="fas fa-stop" aria-hidden="true"></i>{{ _('Interrupted') }}</span>
+  {% elif status == 'running' %}
+    <span class="cache-run-status is-running"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>{{ _('In progress') }}</span>
+  {% else %}
+    <span class="cache-run-status is-pending"><i class="fas fa-hourglass-half" aria-hidden="true"></i>{{ _('Queued') }}</span>
+  {% endif %}
+{% endmacro %}
+
 {% block title %}{{ _('Data Synchronization · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-  <h1 class="m-0 text-dark">{{ _('Institutional Data Management') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('Synchronization and datasets') }}</h1>
+  <p>{{ _('Monitor cache health, refresh institutional metadata, and download reusable datasets.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
   <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
-  <li class="breadcrumb-item active">{{ _('Bulk Download') }}</li>
+  <li class="breadcrumb-item active" aria-current="page">{{ _('Synchronization and datasets') }}</li>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    {# --- LEFT COLUMN: STATUS TABLE --- #}
-    <div class="col-lg-8">
-        <div class="card card-outline card-primary shadow-sm">
-            <div class="card-header border-0 d-flex flex-column flex-xl-row align-items-xl-center">
-                <h3 class="card-title font-weight-bold mb-2 mb-xl-0 flex-shrink-0" style="white-space: nowrap;">
-                    <i class="fas fa-database mr-2 text-primary"></i> {{ _('Cache Status') }}
-                </h3>
-                
-                {# Only Admins and Managers can trigger the Sync #}
-                {% if session.get('is_admin') or session.get('is_manager') %}
-                <div class="ml-xl-auto d-flex flex-wrap justify-content-start justify-content-xl-end align-items-center" style="gap: 0.4rem;">
-                    <form id="formMasterSync" method="post" action="{{ url_for('works.cache_full_build') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-warning btn-sm font-weight-bold shadow-sm">
-                            <i class="fas fa-sync-alt mr-1"></i> {{ _('Sync Everything') }}
-                        </button>
-                    </form>
-                    {% if session.get('is_admin') %}
-                    <form id="formAllInstitutionsSync" method="post" action="{{ url_for('works.cache_full_build_all') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger btn-sm font-weight-bold shadow-sm">
-                            <i class="fas fa-globe-americas mr-1"></i> {{ _('Sync All Institutions') }}
-                        </button>
-                    </form>
-	                    <div class="dropdown">
-	                        <button class="btn btn-info btn-sm font-weight-bold shadow-sm dropdown-toggle" type="button" id="dropdownOpenAlexSystem" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false" {% if admin_works_count == 0 %}disabled{% endif %}>
-	                            <i class="fas fa-project-diagram mr-1"></i> {{ _('OpenAlex') }}
-	                        </button>
-	                        <div class="dropdown-menu dropdown-menu-right shadow" style="z-index: 1060;" aria-labelledby="dropdownOpenAlexSystem">
-	                            <button type="submit" form="formOpenAlexSystemMissing" class="dropdown-item">
-	                                <i class="fas fa-plus-circle mr-2 text-info"></i>{{ _('Sync Missing All') }}
-	                            </button>
-	                            <button type="submit" form="formOpenAlexSystemTitle" class="dropdown-item">
-	                                <i class="fas fa-search mr-2 text-primary"></i>{{ _('Match Titles All') }}
-	                            </button>
-	                            <div class="dropdown-divider"></div>
-	                            <button type="submit" form="formOpenAlexSystemAll" class="dropdown-item text-danger">
-	                                <i class="fas fa-redo-alt mr-2"></i>{{ _('Refresh System') }}
-	                            </button>
-	                        </div>
-	                    </div>
-	                    <form id="formOpenAlexSystemMissing" method="post" action="{{ url_for('works.openalex_sync_system') }}" class="d-none">
-	                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-	                        <input type="hidden" name="mode" value="missing">
-	                    </form>
-	                    <form id="formOpenAlexSystemTitle" method="post" action="{{ url_for('works.openalex_sync_system') }}" class="d-none">
-	                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-	                        <input type="hidden" name="mode" value="title">
-	                    </form>
-	                    <form id="formOpenAlexSystemAll" method="post" action="{{ url_for('works.openalex_sync_system') }}" class="d-none">
-	                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-	                        <input type="hidden" name="mode" value="all">
-	                    </form>
-	                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="card-body p-0">
-                    <div class="overlay d-none" id="overlaySync">
-                        <div class="text-center">
-                            <i class="fas fa-3x fa-sync-alt fa-spin"></i>
-                            <p class="mt-2 font-weight-bold">{{ _('Synchronizing data...') }}<br><small>{{ _('This may take several minutes.') }}</small></p>
-                        </div>
-                    </div>
-
-                <table class="table table-striped table-valign-middle">
-                    <thead>
-                    <tr>
-                        <th>{{ _('Data Type') }}</th>
-                        <th class="text-center">{{ _('Records Cached') }}</th>
-                        <th>{{ _('Last Update') }}</th>
-                        <th class="text-right">{{ _('Export Data') }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    
-                    {# --- ROW 1: WORKS --- #}
-                    <tr>
-                        <td>
-                            <i class="fas fa-book-open text-blue mr-2"></i> <strong>{{ _('Scholarly Works') }}</strong>
-                        </td>
-                        <td class="text-center">
-                            {% if has_cache_works %}
-                                <span class="badge badge-success" style="font-size: 1em;">{{ count_works }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-muted">
-                            {% if last_run_works %}
-                                <i class="far fa-clock mr-1"></i> {{ last_run_works.finished_at|datetimeformat }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-                        <td class="text-right">
-                            {% if has_cache_works %}
-                            <div class="btn-group">
-                                <a href="{{ url_for('works.download_all_works_cache') }}" class="btn btn-default btn-sm" title="CSV">
-                                    <i class="fas fa-file-csv text-success"></i>
-                                </a>
-                                <a href="{{ url_for('works.download_all_works_cache', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
-                                    <i class="fas fa-file-excel text-success"></i>
-                                </a>
-                            </div>
-                            {% else %}
-                                <span class="text-muted small">—</span>
-                            {% endif %}
-                        </td>
-                        </tr>
-
-                        {# --- ROW 2: OPENALEX --- #}
-                        <tr>
-                            <td>
-                                <i class="fas fa-project-diagram text-info mr-2"></i> <strong>{{ _('OpenAlex Articles') }}</strong>
-                                <div class="small text-muted">{{ _('Journal articles with DOI') }}</div>
-                            </td>
-                            <td class="text-center">
-                                {% if openalex_summary.candidate_dois > 0 %}
-                                    <span class="badge badge-info" style="font-size: 1em;">{{ openalex_summary.matched_dois }} / {{ openalex_summary.candidate_dois }}</span>
-                                    {% if openalex_summary.pending_dois > 0 %}
-                                        <div class="small text-muted">{{ _('%(count)s pending', count=openalex_summary.pending_dois) }}</div>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="small text-muted">
-                                {% if openalex_summary.last_run and openalex_summary.last_run.finished_at %}
-                                    <i class="far fa-clock mr-1"></i> {{ openalex_summary.last_run.finished_at|datetimeformat }}
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                            <td class="text-right">
-                                <div class="d-flex flex-wrap justify-content-end align-items-center" style="gap: 0.35rem;">
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('works.openalex_works') }}" class="btn btn-default btn-sm" title="{{ _('OpenAlex detail') }}">
-                                            <i class="fas fa-table text-info"></i>
-                                        </a>
-                                        <a href="{{ url_for('works.openalex_analytics') }}" class="btn btn-default btn-sm" title="{{ _('OpenAlex analytics') }}">
-                                            <i class="fas fa-chart-line text-primary"></i>
-                                        </a>
-                                    </div>
-                                    {% if session.get('is_admin') or session.get('is_manager') %}
-                                    <div class="dropdown">
-                                        <button class="btn btn-outline-info btn-sm dropdown-toggle" type="button" id="dropdownOpenAlexRow" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-sync-alt mr-1"></i>{{ _('Sync') }}
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-right shadow-sm" style="z-index: 1060;" aria-labelledby="dropdownOpenAlexRow">
-                                            <button type="submit" form="formOpenAlexMissing" class="dropdown-item" {% if openalex_summary.candidate_dois == 0 %}disabled{% endif %}>
-                                                <i class="fas fa-plus-circle mr-2 text-info"></i>{{ _('Sync Missing') }}
-                                            </button>
-                                            <button type="submit" form="formOpenAlexTitle" class="dropdown-item" {% if openalex_summary.title_candidate_works == 0 %}disabled{% endif %}>
-                                                <i class="fas fa-search mr-2 text-primary"></i>{{ _('Match by Title') }}
-                                            </button>
-                                            <div class="dropdown-divider"></div>
-                                            <button type="submit" form="formOpenAlexAll" class="dropdown-item text-warning" {% if openalex_summary.candidate_dois == 0 %}disabled{% endif %}>
-                                                <i class="fas fa-redo-alt mr-2"></i>{{ _('Refresh All') }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <form id="formOpenAlexMissing" method="post" action="{{ url_for('works.openalex_sync') }}" class="d-none">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <input type="hidden" name="mode" value="missing">
-                                    </form>
-                                    <form id="formOpenAlexTitle" method="post" action="{{ url_for('works.openalex_sync') }}" class="d-none">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <input type="hidden" name="mode" value="title">
-                                    </form>
-                                    <form id="formOpenAlexAll" method="post" action="{{ url_for('works.openalex_sync') }}" class="d-none">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <input type="hidden" name="mode" value="all">
-                                    </form>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-
-                        {# --- ROW 2: FUNDINGS --- #}
-                        <tr>
-                            <td>
-                            <i class="fas fa-hand-holding-usd text-orange mr-2"></i> <strong>{{ _('Fundings & Grants') }}</strong>
-                        </td>
-                        <td class="text-center">
-                            {% if has_cache_fundings %}
-                                <span class="badge badge-success" style="font-size: 1em;">{{ count_fundings }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-muted">
-                            {% if last_run_fundings %}
-                                <i class="far fa-clock mr-1"></i> {{ last_run_fundings.finished_at|datetimeformat }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-                        <td class="text-right">
-                            {% if has_cache_fundings %}
-                            <div class="btn-group">
-                                <a href="{{ url_for('works.download_all_fundings_cache') }}" class="btn btn-default btn-sm" title="CSV">
-                                    <i class="fas fa-file-csv text-success"></i>
-                                </a>
-                                <a href="{{ url_for('works.download_all_fundings_cache', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
-                                    <i class="fas fa-file-excel text-success"></i>
-                                </a>
-                            </div>
-                            {% else %}
-                                <span class="text-muted small">—</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-
-                    {# --- ROW 3: RESEARCHER ASSOCIATIONS --- #}
-                    <tr>
-                        <td>
-                            <i class="fas fa-id-card text-purple mr-2"></i> <strong>{{ _('Associated Researchers') }}</strong>
-                        </td>
-                        <td class="text-center">
-                            {% if count_profiles > 0 %}
-                                <span class="badge badge-info" style="font-size: 1em;">{{ count_profiles }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-muted">
-                            {{ _('Researchers matched by ROR, GRID, or Ringgold') }}
-                        </td>
-                        <td class="text-right">
-                            {% if count_profiles > 0 %}
-                            <div class="btn-group">
-                                <a href="{{ url_for('works.download_researchers_cache') }}" class="btn btn-default btn-sm" title="CSV">
-                                    <i class="fas fa-file-csv text-success"></i>
-                                </a>
-                                <a href="{{ url_for('works.download_researchers_cache', format='excel') }}" class="btn btn-default btn-sm" title="Excel">
-                                    <i class="fas fa-file-excel text-success"></i>
-                                </a>
-                            </div>
-                            {% else %}
-                                <span class="text-muted small">—</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {% if session.get('is_admin') %}
-        <div class="card card-outline card-danger shadow-sm">
-            <div class="card-header border-0 d-flex align-items-center">
-                <h3 class="card-title font-weight-bold">
-                    <i class="fas fa-globe-americas mr-2 text-danger"></i> {{ _('All Institutions Exports') }}
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-striped table-valign-middle mb-0">
-                    <thead>
-                    <tr>
-                        <th>{{ _('Dataset') }}</th>
-                        <th class="text-center">{{ _('Records') }}</th>
-                        <th>{{ _('Scope') }}</th>
-                        <th class="text-right">{{ _('Export Data') }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>
-                            <i class="fas fa-user-graduate text-purple mr-2"></i> <strong>{{ _('Associated Researchers') }}</strong>
-                        </td>
-                        <td class="text-center">
-                            {% if admin_researcher_count > 0 %}
-                                <span class="badge badge-success" style="font-size: 1em;">{{ admin_researcher_count }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-muted">{{ _('All universities') }}</td>
-                        <td class="text-right">
-                            {% if admin_researcher_count > 0 %}
-                            <div class="btn-group">
-                                <a href="{{ url_for('works.download_all_researchers_admin') }}" class="btn btn-default btn-sm js-admin-export" title="CSV">
-                                    <i class="fas fa-file-csv text-success"></i>
-                                </a>
-                                <a href="{{ url_for('works.download_all_researchers_admin', format='excel') }}" class="btn btn-default btn-sm js-admin-export" title="Excel">
-                                    <i class="fas fa-file-excel text-success"></i>
-                                </a>
-                            </div>
-                            {% else %}
-                                <span class="text-muted small">—</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <i class="fas fa-book-open text-blue mr-2"></i> <strong>{{ _('Scholarly Works') }}</strong>
-                        </td>
-                        <td class="text-center">
-                            {% if admin_works_count > 0 %}
-                                <span class="badge badge-success" style="font-size: 1em;">{{ admin_works_count }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-muted">{{ _('All universities') }}</td>
-                        <td class="text-right">
-                            {% if admin_works_count > 0 %}
-                            <div class="btn-group">
-                                <a href="{{ url_for('works.download_all_works_admin') }}" class="btn btn-default btn-sm js-admin-export" title="CSV">
-                                    <i class="fas fa-file-csv text-success"></i>
-                                </a>
-                                <a href="{{ url_for('works.download_all_works_admin', format='excel') }}" class="btn btn-default btn-sm js-admin-export" title="Excel">
-                                    <i class="fas fa-file-excel text-success"></i>
-                                </a>
-                            </div>
-                            {% else %}
-                                <span class="text-muted small">—</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <i class="fas fa-hand-holding-usd text-orange mr-2"></i> <strong>{{ _('Fundings & Grants') }}</strong>
-                        </td>
-                        <td class="text-center">
-                            {% if admin_fundings_count > 0 %}
-                                <span class="badge badge-success" style="font-size: 1em;">{{ admin_fundings_count }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-muted">{{ _('All universities') }}</td>
-                        <td class="text-right">
-                            {% if admin_fundings_count > 0 %}
-                            <div class="btn-group">
-                                <a href="{{ url_for('works.download_all_fundings_admin') }}" class="btn btn-default btn-sm js-admin-export" title="CSV">
-                                    <i class="fas fa-file-csv text-success"></i>
-                                </a>
-                                <a href="{{ url_for('works.download_all_fundings_admin', format='excel') }}" class="btn btn-default btn-sm js-admin-export" title="Excel">
-                                    <i class="fas fa-file-excel text-success"></i>
-                                </a>
-                            </div>
-                            {% else %}
-                                <span class="text-muted small">—</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <i class="fas fa-project-diagram text-info mr-2"></i> <strong>{{ _('OpenAlex Articles') }}</strong>
-                            <div class="small text-muted">{{ _('OpenAlex cache, raw payloads, and derived article metadata') }}</div>
-                        </td>
-                        <td class="text-center">
-                            {% if admin_openalex_count > 0 %}
-                                <span class="badge badge-info" style="font-size: 1em;">{{ admin_openalex_count }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">{{ _('Empty') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-muted">{{ _('All universities') }}</td>
-                        <td class="text-right">
-                            {% if admin_openalex_count > 0 %}
-                            <div class="btn-group">
-                                <a href="{{ url_for('works.download_openalex_admin') }}" class="btn btn-default btn-sm js-admin-export" title="CSV">
-                                    <i class="fas fa-file-csv text-success"></i>
-                                </a>
-                                <a href="{{ url_for('works.download_openalex_admin', format='excel') }}" class="btn btn-default btn-sm js-admin-export" title="Excel">
-                                    <i class="fas fa-file-excel text-success"></i>
-                                </a>
-                            </div>
-                            {% else %}
-                                <span class="text-muted small">—</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+<section class="app-kpi-strip cache-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Institutional cache metrics') }}">
+  <article class="app-kpi">
+    <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Unique scholarly outputs') }}</span>
+      <strong>{{ canonical_summary.unique_outputs or count_works }}</strong>
+      <small>
+        {{ _('%(count)s cached ORCID records', count=count_works) }}
+      </small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-project-diagram"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('OpenAlex coverage') }}</span>
+      <strong>{% if openalex_summary.candidate_dois %}{{ openalex_summary.matched_percent }}%{% else %}—{% endif %}</strong>
+      <small>
+        {% if openalex_summary.candidate_dois %}
+          {{ _('%(matched)s of %(total)s DOI records matched', matched=openalex_summary.matched_dois, total=openalex_summary.candidate_dois) }}
+        {% else %}
+          {{ _('No eligible article DOI records') }}
         {% endif %}
+      </small>
     </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-hand-holding-usd"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Funding records') }}</span>
+      <strong>{{ count_fundings }}</strong>
+      <small>
+        {% if last_run_fundings and last_run_fundings.finished_at %}
+          {{ _('Updated %(date)s', date=last_run_fundings.finished_at|datetimeformat) }}
+        {% else %}
+          {{ _('Not synchronized yet') }}
+        {% endif %}
+      </small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-user-graduate"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Associated researchers') }}</span>
+      <strong>{{ count_profiles }}</strong>
+      <small>{{ _('%(verified)s verified · %(inferred)s inferred', verified=cache_health.components.researchers.verified, inferred=cache_health.components.researchers.inferred) }}</small>
+    </div>
+  </article>
+</section>
 
-    {# --- RIGHT COLUMN: CONTEXTUAL HELP --- #}
-    <div class="col-lg-4">
-        <div class="card card-outline card-info shadow-sm h-100">
-            <div class="card-header">
-                {% if session.get('is_admin') or session.get('is_manager') %}
-                    <h3 class="card-title text-bold">{{ _('Management Actions') }}</h3>
-                {% else %}
-                    <h3 class="card-title text-bold">{{ _('Data Access') }}</h3>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                
-                {# Context 1: Synchronization (Admin/Manager Only) #}
-                {% if session.get('is_admin') or session.get('is_manager') %}
-                <div class="d-flex mb-3">
-                    <div class="mr-3"><i class="fas fa-sync-alt fa-2x text-warning"></i></div>
-                    <div>
-                        <h6 class="font-weight-bold">{{ _('Full Sync') }}</h6>
-                        <p class="small text-muted mb-0">
-                            {{ _('The full sync searches all verified institutional identifiers and downloads each ORCID profile once to update researchers, works, fundings, and Affiliation Manager status.') }}
-                        </p>
-                    </div>
-                </div>
-                    {% if session.get('is_admin') %}
-                    <div class="d-flex mb-3">
-                        <div class="mr-3"><i class="fas fa-globe-americas fa-2x text-danger"></i></div>
-                    <div>
-                        <h6 class="font-weight-bold">{{ _('All Institutions Sync') }}</h6>
-                        <p class="small text-muted mb-0">
-                            {{ _('The all-institution sync uses the institutional registry, including Chilean universities without user accounts, and rebuilds their Works, Fundings, and Profile names caches.') }}
-                        </p>
-                    </div>
-                    </div>
-                    {% endif %}
-                    <div class="d-flex mb-3">
-                        <div class="mr-3"><i class="fas fa-project-diagram fa-2x text-info"></i></div>
-                        <div>
-	                            <h6 class="font-weight-bold">{{ _('OpenAlex Sync') }}</h6>
-	                            <p class="small text-muted mb-1">
-	                                {{ _('Sync Missing only requests article DOIs that do not have an OpenAlex cache row. Refresh All requests every article DOI again and overwrites the stored OpenAlex response.') }}
-	                            </p>
-	                            <p class="small text-muted mb-0">
-	                                {{ _('Match by Title searches only DOI records already not found in OpenAlex and journal articles without DOI. Matches are saved only when title confidence is high.') }}
-	                            </p>
-	                            {% if session.get('is_admin') %}
-	                            <p class="small text-muted mb-0 mt-1">
-	                                {{ _('System-wide OpenAlex sync uses every unique journal-article DOI in the local Works cache, regardless of the active institution.') }}
-                            </p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% else %}
-                {# Context 1: Data Availability (Regular User) #}
-                <div class="d-flex mb-3">
-                    <div class="mr-3"><i class="fas fa-database fa-2x text-secondary"></i></div>
-                    <div>
-                        <h6 class="font-weight-bold">{{ _('Data Availability') }}</h6>
-                        <p class="small text-muted mb-0">
-                            {{ _('This data is centrally synchronized by the institutional administrators. You can download the latest available datasets in CSV or Excel format.') }}
-                        </p>
-                    </div>
-                </div>
-                {% endif %}
-
-                <hr>
-
-                {# Context 2: Analytics (Everyone) #}
-                <div class="d-flex">
-                    <div class="mr-3"><i class="fas fa-chart-pie fa-2x text-primary"></i></div>
-                    <div>
-                        <h6 class="font-weight-bold">{{ _('Analytics') }}</h6>
-                        <p class="small text-muted mb-0">
-                            {{ _('Visualize trends, funding sources, and top journals in the Metrics Panel.') }}
-                        </p>
-                        <a href="{{ url_for('main.metrics_panel') }}" class="btn btn-xs btn-primary mt-2">{{ _('Go to Metrics') }}</a>
-                    </div>
-                </div>
-            </div>
+<section class="card cache-sync-card" aria-labelledby="cacheSyncTitle">
+  <div class="overlay d-none cache-sync-overlay" id="overlaySync" aria-hidden="true">
+    <div class="cache-sync-overlay-content" role="status" aria-live="polite">
+      <i class="fas fa-2x fa-circle-notch fa-spin" aria-hidden="true"></i>
+      <strong>{{ _('Synchronizing data...') }}</strong>
+      <span>{{ _('This may take several minutes.') }}</span>
+    </div>
+  </div>
+  <div class="card-body cache-sync-body">
+    <div class="cache-sync-summary">
+      <span class="cache-sync-icon" aria-hidden="true"><i class="fas fa-sync-alt"></i></span>
+      <div>
+        <div class="cache-sync-heading">
+          <h2 id="cacheSyncTitle">{{ _('Synchronization controls') }}</h2>
+          {{ cache_health_badge(cache_health.state) }}
         </div>
+        <p>
+          {{ _('Active institution:') }}
+          <strong id="cacheActiveInstitutionName">{{ active_institution_name }}</strong>
+          {% if cache_health.latest_update %}
+            · {{ _('Last successful update %(date)s', date=cache_health.latest_update|datetimeformat) }}
+          {% endif %}
+        </p>
+        {% if cache_health.state == 'stale' %}
+          <small>{{ _('The institutional cache is older than %(days)s days. Refresh it before using time-sensitive exports.', days=cache_health.stale_days) }}</small>
+        {% elif cache_health.state == 'partial' %}
+          <small>{{ _('Some institutional datasets have not completed a successful synchronization.') }}</small>
+        {% elif cache_health.state == 'failed' %}
+          <small>{{ _('The latest synchronization failed. Review the recent runs before exporting time-sensitive data.') }}</small>
+        {% else %}
+          <small>{{ _('Synchronization refreshes researchers, public ORCID profiles, works, funding records, and OpenAlex metadata.') }}</small>
+        {% endif %}
+      </div>
     </div>
+
+    {% if session.get('is_admin') or session.get('is_manager') %}
+    <div class="cache-sync-actions">
+      <form id="formMasterSync" method="post" action="{{ url_for('works.cache_full_build') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>{{ _('Sync active institution') }}
+        </button>
+      </form>
+
+      <div class="dropdown">
+        <button class="btn btn-outline-info dropdown-toggle" type="button" id="dropdownOpenAlexInstitution"
+                data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false"
+                {% if openalex_summary.article_works == 0 %}disabled{% endif %}>
+          <i class="fas fa-project-diagram mr-1" aria-hidden="true"></i>{{ _('OpenAlex actions') }}
+        </button>
+        <div class="dropdown-menu dropdown-menu-right cache-operation-menu" aria-labelledby="dropdownOpenAlexInstitution">
+          <h3 class="dropdown-header">{{ _('Active institution') }}</h3>
+          <button type="submit" form="formOpenAlexMissing" class="dropdown-item" {% if openalex_summary.candidate_dois == 0 %}disabled{% endif %}>
+            <i class="fas fa-plus-circle text-info" aria-hidden="true"></i>{{ _('Sync missing records') }}
+          </button>
+          <button type="submit" form="formOpenAlexTitle" class="dropdown-item" {% if openalex_summary.title_candidate_works == 0 %}disabled{% endif %}>
+            <i class="fas fa-search text-primary" aria-hidden="true"></i>{{ _('Match records by title') }}
+          </button>
+          <div class="dropdown-divider"></div>
+          <button type="submit" form="formOpenAlexAll" class="dropdown-item text-warning" {% if openalex_summary.candidate_dois == 0 %}disabled{% endif %}>
+            <i class="fas fa-redo-alt" aria-hidden="true"></i>{{ _('Refresh all OpenAlex records') }}
+          </button>
+        </div>
+      </div>
+
+      {% if session.get('is_admin') %}
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownSystemSync"
+                data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-globe-americas mr-1" aria-hidden="true"></i>{{ _('System actions') }}
+        </button>
+        <div class="dropdown-menu dropdown-menu-right cache-operation-menu" aria-labelledby="dropdownSystemSync">
+          <h3 class="dropdown-header">{{ _('All institutions') }}</h3>
+          <button type="submit" form="formAllInstitutionsSync" class="dropdown-item text-danger">
+            <i class="fas fa-sync-alt" aria-hidden="true"></i>{{ _('Sync all institutional caches') }}
+          </button>
+          <div class="dropdown-divider"></div>
+          <h3 class="dropdown-header">{{ _('System-wide OpenAlex') }}</h3>
+          <button type="submit" form="formOpenAlexSystemMissing" class="dropdown-item" {% if admin_works_count == 0 %}disabled{% endif %}>
+            <i class="fas fa-plus-circle text-info" aria-hidden="true"></i>{{ _('Sync missing OpenAlex records') }}
+          </button>
+          <button type="submit" form="formOpenAlexSystemTitle" class="dropdown-item" {% if admin_works_count == 0 %}disabled{% endif %}>
+            <i class="fas fa-search text-primary" aria-hidden="true"></i>{{ _('Match OpenAlex records by title') }}
+          </button>
+          <button type="submit" form="formOpenAlexSystemAll" class="dropdown-item text-danger" {% if admin_works_count == 0 %}disabled{% endif %}>
+            <i class="fas fa-redo-alt" aria-hidden="true"></i>{{ _('Refresh the system OpenAlex cache') }}
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <form id="formOpenAlexMissing" method="post" action="{{ url_for('works.openalex_sync') }}" class="d-none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="missing">
+    </form>
+    <form id="formOpenAlexTitle" method="post" action="{{ url_for('works.openalex_sync') }}" class="d-none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="title">
+    </form>
+    <form id="formOpenAlexAll" method="post" action="{{ url_for('works.openalex_sync') }}" class="d-none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="all">
+    </form>
+    {% if session.get('is_admin') %}
+    <form id="formAllInstitutionsSync" method="post" action="{{ url_for('works.cache_full_build_all') }}" class="d-none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    <form id="formOpenAlexSystemMissing" method="post" action="{{ url_for('works.openalex_sync_system') }}" class="d-none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="missing">
+    </form>
+    <form id="formOpenAlexSystemTitle" method="post" action="{{ url_for('works.openalex_sync_system') }}" class="d-none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="title">
+    </form>
+    <form id="formOpenAlexSystemAll" method="post" action="{{ url_for('works.openalex_sync_system') }}" class="d-none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="all">
+    </form>
+    {% endif %}
+    {% endif %}
+  </div>
+</section>
+
+<div class="cache-management-grid{% if cache_scope == 'system' %} is-system-scope{% endif %}" id="cacheManagementGrid">
+  <section class="card cache-datasets-card" aria-labelledby="cacheDatasetsTitle">
+    <div class="card-header cache-datasets-header">
+      <div>
+        <h2 id="cacheDatasetsTitle" class="card-title"><i class="fas fa-database mr-2" aria-hidden="true"></i>{{ _('Available datasets') }}</h2>
+        <p>{{ _('Review coverage and download the latest cached records.') }}</p>
+      </div>
+      {% if session.get('is_admin') or session.get('is_manager') %}
+      <nav class="cache-scope-switch" aria-label="{{ _('Dataset scope') }}">
+        <a class="{% if cache_scope == 'institution' %}is-active{% endif %}" id="cacheScopeInstitutionTab"
+           href="{{ url_for('works.cache_works_status') }}" {% if cache_scope == 'institution' %}aria-current="page"{% endif %}>
+          <i class="fas fa-university" aria-hidden="true"></i><span>{{ _('Active institution') }}</span>
+        </a>
+        <a class="{% if cache_scope == 'system' %}is-active{% endif %}" id="cacheScopeSystemTab"
+           href="{{ url_for('works.cache_works_status', scope='system') }}" {% if cache_scope == 'system' %}aria-current="page"{% endif %}>
+          <i class="fas fa-globe-americas" aria-hidden="true"></i><span>{{ _('All institutions') }}</span>
+        </a>
+      </nav>
+      {% else %}
+        <span class="cache-scope-label"><i class="fas fa-university" aria-hidden="true"></i>{{ _('Active institution') }}</span>
+      {% endif %}
+    </div>
+
+    {% if cache_scope == 'institution' %}
+    <div id="cacheScopeInstitution" class="cache-dataset-panel" aria-labelledby="cacheScopeInstitutionTab">
+      <div class="cache-dataset-list" role="list">
+        <article class="cache-dataset-row" role="listitem">
+          <div class="cache-dataset-main">
+            <span class="cache-dataset-icon is-works" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+            <div><h3>{{ _('Scholarly works') }}</h3><p>{{ _('Public works cached from associated ORCID profiles.') }}</p></div>
+          </div>
+          <div class="cache-dataset-stat"><span>{{ _('Records') }}</span><strong>{{ count_works }}</strong></div>
+          <div class="cache-dataset-stat cache-dataset-updated"><span>{{ _('Last update') }}</span>
+            {% if last_run_works and last_run_works.finished_at %}<time datetime="{{ last_run_works.finished_at.isoformat() }}">{{ last_run_works.finished_at|datetimeformat }}</time>{% else %}<strong>—</strong>{% endif %}
+          </div>
+          <div class="cache-dataset-actions"><span>{{ _('Download') }}</span>
+            {% if count_works > 0 %}{{ export_actions(url_for('works.download_all_works_cache'), url_for('works.download_all_works_cache', format='excel'), _('Scholarly works')) }}{% else %}<span class="cache-unavailable">{{ _('Not available') }}</span>{% endif %}
+          </div>
+        </article>
+
+        <article class="cache-dataset-row is-openalex" role="listitem">
+          <div class="cache-dataset-main">
+            <span class="cache-dataset-icon is-openalex" aria-hidden="true"><i class="fas fa-project-diagram"></i></span>
+            <div>
+              <h3>{{ _('OpenAlex articles') }}</h3>
+              <p>{{ _('Journal articles enriched by DOI or high-confidence title matching.') }}</p>
+              {% if openalex_summary.candidate_dois %}
+              <div class="cache-coverage-breakdown" aria-label="{{ _('OpenAlex coverage details') }}">
+                <span class="is-matched">{{ _('%(count)s matched', count=openalex_summary.matched_dois) }}</span>
+                <span class="is-missing">{{ _('%(count)s not found', count=openalex_summary.unmatched_dois) }}</span>
+                <span class="is-pending">{{ _('%(count)s pending', count=openalex_summary.pending_dois) }}</span>
+                {% if openalex_summary.error_dois %}<span class="is-error">{{ _('%(count)s errors', count=openalex_summary.error_dois) }}</span>{% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="cache-dataset-stat"><span>{{ _('Coverage') }}</span><strong>{% if openalex_summary.candidate_dois %}{{ openalex_summary.matched_percent }}%{% else %}—{% endif %}</strong></div>
+          <div class="cache-dataset-stat cache-dataset-updated"><span>{{ _('Last update') }}</span>
+            {% if openalex_summary.last_run and openalex_summary.last_run.finished_at %}<time datetime="{{ openalex_summary.last_run.finished_at.isoformat() }}">{{ openalex_summary.last_run.finished_at|datetimeformat }}</time>{% else %}<strong>—</strong>{% endif %}
+          </div>
+          <div class="cache-dataset-actions"><span>{{ _('Explore') }}</span>
+            <div class="cache-export-actions">
+              <a class="app-icon-action cache-detail-action" href="{{ url_for('works.openalex_works') }}" title="{{ _('OpenAlex detail') }}" aria-label="{{ _('Open OpenAlex record detail') }}"><i class="fas fa-table" aria-hidden="true"></i></a>
+              <a class="app-icon-action cache-analytics-action" href="{{ url_for('works.openalex_analytics') }}" title="{{ _('OpenAlex analytics') }}" aria-label="{{ _('Open OpenAlex analytics') }}"><i class="fas fa-chart-line" aria-hidden="true"></i></a>
+            </div>
+          </div>
+        </article>
+
+        <article class="cache-dataset-row" role="listitem">
+          <div class="cache-dataset-main">
+            <span class="cache-dataset-icon is-fundings" aria-hidden="true"><i class="fas fa-hand-holding-usd"></i></span>
+            <div><h3>{{ _('Funding and grants') }}</h3><p>{{ _('Public funding records cached from associated ORCID profiles.') }}</p></div>
+          </div>
+          <div class="cache-dataset-stat"><span>{{ _('Records') }}</span><strong>{{ count_fundings }}</strong></div>
+          <div class="cache-dataset-stat cache-dataset-updated"><span>{{ _('Last update') }}</span>
+            {% if last_run_fundings and last_run_fundings.finished_at %}<time datetime="{{ last_run_fundings.finished_at.isoformat() }}">{{ last_run_fundings.finished_at|datetimeformat }}</time>{% else %}<strong>—</strong>{% endif %}
+          </div>
+          <div class="cache-dataset-actions"><span>{{ _('Download') }}</span>
+            {% if count_fundings > 0 %}{{ export_actions(url_for('works.download_all_fundings_cache'), url_for('works.download_all_fundings_cache', format='excel'), _('Funding and grants')) }}{% else %}<span class="cache-unavailable">{{ _('Not available') }}</span>{% endif %}
+          </div>
+        </article>
+
+        <article class="cache-dataset-row" role="listitem">
+          <div class="cache-dataset-main">
+            <span class="cache-dataset-icon is-researchers" aria-hidden="true"><i class="fas fa-user-graduate"></i></span>
+            <div><h3>{{ _('Associated researchers') }}</h3><p>{{ _('Researchers discovered through ROR, GRID, or Ringgold identifiers.') }}</p></div>
+          </div>
+          <div class="cache-dataset-stat"><span>{{ _('Records') }}</span><strong>{{ count_profiles }}</strong></div>
+          <div class="cache-dataset-stat cache-dataset-updated"><span>{{ _('Source') }}</span><strong class="cache-source-label">ORCID</strong></div>
+          <div class="cache-dataset-actions"><span>{{ _('Download') }}</span>
+            {% if count_profiles > 0 %}{{ export_actions(url_for('works.download_researchers_cache'), url_for('works.download_researchers_cache', format='excel'), _('Associated researchers')) }}{% else %}<span class="cache-unavailable">{{ _('Not available') }}</span>{% endif %}
+          </div>
+        </article>
+      </div>
+    </div>
+
+    {% elif session.get('is_admin') or session.get('is_manager') %}
+    <div id="cacheScopeSystem" class="cache-dataset-panel" aria-labelledby="cacheScopeSystemTab">
+      <form class="cache-institution-toolbar" method="get">
+        <input type="hidden" name="scope" value="system">
+        <div class="cache-institution-search">
+          <label for="institutionCacheSearch">{{ _('Search institutions') }}</label>
+          <div class="input-group">
+            <div class="input-group-prepend"><span class="input-group-text" aria-hidden="true"><i class="fas fa-search"></i></span></div>
+            <input type="search" class="form-control" id="institutionCacheSearch" name="institution_q"
+                   value="{{ institution_query }}" placeholder="{{ _('Search by institution name or ROR...') }}" autocomplete="off">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit" aria-label="{{ _('Search institutions') }}">
+                <i class="fas fa-search" aria-hidden="true"></i>
+              </button>
+              {% if institution_query %}<a class="btn btn-outline-secondary" href="{{ url_for('works.cache_works_status', scope='system') }}" aria-label="{{ _('Clear institution search') }}" title="{{ _('Clear search') }}"><i class="fas fa-times" aria-hidden="true"></i></a>{% endif %}
+            </div>
+          </div>
+          <small id="institutionCacheSearchStatus" role="status" aria-live="polite">
+            {{ _('Showing %(start)s–%(end)s of %(total)s institutions', start=institution_pagination.start, end=institution_pagination.end, total=institution_pagination.total_rows) }}
+          </small>
+          <div class="cache-institution-mobile-sort">
+            <label for="institutionCacheSort">{{ _('Sort institutions by') }}</label>
+            <div class="input-group">
+              <select class="custom-select" id="institutionCacheSort" name="institution_sort">
+                <option value="name" {% if institution_sort == 'name' %}selected{% endif %}>{{ _('Institution') }}</option>
+                <option value="researchers" {% if institution_sort == 'researchers' %}selected{% endif %}>{{ _('Researchers') }}</option>
+                <option value="works" {% if institution_sort == 'works' %}selected{% endif %}>{{ _('Works') }}</option>
+                <option value="fundings" {% if institution_sort == 'fundings' %}selected{% endif %}>{{ _('Funding') }}</option>
+                <option value="openalex" {% if institution_sort == 'openalex' %}selected{% endif %}>{{ _('OpenAlex coverage') }}</option>
+                <option value="updated" {% if institution_sort == 'updated' %}selected{% endif %}>{{ _('Last update') }}</option>
+              </select>
+              <select class="custom-select" name="institution_dir" aria-label="{{ _('Sort direction') }}">
+                <option value="asc" {% if institution_direction == 'asc' %}selected{% endif %}>{{ _('Ascending') }}</option>
+                <option value="desc" {% if institution_direction == 'desc' %}selected{% endif %}>{{ _('Descending') }}</option>
+              </select>
+              <div class="input-group-append"><button class="btn btn-outline-secondary" type="submit">{{ _('Apply') }}</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="cache-institution-toolbar-actions">
+          {{ global_download_menu() }}
+          <div class="cache-institution-summary-export">
+            <span>{{ _('Download summary') }}</span>
+            {{ export_actions(
+              url_for('works.download_institution_cache_summary'),
+              url_for('works.download_institution_cache_summary', format='excel'),
+              _('Institution cache summary')
+            ) }}
+          </div>
+        </div>
+      </form>
+
+      {% if institution_summaries %}
+      <div class="cache-institution-mobile-list">
+        {% for institution in institution_summaries %}
+        <article class="cache-institution-card" data-institution-row data-institution-id="{{ institution.ror_id }}"
+                 data-search-text="{{ (institution.name ~ ' ' ~ institution.ror_id)|lower }}"
+                 data-sort-name="{{ institution.name|lower }}"
+                 data-sort-researchers="{{ institution.researchers }}"
+                 data-sort-works="{{ institution.works }}"
+                 data-sort-fundings="{{ institution.fundings }}"
+                 data-sort-openalex="{{ institution.openalex_percent }}"
+                 data-sort-updated="{{ institution.last_update.timestamp() if institution.last_update else 0 }}">
+          <header>
+            <div class="cache-institution-name">
+              <h3>{{ institution.name }}</h3>
+              <span>ROR: {{ institution.ror_id }}</span>
+            </div>
+            {{ cache_health_badge(institution.health) }}
+          </header>
+          <dl>
+            <div><dt>{{ _('Researchers') }}</dt><dd>{{ institution.researchers }}</dd></div>
+            <div><dt>{{ _('Works') }}</dt><dd>{{ institution.works }}</dd></div>
+            <div><dt>{{ _('Funding') }}</dt><dd>{{ institution.fundings }}</dd></div>
+            <div><dt>{{ _('OpenAlex') }}</dt><dd>{% if institution.openalex_candidates %}{{ institution.openalex_matched }}/{{ institution.openalex_candidates }}{% else %}—{% endif %}</dd></div>
+          </dl>
+          <footer>
+            <span>
+              <small>{{ _('Last update') }}</small>
+              {% if institution.last_update %}<time datetime="{{ institution.last_update.isoformat() }}">{{ institution.last_update|datetimeformat }}</time>{% else %}{{ _('Never') }}{% endif %}
+            </span>
+            {{ institution_row_actions(institution, 'Card') }}
+          </footer>
+        </article>
+        {% endfor %}
+      </div>
+
+      {% if institution_pagination.pages > 1 %}
+      <nav class="cache-institution-pagination" aria-label="{{ _('Institution pagination') }}">
+        <span>{{ _('Page %(page)s of %(pages)s', page=institution_pagination.page, pages=institution_pagination.pages) }}</span>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item {% if not institution_pagination.has_prev %}disabled{% endif %}"><a class="page-link" href="{{ cache_status_url(scope='system', institution_page=institution_pagination.prev_page) }}" aria-label="{{ _('Previous') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a></li>
+          {% for page_number in institution_pagination.page_numbers %}
+            {% if page_number %}<li class="page-item {% if page_number == institution_pagination.page %}active{% endif %}"><a class="page-link" href="{{ cache_status_url(scope='system', institution_page=page_number) }}">{{ page_number }}</a></li>{% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+          {% endfor %}
+          <li class="page-item {% if not institution_pagination.has_next %}disabled{% endif %}"><a class="page-link" href="{{ cache_status_url(scope='system', institution_page=institution_pagination.next_page) }}" aria-label="{{ _('Next') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a></li>
+        </ul>
+      </nav>
+      {% endif %}
+      {% else %}
+      <div class="cache-institution-no-results">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <strong>{% if institution_query %}{{ _('No institutions match your search') }}{% else %}{{ _('No institutions available') }}{% endif %}</strong>
+        <span>{% if institution_query %}{{ _('Try another institution name or ROR identifier.') }}{% else %}{{ _('No institutional cache summary is available.') }}{% endif %}</span>
+      </div>
+      {% endif %}
+      <form id="institutionCacheSyncForm" method="post" class="d-none">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      </form>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="card cache-runs-card" aria-labelledby="cacheRunsTitle">
+    <div class="card-header">
+      <h2 id="cacheRunsTitle" class="card-title"><i class="fas fa-history mr-2" aria-hidden="true"></i>{{ _('Recent synchronization runs') }}</h2>
+      <p>{{ _('Latest activity for the active institution.') }}</p>
+    </div>
+    <div class="card-body">
+      {% if recent_runs %}
+      <ol class="cache-run-list">
+        {% for run in recent_runs %}
+        <li>
+          <span class="cache-run-kind-icon is-{{ run.kind }}" aria-hidden="true">
+            {% if run.kind == 'works' %}<i class="fas fa-book-open"></i>{% elif run.kind == 'fundings' %}<i class="fas fa-hand-holding-usd"></i>{% elif run.kind == 'full' %}<i class="fas fa-sync-alt"></i>{% else %}<i class="fas fa-project-diagram"></i>{% endif %}
+          </span>
+          <div class="cache-run-content">
+            <div class="cache-run-heading">
+              <strong>{% if run.kind == 'works' %}{{ _('Scholarly works') }}{% elif run.kind == 'fundings' %}{{ _('Funding and grants') }}{% elif run.kind == 'full' %}{{ _('Full institutional synchronization') }}{% else %}{{ _('OpenAlex') }}{% endif %}</strong>
+              {{ run_status_badge(run.status) }}
+            </div>
+            {% if run.timestamp %}<time datetime="{{ run.timestamp.isoformat() }}">{{ run.timestamp|datetimeformat }}</time>{% endif %}
+            <div class="cache-run-meta">
+              <span><i class="fas fa-database" aria-hidden="true"></i>{% if run.kind == 'openalex' %}{{ _('%(count)s matches', count=run.records) }}{% elif run.kind == 'full' %}{{ _('%(current)s of %(total)s steps', current=run.records, total=run.records_total) }}{% else %}{{ _('%(count)s records', count=run.records) }}{% endif %}</span>
+              {% if run.duration_seconds is not none %}<span><i class="fas fa-stopwatch" aria-hidden="true"></i>{% if run.duration_seconds >= 60 %}{{ _('%(count)s min', count=(run.duration_seconds // 60)) }}{% else %}{{ _('%(count)s sec', count=run.duration_seconds) }}{% endif %}</span>{% endif %}
+              {% if run.errors %}<span class="is-error"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i>{{ _('%(count)s errors', count=run.errors) }}</span>{% endif %}
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <div class="cache-runs-empty">
+        <i class="fas fa-history" aria-hidden="true"></i>
+        <strong>{{ _('No synchronization history') }}</strong>
+        <p>{{ _('Completed and failed runs will appear here.') }}</p>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card-footer cache-runs-footer">
+      <a href="{{ url_for('help.topic', topic='synchronization') }}">
+        <i class="fas fa-question-circle" aria-hidden="true"></i>{{ _('Learn how synchronization and exports work') }}
+      </a>
+    </div>
+  </aside>
 </div>
 
-{% if session.get('is_admin') %}
+{% if session.get('is_admin') or session.get('is_manager') %}
 <div class="modal fade" id="modalExportPreparing" tabindex="-1" role="dialog" aria-labelledby="modalExportPreparingTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-body d-flex align-items-center">
-                <div class="mr-3 text-primary">
-                    <i class="fas fa-circle-notch fa-spin fa-2x"></i>
-                </div>
-                <div>
-                    <h5 id="modalExportPreparingTitle" class="mb-1">{{ _('Preparing download...') }}</h5>
-                    <p class="text-muted mb-0">{{ _('Large exports can take a few minutes. The file will start downloading automatically.') }}</p>
-                </div>
-            </div>
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">{{ _('Close') }}</button>
-            </div>
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-body d-flex align-items-center">
+        <div class="mr-3 text-primary"><i class="fas fa-circle-notch fa-spin fa-2x" aria-hidden="true"></i></div>
+        <div>
+          <h2 id="modalExportPreparingTitle" class="h5 mb-1">{{ _('Preparing download...') }}</h2>
+          <p class="text-muted mb-0">{{ _('Large exports can take a few minutes. The file will start downloading automatically.') }}</p>
         </div>
+      </div>
+      <div class="modal-footer py-2"><button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">{{ _('Close') }}</button></div>
     </div>
+  </div>
 </div>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }}
-  {% if session.get('is_admin') or session.get('is_manager') %}
-  <script>
-  $(function() {
-    $('#formMasterSync').on('submit', function(e) {
-        if (!confirm('{{ _("Start full synchronization? This process searches ROR, GRID, and Ringgold, then downloads public ORCID metadata.") }}')) {
-            e.preventDefault();
-            return;
-        }
-        $(this).find('button').attr('disabled', true).addClass('disabled');
-        $('#overlaySync').removeClass('d-none');
-    });
-        $('#formAllInstitutionsSync').on('submit', function(e) {
-            if (!confirm('{{ _("Start synchronization for all institutions? This can take a long time and will contact ORCID for every registered institution.") }}')) {
-                e.preventDefault();
-            return;
-        }
-            $(this).find('button').attr('disabled', true).addClass('disabled');
-            $('#overlaySync').removeClass('d-none');
-        });
-        $('#formOpenAlexMissing').on('submit', function(e) {
-            if (!confirm('{{ _("Synchronize only missing OpenAlex article records for the active institution?") }}')) {
-                e.preventDefault();
-                return;
-            }
-            $(this).find('button').attr('disabled', true).addClass('disabled');
-            $('#overlaySync').removeClass('d-none');
-        });
-        $('#formOpenAlexAll').on('submit', function(e) {
-            if (!confirm('{{ _("Refresh all OpenAlex article records for the active institution? This can take a long time.") }}')) {
-                e.preventDefault();
-                return;
-            }
-            $(this).find('button').attr('disabled', true).addClass('disabled');
-            $('#overlaySync').removeClass('d-none');
-        });
-        $('#formOpenAlexTitle').on('submit', function(e) {
-            if (!confirm('{{ _("Search OpenAlex by title for DOI misses and articles without DOI in the active institution?") }}')) {
-                e.preventDefault();
-                return;
-            }
-            $(this).find('button').attr('disabled', true).addClass('disabled');
-            $('#overlaySync').removeClass('d-none');
-        });
-        $('#formOpenAlexSystemMissing').on('submit', function(e) {
-            if (!confirm('{{ _("Synchronize missing OpenAlex article records across all institutions?") }}')) {
-                e.preventDefault();
-                return;
-            }
-            $(this).find('button').attr('disabled', true).addClass('disabled');
-            $('#overlaySync').removeClass('d-none');
-        });
-        $('#formOpenAlexSystemAll').on('submit', function(e) {
-            if (!confirm('{{ _("Refresh every OpenAlex article DOI across all institutions? This can take a very long time.") }}')) {
-                e.preventDefault();
-                return;
-            }
-            $(this).find('button').attr('disabled', true).addClass('disabled');
-            $('#overlaySync').removeClass('d-none');
-        });
-        $('#formOpenAlexSystemTitle').on('submit', function(e) {
-            if (!confirm('{{ _("Search OpenAlex by title for DOI misses and articles without DOI across all institutions?") }}')) {
-                e.preventDefault();
-                return;
-            }
-            $(this).find('button').attr('disabled', true).addClass('disabled');
-            $('#overlaySync').removeClass('d-none');
-        });
-        $('.js-admin-export').on('click', function() {
-            var token = 'download-' + Date.now() + '-' + Math.random().toString(16).slice(2);
-            var url = new URL(this.href, window.location.origin);
-            url.searchParams.set('download_token', token);
-            this.href = url.toString();
-            $('#modalExportPreparing').modal('show');
+{{ super() }}
+<script>
+$(function () {
+  const refreshInstitutionTemplate = {{ _('Refresh all data for %(institution)s? Researchers, profiles, works, funding, and OpenAlex will be synchronized in the background.', institution='__institution__')|tojson }};
+  $('.js-institution-sync').on('click', function () {
+    const $button = $(this);
+    const institution = $button.data('institution');
+    if (!window.confirm(refreshInstitutionTemplate.replace('__institution__', institution))) return;
+    const syncUrl = $button.data('syncUrl');
+    $(`.js-institution-sync[data-sync-url="${syncUrl}"]`)
+      .prop('disabled', true)
+      .find('i')
+      .attr('class', 'fas fa-circle-notch fa-spin');
+    $('#institutionCacheSyncForm').attr('action', syncUrl).get(0).submit();
+  });
 
-            var checks = 0;
-            var interval = window.setInterval(function() {
-                checks += 1;
-                if (document.cookie.indexOf('orcid_download_token=' + token) !== -1 || checks > 240) {
-                    document.cookie = 'orcid_download_token=; Max-Age=0; path=/';
-                    window.clearInterval(interval);
-                    $('#modalExportPreparing').modal('hide');
-                }
-            }, 500);
-        });
-      });
-      </script>
+  {% if session.get('is_admin') or session.get('is_manager') %}
+  const syncMessages = {
+    formMasterSync: {{ _('Start a full synchronization for the active institution? This refreshes researchers, public ORCID profiles, works, funding records, management status, and OpenAlex metadata.')|tojson }},
+    formOpenAlexMissing: {{ _('Synchronize only missing OpenAlex article records for the active institution?')|tojson }},
+    formOpenAlexTitle: {{ _('Search OpenAlex by title for unmatched articles in the active institution?')|tojson }},
+    formOpenAlexAll: {{ _('Refresh every eligible OpenAlex article for the active institution? This can take a long time.')|tojson }},
+    formAllInstitutionsSync: {{ _('Synchronize every registered institution? This is a system-wide operation and can take a long time.')|tojson }},
+    formOpenAlexSystemMissing: {{ _('Synchronize missing OpenAlex article records across all institutions?')|tojson }},
+    formOpenAlexSystemTitle: {{ _('Search OpenAlex by title for unmatched articles across all institutions?')|tojson }},
+    formOpenAlexSystemAll: {{ _('Refresh every eligible OpenAlex article across all institutions? This can take a very long time.')|tojson }}
+  };
+
+  Object.entries(syncMessages).forEach(function ([formId, message]) {
+    const $form = $(`#${formId}`);
+    if (!$form.length) return;
+    $form.on('submit', function (event) {
+      if (!window.confirm(message)) {
+        event.preventDefault();
+        return;
+      }
+      $form.find('[type="submit"]')
+        .add($(`[form="${formId}"]`))
+        .prop('disabled', true)
+        .addClass('disabled');
+      $('#overlaySync').removeClass('d-none').attr('aria-hidden', 'false');
+    });
+  });
   {% endif %}
+
+  {% if session.get('is_admin') or session.get('is_manager') %}
+  $('.js-large-export').on('click', function () {
+    const token = `download-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const url = new URL(this.href, window.location.origin);
+    url.searchParams.set('download_token', token);
+    this.href = url.toString();
+    $('#modalExportPreparing').modal('show');
+
+    let checks = 0;
+    const interval = window.setInterval(function () {
+      checks += 1;
+      if (document.cookie.indexOf(`orcid_download_token=${token}`) !== -1 || checks > 240) {
+        document.cookie = 'orcid_download_token=; Max-Age=0; path=/';
+        window.clearInterval(interval);
+        $('#modalExportPreparing').modal('hide');
+      }
+    }, 500);
+  });
+  {% endif %}
+});
+</script>
 {% endblock %}

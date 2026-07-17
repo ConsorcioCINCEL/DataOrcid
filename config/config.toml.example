@@ -34,8 +34,8 @@ session_cookie_samesite = "Lax"
 # 🔹 LANGUAGES (i18n)
 # ------------------------------------------------------------
 [languages]
-supported = ["es", "en"]
-default = "es"
+supported = ["en", "es"]
+default = "en"
 
 
 # ------------------------------------------------------------
@@ -50,6 +50,19 @@ datasets_dir = "app/datasets"
 # ------------------------------------------------------------
 [app]
 base_url = "http://localhost:5000"
+version = "2.0"
+
+[cache]
+# Shared freshness threshold used by summary, cache, and quality views.
+stale_days = 30
+
+[jobs]
+# Running jobs without a recent heartbeat are marked as interrupted on startup.
+stale_minutes = 30
+
+[tracking]
+# Apply with: flask cleanup-tracking-logs
+retention_days = 90
 
 
 # ------------------------------------------------------------
@@ -62,6 +75,7 @@ search_url       = "https://api.orcid.org/v3.0/"
 token_url      = "https://orcid.org/oauth/token"
 client_id      = "APP-XXXXXX"
 client_secret = "REPLACE_OR_USE_ENV"
+profile_cache_ttl = 900
 
 
 # ------------------------------------------------------------
@@ -79,8 +93,9 @@ stale_days = 30
 workers = 4
 # Title fallback is heavier than DOI lookup; keep it lower to avoid 429s.
 title_workers = 2
-# Seconds to keep global OpenAlex analytics in memory per worker and filter set.
-analytics_cache_ttl = 900
+# Seconds to keep institutional and global analytics in memory and on disk.
+# Data changes create a new cache key, so a one-day TTL avoids needless rebuilds.
+analytics_cache_ttl = 86400
 
 
 # ------------------------------------------------------------

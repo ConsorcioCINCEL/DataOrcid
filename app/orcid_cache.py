@@ -1,9 +1,8 @@
 """Persistence helpers for aggregated yearly ORCID datasets."""
 
-from datetime import datetime
 from typing import Optional, Dict, Any
 from flask import current_app
-from .models import OrcidCache, db
+from .models import OrcidCache, db, utc_now
 
 
 def get_cached_data(year: int) -> Optional[OrcidCache]:
@@ -22,7 +21,7 @@ def save_cache(year: int, data: Dict[str, Any]) -> Optional[OrcidCache]:
         
         if cache_entry:
             cache_entry.data = data
-            cache_entry.created_at = datetime.utcnow()
+            cache_entry.created_at = utc_now()
             current_app.logger.debug("Updating existing ORCID cache entry for year %s", year)
         else:
             cache_entry = OrcidCache(year=year, data=data)

@@ -1,257 +1,414 @@
 {% extends 'base.html' %}
-{% block title %}{{ _('Home · Data ORCID-Chile') }}{% endblock %}
+{% from 'components/ui.html' import chart_exports %}
+
+{% block title %}{{ _('Institutional overview · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-<h1 class="m-0 text-dark">{{ _('Institutional Dashboard') }}</h1>
+<div class="dashboard-page-heading">
+  <h1>{{ _('Institutional overview') }}</h1>
+  <p>
+    {% if last_works_run and last_works_run.finished_at %}
+      {{ _('ORCID data updated %(date)s', date=last_works_run.finished_at|datetimeformat('%Y-%m-%d %H:%M')) }}
+    {% elif last_fundings_run and last_fundings_run.finished_at %}
+      {{ _('ORCID data updated %(date)s', date=last_fundings_run.finished_at|datetimeformat('%Y-%m-%d %H:%M')) }}
+    {% else %}
+      {{ _('No institutional synchronization has been completed yet.') }}
+    {% endif %}
+  </p>
+</div>
 {% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item active">{{ _('Home') }}</li>
+{% block header_actions %}
+<div class="dashboard-sync-summary">
+  <span class="dashboard-sync-state {{ data_health_ui.css }}">
+    <i class="{{ data_health_ui.icon }}" aria-hidden="true"></i>
+    {% if data_health.state == 'current' %}{{ _('Synchronization up to date') }}
+    {% elif data_health.state == 'stale' %}{{ _('Update recommended') }}
+    {% elif data_health.state == 'running' %}{{ _('Synchronization in progress') }}
+    {% elif data_health.state == 'partial' %}{{ _('Data partially synchronized') }}
+    {% elif data_health.state == 'failed' %}{{ _('Synchronization needs attention') }}
+    {% else %}{{ _('Synchronization pending') }}{% endif %}
+  </span>
+  {% if can_sync %}
+  <form method="post" action="{{ url_for('works.cache_full_build') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="dashboard-text-action">{{ _('Update now') }}</button>
+  </form>
+  {% endif %}
+</div>
 {% endblock %}
+
+{% block breadcrumb %}{% endblock %}
 
 {% block content %}
-
-{# --- WELCOME & INSTITUTIONAL CONTEXT --- #}
-<div class="row">
-  <div class="col-12 mb-4">
-    <div class="card card-outline card-primary shadow-sm">
-      <div class="card-body">
-        <div class="d-flex align-items-center mb-3">
-            <div class="bg-primary-light p-2 rounded-circle mr-3">
-                <i class="fas fa-user-circle text-primary fa-2x"></i>
-            </div>
-            <div>
-                <h4 class="font-weight-bold mb-0">
-                    {{ _('Hello,') }} {{ session.get('first_name') }}
-                </h4>
-                <p class="text-muted mb-0 small">{{ _('Institutional Management Portal · ORCID-Chile Consortium') }}</p>
-            </div>
-        </div>
-        <hr class="mt-0">
-        <div class="row">
-            <div class="col-md-8">
-                <p class="text-justify text-muted">
-                    {{ _('This platform enables member institutions to access, consult, and export public data registered by their affiliated researchers. All information is retrieved directly via the official ORCID API, ensuring that the data reflects exactly what researchers have published on their profiles.') }}
-                </p>
-            </div>
-            <div class="col-md-4 border-left">
-                <ul class="list-unstyled mb-0">
-                    <li class="small mb-2">
-                        <i class="fas fa-sync text-success mr-2"></i>
-                        <strong>{{ _('Auto-update:') }}</strong> {{ _('Every weekend.') }}
-                    </li>
-                    <li class="small mb-2">
-                        <i class="fas fa-database text-info mr-2"></i>
-                        <strong>{{ _('Data Source:') }}</strong> {{ _('ORCID Public V3.0.') }}
-                    </li>
-                    <li class="small">
-                        <i class="fas fa-shield-alt text-warning mr-2"></i>
-                        <strong>{{ _('Integrity:') }}</strong> {{ _('Unmodified original records.') }}
-                    </li>
-                </ul>
-            </div>
-        </div>
-      </div>
+<div class="institution-dashboard">
+  <section class="dashboard-insight" aria-labelledby="dashboard-insight-title">
+    <div class="dashboard-insight-icon" aria-hidden="true">
+      <i class="fas fa-chart-line"></i>
     </div>
-  </div>
-</div>
-
-{# --- KPI CARDS (Snapshot) --- #}
-<div class="row">
-    <div class="col-md-4 col-sm-6 col-12">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-info"><i class="fas fa-user-graduate"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('Affiliated Researchers') }}</span>
-                <span class="info-box-number">{{ researcher_count }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-6 col-12">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-primary"><i class="fas fa-book-open"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('Cached Works') }}</span>
-                <span class="info-box-number">{{ works_count }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-6 col-12">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon bg-success"><i class="fas fa-hand-holding-usd"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text text-uppercase small font-weight-bold">{{ _('Cached Grants') }}</span>
-                <span class="info-box-number">{{ fundings_count }}</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# --- VISUALIZATIONS ROW --- #}
-<div class="row mt-2">
-  {# Chart 1: Data Composition #}
-  <div class="col-lg-5 mb-4">
-    <div class="card h-100 shadow-sm border-0">
-      <div class="card-header bg-white border-0 d-flex align-items-center">
-        <h3 class="card-title font-weight-bold text-muted small text-uppercase">
-          <i class="fas fa-chart-pie mr-2"></i> {{ _('Data Composition') }}
-        </h3>
-        <a href="{{ url_for('main.metrics_panel') }}" class="btn btn-xs btn-link ml-auto text-primary">{{ _('Full Rankings') }}</a>
-      </div>
-      <div class="card-body">
-        {% if works_count > 0 or fundings_count > 0 %}
-            <div style="height: 220px;">
-                <canvas id="chartComposition"></canvas>
-            </div>
-            <div class="text-center mt-3 small text-muted">
-                {{ _('Comparison of data volume of contributions (Works) vs. fundings in local cache.') }}
-            </div>
+    <div class="dashboard-insight-copy">
+      <h2 id="dashboard-insight-title">
+        {% if quality.duplicate_groups %}
+          {{ _('%(count)s potential duplicate profile groups need review.', count=quality.duplicate_groups) }}
+        {% elif not has_any_cache %}
+          {{ _('Start by synchronizing your institution’s ORCID data.') }}
         {% else %}
-            <div class="text-center py-5 text-muted">
-                <i class="fas fa-sync-alt fa-2x mb-2"></i>
-                <p>{{ _('No data cached. Please run a sync.') }}</p>
-            </div>
+          {{ _('Your institutional ORCID data is ready to explore.') }}
+        {% endif %}
+      </h2>
+      <p>
+        {% if publication_comparison.change is not none and publication_comparison.change|abs <= 5 %}
+          {{ _('Year-to-date publication activity is in line with the same period in %(year)s (through %(date)s).', year=publication_comparison.previous_year, date=publication_comparison.cutoff_date.strftime('%Y-%m-%d')) }}
+        {% elif publication_comparison.change is not none and publication_comparison.change > 5 %}
+          {{ _('Year-to-date publication activity is %(percent)s%% above the same period in %(year)s (through %(date)s).', percent=publication_comparison.change|abs, year=publication_comparison.previous_year, date=publication_comparison.cutoff_date.strftime('%Y-%m-%d')) }}
+        {% elif publication_comparison.change is not none %}
+          {{ _('Year-to-date publication activity is %(percent)s%% below the same period in %(year)s (through %(date)s).', percent=publication_comparison.change|abs, year=publication_comparison.previous_year, date=publication_comparison.cutoff_date.strftime('%Y-%m-%d')) }}
+        {% else %}
+          {{ _('Not enough dated publication records are available for an equivalent year-to-date comparison.') }}
+        {% endif %}
+      </p>
+    </div>
+    <div class="dashboard-insight-actions">
+      {% if quality.duplicate_groups %}
+        <a class="btn btn-primary dashboard-primary-action" href="{{ url_for('duplicates.index') }}">
+          <i class="fas fa-user-friends" aria-hidden="true"></i>
+          {{ _('Review profiles') }}
+        </a>
+        <a class="dashboard-secondary-link" href="{{ url_for('duplicates.index') }}#methodology">
+          {{ _('View methodology') }} <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+        </a>
+      {% elif not has_any_cache and can_sync %}
+        <form method="post" action="{{ url_for('works.cache_full_build') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-primary dashboard-primary-action">
+            <i class="fas fa-sync-alt" aria-hidden="true"></i>
+            {{ _('Synchronize data') }}
+          </button>
+        </form>
+      {% else %}
+        <a class="btn btn-primary dashboard-primary-action" href="{{ url_for('main.metrics_panel') }}">
+          <i class="fas fa-chart-bar" aria-hidden="true"></i>
+          {{ _('Explore analytics') }}
+        </a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="app-kpi-strip dashboard-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Institutional indicators') }}">
+    <article class="app-kpi">
+      <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-users"></i></span>
+      <div>
+        <span class="app-kpi-label">{{ _('Institutional researchers') }}</span>
+        <strong>{{ researcher_count or 0 }}</strong>
+        <small>{{ _('%(verified)s verified · %(inferred)s inferred', verified=quality.verified_associations, inferred=quality.inferred_associations) }}</small>
+      </div>
+    </article>
+    <article class="app-kpi">
+      <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+      <div>
+        <span class="app-kpi-label">{{ _('Unique scholarly outputs') }}</span>
+        <strong>{{ unique_work_summary.unique_outputs or works_count }}</strong>
+        <small>{{ _('%(count)s cached ORCID records', count=works_count) }}</small>
+      </div>
+    </article>
+    <article class="app-kpi">
+      <span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-hand-holding-usd"></i></span>
+      <div>
+        <span class="app-kpi-label">{{ _('Fundings') }}</span>
+        <strong>{{ fundings_count }}</strong>
+        <small>{{ _('Cached funding records') }}</small>
+      </div>
+    </article>
+    <article class="app-kpi">
+      <span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-project-diagram"></i></span>
+      <div>
+        <span class="app-kpi-label">{{ _('OpenAlex-enriched outputs') }}</span>
+        <strong>{{ openalex_summary.matched }}</strong>
+        <small>{{ _('%(citations)s citations · %(open_access)s open access', citations=openalex_summary.citations, open_access=openalex_summary.open_access) }}</small>
+      </div>
+    </article>
+  </section>
+
+  <div class="dashboard-main-grid">
+    <section class="dashboard-panel dashboard-chart-panel" aria-labelledby="production-chart-title">
+      <div class="dashboard-panel-header">
+        <div>
+          <h2 id="production-chart-title">{{ _('Scientific production and OpenAlex enrichment by year') }}</h2>
+          <p>{{ _('Annual ORCID records and OpenAlex-enriched works available in the institutional cache.') }}</p>
+        </div>
+        <div class="app-card-tools">
+          <div class="dashboard-segmented-control" role="group" aria-label="{{ _('Select dataset') }}">
+            <button type="button" class="is-active" data-dashboard-series="works" aria-pressed="true">
+              {{ _('Publications') }}
+            </button>
+            <button type="button" data-dashboard-series="fundings" aria-pressed="false">
+              {{ _('Fundings') }}
+            </button>
+            <button type="button" data-dashboard-series="openalex" aria-pressed="false">
+              OpenAlex
+            </button>
+          </div>
+          {{ chart_exports('dashboardProductionChart') }}
+        </div>
+      </div>
+      <div class="dashboard-chart-meta" id="worksTrendChange">
+        {% if publication_comparison.change is none %}
+          {{ _('Not enough dated records for a year-to-date comparison.') }}
+        {% else %}
+          <strong>{{ '%+d'|format(publication_comparison.change) }}%</strong>
+          {{ _('year to date through %(date)s, compared with the same period in %(year)s', date=publication_comparison.cutoff_date.strftime('%Y-%m-%d'), year=publication_comparison.previous_year) }}
         {% endif %}
       </div>
-    </div>
-  </div>
-
-  {# Chart 2: 5-Year Trend #}
-  <div class="col-lg-7 mb-4">
-    <div class="card h-100 shadow-sm border-0">
-      <div class="card-header bg-white border-0 d-flex align-items-center">
-        <h3 class="card-title font-weight-bold text-muted small text-uppercase">
-          <i class="fas fa-chart-line mr-2 text-primary"></i> {{ _('Works Production Trend') }}
-        </h3>
+      <div class="dashboard-chart-meta" id="fundingsTrendChange" hidden>
+        {% if funding_comparison.change is none %}
+          {{ _('Not enough dated records for a year-to-date comparison.') }}
+        {% else %}
+          <strong>{{ '%+d'|format(funding_comparison.change) }}%</strong>
+          {{ _('year to date through %(date)s, compared with the same period in %(year)s', date=funding_comparison.cutoff_date.strftime('%Y-%m-%d'), year=funding_comparison.previous_year) }}
+        {% endif %}
       </div>
-      <div class="card-body">
-        <p class="small text-muted">{{ _('Evolution of contributions (Works) over the last 5 years.') }}</p>
-        <div style="height: 220px;">
-            <canvas id="chartWorksTrend"></canvas>
+      <div class="dashboard-chart-meta" id="openalexTrendChange" hidden>
+        {{ _('OpenAlex-enriched works by publication year.') }}
+        {{ _('%(matched)s matched works · %(citations)s citations · %(open_access)s open access', matched=openalex_summary.matched, citations=openalex_summary.citations, open_access=openalex_summary.open_access) }}
+      </div>
+      <div class="dashboard-chart-wrap">
+        <canvas id="dashboardProductionChart" aria-label="{{ _('Institutional ORCID production and OpenAlex enrichment trend chart') }}" role="img"></canvas>
+        {% if not has_any_cache %}
+        <div class="dashboard-chart-empty">
+          <i class="fas fa-chart-line" aria-hidden="true"></i>
+          <span>{{ _('Synchronize data to display the production trend.') }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="dashboard-panel dashboard-quality-panel" aria-labelledby="quality-title">
+      <div class="dashboard-panel-header">
+        <div>
+          <h2 id="quality-title">{{ _('Coverage and quality') }}</h2>
+          <p>{{ _('Coverage shows how completely known researchers are described; quality flags records that may need institutional review.') }}</p>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-{# --- QUICK ACCESS MODULES --- #}
-<h5 class="mb-3 mt-2 text-uppercase small font-weight-bold text-muted">{{ _('System Modules') }}</h5>
-<div class="row">
-  {% set modules = [
-    {
-        'title': _('ORCID Analytics'),
-        'desc': _('Analyze publication trends, journals, and top researchers.'),
-        'icon': 'fa-chart-bar',
-        'url': url_for('main.metrics_panel') if has_any_cache else '#',
-        'color': 'info',
-        'disabled': not has_any_cache
-    },
-    {
-        'title': _('Data Downloads'),
-        'desc': _('Access the repository to export Works and Fundings to Excel/CSV.'),
-        'icon': 'fa-cloud-download-alt',
-        'url': url_for('works.cache_works_status'),
-        'color': 'primary',
-        'disabled': false
-    },
-    {
-        'title': _('Researchers List'),
-        'desc': _('Direct access to the profile directory and management tools.'),
-        'icon': 'fa-user-friends',
-        'url': url_for('main.researcher_list'),
-        'color': 'purple',
-        'disabled': false
-    }
-  ] %}
-
-  {% for module in modules %}
-  <div class="col-md-4 mb-3">
-    <div class="card h-100 shadow-sm">
-      <div class="card-body d-flex flex-column">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-            <h5 class="font-weight-bold text-{{ module.color }}">{{ module.title }}</h5>
-            <span class="text-{{ module.color }} opacity-50"><i class="fas {{ module.icon }} fa-lg"></i></span>
+      <div class="dashboard-quality-list">
+        <div class="dashboard-quality-item">
+          <span class="dashboard-quality-icon" aria-hidden="true"><i class="fas fa-university"></i></span>
+          <div class="dashboard-quality-content">
+            <div class="dashboard-quality-label">
+              <span>{{ _('Verified researcher relationships') }}</span>
+              <strong>{{ quality.affiliation_coverage }}%</strong>
+            </div>
+            <div class="dashboard-progress" role="progressbar" aria-label="{{ _('Verified researcher relationships') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ quality.affiliation_coverage }}">
+              <span style="width: {{ quality.affiliation_coverage }}%"></span>
+            </div>
+            <small class="dashboard-quality-description">{{ _('Percentage of known institutional ORCID iDs supported by a verified affiliation, rather than inferred only from cached activity.') }}</small>
+          </div>
         </div>
-        <p class="text-muted small">{{ module.desc }}</p>
-        
-        <div class="mt-auto">
-            {% if module.disabled %}
-                <button class="btn btn-sm btn-light btn-block text-muted disabled" style="cursor: not-allowed;">{{ _('Sync Required') }}</button>
-            {% else %}
-                <a href="{{ module.url }}" class="btn btn-sm btn-outline-{{ module.color }} btn-block shadow-none">
-                    {{ _('Open Module') }} <i class="fas fa-chevron-right ml-1 small"></i>
-                </a>
-            {% endif %}
+        <div class="dashboard-quality-item">
+          <span class="dashboard-quality-icon" aria-hidden="true"><i class="fas fa-user-check"></i></span>
+          <div class="dashboard-quality-content">
+            <div class="dashboard-quality-label">
+              <span>{{ _('Profiles with names') }}</span>
+              <strong>{{ quality.profile_completion }}%</strong>
+            </div>
+            <div class="dashboard-progress" role="progressbar" aria-label="{{ _('Profiles with names') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ quality.profile_completion }}">
+              <span style="width: {{ quality.profile_completion }}%"></span>
+            </div>
+            <small class="dashboard-quality-description">{{ _('Percentage of known institutional ORCID profiles with a credit, given, or family name in the local cache.') }}</small>
+          </div>
+        </div>
+        <div class="dashboard-quality-item">
+          <span class="dashboard-quality-icon" aria-hidden="true"><i class="fas fa-user-friends"></i></span>
+          <div class="dashboard-quality-content">
+            <div class="dashboard-quality-label">
+              <span>{{ _('Potential duplicate groups') }}</span>
+              <strong>{{ quality.duplicate_groups }}</strong>
+            </div>
+            <small class="dashboard-quality-description">{{ _('Candidate groups detected from similar names or shared evidence. They require review and are not confirmed duplicates.') }}</small>
+          </div>
         </div>
       </div>
-    </div>
+      <a class="dashboard-panel-link" href="{{ url_for('works.data_quality') }}">
+        {{ _('View data quality') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
+      </a>
+    </section>
   </div>
-  {% endfor %}
+
+  <section class="dashboard-panel dashboard-datasets" aria-labelledby="datasets-title">
+    <div class="dashboard-panel-header">
+      <div>
+        <h2 id="datasets-title">{{ _('Datasets') }}</h2>
+        <p>{{ _('Institutional records available from ORCID and OpenAlex.') }}</p>
+      </div>
+      <a class="btn btn-outline-info dashboard-export-action" href="{{ url_for('works.cache_works_status') }}">
+        <i class="fas fa-download" aria-hidden="true"></i> {{ _('Manage exports') }}
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table dashboard-dataset-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Dataset') }}</th>
+            <th scope="col">{{ _('Records') }}</th>
+            <th scope="col">{{ _('Last update') }}</th>
+            <th scope="col">{{ _('Status') }}</th>
+            <th scope="col"><span class="sr-only">{{ _('Actions') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row"><i class="far fa-bookmark text-info" aria-hidden="true"></i> {{ _('Publications') }}</th>
+            <td data-label="{{ _('Records') }}">{{ works_count }}</td>
+            <td data-label="{{ _('Last update') }}">{{ last_works_run.finished_at|datetimeformat if last_works_run and last_works_run.finished_at else '—' }}</td>
+            <td data-label="{{ _('Status') }}">
+              <span class="dashboard-dataset-status {% if works_count %}is-ready{% endif %}">
+                <i class="far {% if works_count %}fa-check-circle{% else %}fa-clock{% endif %}" aria-hidden="true"></i>
+                {{ _('Updated') if works_count else _('Not synchronized') }}
+              </span>
+            </td>
+            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.download_all_works_cache') }}" aria-label="{{ _('Download publications') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+          </tr>
+          <tr>
+            <th scope="row"><i class="fas fa-coins text-primary" aria-hidden="true"></i> {{ _('Fundings') }}</th>
+            <td data-label="{{ _('Records') }}">{{ fundings_count }}</td>
+            <td data-label="{{ _('Last update') }}">{{ last_fundings_run.finished_at|datetimeformat if last_fundings_run and last_fundings_run.finished_at else '—' }}</td>
+            <td data-label="{{ _('Status') }}">
+              <span class="dashboard-dataset-status {% if fundings_count %}is-ready{% endif %}">
+                <i class="far {% if fundings_count %}fa-check-circle{% else %}fa-clock{% endif %}" aria-hidden="true"></i>
+                {{ _('Updated') if fundings_count else _('Not synchronized') }}
+              </span>
+            </td>
+            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.download_all_fundings_cache') }}" aria-label="{{ _('Download fundings') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+          </tr>
+          <tr>
+            <th scope="row"><i class="far fa-id-card text-purple" aria-hidden="true"></i> {{ _('Profiles') }}</th>
+            <td data-label="{{ _('Records') }}">{{ researcher_count or 0 }}</td>
+            <td data-label="{{ _('Last update') }}">{{ quality.profile_update|datetimeformat if quality.profile_update else '—' }}</td>
+            <td data-label="{{ _('Status') }}">
+              <span class="dashboard-dataset-status {% if researcher_count %}is-ready{% endif %}">
+                <i class="far {% if researcher_count %}fa-check-circle{% else %}fa-clock{% endif %}" aria-hidden="true"></i>
+                {{ _('Updated') if researcher_count else _('Not synchronized') }}
+              </span>
+            </td>
+            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.download_researchers_cache') }}" aria-label="{{ _('Download profiles') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+          </tr>
+          <tr>
+            <th scope="row"><i class="fas fa-project-diagram text-purple" aria-hidden="true"></i> {{ _('OpenAlex enrichment') }}</th>
+            <td data-label="{{ _('Records') }}">{{ openalex_summary.matched }}</td>
+            <td data-label="{{ _('Last update') }}">{{ openalex_summary.last_update|datetimeformat if openalex_summary.last_update else '—' }}</td>
+            <td data-label="{{ _('Status') }}">
+              <span class="dashboard-dataset-status {% if openalex_summary.matched %}is-ready{% endif %}">
+                <i class="far {% if openalex_summary.matched %}fa-check-circle{% else %}fa-clock{% endif %}" aria-hidden="true"></i>
+                {{ _('Updated') if openalex_summary.matched else _('Not synchronized') }}
+              </span>
+            </td>
+            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.openalex_works_export', coverage='enriched') }}" aria-label="{{ _('Download OpenAlex enrichment') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }}
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-  <script>
-  $(function() {
-    Chart.defaults.maintainAspectRatio = false;
-    Chart.defaults.responsive = true;
-    
-    // Doughnut Chart (Data Composition)
-    const ctxComp = document.getElementById('chartComposition')?.getContext('2d');
-    if (ctxComp) {
-        new Chart(ctxComp, {
-            type: 'doughnut',
-            data: { 
-                labels: ['{{ _("Works") }}', '{{ _("Fundings") }}'], 
-                datasets: [{ 
-                    data: [{{ works_count }}, {{ fundings_count }}], 
-                    backgroundColor: ['#007bff', '#28a745'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }] 
-            },
-            options: {
-                plugins: { 
-                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
-                },
-                cutout: '70%'
-            }
-        });
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+$(function () {
+  Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+  Chart.defaults.color = '#5d6875';
+  const series = {
+    works: {
+      labels: {{ trend_labels | tojson | safe }},
+      values: {{ trend_counts | tojson | safe }},
+      label: {{ _('Publications') | tojson }},
+      color: '#0077c8',
+      background: 'rgba(0, 119, 200, 0.08)'
+    },
+    fundings: {
+      labels: {{ funding_trend_labels | tojson | safe }},
+      values: {{ funding_trend_counts | tojson | safe }},
+      label: {{ _('Fundings') | tojson }},
+      color: '#ef5a2f',
+      background: 'rgba(239, 90, 47, 0.08)'
+    },
+    openalex: {
+      labels: {{ openalex_trend_labels | tojson | safe }},
+      values: {{ openalex_summary.trend_counts | tojson | safe }},
+      label: {{ _('OpenAlex-enriched outputs') | tojson }},
+      color: '#6f42c1',
+      background: 'rgba(111, 66, 193, 0.08)'
     }
+  };
 
-    // Line Chart (5-Year Trend)
-    const ctxTrend = document.getElementById('chartWorksTrend')?.getContext('2d');
-    if (ctxTrend) {
-        const trendLabels = {{ trend_years | tojson | safe }};
-        const trendData = {{ trend_counts | tojson | safe }};
-        
-        new Chart(ctxTrend, {
-            type: 'line',
-            data: {
-                labels: trendLabels,
-                datasets: [{
-                    label: '{{ _("Works") }}',
-                    data: trendData,
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: '#007bff',
-                    pointRadius: 4
-                }]
-            },
-            options: {
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { beginAtZero: true, ticks: { precision: 0 } }
-                }
-            }
-        });
+  const canvas = document.getElementById('dashboardProductionChart');
+  if (!canvas) return;
+
+  const chart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: series.works.labels,
+      datasets: [{
+        label: series.works.label,
+        data: series.works.values,
+        borderColor: series.works.color,
+        backgroundColor: 'rgba(0, 119, 200, 0.08)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.28,
+        pointBackgroundColor: series.works.color,
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          displayColors: false,
+          padding: 12,
+          titleFont: { family: 'Source Sans 3', size: 13 },
+          bodyFont: { family: 'Source Sans 3', size: 14, weight: '600' }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#5d6875', font: { family: 'Source Sans 3', size: 12 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#e7ebf0', drawBorder: false },
+          ticks: { precision: 0, color: '#5d6875', font: { family: 'Source Sans 3', size: 12 } }
+        }
+      }
     }
   });
-  </script>
+
+  $('[data-dashboard-series]').on('click', function () {
+    const key = $(this).data('dashboard-series');
+    const selected = series[key];
+
+    $('[data-dashboard-series]').removeClass('is-active').attr('aria-pressed', 'false');
+    $(this).addClass('is-active').attr('aria-pressed', 'true');
+
+    chart.data.labels = selected.labels;
+    chart.data.datasets[0].label = selected.label;
+    chart.data.datasets[0].data = selected.values;
+    chart.data.datasets[0].borderColor = selected.color;
+    chart.data.datasets[0].pointBackgroundColor = selected.color;
+    chart.data.datasets[0].backgroundColor = selected.background;
+    chart.update();
+
+    $('#worksTrendChange').prop('hidden', key !== 'works');
+    $('#fundingsTrendChange').prop('hidden', key !== 'fundings');
+    $('#openalexTrendChange').prop('hidden', key !== 'openalex');
+  });
+});
+</script>
 {% endblock %}

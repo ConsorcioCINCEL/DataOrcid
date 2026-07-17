@@ -77,7 +77,7 @@ El sistema lee `config/config.toml` y lo carga en `current_app.config`.
 ### 🔹 Base de datos
 ```toml
 [database]
-uri = "mysql+pymysql://USER:PASS@host/dbname"
+uri = "postgresql+psycopg://USER:PASS@host:5432/dbname"
 ```
 
 ### 🔹 Flask y seguridad

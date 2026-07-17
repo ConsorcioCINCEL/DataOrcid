@@ -199,6 +199,7 @@ def register_commands(app):
     @app.cli.command("sync-openalex-works")
     @click.option("--ror", default=None, help="Target a specific institutional ROR ID.")
     @click.option("--all", "all_institutions", is_flag=True, help="Scan every known institution.")
+    @click.option("--system", "system_wide", is_flag=True, help="Scan all works in one system-wide run.")
     @click.option("--limit", default=None, type=int, help="Maximum DOI count to process per scope.")
     @click.option("--force", is_flag=True, help="Refresh records even when the local OpenAlex cache is fresh.")
     @click.option("--stale-days", default=None, type=int, help="Refresh cached records older than this many days.")
@@ -207,7 +208,7 @@ def register_commands(app):
     @click.option("--workers", default=None, type=int, help="Parallel DOI fetch workers. Defaults to openalex.workers.")
     @click.option("--title-fallback", is_flag=True, help="Search by title only for DOI misses and works without DOI.")
     @with_appcontext
-    def sync_openalex_works_command(ror, all_institutions, limit, force, stale_days, include_all_types, dry_run, workers, title_fallback):
+    def sync_openalex_works_command(ror, all_institutions, system_wide, limit, force, stale_days, include_all_types, dry_run, workers, title_fallback):
         """Enrich local DOI-backed works with OpenAlex metadata."""
         from .services.institution_registry_service import get_institution_options
         from .services.openalex_service import (
@@ -216,14 +217,17 @@ def register_commands(app):
             sync_openalex_works,
         )
 
-        if ror and all_institutions:
-            click.echo("Use either --ror or --all, not both.")
+        selected_scopes = sum(bool(value) for value in (ror, all_institutions, system_wide))
+        if selected_scopes > 1:
+            click.echo("Use only one of --ror, --all, or --system.")
             return
-        if not ror and not all_institutions:
-            click.echo("Choose a scope with --ror <ROR_ID> or --all.")
+        if not selected_scopes:
+            click.echo("Choose a scope with --ror <ROR_ID>, --all, or --system.")
             return
 
-        if all_institutions:
+        if system_wide:
+            scopes = [None]
+        elif all_institutions:
             try:
                 scopes = [item["ror_id"] for item in get_institution_options() if item.get("ror_id")]
             except Exception as exc:
@@ -239,7 +243,8 @@ def register_commands(app):
         click.echo(f"Starting OpenAlex {mode} for {len(scopes)} scope(s).")
 
         for current_ror in scopes:
-            click.echo(f"\nProcessing ROR: {current_ror}")
+            scope_label = current_ror or "system-wide"
+            click.echo(f"\nProcessing scope: {scope_label}")
             try:
                 sync_func = sync_openalex_title_matches if title_fallback else sync_openalex_works
                 summary = sync_func(

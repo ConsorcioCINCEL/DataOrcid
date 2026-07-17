@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 import logging
@@ -31,6 +31,8 @@ DEFAULT_OPENALEX_WORKERS = 4
 DEFAULT_OPENALEX_TITLE_WORKERS = 2
 OPENALEX_RETRY_STATUSES = {429, 500, 502, 503, 504}
 OPENALEX_MAX_RETRIES = 2
+OPENALEX_DB_MAX_RETRIES = 3
+OPENALEX_PROGRESS_INTERVAL = 500
 TITLE_MATCH_NOT_FOUND_ERROR = "No confident OpenAlex title match."
 TITLE_MATCH_MIN_SCORE_WITH_YEAR = 0.88
 TITLE_MATCH_MIN_SCORE_WITHOUT_YEAR = 0.94
@@ -405,6 +407,8 @@ def _select_best_title_match(candidate: dict, results: list[dict]) -> tuple[dict
 def should_refresh_raw(raw_row: OpenAlexWorkRawCache | None, stale_days: int, force_refresh: bool = False) -> bool:
     if force_refresh or not raw_row:
         return True
+    if raw_row.status in {"error", "pending"}:
+        return True
     if stale_days <= 0:
         return False
     if not raw_row.fetched_at:
@@ -445,6 +449,7 @@ def sync_work_by_doi(
     raw_row = OpenAlexWorkRawCache.query.filter_by(doi_normalized=normalized_doi).first()
     if not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
         return {"status": "skipped", "doi": normalized_doi, "raw_status": raw_row.status}
+    is_new_raw_row = raw_row is None
 
     client = client or OpenAlexClient.from_current_app()
     result = client.fetch_work_by_doi(normalized_doi)
@@ -466,10 +471,11 @@ def sync_work_by_doi(
         raw_row.openalex_id = _short_openalex_id(payload.get("id"))
         raw_row.oa_updated_date = _parse_openalex_datetime(payload.get("updated_date"))
         _upsert_metadata(extract_work_metadata(payload, normalized_doi))
-        _replace_work_dimensions(normalized_doi, payload)
+        _replace_work_dimensions(normalized_doi, payload, delete_existing=not is_new_raw_row)
     elif result["status"] == "not_found":
         OpenAlexWorkMetadata.query.filter_by(doi_normalized=normalized_doi).delete(synchronize_session=False)
-        _delete_work_dimensions(normalized_doi)
+        if not is_new_raw_row:
+            _delete_work_dimensions(normalized_doi)
 
     db.session.commit()
     return {"status": result["status"], "doi": normalized_doi, "error": result.get("error")}
@@ -490,6 +496,7 @@ def sync_work_by_title(
     stale_days = current_app.config.get("OPENALEX_STALE_DAYS", 30) if stale_days is None else stale_days
     raw_row = OpenAlexWorkRawCache.query.filter_by(doi_normalized=cache_key).first()
     metadata_row = OpenAlexWorkMetadata.query.filter_by(doi_normalized=cache_key).first()
+    is_new_raw_row = raw_row is None
     title_search_already_failed = bool(raw_row and raw_row.error == TITLE_MATCH_NOT_FOUND_ERROR)
 
     if metadata_row and not should_refresh_raw(raw_row, int(stale_days or 0), force_refresh):
@@ -526,7 +533,7 @@ def sync_work_by_title(
         raw_row.openalex_id = _short_openalex_id(payload.get("id"))
         raw_row.oa_updated_date = _parse_openalex_datetime(payload.get("updated_date"))
         _upsert_metadata(extract_work_metadata(payload, cache_key))
-        _replace_work_dimensions(cache_key, payload)
+        _replace_work_dimensions(cache_key, payload, delete_existing=not is_new_raw_row)
         db.session.commit()
         return {
             "status": "found",
@@ -541,51 +548,110 @@ def sync_work_by_title(
     raw_row.openalex_id = None
     raw_row.oa_updated_date = None
     OpenAlexWorkMetadata.query.filter_by(doi_normalized=cache_key).delete(synchronize_session=False)
-    _delete_work_dimensions(cache_key)
+    if not is_new_raw_row:
+        _delete_work_dimensions(cache_key)
     db.session.commit()
     return {"status": "not_found", "doi": cache_key, "error": TITLE_MATCH_NOT_FOUND_ERROR}
+
+
+def _is_retryable_database_error(exc: Exception) -> bool:
+    """Return whether an exception represents transient database contention."""
+    original = getattr(exc, "orig", exc)
+    args = getattr(original, "args", ())
+    mysql_code = args[0] if args else None
+    sqlstate = getattr(original, "sqlstate", None) or getattr(original, "pgcode", None)
+    return mysql_code in {1205, 1213} or sqlstate in {"40001", "40P01", "55P03"}
+
+
+def _bounded_executor_results(executor, submit, candidates, max_pending: int):
+    """Yield executor results without retaining a Future for every candidate."""
+    iterator = iter(candidates)
+    pending = set()
+
+    for _ in range(max(max_pending, 1)):
+        try:
+            pending.add(submit(executor, next(iterator)))
+        except StopIteration:
+            break
+
+    while pending:
+        completed, pending = wait(pending, return_when=FIRST_COMPLETED)
+        for future in completed:
+            yield future.result()
+            try:
+                pending.add(submit(executor, next(iterator)))
+            except StopIteration:
+                pass
 
 
 def _sync_candidate_in_worker(app, candidate: dict, force_refresh: bool, stale_days: int | None) -> dict:
     """Synchronize one DOI inside a worker-owned app context and DB session."""
     with app.app_context():
-        try:
-            return sync_work_by_doi(
-                candidate["source_doi"],
-                force_refresh=force_refresh,
-                stale_days=stale_days,
-            )
-        except Exception as exc:
-            db.session.rollback()
-            logger.exception("OpenAlex DOI sync failed for %s: %s", candidate.get("doi"), exc)
-            return {
-                "status": "error",
-                "doi": candidate.get("doi"),
-                "error": str(exc),
-            }
-        finally:
-            db.session.remove()
+        for attempt in range(OPENALEX_DB_MAX_RETRIES + 1):
+            try:
+                return sync_work_by_doi(
+                    candidate["source_doi"],
+                    force_refresh=force_refresh,
+                    stale_days=stale_days,
+                )
+            except Exception as exc:
+                db.session.rollback()
+                if _is_retryable_database_error(exc) and attempt < OPENALEX_DB_MAX_RETRIES:
+                    delay = 0.25 * (2 ** attempt)
+                    logger.warning(
+                        "Retrying OpenAlex DOI %s after database contention (attempt %s/%s)",
+                        candidate.get("doi"),
+                        attempt + 1,
+                        OPENALEX_DB_MAX_RETRIES,
+                    )
+                    sleep(delay)
+                    continue
+
+                logger.exception("OpenAlex DOI sync failed for %s: %s", candidate.get("doi"), exc)
+                return {
+                    "status": "error",
+                    "doi": candidate.get("doi"),
+                    "error": str(exc),
+                }
+            finally:
+                db.session.remove()
+
+    return {"status": "error", "doi": candidate.get("doi"), "error": "Retry limit exceeded."}
 
 
 def _sync_title_candidate_in_worker(app, candidate: dict, force_refresh: bool, stale_days: int | None) -> dict:
     """Synchronize one title candidate inside a worker-owned app context and DB session."""
     with app.app_context():
-        try:
-            return sync_work_by_title(
-                candidate,
-                force_refresh=force_refresh,
-                stale_days=stale_days,
-            )
-        except Exception as exc:
-            db.session.rollback()
-            logger.exception("OpenAlex title sync failed for %s: %s", candidate.get("cache_key"), exc)
-            return {
-                "status": "error",
-                "doi": candidate.get("cache_key"),
-                "error": str(exc),
-            }
-        finally:
-            db.session.remove()
+        for attempt in range(OPENALEX_DB_MAX_RETRIES + 1):
+            try:
+                return sync_work_by_title(
+                    candidate,
+                    force_refresh=force_refresh,
+                    stale_days=stale_days,
+                )
+            except Exception as exc:
+                db.session.rollback()
+                if _is_retryable_database_error(exc) and attempt < OPENALEX_DB_MAX_RETRIES:
+                    delay = 0.25 * (2 ** attempt)
+                    logger.warning(
+                        "Retrying OpenAlex title %s after database contention (attempt %s/%s)",
+                        candidate.get("cache_key"),
+                        attempt + 1,
+                        OPENALEX_DB_MAX_RETRIES,
+                    )
+                    sleep(delay)
+                    continue
+
+                logger.exception("OpenAlex title sync failed for %s: %s", candidate.get("cache_key"), exc)
+                return {
+                    "status": "error",
+                    "doi": candidate.get("cache_key"),
+                    "error": str(exc),
+                }
+            finally:
+                db.session.remove()
+
+    return {"status": "error", "doi": candidate.get("cache_key"), "error": "Retry limit exceeded."}
 
 
 def _apply_sync_result(summary: dict, result: dict) -> None:
@@ -604,6 +670,24 @@ def _apply_sync_result(summary: dict, result: dict) -> None:
             summary["error"] = result.get("error")
 
 
+def _checkpoint_sync_run(run: OpenAlexSyncRun, summary: dict) -> None:
+    """Persist in-flight counters so interrupted runs retain useful progress."""
+    run.fetched_count = summary["fetched_count"]
+    run.matched_count = summary["matched_count"]
+    run.not_found_count = summary["not_found_count"]
+    run.error_count = summary["error_count"]
+    run.skipped_count = summary["skipped_count"]
+    run.error = summary["error"]
+    db.session.add(run)
+    db.session.commit()
+
+
+def _checkpoint_sync_run_if_due(run: OpenAlexSyncRun, summary: dict) -> None:
+    processed = summary["fetched_count"] + summary["skipped_count"]
+    if processed and processed % OPENALEX_PROGRESS_INTERVAL == 0:
+        _checkpoint_sync_run(run, summary)
+
+
 def _upsert_metadata(values: dict) -> OpenAlexWorkMetadata:
     metadata = OpenAlexWorkMetadata.query.filter_by(doi_normalized=values["doi_normalized"]).first()
     if not metadata:
@@ -620,9 +704,14 @@ def _delete_work_dimensions(doi_normalized: str) -> None:
     OpenAlexWorkInstitution.query.filter_by(doi_normalized=doi_normalized).delete(synchronize_session=False)
 
 
-def _replace_work_dimensions(doi_normalized: str, payload: dict) -> tuple[int, int]:
+def _replace_work_dimensions(
+    doi_normalized: str,
+    payload: dict,
+    delete_existing: bool = True,
+) -> tuple[int, int]:
     """Replace author and institution dimension rows for one OpenAlex work."""
-    _delete_work_dimensions(doi_normalized)
+    if delete_existing:
+        _delete_work_dimensions(doi_normalized)
 
     openalex_id = _short_openalex_id(payload.get("id"))
     institution_map = {}
@@ -974,16 +1063,29 @@ def sync_openalex_works(
                     stale_days=stale_days,
                 )
                 _apply_sync_result(summary, result)
+                _checkpoint_sync_run_if_due(run, summary)
         else:
             app = current_app._get_current_object()
             max_workers = min(worker_count, len(candidates))
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [
-                    executor.submit(_sync_candidate_in_worker, app, candidate, force_refresh, stale_days)
-                    for candidate in candidates
-                ]
-                for future in as_completed(futures):
-                    _apply_sync_result(summary, future.result())
+                def submit(pool, candidate):
+                    return pool.submit(
+                        _sync_candidate_in_worker,
+                        app,
+                        candidate,
+                        force_refresh,
+                        stale_days,
+                    )
+
+                results = _bounded_executor_results(
+                    executor,
+                    submit,
+                    candidates,
+                    max_pending=max_workers * 2,
+                )
+                for result in results:
+                    _apply_sync_result(summary, result)
+                    _checkpoint_sync_run_if_due(run, summary)
 
         summary["status"] = "failed" if summary["error_count"] else "success"
     except Exception as exc:
@@ -993,12 +1095,7 @@ def sync_openalex_works(
         summary["error"] = str(exc)
     finally:
         run.status = summary["status"]
-        run.fetched_count = summary["fetched_count"]
-        run.matched_count = summary["matched_count"]
-        run.not_found_count = summary["not_found_count"]
-        run.error_count = summary["error_count"]
-        run.skipped_count = summary["skipped_count"]
-        run.error = summary["error"]
+        _checkpoint_sync_run(run, summary)
         run.finished_at = utc_now()
         db.session.add(run)
         db.session.commit()
@@ -1053,16 +1150,29 @@ def sync_openalex_title_matches(
                     stale_days=stale_days,
                 )
                 _apply_sync_result(summary, result)
+                _checkpoint_sync_run_if_due(run, summary)
         else:
             app = current_app._get_current_object()
             max_workers = min(worker_count, len(candidates))
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [
-                    executor.submit(_sync_title_candidate_in_worker, app, candidate, force_refresh, stale_days)
-                    for candidate in candidates
-                ]
-                for future in as_completed(futures):
-                    _apply_sync_result(summary, future.result())
+                def submit(pool, candidate):
+                    return pool.submit(
+                        _sync_title_candidate_in_worker,
+                        app,
+                        candidate,
+                        force_refresh,
+                        stale_days,
+                    )
+
+                results = _bounded_executor_results(
+                    executor,
+                    submit,
+                    candidates,
+                    max_pending=max_workers * 2,
+                )
+                for result in results:
+                    _apply_sync_result(summary, result)
+                    _checkpoint_sync_run_if_due(run, summary)
 
         summary["status"] = "failed" if summary["error_count"] else "success"
     except Exception as exc:
@@ -1072,12 +1182,7 @@ def sync_openalex_title_matches(
         summary["error"] = str(exc)
     finally:
         run.status = summary["status"]
-        run.fetched_count = summary["fetched_count"]
-        run.matched_count = summary["matched_count"]
-        run.not_found_count = summary["not_found_count"]
-        run.error_count = summary["error_count"]
-        run.skipped_count = summary["skipped_count"]
-        run.error = summary["error"]
+        _checkpoint_sync_run(run, summary)
         run.finished_at = utc_now()
         db.session.add(run)
         db.session.commit()

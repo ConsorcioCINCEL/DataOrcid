@@ -10,14 +10,7 @@ from sqlalchemy import func
 
 from .. import db
 from ..models import CanonicalWork, WorkCache, WorkRecordLink, utc_now
-
-DOI_PREFIX_RE = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", re.IGNORECASE)
-
-
-def normalize_doi(value: str | None) -> str | None:
-    """Return a comparison-safe DOI without URL or label prefixes."""
-    normalized = DOI_PREFIX_RE.sub("", (value or "").strip()).strip().lower()
-    return normalized or None
+from .doi_service import normalize_doi
 
 
 def normalize_title(value: str | None) -> str:

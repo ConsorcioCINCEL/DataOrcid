@@ -27,6 +27,7 @@ from ..models import (
     WorkCache,
     utc_now,
 )
+from .doi_service import normalize_doi as _normalize_doi
 
 logger = logging.getLogger(__name__)
 DEFAULT_OPENALEX_WORKERS = 4
@@ -49,13 +50,7 @@ class OpenAlexConfigError(RuntimeError):
 
 def normalize_doi(value: str | None) -> str:
     """Normalize DOI values so ORCID and OpenAlex rows can be joined safely."""
-    doi = (value or "").strip().lower()
-    if not doi:
-        return ""
-
-    doi = re.sub(r"^https?://(dx\.)?doi\.org/", "", doi)
-    doi = re.sub(r"^doi:\s*", "", doi)
-    return doi.strip().rstrip(".")
+    return _normalize_doi(value) or ""
 
 
 def normalize_title(value: str | None) -> str:
@@ -504,7 +499,7 @@ def sync_work_by_doi(
             raw_row = OpenAlexWorkRawCache(doi_normalized=normalized_doi)
             db.session.add(raw_row)
 
-        raw_row.source_doi = doi
+        raw_row.source_doi = normalized_doi
         _set_raw_result_state(raw_row, result["status"], now)
         raw_row.http_status = result.get("http_status")
         raw_row.raw_json = result.get("payload")
@@ -562,7 +557,7 @@ def sync_work_by_title(
             raw_row = OpenAlexWorkRawCache(doi_normalized=cache_key)
             db.session.add(raw_row)
 
-        raw_row.source_doi = candidate.get("source_doi")
+        raw_row.source_doi = normalize_doi(candidate.get("source_doi")) or None
         raw_row.http_status = result.get("http_status")
         raw_row.fetched_at = now
 

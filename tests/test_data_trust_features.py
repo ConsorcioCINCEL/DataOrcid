@@ -39,8 +39,8 @@ class DataTrustFeatureTest(unittest.TestCase):
 
     def test_canonical_outputs_collapse_doi_records_without_merging_untitled_rows(self):
         db.session.add_all([
-            WorkCache(ror_id="01test", orcid="0000-0001", put_code=1, title="One", doi="https://doi.org/10.1/ABC", pub_year="2024"),
-            WorkCache(ror_id="01test", orcid="0000-0002", put_code=2, title="One copy", doi="doi:10.1/abc", pub_year="2024"),
+            WorkCache(ror_id="01test", orcid="0000-0001", put_code=1, title="One", doi="https://doi.org/10.1000/ABC", pub_year="2024"),
+            WorkCache(ror_id="01test", orcid="0000-0002", put_code=2, title="One copy", doi="doi:10.1000/abc", pub_year="2024"),
             WorkCache(ror_id="01test", orcid="0000-0001", put_code=3, title="Fallback title", pub_year="2023"),
             WorkCache(ror_id="01test", orcid="0000-0001", put_code=4, title=None, pub_year=None),
             WorkCache(ror_id="01test", orcid="0000-0001", put_code=5, title=None, pub_year=None),

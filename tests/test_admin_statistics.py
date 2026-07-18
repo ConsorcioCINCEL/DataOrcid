@@ -3,6 +3,8 @@
 import unittest
 from datetime import datetime, timezone
 
+from flask import session
+
 from app import create_app
 from app.blueprints.admin import (
     _format_latency,
@@ -46,6 +48,7 @@ class AdminStatisticsTest(unittest.TestCase):
         self.assertEqual("38 ms", _format_latency(38))
         self.assertEqual("2.5 s", _format_latency(2500))
         with self.app.test_request_context("/admin/statistics"):
+            session["locale"] = "en"
             label = _user_agent_summary(
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/150.0 Safari/537.36"
             )

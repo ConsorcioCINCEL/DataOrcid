@@ -8,7 +8,7 @@
 {%- endmacro %}
 {% macro priority_oa_badge(status, label) -%}
   <span class="badge openalex-oa-badge {% if status == 'diamond' %}openalex-oa-badge-diamond{% else %}openalex-oa-badge-green{% endif %}">
-    <i class="fas fa-lock" aria-hidden="true"></i>{{ label }}
+    <i class="fas fa-lock-open" aria-hidden="true"></i>{{ label }}
   </span>
 {%- endmacro %}
 {% macro analysis_chart(chart_id, title, description, methodology, size='openalex-chart') -%}
@@ -552,7 +552,7 @@
     </div>
     <section class="app-kpi-strip" style="--app-kpi-columns: 3" aria-label="{{ _('Diamond and Green Open Access') }}">
       <article class="app-kpi openalex-oa-kpi-diamond">
-        <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock"></i></span>
+        <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
         <div>
           <span class="app-kpi-label">{{ _('Diamond Open Access') }}</span>
           <strong>{{ analytics.summary.diamond_open_access_count }}</strong>
@@ -560,7 +560,7 @@
         </div>
       </article>
       <article class="app-kpi openalex-oa-kpi-green">
-        <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock"></i></span>
+        <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
         <div>
           <span class="app-kpi-label">{{ _('Green Open Access') }}</span>
           <strong>{{ analytics.summary.green_open_access_count }}</strong>

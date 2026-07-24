@@ -2032,17 +2032,29 @@ h1, h2, h3, h4, h5, h6,
 
 .openalex-oa-badge {
     align-items: center;
+    border: 1px solid transparent;
+    border-radius: 999px;
     display: inline-flex;
-    gap: 0.3rem;
+    font-weight: 700;
+    gap: 0.35rem;
+    line-height: 1;
+    padding: 0.38rem 0.65rem;
+    white-space: nowrap;
+}
+
+.openalex-oa-badge i {
+    font-size: 0.78rem;
 }
 
 .openalex-oa-badge-diamond {
     background-color: #595959 !important;
+    border-color: #484848 !important;
     color: #ffffff !important;
 }
 
 .openalex-oa-badge-green {
     background-color: #00b050 !important;
+    border-color: #008f41 !important;
     color: #102a1d !important;
 }
 

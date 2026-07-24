@@ -14,7 +14,7 @@
   {% if session.get('logged_in') and session.get('is_admin') %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
   {% endif %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css', v=config.get('APP_VERSION', '2.0')) }}">
   
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
   

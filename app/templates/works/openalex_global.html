@@ -8,7 +8,7 @@
 {%- endmacro %}
 {% macro priority_oa_badge(status, label) -%}
   <span class="badge openalex-oa-badge {% if status == 'diamond' %}openalex-oa-badge-diamond{% else %}openalex-oa-badge-green{% endif %}">
-    <i class="fas fa-lock" aria-hidden="true"></i>{{ label }}
+    <i class="fas fa-lock-open" aria-hidden="true"></i>{{ label }}
   </span>
 {%- endmacro %}
 {% macro sort_link(label, table_key, column) -%}
@@ -583,7 +583,7 @@
       </div>
       <section class="app-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Diamond and Green global statistics') }}">
         <article class="app-kpi openalex-oa-kpi-diamond">
-          <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock"></i></span>
+          <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
           <div>
             <span class="app-kpi-label">{{ _('Diamond Articles') }}</span>
             <strong>{{ priority.summary.diamond_articles }}</strong>
@@ -591,7 +591,7 @@
           </div>
         </article>
         <article class="app-kpi openalex-oa-kpi-green">
-          <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock"></i></span>
+          <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
           <div>
             <span class="app-kpi-label">{{ _('Green Articles') }}</span>
             <strong>{{ priority.summary.green_articles }}</strong>

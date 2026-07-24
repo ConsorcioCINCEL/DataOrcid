@@ -107,3 +107,7 @@ app/datasets/*
 # Localization binaries and templates
 *.mo
 *.pot
+
+# Generated OpenAlex user manuals, screenshots, and review previews
+/manual_openalex/
+/artifacts/manual_openalex/

@@ -1,15 +1,10 @@
 {% extends 'base.html' %}
-{% from 'components/ui.html' import chart_exports, chart_info, export_links %}
+{% from 'components/ui.html' import chart_exports, chart_info, export_links, priority_oa_badge %}
 {% macro chart_tools(chart_id, description, methodology) -%}
   <div class="app-card-tools">
     {{ chart_exports(chart_id) }}
     {{ chart_info(description, methodology) }}
   </div>
-{%- endmacro %}
-{% macro priority_oa_badge(status, label) -%}
-  <span class="badge openalex-oa-badge {% if status == 'diamond' %}openalex-oa-badge-diamond{% else %}openalex-oa-badge-green{% endif %}">
-    <i class="fas fa-lock-open" aria-hidden="true"></i>{{ label }}
-  </span>
 {%- endmacro %}
 {% macro analysis_chart(chart_id, title, description, methodology, size='openalex-chart') -%}
 <div class="card openalex-analysis-card">
@@ -451,7 +446,7 @@
 <section class="app-kpi-strip openalex-summary-grid" style="--app-kpi-columns: 6" aria-label="{{ _('Metrics') }}">
   {% for card in analytics.metric_cards %}
   <article class="app-kpi openalex-metric-card" data-metric-id="{{ card.id }}" {% if card.id not in analytics.filters.metrics %}hidden{% endif %}>
-    <span class="app-kpi-icon {% if card.color == 'bg-success' %}is-green{% elif card.color == 'bg-warning' %}is-amber{% elif card.color == 'bg-danger' %}is-red{% elif card.color == 'bg-secondary' %}is-neutral{% elif card.color == 'bg-primary' %}is-orange{% endif %}" aria-hidden="true"><i class="{{ card.icon }}"></i></span>
+    <span class="app-kpi-icon {% if card.color == 'bg-success' %}is-green{% elif card.color == 'bg-warning' %}is-amber{% elif card.color == 'bg-danger' %}is-red{% elif card.color == 'bg-secondary' %}is-neutral{% elif card.color == 'bg-primary' %}is-orange{% endif %}" aria-hidden="true"><i class="{{ 'ai ai-open-access' if card.id == 'open_access_percent' else card.icon }}"></i></span>
     <div>
       <span class="app-kpi-label">{{ card.label }}</span>
       <strong>{{ card.value }}</strong>
@@ -463,7 +458,7 @@
 <nav class="app-review-tabs openalex-analytics-tabs" aria-label="{{ _('OpenAlex analytics sections') }}">
   {% for key, label, icon in [
     ('overview', _('Overview'), 'fas fa-chart-pie'),
-    ('open_access', _('Open Access · ANID'), 'fas fa-unlock-alt'),
+    ('open_access', _('Open Access · ANID'), 'ai ai-open-access'),
     ('collaboration', _('Collaboration'), 'fas fa-project-diagram'),
     ('topics', _('Topics and sources'), 'fas fa-tags'),
     ('impact', _('Citation impact'), 'fas fa-quote-right')
@@ -538,7 +533,7 @@
 <div class="card openalex-oa-focus-card">
   <div class="card-body">
     <div class="openalex-oa-focus-intro">
-      <span class="openalex-oa-focus-icon" aria-hidden="true"><i class="fas fa-unlock-alt"></i></span>
+      <span class="openalex-oa-focus-icon" aria-hidden="true"><i class="ai ai-open-access"></i></span>
       <div>
         <h2>
           {{ _('Focus: Open Access types recommended by the') }}
@@ -552,7 +547,7 @@
     </div>
     <section class="app-kpi-strip" style="--app-kpi-columns: 3" aria-label="{{ _('Diamond and Green Open Access') }}">
       <article class="app-kpi openalex-oa-kpi-diamond">
-        <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
+        <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="ai ai-open-access"></i></span>
         <div>
           <span class="app-kpi-label">{{ _('Diamond Open Access') }}</span>
           <strong>{{ analytics.summary.diamond_open_access_count }}</strong>
@@ -560,7 +555,7 @@
         </div>
       </article>
       <article class="app-kpi openalex-oa-kpi-green">
-        <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
+        <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="ai ai-open-access"></i></span>
         <div>
           <span class="app-kpi-label">{{ _('Green Open Access') }}</span>
           <strong>{{ analytics.summary.green_open_access_count }}</strong>

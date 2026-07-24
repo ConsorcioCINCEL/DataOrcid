@@ -15,6 +15,12 @@
 </div>
 {%- endmacro %}
 
+{% macro priority_oa_badge(status, label) -%}
+<span class="badge openalex-oa-badge {% if status == 'diamond' %}openalex-oa-badge-diamond{% else %}openalex-oa-badge-green{% endif %}">
+  <i class="ai ai-open-access" aria-hidden="true"></i>{{ label }}
+</span>
+{%- endmacro %}
+
 {% macro chart_exports(chart_id) -%}
 <div class="app-chart-export-actions" role="group" aria-label="{{ _('Download chart image') }}">
   <button type="button"

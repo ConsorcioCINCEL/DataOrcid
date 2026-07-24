@@ -1,15 +1,10 @@
 {% extends 'base.html' %}
-{% from 'components/ui.html' import chart_exports, chart_info, export_links %}
+{% from 'components/ui.html' import chart_exports, chart_info, export_links, priority_oa_badge %}
 {% macro chart_tools(chart_id, description, methodology) -%}
   <div class="app-card-tools">
     {{ chart_exports(chart_id) }}
     {{ chart_info(description, methodology) }}
   </div>
-{%- endmacro %}
-{% macro priority_oa_badge(status, label) -%}
-  <span class="badge openalex-oa-badge {% if status == 'diamond' %}openalex-oa-badge-diamond{% else %}openalex-oa-badge-green{% endif %}">
-    <i class="fas fa-lock-open" aria-hidden="true"></i>{{ label }}
-  </span>
 {%- endmacro %}
 {% macro sort_link(label, table_key, column) -%}
   {% set table = analytics.tables[table_key] %}
@@ -503,7 +498,7 @@
 <nav class="app-review-tabs openalex-global-tabs" aria-label="{{ _('Global OpenAlex sections') }}">
   {% for tab_id, label, icon in [
     ('overview', _('Summary'), 'fas fa-chart-pie'),
-    ('open_access', _('Open Access · ANID'), 'fas fa-unlock-alt'),
+    ('open_access', _('Open Access · ANID'), 'ai ai-open-access'),
     ('universities', _('Universities'), 'fas fa-university'),
     ('production', _('Production'), 'fas fa-users'),
     ('institution_authors', _('Authors by Institution'), 'fas fa-user-graduate'),
@@ -575,7 +570,7 @@
   <div class="card openalex-oa-focus-card shadow-sm">
     <div class="card-body">
       <div class="openalex-oa-focus-heading">
-        <span class="openalex-oa-focus-icon" aria-hidden="true"><i class="fas fa-unlock-alt"></i></span>
+        <span class="openalex-oa-focus-icon" aria-hidden="true"><i class="ai ai-open-access"></i></span>
         <div>
           <h2>{{ _('Institutional Comparison of Diamond and Green Open Access') }}</h2>
           <p>{{ _('Comparative production, citation, source, and institutional distribution indicators for the filtered system.') }}</p>
@@ -583,7 +578,7 @@
       </div>
       <section class="app-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Diamond and Green global statistics') }}">
         <article class="app-kpi openalex-oa-kpi-diamond">
-          <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
+          <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="ai ai-open-access"></i></span>
           <div>
             <span class="app-kpi-label">{{ _('Diamond Articles') }}</span>
             <strong>{{ priority.summary.diamond_articles }}</strong>
@@ -591,7 +586,7 @@
           </div>
         </article>
         <article class="app-kpi openalex-oa-kpi-green">
-          <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
+          <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="ai ai-open-access"></i></span>
           <div>
             <span class="app-kpi-label">{{ _('Green Articles') }}</span>
             <strong>{{ priority.summary.green_articles }}</strong>

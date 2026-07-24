@@ -34,7 +34,7 @@
 <section class="app-kpi-strip openalex-works-kpis" style="--app-kpi-columns: 4" aria-label="{{ _('Metrics') }}">
   <article class="app-kpi"><span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-newspaper"></i></span><div><span class="app-kpi-label">{{ _('Journal Articles') }}</span><strong>{{ summary.total_article_works }}</strong><small>{{ _('ORCID cache') }}</small></div></article>
   <article class="app-kpi"><span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-check-circle"></i></span><div><span class="app-kpi-label">{{ _('OpenAlex Coverage') }}</span><strong>{{ summary.coverage_counts.enriched }} / {{ summary.coverage_counts.all }}</strong><small>{{ summary.coverage_percent }}% {{ _('matched') }}</small></div></article>
-  <article class="app-kpi"><span class="app-kpi-icon is-amber" aria-hidden="true"><i class="fas fa-unlock-alt"></i></span><div><span class="app-kpi-label">{{ _('Open Access Works') }}</span><strong>{{ summary.open_access_works }}</strong><small>{{ _('matched articles') }}</small></div></article>
+  <article class="app-kpi"><span class="app-kpi-icon is-amber" aria-hidden="true"><i class="ai ai-open-access"></i></span><div><span class="app-kpi-label">{{ _('Open Access Works') }}</span><strong>{{ summary.open_access_works }}</strong><small>{{ _('matched articles') }}</small></div></article>
   <article class="app-kpi"><span class="app-kpi-icon is-neutral" aria-hidden="true"><i class="fas fa-quote-right"></i></span><div><span class="app-kpi-label">{{ _('OpenAlex Citations') }}</span><strong>{{ summary.total_citations }}</strong><small>{{ _('citation total') }}</small></div></article>
 </section>
 
@@ -122,7 +122,7 @@
       <tbody class="openalex-result-group">
         <tr>
           <td class="openalex-article-cell"><strong>{{ (row.title|plain_text) or _('Untitled work') }}</strong><small>{{ row.pub_year or _('No year') }}{% if row.journal_title %} · {{ row.journal_title }}{% endif %}</small></td>
-          <td><div class="openalex-status-cell">{{ status_badge(row) }}{% if row.matched %}<span class="openalex-oa-label {{ 'is-open' if row.is_oa else '' }}"><i class="fas {{ 'fa-lock-open' if row.is_oa else 'fa-lock' }}" aria-hidden="true"></i>{{ row.oa_status or (_('Open') if row.is_oa else _('Closed')) }}</span>{% endif %}</div></td>
+          <td><div class="openalex-status-cell">{{ status_badge(row) }}{% if row.matched %}<span class="openalex-oa-label {{ 'is-open' if row.is_oa else '' }}"><i class="{{ 'ai ai-open-access' if row.is_oa else 'fas fa-lock' }}" aria-hidden="true"></i>{{ row.oa_status or (_('Open') if row.is_oa else _('Closed')) }}</span>{% endif %}</div></td>
           <td class="text-right openalex-citation-cell">{% if row.cited_by_count is not none %}<strong>{{ row.cited_by_count }}</strong>{% else %}<span>—</span>{% endif %}</td>
           <td>{% if row.source_name %}{{ row.source_name }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td class="text-right"><button class="btn btn-sm btn-light openalex-detail-toggle collapsed" type="button" data-toggle="collapse" data-target="#openalexDetails{{ row.work_cache_id }}" aria-expanded="false" aria-controls="openalexDetails{{ row.work_cache_id }}" title="{{ _('Show details') }}"><i class="fas fa-chevron-down" aria-hidden="true"></i><span class="sr-only">{{ _('Show details') }}</span></button></td>

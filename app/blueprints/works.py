@@ -2499,7 +2499,7 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             {"id": "selected_percent", "label": _("Associated with Selected Institution"), "value": f"{round((selected_institution_count / enriched_count * 100), 1) if enriched_count else 0}%", "icon": "fas fa-university", "color": "bg-primary"},
             {"id": "chile_percent", "label": _("Associated with Chile"), "value": f"{round((chile_affiliation_count / enriched_count * 100), 1) if enriched_count else 0}%", "icon": "fas fa-flag", "color": "bg-info"},
             {"id": "selected_international_percent", "label": _("Selected Institution + International"), "value": f"{round((selected_international_count / selected_institution_count * 100), 1) if selected_institution_count else 0}%", "icon": "fas fa-globe-americas", "color": "bg-secondary"},
-            {"id": "open_access_percent", "label": _("Open Access"), "value": f"{round((open_access_count / enriched_count * 100), 1) if enriched_count else 0}%", "icon": "fas fa-unlock-alt", "color": "bg-warning"},
+            {"id": "open_access_percent", "label": _("Open Access"), "value": f"{round((open_access_count / enriched_count * 100), 1) if enriched_count else 0}%", "icon": "ai ai-open-access", "color": "bg-warning"},
             {"id": "total_citations", "label": _("Total Citations"), "value": total_citations, "icon": "fas fa-quote-right", "color": "bg-danger"},
             {"id": "selected_articles", "label": _("Selected Institution Articles"), "value": selected_institution_count, "icon": "fas fa-building", "color": "bg-primary"},
             {"id": "chile_articles", "label": _("Chile-Affiliated Articles"), "value": chile_affiliation_count, "icon": "fas fa-map-marker-alt", "color": "bg-info"},

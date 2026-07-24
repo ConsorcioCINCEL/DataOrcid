@@ -2046,6 +2046,20 @@ h1, h2, h3, h4, h5, h6,
     font-size: 0.78rem;
 }
 
+.app-kpi-icon .ai-open-access,
+.openalex-oa-focus-icon .ai-open-access {
+    font-size: 1.35rem;
+}
+
+.openalex-oa-badge .ai-open-access {
+    font-size: 1rem;
+}
+
+.app-review-tab .ai-open-access,
+.openalex-oa-label .ai-open-access {
+    font-size: 1.05em;
+}
+
 .openalex-oa-badge-diamond {
     background-color: #595959 !important;
     border-color: #484848 !important;

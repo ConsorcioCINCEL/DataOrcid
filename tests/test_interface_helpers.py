@@ -84,6 +84,29 @@ class InterfaceHelperTest(unittest.TestCase):
         self.assertIn('id="chartExportMenutestChart"', html)
         self.assertEqual(4, html.count('data-chart-id="testChart"'))
 
+    def test_priority_open_access_badges_share_the_academic_icon_and_status_colors(self):
+        with self.app.test_request_context():
+            html = render_template_string(
+                "{% from 'components/ui.html' import priority_oa_badge %}"
+                "{{ priority_oa_badge('diamond', 'Diamond Open Access') }}"
+                "{{ priority_oa_badge('green', 'Green Open Access') }}"
+            )
+
+        self.assertEqual(2, html.count("ai-open-access"))
+        self.assertIn("openalex-oa-badge-diamond", html)
+        self.assertIn("openalex-oa-badge-green", html)
+
+    def test_base_template_loads_the_pinned_academicons_release(self):
+        with self.app.test_request_context("/"):
+            html = render_template_string(
+                "{% extends 'base.html' %}{% block content %}{% endblock %}"
+            )
+
+        self.assertIn(
+            "jpswalsh/academicons@1.9.4/css/academicons.min.css",
+            html,
+        )
+
     def test_legacy_cache_dashboard_redirects_to_the_canonical_view(self):
         client = self.app.test_client()
         with client.session_transaction() as session:

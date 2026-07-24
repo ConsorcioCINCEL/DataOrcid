@@ -16,15 +16,22 @@ from pathlib import Path
 from threading import RLock
 
 import pandas as pd
+from babel import Locale, UnknownLocaleError
 from flask import (
     Blueprint, g, request, redirect, url_for,
     Response, send_file, current_app, render_template, session, stream_with_context
 )
-from flask_babel import _
+from flask_babel import _, get_locale
 from sqlalchemy import String, and_, case, cast, func, literal, or_, select
 
 from .. import db, plain_text
-from ..decorators import admin_required, login_required, normalize_ror_id, staff_required
+from ..decorators import (
+    admin_required,
+    institution_required,
+    login_required,
+    normalize_ror_id,
+    staff_required,
+)
 from ..utils.flashes import flash_err, flash_ok
 from ..utils.session_helpers import get_active_ror_id
 
@@ -37,7 +44,7 @@ _OPENALEX_INSTITUTION_ANALYTICS_CACHE = OrderedDict()
 _OPENALEX_INSTITUTION_ANALYTICS_CACHE_LOCK = RLock()
 _OPENALEX_ANALYTICS_CACHE_MAX_SIZE = 40
 _OPENALEX_ANALYTICS_CACHE_TTL = 86400
-_OPENALEX_PERSISTENT_CACHE_VERSION = 1
+_OPENALEX_PERSISTENT_CACHE_VERSION = 6
 _OPENALEX_PERSISTENT_CACHE_MAX_FILES = 120
 
 
@@ -459,7 +466,14 @@ def _openalex_institution_analytics_with_cache(ror_id: str, filters: dict) -> di
 
 def _openalex_global_analytics_with_cache(filters: dict) -> dict:
     requested_tab = (filters.get("tab") or "overview").strip().lower()
-    if requested_tab not in {"overview", "universities", "production", "institution_authors", "articles"}:
+    if requested_tab not in {
+        "overview",
+        "open_access",
+        "universities",
+        "production",
+        "institution_authors",
+        "articles",
+    }:
         requested_tab = "overview"
 
     # Overview, university, and article tabs use the same global aggregate.
@@ -492,6 +506,56 @@ def _summary_labels(summary: dict | None) -> str:
     if not summary:
         return ""
     return "; ".join(summary.get("labels") or [])
+
+
+def _priority_source_export_rows(priority_open_access: dict) -> list[dict]:
+    """Return export-ready Diamond and Green source metrics."""
+    return [
+        {
+            "source": row["source_name"],
+            "issn_l": row["source_issn_l"],
+            "open_access_type": row["oa_status_label"],
+            "articles": row["articles"],
+            "citations": row["citations"],
+            "average_citations": row["average_citations"],
+        }
+        for row in priority_open_access["source_rows"]
+    ]
+
+
+def _priority_article_export_rows(priority_open_access: dict) -> list[dict]:
+    """Return export-ready top-cited Diamond and Green articles."""
+    return [
+        {
+            "title": plain_text(row["title"]),
+            "doi": row["doi"],
+            "openalex_id": row["openalex_id"],
+            "publication_year": row["publication_year"],
+            "source": row["source_name"],
+            "issn_l": row["source_issn_l"],
+            "open_access_type": row["oa_status_label"],
+            "citations": row["citations"],
+            "fwci": row["fwci"],
+        }
+        for row in priority_open_access["top_cited_articles"]
+    ]
+
+
+def _priority_institution_export_rows(priority_open_access: dict) -> list[dict]:
+    """Return export-ready institutional Diamond and Green metrics."""
+    return [
+        {
+            "institution": row["institution"],
+            "ror_id": row["ror_id"],
+            "diamond_articles": row["diamond_articles"],
+            "green_articles": row["green_articles"],
+            "diamond_and_green_articles": row["articles"],
+            "diamond_citations": row["diamond_citations"],
+            "green_citations": row["green_citations"],
+            "diamond_and_green_citations": row["citations"],
+        }
+        for row in priority_open_access["institution_rows"]
+    ]
 
 
 def _researcher_pairs(ror_id: str | None = None):
@@ -1448,6 +1512,410 @@ def _chart_color(index: int) -> str:
     return colors[index % len(colors)]
 
 
+def _openalex_oa_status_label(value: str | None) -> str:
+    """Return a localized, reader-facing label for an OpenAlex OA status."""
+    status = str(value or "").strip().lower()
+    labels = {
+        "diamond": _("Diamond"),
+        "green": _("Green"),
+        "gold": _("Gold"),
+        "hybrid": _("Hybrid"),
+        "bronze": _("Bronze"),
+        "closed": _("Closed"),
+    }
+    if not status:
+        return _("Unknown OA status")
+    return labels.get(status, status.replace("_", " ").replace("-", " ").title())
+
+
+def _openalex_language_label(value: str | None, locale=None) -> str:
+    """Expand an OpenAlex ISO 639-1 language code in the active interface locale."""
+    code = str(value or "").strip().lower()
+    if not code:
+        return _("Unknown language")
+
+    display_locale = locale or get_locale()
+    try:
+        parsed_locale = (
+            display_locale
+            if isinstance(display_locale, Locale)
+            else Locale.parse(
+                str(display_locale or "en"),
+                sep="_" if "_" in str(display_locale or "") else "-",
+            )
+        )
+        language_name = parsed_locale.languages.get(code)
+    except (UnknownLocaleError, ValueError):
+        language_name = None
+
+    if not language_name:
+        return code.upper()
+    return f"{language_name[:1].upper()}{language_name[1:]} ({code})"
+
+
+def _priority_open_access_breakdown(doi_subquery) -> dict:
+    """Aggregate Diamond and Green articles, sources, and citations."""
+    from ..models import OpenAlexWorkMetadata
+
+    source_page, source_per_page = _table_page_params(
+        "priority_source",
+        default_per_page=10,
+        max_per_page=50,
+    )
+    article_page, article_per_page = _table_page_params(
+        "priority_article",
+        default_per_page=10,
+        max_per_page=50,
+    )
+    source_sort, source_dir = _table_sort_params(
+        "priority_source",
+        {
+            "source",
+            "oa_status",
+            "articles",
+            "citations",
+            "average_citations",
+        },
+        "articles",
+    )
+    article_sort, article_dir = _table_sort_params(
+        "priority_article",
+        {
+            "article",
+            "oa_status",
+            "citations",
+            "year",
+            "openalex",
+        },
+        "citations",
+    )
+    source_search = (
+        request.args.get("priority_source_q") or ""
+    ).strip()
+    article_search = (
+        request.args.get("priority_article_q") or ""
+    ).strip()
+    priority_statuses = ("diamond", "green")
+    status_expr = func.lower(OpenAlexWorkMetadata.oa_status)
+    source_name_expr = func.coalesce(
+        func.nullif(func.trim(OpenAlexWorkMetadata.source_name), ""),
+        _("Unknown source"),
+    )
+    article_count_expr = func.count(func.distinct(OpenAlexWorkMetadata.doi_normalized))
+    citation_count_expr = func.coalesce(func.sum(OpenAlexWorkMetadata.cited_by_count), 0)
+
+    summary_rows = (
+        db.session.query(
+            status_expr.label("oa_status"),
+            article_count_expr.label("article_count"),
+            citation_count_expr.label("citation_count"),
+        )
+        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+        .filter(status_expr.in_(priority_statuses))
+        .group_by(status_expr)
+        .all()
+    )
+    summary_by_status = {
+        row.oa_status: {
+            "articles": int(row.article_count or 0),
+            "citations": int(row.citation_count or 0),
+        }
+        for row in summary_rows
+    }
+
+    grouped_source_rows = (
+        db.session.query(
+            source_name_expr.label("source_name"),
+            OpenAlexWorkMetadata.source_issn_l.label("source_issn_l"),
+            status_expr.label("oa_status"),
+            article_count_expr.label("article_count"),
+            citation_count_expr.label("citation_count"),
+        )
+        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+        .filter(status_expr.in_(priority_statuses))
+        .group_by(
+            source_name_expr,
+            OpenAlexWorkMetadata.source_issn_l,
+            status_expr,
+        )
+        .all()
+    )
+
+    source_rows = []
+    source_totals = {}
+    source_status_values = {}
+    for row in grouped_source_rows:
+        source_key = (row.source_name, row.source_issn_l or "")
+        articles = int(row.article_count or 0)
+        citations = int(row.citation_count or 0)
+        source_rows.append({
+            "source_name": row.source_name,
+            "source_issn_l": row.source_issn_l,
+            "oa_status": row.oa_status,
+            "oa_status_label": _openalex_oa_status_label(row.oa_status),
+            "articles": articles,
+            "citations": citations,
+            "average_citations": round(citations / articles, 1) if articles else 0,
+        })
+        totals = source_totals.setdefault(
+            source_key,
+            {"articles": 0, "citations": 0},
+        )
+        totals["articles"] += articles
+        totals["citations"] += citations
+        source_status_values[(source_key, row.oa_status)] = {
+            "articles": articles,
+            "citations": citations,
+        }
+
+    if source_search:
+        source_search_value = source_search.casefold()
+        source_rows = [
+            row
+            for row in source_rows
+            if source_search_value in " ".join((
+                row["source_name"],
+                row["source_issn_l"] or "",
+                row["oa_status"],
+                row["oa_status_label"],
+            )).casefold()
+        ]
+
+    source_rows.sort(
+        key=lambda row: (
+            row["source_name"].casefold(),
+            row["source_issn_l"] or "",
+            row["oa_status"],
+        )
+    )
+    if source_sort == "source":
+        source_rows.sort(
+            key=lambda row: (
+                row["source_name"].casefold(),
+                row["source_issn_l"] or "",
+            ),
+            reverse=source_dir == "desc",
+        )
+    elif source_sort == "oa_status":
+        source_rows.sort(
+            key=lambda row: row["oa_status_label"].casefold(),
+            reverse=source_dir == "desc",
+        )
+    else:
+        source_rows.sort(
+            key=lambda row: row[source_sort],
+            reverse=source_dir == "desc",
+        )
+    source_pagination = _pagination_dict(
+        source_page,
+        source_per_page,
+        len(source_rows),
+    )
+    source_start = (
+        source_pagination["page"] - 1
+    ) * source_pagination["per_page"]
+    paged_source_rows = source_rows[
+        source_start:source_start + source_pagination["per_page"]
+    ]
+
+    def source_chart(metric: str) -> dict:
+        ranked_keys = sorted(
+            source_totals,
+            key=lambda key: (
+                -source_totals[key][metric],
+                key[0].lower(),
+                key[1],
+            ),
+        )[:10]
+        return {
+            "labels": [key[0] for key in ranked_keys],
+            "datasets": [
+                {
+                    "label": _openalex_oa_status_label(status),
+                    "data": [
+                        source_status_values.get((key, status), {}).get(metric, 0)
+                        for key in ranked_keys
+                    ],
+                    "backgroundColor": color,
+                }
+                for status, color in (
+                    ("diamond", "#00a36c"),
+                    ("green", "#6f42c1"),
+                )
+            ],
+        }
+
+    priority_article_query = (
+        OpenAlexWorkMetadata.query
+        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+        .filter(status_expr.in_(priority_statuses))
+    )
+    if article_search:
+        article_search_value = article_search.casefold()
+        article_search_like = f"%{article_search_value}%"
+        matching_statuses = [
+            status
+            for status in priority_statuses
+            if article_search_value in str(
+                _openalex_oa_status_label(status)
+            ).casefold()
+        ]
+        article_search_conditions = [
+            func.lower(func.coalesce(OpenAlexWorkMetadata.title, "")).like(
+                article_search_like
+            ),
+            func.lower(func.coalesce(OpenAlexWorkMetadata.source_name, "")).like(
+                article_search_like
+            ),
+            func.lower(OpenAlexWorkMetadata.doi_normalized).like(
+                article_search_like
+            ),
+            func.lower(func.coalesce(OpenAlexWorkMetadata.openalex_id, "")).like(
+                article_search_like
+            ),
+        ]
+        if matching_statuses:
+            article_search_conditions.append(
+                status_expr.in_(matching_statuses)
+            )
+        priority_article_query = priority_article_query.filter(
+            or_(*article_search_conditions)
+        )
+
+    article_pagination = _pagination_dict(
+        article_page,
+        article_per_page,
+        priority_article_query.count(),
+    )
+    article_sort_columns = {
+        "article": func.lower(func.coalesce(OpenAlexWorkMetadata.title, "")),
+        "oa_status": status_expr,
+        "citations": OpenAlexWorkMetadata.cited_by_count,
+        "year": func.coalesce(OpenAlexWorkMetadata.publication_year, 0),
+        "openalex": func.lower(func.coalesce(OpenAlexWorkMetadata.openalex_id, "")),
+    }
+    article_order = article_sort_columns[article_sort]
+    article_order = (
+        article_order.asc()
+        if article_dir == "asc"
+        else article_order.desc()
+    )
+    top_cited_rows = (
+        priority_article_query
+        .order_by(
+            article_order,
+            OpenAlexWorkMetadata.cited_by_count.desc(),
+            OpenAlexWorkMetadata.title.asc(),
+        )
+        .offset(
+            (article_pagination["page"] - 1)
+            * article_pagination["per_page"]
+        )
+        .limit(article_pagination["per_page"])
+        .all()
+    )
+    top_cited_articles = [
+        {
+            "title": row.title,
+            "doi": row.doi_normalized,
+            "openalex_id": row.openalex_id,
+            "publication_year": row.publication_year,
+            "source_name": row.source_name,
+            "source_issn_l": row.source_issn_l,
+            "oa_status": str(row.oa_status or "").lower(),
+            "oa_status_label": _openalex_oa_status_label(row.oa_status),
+            "citations": int(row.cited_by_count or 0),
+            "fwci": row.fwci,
+        }
+        for row in top_cited_rows
+    ]
+
+    trend_rows = (
+        db.session.query(
+            OpenAlexWorkMetadata.publication_year.label("publication_year"),
+            status_expr.label("oa_status"),
+            article_count_expr.label("article_count"),
+            citation_count_expr.label("citation_count"),
+        )
+        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+        .filter(
+            OpenAlexWorkMetadata.publication_year.isnot(None),
+            status_expr.in_(priority_statuses),
+        )
+        .group_by(OpenAlexWorkMetadata.publication_year, status_expr)
+        .order_by(OpenAlexWorkMetadata.publication_year.asc())
+        .all()
+    )
+    trend_years = sorted({
+        str(row.publication_year)
+        for row in trend_rows
+    })
+    trend_values = {
+        (str(row.publication_year), row.oa_status): {
+            "articles": int(row.article_count or 0),
+            "citations": int(row.citation_count or 0),
+        }
+        for row in trend_rows
+    }
+
+    def trend_datasets(metric: str) -> list[dict]:
+        return [
+            {
+                "label": _openalex_oa_status_label(status),
+                "data": [
+                    trend_values.get((year, status), {}).get(metric, 0)
+                    for year in trend_years
+                ],
+                "borderColor": color,
+                "backgroundColor": color,
+                "tension": 0.25,
+                "fill": False,
+            }
+            for status, color in (
+                ("diamond", "#00a36c"),
+                ("green", "#6f42c1"),
+            )
+        ]
+
+    diamond = summary_by_status.get("diamond", {"articles": 0, "citations": 0})
+    green = summary_by_status.get("green", {"articles": 0, "citations": 0})
+    return {
+        "summary": {
+            "diamond_articles": diamond["articles"],
+            "diamond_citations": diamond["citations"],
+            "green_articles": green["articles"],
+            "green_citations": green["citations"],
+            "articles": diamond["articles"] + green["articles"],
+            "citations": diamond["citations"] + green["citations"],
+        },
+        "source_rows": paged_source_rows,
+        "top_cited_articles": top_cited_articles,
+        "tables": {
+            "sources": {
+                "pagination": source_pagination,
+                "per_page_options": [10, 25, 50],
+                "search": source_search,
+                "sort": source_sort,
+                "dir": source_dir,
+            },
+            "articles": {
+                "pagination": article_pagination,
+                "per_page_options": [10, 25, 50],
+                "search": article_search,
+                "sort": article_sort,
+                "dir": article_dir,
+            },
+        },
+        "charts": {
+            "sources_by_articles": source_chart("articles"),
+            "sources_by_citations": source_chart("citations"),
+            "trend_years": trend_years,
+            "article_trend_datasets": trend_datasets("articles"),
+            "citation_trend_datasets": trend_datasets("citations"),
+        },
+    }
+
+
 def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
     """Build chart-ready analytics from OpenAlex-enriched journal articles."""
     from ..models import (
@@ -1462,6 +1930,7 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
     year_to = _int_filter(filters.get("year_to"))
     selected_types = _list_filter(filters.get("type"))
     selected_oa_statuses = _list_filter(filters.get("oa_status"))
+    selected_languages = _list_filter(filters.get("language"))
     selected_affiliations = [
         value.lower()
         for value in _list_filter(filters.get("affiliation"))
@@ -1519,6 +1988,17 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             .all()
         )
     ]
+    option_languages = [
+        row[0]
+        for row in (
+            db.session.query(OpenAlexWorkMetadata.language)
+            .join(local_key_subquery, OpenAlexWorkMetadata.doi_normalized == local_key_subquery.c.doi_normalized)
+            .filter(OpenAlexWorkMetadata.language.isnot(None), OpenAlexWorkMetadata.language != "")
+            .distinct()
+            .order_by(OpenAlexWorkMetadata.language.asc())
+            .all()
+        )
+    ]
 
     selected_inst_subquery = (
         db.session.query(OpenAlexWorkInstitution.doi_normalized)
@@ -1552,6 +2032,8 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         filtered_query = filtered_query.filter(OpenAlexWorkMetadata.type.in_(selected_types))
     if selected_oa_statuses:
         filtered_query = filtered_query.filter(OpenAlexWorkMetadata.oa_status.in_(selected_oa_statuses))
+    if selected_languages:
+        filtered_query = filtered_query.filter(OpenAlexWorkMetadata.language.in_(selected_languages))
     affiliation_conditions = []
     if "selected" in selected_affiliations:
         affiliation_conditions.append(OpenAlexWorkMetadata.doi_normalized.in_(selected_inst_select))
@@ -1575,7 +2057,7 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
     )
 
     def _counter_query(column, fallback: str, limit: int = 10):
-        label_expr = func.coalesce(column, fallback)
+        label_expr = func.coalesce(func.nullif(column, ""), fallback)
         count_expr = func.count(OpenAlexWorkMetadata.id)
         rows = (
             db.session.query(label_expr, count_expr)
@@ -1682,11 +2164,23 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
     )
 
     type_labels, type_values = _counter_query(OpenAlexWorkMetadata.type, _("Unknown type"), limit=8)
-    oa_labels, oa_values = _counter_query(OpenAlexWorkMetadata.oa_status, _("Unknown OA status"), limit=8)
+    oa_statuses, oa_values = _counter_query(OpenAlexWorkMetadata.oa_status, _("Unknown OA status"), limit=8)
+    oa_labels = [
+        _("Unknown OA status")
+        if status == _("Unknown OA status")
+        else _openalex_oa_status_label(status)
+        for status in oa_statuses
+    ]
     field_labels, field_values = _counter_query(OpenAlexWorkMetadata.primary_topic_field, _("Unknown field"), limit=10)
     domain_labels, domain_values = _counter_query(OpenAlexWorkMetadata.primary_topic_domain, _("Unknown domain"), limit=10)
     source_labels, source_values = _counter_query(OpenAlexWorkMetadata.source_name, _("Unknown source"), limit=10)
-    language_labels, language_values = _counter_query(OpenAlexWorkMetadata.language, _("Unknown language"), limit=8)
+    language_codes, language_values = _counter_query(OpenAlexWorkMetadata.language, _("Unknown language"), limit=10)
+    language_labels = [
+        _("Unknown language")
+        if code == _("Unknown language")
+        else _openalex_language_label(code)
+        for code in language_codes
+    ]
 
     type_year_label_expr = func.coalesce(OpenAlexWorkMetadata.type, _("Unknown type"))
     type_year_rows = (
@@ -1732,6 +2226,38 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         (str(year), bool(is_oa)): count
         for year, is_oa, count in oa_year_rows
     }
+    priority_oa_status_expr = func.lower(OpenAlexWorkMetadata.oa_status)
+    priority_oa_rows = (
+        db.session.query(
+            priority_oa_status_expr,
+            func.count(OpenAlexWorkMetadata.id),
+        )
+        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+        .filter(priority_oa_status_expr.in_(("diamond", "green")))
+        .group_by(priority_oa_status_expr)
+        .all()
+    )
+    priority_oa_counts = {status: count for status, count in priority_oa_rows}
+    diamond_open_access_count = int(priority_oa_counts.get("diamond", 0) or 0)
+    green_open_access_count = int(priority_oa_counts.get("green", 0) or 0)
+
+    priority_oa_year_rows = (
+        db.session.query(
+            OpenAlexWorkMetadata.publication_year,
+            priority_oa_status_expr,
+            func.count(OpenAlexWorkMetadata.id),
+        )
+        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+        .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
+        .filter(priority_oa_status_expr.in_(("diamond", "green")))
+        .group_by(OpenAlexWorkMetadata.publication_year, priority_oa_status_expr)
+        .all()
+    )
+    priority_oa_year_counts = {
+        (str(year), status): count
+        for year, status, count in priority_oa_year_rows
+    }
+    priority_open_access = _priority_open_access_breakdown(doi_subquery)
 
     country_label_expr = func.coalesce(OpenAlexWorkInstitution.country_code, _("Unknown country"))
     country_count_expr = func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized))
@@ -1920,6 +2446,12 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             "processed_dois": summary["processed_dois"],
             "open_access_count": open_access_count,
             "open_access_percent": round((open_access_count / enriched_count * 100), 1) if enriched_count else 0,
+            "diamond_open_access_count": diamond_open_access_count,
+            "diamond_open_access_percent": round((diamond_open_access_count / enriched_count * 100), 1) if enriched_count else 0,
+            "green_open_access_count": green_open_access_count,
+            "green_open_access_percent": round((green_open_access_count / enriched_count * 100), 1) if enriched_count else 0,
+            "priority_open_access_count": diamond_open_access_count + green_open_access_count,
+            "priority_open_access_percent": round(((diamond_open_access_count + green_open_access_count) / enriched_count * 100), 1) if enriched_count else 0,
             "total_citations": total_citations,
             "average_citations": round((total_citations / enriched_count), 1) if enriched_count else 0,
             "average_fwci": round(float(average_fwci), 2) if average_fwci is not None else None,
@@ -1933,13 +2465,13 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             "selected_international_percent": round((selected_international_count / selected_institution_count * 100), 1) if selected_institution_count else 0,
             "unique_authors": unique_authors,
             "unique_institutions": unique_institutions,
-            "last_run": summary["last_run"],
         },
         "filters": {
             "year_from": year_from,
             "year_to": year_to,
             "type": selected_types,
             "oa_status": selected_oa_statuses,
+            "language": selected_languages,
             "affiliation": selected_affiliations,
             "metrics": selected_metrics,
         },
@@ -1960,7 +2492,14 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         "filter_options": {
             "years": option_years,
             "types": option_types,
-            "oa_statuses": option_oa_statuses,
+            "oa_statuses": [
+                {"value": status, "label": _openalex_oa_status_label(status)}
+                for status in option_oa_statuses
+            ],
+            "languages": [
+                {"value": code, "label": _openalex_language_label(code)}
+                for code in option_languages
+            ],
             "affiliations": [
                 {"value": "selected", "label": _("Selected institution")},
                 {"value": "chile", "label": _("Any Chile affiliation")},
@@ -1984,6 +2523,10 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             "doc_type_trend_datasets": doc_type_trend_datasets,
             "open_access_year_values": [oa_year_counts.get((year, True), 0) for year in sorted_years],
             "closed_access_year_values": [oa_year_counts.get((year, False), 0) for year in sorted_years],
+            "priority_oa_labels": [_("Diamond"), _("Green")],
+            "priority_oa_values": [diamond_open_access_count, green_open_access_count],
+            "diamond_oa_year_values": [priority_oa_year_counts.get((year, "diamond"), 0) for year in sorted_years],
+            "green_oa_year_values": [priority_oa_year_counts.get((year, "green"), 0) for year in sorted_years],
             "oa_labels": oa_labels,
             "oa_values": oa_values,
             "field_labels": field_labels,
@@ -2015,6 +2558,7 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         "top_cited": top_cited,
         "top_institutions": top_institutions,
         "top_authors": top_authors,
+        "priority_open_access": priority_open_access,
     }
 
 
@@ -2033,7 +2577,14 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
     selected_types = _list_filter(filters.get("type"))
     selected_oa_statuses = _list_filter(filters.get("oa_status"))
     active_tab = (filters.get("tab") or "overview").strip().lower()
-    valid_tabs = {"overview", "universities", "production", "institution_authors", "articles"}
+    valid_tabs = {
+        "overview",
+        "open_access",
+        "universities",
+        "production",
+        "institution_authors",
+        "articles",
+    }
     if active_tab not in valid_tabs:
         active_tab = "overview"
 
@@ -2134,6 +2685,7 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
         .distinct()
         .subquery()
     )
+    priority_open_access = _priority_open_access_breakdown(global_filtered_dois)
 
     global_year_rows = (
         db.session.query(OpenAlexWorkMetadata.publication_year)
@@ -2205,6 +2757,164 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
     }
 
     institutions = _institution_lookup()
+    priority_status_expr = func.lower(OpenAlexWorkMetadata.oa_status)
+    priority_institution_metrics = (
+        db.session.query(
+            filtered_pairs.c.ror_id.label("ror_id"),
+            func.count(func.distinct(case(
+                (
+                    priority_status_expr == "diamond",
+                    filtered_pairs.c.doi_normalized,
+                ),
+            ))).label("diamond_articles"),
+            func.count(func.distinct(case(
+                (
+                    priority_status_expr == "green",
+                    filtered_pairs.c.doi_normalized,
+                ),
+            ))).label("green_articles"),
+            func.coalesce(func.sum(case(
+                (
+                    priority_status_expr == "diamond",
+                    OpenAlexWorkMetadata.cited_by_count,
+                ),
+                else_=0,
+            )), 0).label("diamond_citations"),
+            func.coalesce(func.sum(case(
+                (
+                    priority_status_expr == "green",
+                    OpenAlexWorkMetadata.cited_by_count,
+                ),
+                else_=0,
+            )), 0).label("green_citations"),
+        )
+        .select_from(filtered_pairs)
+        .join(
+            OpenAlexWorkMetadata,
+            OpenAlexWorkMetadata.doi_normalized == filtered_pairs.c.doi_normalized,
+        )
+        .filter(priority_status_expr.in_(("diamond", "green")))
+        .group_by(filtered_pairs.c.ror_id)
+        .all()
+    )
+    priority_institution_rows = [
+        {
+            "ror_id": row.ror_id,
+            "institution": institutions.get(row.ror_id) or row.ror_id,
+            "diamond_articles": int(row.diamond_articles or 0),
+            "green_articles": int(row.green_articles or 0),
+            "articles": int(row.diamond_articles or 0) + int(row.green_articles or 0),
+            "diamond_citations": int(row.diamond_citations or 0),
+            "green_citations": int(row.green_citations or 0),
+            "citations": int(row.diamond_citations or 0) + int(row.green_citations or 0),
+        }
+        for row in priority_institution_metrics
+    ]
+    all_priority_institution_rows = list(priority_institution_rows)
+    priority_institution_sort, priority_institution_dir = _table_sort_params(
+        "priority_institution",
+        {
+            "institution",
+            "diamond_articles",
+            "green_articles",
+            "articles",
+            "diamond_citations",
+            "green_citations",
+            "citations",
+        },
+        "articles",
+    )
+    priority_institution_search = (
+        request.args.get("priority_institution_q") or ""
+    ).strip()
+    if priority_institution_search:
+        search_value = priority_institution_search.casefold()
+        priority_institution_rows = [
+            row
+            for row in priority_institution_rows
+            if search_value in " ".join((
+                row["institution"],
+                row["ror_id"],
+            )).casefold()
+        ]
+
+    priority_institution_rows.sort(
+        key=lambda row: (
+            row["institution"].casefold(),
+            row["ror_id"],
+        )
+    )
+    if priority_institution_sort == "institution":
+        priority_institution_rows.sort(
+            key=lambda row: (
+                row["institution"].casefold(),
+                row["ror_id"],
+            ),
+            reverse=priority_institution_dir == "desc",
+        )
+    else:
+        priority_institution_rows.sort(
+            key=lambda row: row[priority_institution_sort],
+            reverse=priority_institution_dir == "desc",
+        )
+    priority_institution_page, priority_institution_per_page = (
+        _table_page_params(
+            "priority_institution",
+            default_per_page=10,
+            max_per_page=50,
+        )
+    )
+    priority_institution_pagination = _pagination_dict(
+        priority_institution_page,
+        priority_institution_per_page,
+        len(priority_institution_rows),
+    )
+    priority_institution_start = (
+        priority_institution_pagination["page"] - 1
+    ) * priority_institution_pagination["per_page"]
+    paged_priority_institution_rows = priority_institution_rows[
+        priority_institution_start:
+        priority_institution_start + priority_institution_pagination["per_page"]
+    ]
+
+    def priority_institution_chart(metric_suffix: str) -> dict:
+        total_key = "articles" if metric_suffix == "articles" else "citations"
+        ranked_rows = sorted(
+            all_priority_institution_rows,
+            key=lambda row: (
+                -row[total_key],
+                row["institution"].lower(),
+            ),
+        )
+        return {
+            "labels": [row["institution"] for row in ranked_rows],
+            "datasets": [
+                {
+                    "label": _openalex_oa_status_label(status),
+                    "data": [row[f"{status}_{metric_suffix}"] for row in ranked_rows],
+                    "backgroundColor": color,
+                }
+                for status, color in (
+                    ("diamond", "#00a36c"),
+                    ("green", "#6f42c1"),
+                )
+            ],
+        }
+
+    priority_open_access["institution_rows"] = paged_priority_institution_rows
+    priority_open_access["tables"]["institutions"] = {
+        "pagination": priority_institution_pagination,
+        "per_page_options": [10, 25, 50],
+        "search": priority_institution_search,
+        "sort": priority_institution_sort,
+        "dir": priority_institution_dir,
+    }
+    priority_open_access["charts"]["institutions_by_articles"] = (
+        priority_institution_chart("articles")
+    )
+    priority_open_access["charts"]["institutions_by_citations"] = (
+        priority_institution_chart("citations")
+    )
 
     def _ordered(expression, direction: str):
         return expression.asc() if direction == "asc" else expression.desc()
@@ -2769,7 +3479,10 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
         "filter_options": {
             "years": option_years,
             "types": option_types,
-            "oa_statuses": option_oa_statuses,
+            "oa_statuses": [
+                {"value": status, "label": _openalex_oa_status_label(status)}
+                for status in option_oa_statuses
+            ],
             "institutions": [
                 {"ror_id": row["ror_id"], "name": row["institution"]}
                 for row in sorted(rows, key=lambda row: row["institution"])
@@ -2795,7 +3508,11 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
         "top_authors": top_authors,
         "top_institutions": top_institutions,
         "institution_author_rows": institution_author_rows,
+        "priority_open_access": priority_open_access,
         "tables": {
+            "priority_sources": priority_open_access["tables"]["sources"],
+            "priority_articles": priority_open_access["tables"]["articles"],
+            "priority_institutions": priority_open_access["tables"]["institutions"],
             "universities": {
                 "sort": university_sort,
                 "dir": university_dir,
@@ -3733,30 +4450,46 @@ def openalex_works_export():
 
 
 @bp_works.route('/openalex/analytics')
-@login_required
+@institution_required
 def openalex_analytics():
-    """Render charts and trends from OpenAlex-enriched journal articles."""
-    ror_id = get_active_ror_id()
-    if not ror_id:
-        flash_err(_('No active institution context found.'))
-        return redirect(url_for('main.index'))
+    """Render OpenAlex analytics for the account's authorized institution."""
+    ror_id = g.institution_ror_id
 
     analytics_filters = {
         "year_from": request.args.get("year_from"),
         "year_to": request.args.get("year_to"),
         "type": _request_list_arg("type"),
         "oa_status": _request_list_arg("oa_status"),
+        "language": _request_list_arg("language"),
         "affiliation": _request_list_arg("affiliation"),
         "metrics": _request_list_arg("metric"),
     }
     section = request.args.get("section", "overview")
-    if section not in {"overview", "collaboration", "topics", "impact"}:
+    if section not in {"overview", "open_access", "collaboration", "topics", "impact"}:
         section = "overview"
     analytics = _openalex_institution_analytics_with_cache(ror_id, analytics_filters)
 
     def query_url(**updates):
         params = request.args.to_dict(flat=False)
         params.update({key: value for key, value in updates.items() if value is not None})
+        for key, value in list(params.items()):
+            if value is None or value == "" or value == []:
+                params.pop(key)
+        return url_for("works.openalex_analytics", **params)
+
+    table_prefixes = {
+        "priority_sources": "priority_source",
+        "priority_articles": "priority_article",
+    }
+
+    def table_url(table_key: str, **updates):
+        params = request.args.to_dict(flat=False)
+        prefix = table_prefixes.get(table_key, table_key)
+        for key, value in updates.items():
+            if key in {"q", "sort", "dir", "page", "per_page"}:
+                params[f"{prefix}_{key}"] = value
+            else:
+                params[key] = value
         for key, value in list(params.items()):
             if value is None or value == "" or value == []:
                 params.pop(key)
@@ -3778,27 +4511,27 @@ def openalex_analytics():
         has_active_filters=bool(
             analytics_filters["year_from"] or analytics_filters["year_to"]
             or analytics_filters["type"] or analytics_filters["oa_status"]
+            or analytics_filters["language"]
             or analytics_filters["affiliation"]
         ),
         ror_id=ror_id,
+        table_url=table_url,
         export_url=export_url,
     )
 
 
 @bp_works.route('/openalex/analytics/export/<table_key>')
-@login_required
+@institution_required
 def openalex_analytics_export(table_key: str):
-    """Export table-like OpenAlex analytics for the active institution."""
-    ror_id = get_active_ror_id()
-    if not ror_id:
-        flash_err(_('No active institution context found.'))
-        return redirect(url_for('main.index'))
+    """Export OpenAlex analytics for the account's authorized institution."""
+    ror_id = g.institution_ror_id
 
     analytics_filters = {
         "year_from": request.args.get("year_from"),
         "year_to": request.args.get("year_to"),
         "type": _request_list_arg("type"),
         "oa_status": _request_list_arg("oa_status"),
+        "language": _request_list_arg("language"),
         "affiliation": _request_list_arg("affiliation"),
     }
     analytics = _openalex_analytics(ror_id, analytics_filters)
@@ -3818,6 +4551,12 @@ def openalex_analytics_export(table_key: str):
             "topic_domain": row["primary_topic_domain"],
         } for row in analytics["top_cited"]]
         sheet_name = "Top cited"
+    elif table_key == "priority_sources":
+        rows = _priority_source_export_rows(analytics["priority_open_access"])
+        sheet_name = "Diamond Green sources"
+    elif table_key == "priority_articles":
+        rows = _priority_article_export_rows(analytics["priority_open_access"])
+        sheet_name = "Diamond Green articles"
     elif table_key == "authors":
         rows = [{
             "author": row["author_name"],
@@ -3869,13 +4608,16 @@ def openalex_global():
         "authors": "author",
         "institutions": "institution",
         "institution_authors": "institution_author",
+        "priority_sources": "priority_source",
+        "priority_articles": "priority_article",
+        "priority_institutions": "priority_institution",
     }
 
     def table_url(table_key: str, **updates):
         params = request.args.to_dict(flat=False)
         prefix = table_prefixes.get(table_key, table_key)
         for key, value in updates.items():
-            if key in {"sort", "dir", "page", "per_page"}:
+            if key in {"q", "sort", "dir", "page", "per_page"}:
                 params[f"{prefix}_{key}"] = value
             else:
                 params[key] = value
@@ -3915,6 +4657,9 @@ def openalex_global_export(table_key: str):
         "authors": "production",
         "institutions": "production",
         "institution_authors": "institution_authors",
+        "priority_sources": "open_access",
+        "priority_articles": "open_access",
+        "priority_universities": "open_access",
     }
     if table_key not in table_tabs:
         flash_err(_('Invalid export table.'))
@@ -3930,7 +4675,16 @@ def openalex_global_export(table_key: str):
     }
     analytics = _openalex_global_analytics(analytics_filters)
 
-    if table_key == "universities":
+    if table_key == "priority_sources":
+        rows = _priority_source_export_rows(analytics["priority_open_access"])
+        sheet_name = "Diamond Green sources"
+    elif table_key == "priority_articles":
+        rows = _priority_article_export_rows(analytics["priority_open_access"])
+        sheet_name = "Diamond Green articles"
+    elif table_key == "priority_universities":
+        rows = _priority_institution_export_rows(analytics["priority_open_access"])
+        sheet_name = "Diamond Green universities"
+    elif table_key == "universities":
         rows = [{
             "university": row["institution"],
             "ror_id": row["ror_id"],

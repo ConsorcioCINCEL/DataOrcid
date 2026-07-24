@@ -63,6 +63,86 @@
     {% endif %}
   </div>
 {%- endmacro %}
+{% macro priority_table_pager(table_key, metadata_key) -%}
+  {% set table = analytics.priority_open_access.tables[metadata_key] %}
+  {% set pagination = table.pagination %}
+  {% if pagination.total_rows > 0 %}
+  <div class="card-footer bg-white d-flex flex-wrap align-items-center justify-content-between" style="gap: 0.75rem;">
+    <div class="small text-muted">
+      {{ _('Showing %(start)s-%(end)s of %(total)s records', start=pagination.start, end=pagination.end, total=pagination.total_rows) }}
+    </div>
+    <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+      <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Rows per page') }}">
+        {% for size in table.per_page_options %}
+          <a class="btn {% if pagination.per_page == size %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ table_url(table_key, page=1, per_page=size) }}">{{ size }}</a>
+        {% endfor %}
+      </div>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ table_url(table_key, page=pagination.prev_page) }}" aria-label="{{ _('Previous page') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+        </li>
+        {% for page_number in pagination.page_numbers %}
+          {% if page_number %}
+            <li class="page-item {% if page_number == pagination.page %}active{% endif %}">
+              <a class="page-link" href="{{ table_url(table_key, page=page_number) }}">{{ page_number }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ table_url(table_key, page=pagination.next_page) }}" aria-label="{{ _('Next page') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+{%- endmacro %}
+{% macro priority_sort_link(label, table_key, metadata_key, column) -%}
+  {% set table = analytics.priority_open_access.tables[metadata_key] %}
+  {% set active = table.sort == column %}
+  {% set next_dir = 'asc' if (not active or table.dir == 'desc') else 'desc' %}
+  <a class="openalex-sort-link" href="{{ table_url(table_key, sort=column, dir=next_dir, page=1) }}">
+    {{ label }}
+    {% if active %}
+      <i class="fas fa-sort-{{ 'up' if table.dir == 'asc' else 'down' }} ml-1" aria-hidden="true"></i>
+    {% else %}
+      <i class="fas fa-sort text-muted ml-1" aria-hidden="true"></i>
+    {% endif %}
+  </a>
+{%- endmacro %}
+{% macro priority_table_search(table_key, metadata_key, search_name, page_name, label, placeholder) -%}
+  {% set table = analytics.priority_open_access.tables[metadata_key] %}
+  <div class="openalex-table-toolbar">
+    <form method="get" action="{{ url_for('works.openalex_analytics') }}" class="openalex-table-search-form">
+      {% for key in request.args %}
+        {% if key != search_name and key != page_name %}
+          {% for value in request.args.getlist(key) %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+      <label class="sr-only" for="{{ search_name }}">{{ label }}</label>
+      <div class="input-group input-group-sm">
+        <input type="search"
+               id="{{ search_name }}"
+               name="{{ search_name }}"
+               class="form-control"
+               value="{{ table.search }}"
+               placeholder="{{ placeholder }}"
+               aria-label="{{ label }}">
+        <div class="input-group-append">
+          <button type="submit" class="btn btn-outline-primary">
+            <i class="fas fa-search mr-1" aria-hidden="true"></i>{{ _('Search') }}
+          </button>
+        </div>
+      </div>
+      {% if table.search %}
+        <a class="btn btn-sm btn-link" href="{{ table_url(table_key, q=None, page=1) }}">{{ _('Clear search') }}</a>
+      {% endif %}
+    </form>
+  </div>
+{%- endmacro %}
 {% block title %}{{ _('OpenAlex analytics · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
@@ -185,6 +265,82 @@
     background: #fff;
     padding: 0.75rem;
   }
+  .openalex-oa-focus-card {
+    border-top: 3px solid #00a36c;
+    margin-bottom: 1rem;
+  }
+  .openalex-oa-focus-card .card-body {
+    padding: 1.15rem 1.25rem;
+  }
+  .openalex-oa-focus-intro {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  .openalex-oa-focus-icon {
+    align-items: center;
+    background: #eaf6f2;
+    border-radius: 8px;
+    color: #198754;
+    display: flex;
+    flex: 0 0 auto;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+  }
+  .openalex-oa-focus-intro h2 {
+    color: #263442;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .openalex-oa-focus-intro p {
+    color: #687583;
+    font-size: 0.82rem;
+    margin: 0.25rem 0 0;
+  }
+  .openalex-oa-focus-card .app-kpi-strip {
+    margin-bottom: 0.8rem;
+  }
+  .openalex-oa-note {
+    color: #687583;
+    font-size: 0.77rem;
+    margin: 0;
+  }
+  .openalex-table-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0.75rem;
+  }
+  .openalex-table-search-form {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .openalex-table-search-form .input-group {
+    max-width: 32rem;
+    width: 100%;
+  }
+  .openalex-sort-link {
+    align-items: center;
+    color: inherit;
+    display: inline-flex;
+    white-space: nowrap;
+  }
+  .openalex-sort-link:hover {
+    color: #0056b3;
+    text-decoration: none;
+  }
+  @media (max-width: 575.98px) {
+    .openalex-oa-focus-intro {
+      display: block;
+    }
+    .openalex-oa-focus-icon {
+      margin-bottom: 0.65rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -249,6 +405,9 @@
           {{ check_filter('oa_status', _('Open Access'), analytics.filter_options.oa_statuses, analytics.filters.oa_status, _('Any')) }}
         </div>
         <div>
+          {{ check_filter('language', _('Language'), analytics.filter_options.languages, analytics.filters.language, _('Any')) }}
+        </div>
+        <div>
           {{ check_filter('affiliation', _('Affiliation'), analytics.filter_options.affiliations, analytics.filters.affiliation, _('Any')) }}
         </div>
       </div>
@@ -299,6 +458,7 @@
 <nav class="app-review-tabs openalex-analytics-tabs" aria-label="{{ _('OpenAlex analytics sections') }}">
   {% for key, label, icon in [
     ('overview', _('Overview'), 'fas fa-chart-pie'),
+    ('open_access', _('Open Access · ANID'), 'fas fa-unlock-alt'),
     ('collaboration', _('Collaboration'), 'fas fa-project-diagram'),
     ('topics', _('Topics and sources'), 'fas fa-tags'),
     ('impact', _('Citation impact'), 'fas fa-quote-right')
@@ -339,6 +499,18 @@
             <div class="text-muted small">{{ _('Field-Weighted Citation Impact reported by OpenAlex. Values above 1 suggest impact above the field average.') }}</div>
           </div>
           <div class="openalex-definition-item">
+            <strong>{{ _('Diamond Open Access') }}</strong>
+            <div class="text-muted small">{{ _('Articles classified as diamond by OpenAlex: published in a fully open-access journal without publication fees for authors.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
+            <strong>{{ _('Green Open Access') }}</strong>
+            <div class="text-muted small">{{ _('Articles classified as green by OpenAlex: the publisher landing page is toll-access, while a free copy is available in an open-access repository.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
+            <strong>{{ _('Publication language') }}</strong>
+            <div class="text-muted small">{{ _('OpenAlex supplies the work language as an ISO 639-1 code. The dashboard expands that code in the interface language and keeps it visible in parentheses.') }}</div>
+          </div>
+          <div class="openalex-definition-item">
             <strong>{{ _('Chile-Affiliated Authors') }}</strong>
             <div class="text-muted small">{{ _('Authors are stored here only when the OpenAlex authorship includes country CL; this is not a census of all university ORCID profiles.') }}</div>
           </div>
@@ -357,6 +529,172 @@
   {{ analysis_chart('chartDocumentTypeTrend', _('Document Type Evolution'), _('Annual changes in the main OpenAlex document types.'), _('Filtered works are grouped by publication year and OpenAlex type; the six highest-volume types in the filtered period are shown.')) }}
   {{ analysis_chart('chartOpenAccessTrend', _('Open Access Evolution'), _('Annual evolution of open and closed articles.'), _('Uses the OpenAlex is_oa field. Open means is_oa=true; closed means is_oa=false for the filtered works.')) }}
 </div>
+{% elif section == 'open_access' %}
+<div class="card openalex-oa-focus-card">
+  <div class="card-body">
+    <div class="openalex-oa-focus-intro">
+      <span class="openalex-oa-focus-icon" aria-hidden="true"><i class="fas fa-unlock-alt"></i></span>
+      <div>
+        <h2>{{ _('Open Access focus for ANID') }}</h2>
+        <p>{{ _('A dedicated view of Diamond and Green Open Access within the filtered institutional output.') }}</p>
+      </div>
+    </div>
+    <section class="app-kpi-strip" style="--app-kpi-columns: 3" aria-label="{{ _('Diamond and Green Open Access') }}">
+      <article class="app-kpi">
+        <span class="app-kpi-icon is-green" aria-hidden="true"><i class="far fa-gem"></i></span>
+        <div>
+          <span class="app-kpi-label">{{ _('Diamond Open Access') }}</span>
+          <strong>{{ analytics.summary.diamond_open_access_count }}</strong>
+          <small>{{ _('%(percent)s%% of filtered articles', percent=analytics.summary.diamond_open_access_percent) }}</small>
+        </div>
+      </article>
+      <article class="app-kpi">
+        <span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-archive"></i></span>
+        <div>
+          <span class="app-kpi-label">{{ _('Green Open Access') }}</span>
+          <strong>{{ analytics.summary.green_open_access_count }}</strong>
+          <small>{{ _('%(percent)s%% of filtered articles', percent=analytics.summary.green_open_access_percent) }}</small>
+        </div>
+      </article>
+      <article class="app-kpi">
+        <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-layer-group"></i></span>
+        <div>
+          <span class="app-kpi-label">{{ _('Diamond + Green') }}</span>
+          <strong>{{ analytics.summary.priority_open_access_count }}</strong>
+          <small>{{ _('%(percent)s%% of filtered articles', percent=analytics.summary.priority_open_access_percent) }}</small>
+        </div>
+      </article>
+    </section>
+    <p class="openalex-oa-note"><i class="fas fa-info-circle mr-1" aria-hidden="true"></i>{{ _('Percentages use all OpenAlex-enriched articles matching the active filters as the denominator. The categories are mutually exclusive according to the OpenAlex oa_status field.') }}</p>
+  </div>
+</div>
+<div class="openalex-analysis-grid">
+  <div class="openalex-analysis-wide">{{ analysis_chart('chartPriorityOpenAccessTrend', _('Diamond and Green Open Access Evolution'), _('Annual evolution of the two open-access types prioritized in this module.'), _('Groups filtered articles by publication year and the native OpenAlex oa_status values diamond and green. Years without classified articles are shown as zero.')) }}</div>
+  {{ analysis_chart('chartPriorityOpenAccess', _('Diamond and Green Composition'), _('Number of filtered articles classified as Diamond or Green Open Access.'), _('Uses the native OpenAlex oa_status field. Diamond identifies publication in a fully open-access journal without author publication fees; Green identifies a free repository copy when the publisher page is toll-access.'), 'openalex-chart-sm') }}
+  {{ analysis_chart('chartOpenAccess', _('All Open Access Types'), _('Distribution across every open-access status present in the filtered set.'), _('Uses the native OpenAlex oa_status field, including diamond, green, gold, hybrid, bronze, closed, and any future status returned by OpenAlex.'), 'openalex-chart-sm') }}
+</div>
+{% if analytics.priority_open_access.summary.articles > 0 %}
+<div class="openalex-analysis-grid">
+  {{ analysis_chart('chartPrioritySourcesByArticles', _('Diamond and Green Articles by Journal'), _('Journals or sources with the most Diamond and Green articles in the filtered institutional output.'), _('Groups filtered works by source_name, ISSN-L, and native OpenAlex oa_status. Each article is counted once; the chart shows the ten sources with the largest combined Diamond and Green volume.')) }}
+  {{ analysis_chart('chartPrioritySourcesByCitations', _('Diamond and Green Citations by Journal'), _('Journals or sources accumulating the most citations from Diamond and Green articles.'), _('Sums the current OpenAlex cited_by_count for filtered Diamond and Green articles, grouped by source. The chart shows the ten sources with the largest combined citation count.')) }}
+</div>
+<div class="card shadow-sm">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h3 class="card-title text-bold mb-0">{{ _('Diamond and Green Journal Statistics') }}</h3>
+    <div class="app-card-tools">
+      {{ export_links(export_url('priority_sources', 'csv'), export_url('priority_sources', 'excel')) }}
+      {{ chart_info(
+        _('Journal-level production and citation metrics for the ANID Open Access focus.'),
+        _('Rows are grouped by source and OpenAlex oa_status. Green is an article-level repository route and does not imply that the complete journal is Green Open Access.')
+      ) }}
+    </div>
+  </div>
+  {{ priority_table_search(
+    'priority_sources',
+    'sources',
+    'priority_source_q',
+    'priority_source_page',
+    _('Search journal statistics'),
+    _('Search by journal, source, ISSN-L, or Open Access type')
+  ) }}
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead>
+          <tr>
+            <th>{{ priority_sort_link(_('Journal or source'), 'priority_sources', 'sources', 'source') }}</th>
+            <th>{{ priority_sort_link(_('Open Access type'), 'priority_sources', 'sources', 'oa_status') }}</th>
+            <th class="text-right">{{ priority_sort_link(_('Articles'), 'priority_sources', 'sources', 'articles') }}</th>
+            <th class="text-right">{{ priority_sort_link(_('Citations'), 'priority_sources', 'sources', 'citations') }}</th>
+            <th class="text-right">{{ priority_sort_link(_('Avg. Citations'), 'priority_sources', 'sources', 'average_citations') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in analytics.priority_open_access.source_rows %}
+          <tr>
+            <td>
+              <strong>{{ row.source_name }}</strong>
+              <div class="small text-muted">{{ row.source_issn_l or _('ISSN-L not available') }}</div>
+            </td>
+            <td>
+              <span class="badge {% if row.oa_status == 'diamond' %}badge-success{% else %}badge-secondary{% endif %}">{{ row.oa_status_label }}</span>
+            </td>
+            <td class="text-right">{{ row.articles }}</td>
+            <td class="text-right"><strong>{{ row.citations }}</strong></td>
+            <td class="text-right">{{ row.average_citations }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">{{ _('No records match your search.') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {{ priority_table_pager('priority_sources', 'sources') }}
+</div>
+<div class="card shadow-sm">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h3 class="card-title text-bold mb-0">{{ _('Most Cited Diamond and Green Articles') }}</h3>
+    <div class="app-card-tools">
+      {{ export_links(export_url('priority_articles', 'csv'), export_url('priority_articles', 'excel')) }}
+      {{ chart_info(
+        _('Diamond and Green articles with the highest current OpenAlex citation counts.'),
+        _('Articles are ranked by cited_by_count after applying every active institutional dashboard filter.')
+      ) }}
+    </div>
+  </div>
+  {{ priority_table_search(
+    'priority_articles',
+    'articles',
+    'priority_article_q',
+    'priority_article_page',
+    _('Search cited articles'),
+    _('Search by article, source, DOI, OpenAlex, or Open Access type')
+  ) }}
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead>
+          <tr>
+            <th>{{ priority_sort_link(_('Article'), 'priority_articles', 'articles', 'article') }}</th>
+            <th>{{ priority_sort_link(_('Open Access type'), 'priority_articles', 'articles', 'oa_status') }}</th>
+            <th class="text-right">{{ priority_sort_link(_('Citations'), 'priority_articles', 'articles', 'citations') }}</th>
+            <th>{{ priority_sort_link(_('Year'), 'priority_articles', 'articles', 'year') }}</th>
+            <th>{{ priority_sort_link(_('OpenAlex'), 'priority_articles', 'articles', 'openalex') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in analytics.priority_open_access.top_cited_articles %}
+          <tr>
+            <td>
+              <strong>{{ (row.title|plain_text) or _('Untitled work') }}</strong>
+              <div class="small text-muted">{{ row.source_name or _('Unknown source') }}</div>
+            </td>
+            <td><span class="badge {% if row.oa_status == 'diamond' %}badge-success{% else %}badge-secondary{% endif %}">{{ row.oa_status_label }}</span></td>
+            <td class="text-right"><strong>{{ row.citations }}</strong></td>
+            <td>{{ row.publication_year or '—' }}</td>
+            <td>
+              {% if row.openalex_id %}
+              <a href="https://openalex.org/{{ row.openalex_id }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info">
+                {{ row.openalex_id }} <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+              </a>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">{{ _('No records match your search.') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {{ priority_table_pager('priority_articles', 'articles') }}
+</div>
+{% else %}
+<div class="alert alert-info">
+  <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('No Diamond or Green articles are available for the active filters.') }}
+</div>
+{% endif %}
 {% elif section == 'collaboration' %}
 <div class="openalex-analysis-grid">
   {{ analysis_chart('chartOpenAlexAuthors', _('Top Chile-Affiliated Authors'), _('Chilean-affiliated authors with the most articles in the filtered set.'), _('Counts authors stored from OpenAlex when the authorship has country CL. This is not a census of all ORCID researchers.')) }}
@@ -369,12 +707,13 @@
   {{ analysis_chart('chartOpenAlexDomains', _('Topic Domains'), _('Distribution by OpenAlex topic domains.'), _('Uses primary_topic_domain from each enriched work. Missing classifications are grouped as unknown.')) }}
   {{ analysis_chart('chartOpenAlexFields', _('Topic Fields'), _('Most frequent OpenAlex topic fields.'), _('Uses primary_topic_field from each enriched work and counts articles by field.')) }}
   {{ analysis_chart('chartOpenAlexTypes', _('Document Types'), _('Composition of the filtered set by document type.'), _('Uses the OpenAlex type field and shows the most frequent types in the selected period.'), 'openalex-chart-sm') }}
-  {{ analysis_chart('chartOpenAccess', _('Open Access Status'), _('Distribution of OpenAlex open access status.'), _('Uses oa_status when available. It can distinguish gold, green, hybrid, bronze, closed, or other statuses defined by OpenAlex.'), 'openalex-chart-sm') }}
+  {{ analysis_chart('chartOpenAccess', _('Open Access Status'), _('Distribution of OpenAlex open access status.'), _('Uses oa_status when available. It can distinguish diamond, green, gold, hybrid, bronze, closed, or other statuses defined by OpenAlex.'), 'openalex-chart-sm') }}
+  {{ analysis_chart('chartOpenAlexLanguages', _('Publication Languages'), _('Most frequent publication languages in the filtered set.'), _('Uses the OpenAlex language field in ISO 639-1 format. Codes are expanded into localized language names; missing values are grouped as unknown.'), 'openalex-chart-sm') }}
   <div class="openalex-analysis-wide">{{ analysis_chart('chartOpenAlexSources', _('Sources'), _('Most frequent sources or journals in the filtered set.'), _('Uses source_name from OpenAlex. Empty values are grouped as unknown source.')) }}</div>
 </div>
 {% else %}
 <div class="card openalex-impact-card">
-  <div class="card-header d-flex align-items-center justify-content-between"><h3 class="card-title text-bold mb-0">{{ _('Top Cited OpenAlex Articles') }}</h3><div class="app-card-tools">{{ export_links(export_url('top_cited', 'csv'), export_url('top_cited', 'excel')) }}{{ info_button(_('Filtered articles with the highest OpenAlex citation counts.'), _('Sorts by cited_by_count descending. Citations use the current counter stored from OpenAlex.')) }}</div></div>
+  <div class="card-header d-flex align-items-center justify-content-between"><h3 class="card-title text-bold mb-0">{{ _('Top Cited OpenAlex Articles') }}</h3><div class="app-card-tools">{{ export_links(export_url('top_cited', 'csv'), export_url('top_cited', 'excel')) }}{{ chart_info(_('Filtered articles with the highest OpenAlex citation counts.'), _('Sorts by cited_by_count descending. Citations use the current counter stored from OpenAlex.')) }}</div></div>
   <div class="card-body p-0"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>{{ _('Article') }}</th><th class="text-right">{{ _('Citations') }}</th><th>{{ _('Year') }}</th><th>{{ _('OpenAlex') }}</th></tr></thead><tbody>{% for row in analytics.top_cited %}<tr><td><strong>{{ (row.title|plain_text) or _('Untitled work') }}</strong><div class="small text-muted">{{ row.source_name or _('Unknown source') }}</div></td><td class="text-right"><strong>{{ row.cited_by_count }}</strong></td><td>{{ row.publication_year or '—' }}</td><td>{% if row.openalex_id %}<a href="https://openalex.org/{{ row.openalex_id }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info">{{ row.openalex_id }} <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
 </div>
 {% endif %}
@@ -624,7 +963,7 @@
         <h3 class="card-title text-bold mb-0">{{ _('Top Cited OpenAlex Articles') }}</h3>
         <div class="app-card-tools">
           {{ export_links(export_url('top_cited', 'csv'), export_url('top_cited', 'excel')) }}
-          {{ info_button(
+          {{ chart_info(
             _('Filtered articles with the highest OpenAlex citation counts.'),
             _('Sorts by cited_by_count descending. Citations use the current counter stored from OpenAlex.')
           ) }}
@@ -800,6 +1139,23 @@
       });
     }
 
+    function groupedHorizontalBar(id, chartData) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      new Chart(el, {
+        type: 'bar',
+        data: chartData,
+        options: {
+          indexAxis: 'y',
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            x: { beginAtZero: true, ticks: { precision: 0 } },
+            y: { ticks: { autoSkip: false } }
+          }
+        }
+      });
+    }
+
     function lineChart(id, labels, datasets) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -871,6 +1227,7 @@
 
     doughnutChart('chartAffiliationCoverage', charts.affiliation_labels, charts.affiliation_values);
     doughnutChart('chartOpenAccess', charts.oa_labels, charts.oa_values);
+    doughnutChart('chartPriorityOpenAccess', charts.priority_oa_labels, charts.priority_oa_values);
     doughnutChart('chartOpenAlexTypes', charts.type_labels, charts.type_values);
     lineChart('chartDocumentTypeTrend', charts.doc_type_trend_labels, charts.doc_type_trend_datasets);
     lineChart('chartOpenAccessTrend', charts.years, [
@@ -891,6 +1248,24 @@
         fill: false
       }
     ]);
+    lineChart('chartPriorityOpenAccessTrend', charts.years, [
+      {
+        label: '{{ _("Diamond") }}',
+        data: charts.diamond_oa_year_values,
+        borderColor: '#00a36c',
+        backgroundColor: '#00a36c',
+        tension: 0.25,
+        fill: false
+      },
+      {
+        label: '{{ _("Green") }}',
+        data: charts.green_oa_year_values,
+        borderColor: '#6f42c1',
+        backgroundColor: '#6f42c1',
+        tension: 0.25,
+        fill: false
+      }
+    ]);
     barChart('chartOpenAlexCountries', charts.country_labels, charts.country_values, '#6f42c1', 'y');
     barChart('chartOpenAlexInstitutions', charts.institution_labels, charts.institution_values, '#2a69b8', 'y');
     barChart('chartOpenAlexChileInstitutions', charts.chile_institution_labels, charts.chile_institution_values, '#17a2b8', 'y');
@@ -898,6 +1273,15 @@
     barChart('chartOpenAlexDomains', charts.domain_labels, charts.domain_values, '#6c757d', 'y');
     barChart('chartOpenAlexFields', charts.field_labels, charts.field_values, '#17a2b8', 'y');
     barChart('chartOpenAlexSources', charts.source_labels, charts.source_values, '#28a745', 'y');
+    barChart('chartOpenAlexLanguages', charts.language_labels, charts.language_values, '#f39c12', 'y');
+    groupedHorizontalBar(
+      'chartPrioritySourcesByArticles',
+      {{ analytics.priority_open_access.charts.sources_by_articles | tojson }}
+    );
+    groupedHorizontalBar(
+      'chartPrioritySourcesByCitations',
+      {{ analytics.priority_open_access.charts.sources_by_citations | tojson }}
+    );
 
   </script>
   {% endif %}

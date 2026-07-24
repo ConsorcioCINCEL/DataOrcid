@@ -151,11 +151,19 @@ class OpenAlexAnalyticsCacheTest(unittest.TestCase):
             with self.app.test_request_context("/openalex/global?tab=universities"):
                 session["locale"] = "en"
                 result = works._openalex_global_analytics_with_cache({"tab": "universities"})
+            with self.app.test_request_context("/openalex/global?tab=open_access"):
+                session["locale"] = "en"
+                open_access_result = works._openalex_global_analytics_with_cache(
+                    {"tab": "open_access"}
+                )
 
         self.assertEqual(1, builder.call_count)
         self.assertEqual("universities", result["active_tab"])
         self.assertEqual("universities", result["filters"]["tab"])
         self.assertEqual("memory", result["cache"]["layer"])
+        self.assertEqual("open_access", open_access_result["active_tab"])
+        self.assertEqual("open_access", open_access_result["filters"]["tab"])
+        self.assertEqual("memory", open_access_result["cache"]["layer"])
 
 
 if __name__ == "__main__":

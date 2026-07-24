@@ -7,35 +7,42 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: DataOrcid-Chile 1.0\n"
-"Report-Msgid-Bugs-To: gastonolivares@gmail.com\n"
-"POT-Creation-Date: 2026-07-17 18:34-0400\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-07-24 13:33-0400\n"
 "PO-Revision-Date: 2026-02-04 21:05-0300\n"
 "Last-Translator: Gastón Olivares <gastonolivares@gmail.com>\n"
-"Language: en\n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: app/decorators.py:24 app/decorators.py:35
+#: app/decorators.py:58 app/decorators.py:69
 msgid "You must log in to access this page."
 msgstr ""
 
-#: app/blueprints/works.py:3130 app/decorators.py:39
+#: app/blueprints/works.py:3847 app/decorators.py:73
 msgid "Access restricted to administrators."
 msgstr ""
 
-#: app/decorators.py:51
+#: app/decorators.py:86 app/decorators.py:111
 msgid "Your session has expired or you are not logged in."
 msgstr ""
 
-#: app/decorators.py:56
+#: app/decorators.py:91
 msgid "You do not have the required permissions to access this section."
 msgstr ""
 
-#: app/decorators.py:68
+#: app/blueprints/works.py:3813 app/blueprints/works.py:4045
+#: app/blueprints/works.py:4184 app/blueprints/works.py:4325
+#: app/blueprints/works.py:4366 app/blueprints/works.py:4409
+#: app/decorators.py:125
+msgid "No active institution context found."
+msgstr ""
+
+#: app/decorators.py:139
 msgid "This action requires administrator or manager permissions."
 msgstr ""
 
@@ -84,7 +91,7 @@ msgid "Primary"
 msgstr ""
 
 #: app/helpers.py:121 app/helpers.py:122
-#: app/templates/works/openalex_global.html:650
+#: app/templates/works/openalex_global.html:1028
 msgid "Country"
 msgstr ""
 
@@ -102,7 +109,7 @@ msgstr ""
 msgid "Value"
 msgstr ""
 
-#: app/blueprints/admin.py:656 app/helpers.py:140
+#: app/blueprints/admin.py:664 app/helpers.py:140
 msgid "URL"
 msgstr ""
 
@@ -149,7 +156,7 @@ msgstr ""
 #: app/templates/duplicates/index.html:296
 #: app/templates/main/orcid_profile.html:233
 #: app/templates/works/cache_status.html:486
-#: app/templates/works/openalex_global.html:649
+#: app/templates/works/openalex_global.html:1027
 msgid "Institution"
 msgstr ""
 
@@ -167,7 +174,9 @@ msgid "Grant ID"
 msgstr ""
 
 #: app/blueprints/export.py:192 app/helpers.py:212 app/helpers.py:254
-#: app/templates/works/openalex_analytics.html:378
+#: app/templates/works/openalex_analytics.html:662
+#: app/templates/works/openalex_analytics.html:717
+#: app/templates/works/openalex_global.html:823
 #: app/templates/works/openalex_works.html:83
 msgid "Year"
 msgstr ""
@@ -242,19 +251,16 @@ msgid "Full institutional synchronization"
 msgstr ""
 
 #: app/blueprints/admin.py:226
-#, fuzzy
 msgid "All-institution synchronization"
-msgstr "No institutions available for synchronization."
+msgstr ""
 
 #: app/blueprints/admin.py:227
-#, fuzzy
 msgid "Institutional OpenAlex synchronization"
-msgstr "Invalid OpenAlex synchronization mode."
+msgstr ""
 
 #: app/blueprints/admin.py:228
-#, fuzzy
 msgid "System-wide OpenAlex synchronization"
-msgstr "Invalid OpenAlex synchronization mode."
+msgstr ""
 
 #: app/blueprints/admin.py:229
 msgid "Member API works synchronization"
@@ -277,11 +283,10 @@ msgid "Background operation"
 msgstr ""
 
 #: app/blueprints/admin.py:235
-#, fuzzy
 msgid "Unknown job"
-msgstr "Unknown"
+msgstr ""
 
-#: app/blueprints/admin.py:240 app/blueprints/main.py:842
+#: app/blueprints/admin.py:243 app/blueprints/main.py:842
 #: app/templates/duplicates/index.html:147 app/templates/layout/sidebar.html:49
 #: app/templates/main/metrics.html:119 app/templates/main/orcid_profile.html:41
 #: app/templates/main/researcher_list.html:14
@@ -295,12 +300,12 @@ msgstr "Unknown"
 msgid "Researchers"
 msgstr ""
 
-#: app/blueprints/admin.py:241 app/templates/duplicates/index.html:177
+#: app/blueprints/admin.py:244 app/templates/duplicates/index.html:177
 #: app/templates/duplicates/index.html:296 app/templates/main/index.html:283
 msgid "Profiles"
 msgstr "Profiles"
 
-#: app/blueprints/admin.py:242 app/templates/works/cache_status.html:48
+#: app/blueprints/admin.py:245 app/templates/works/cache_status.html:48
 #: app/templates/works/cache_status.html:53
 #: app/templates/works/cache_status.html:121
 #: app/templates/works/cache_status.html:395
@@ -309,7 +314,7 @@ msgstr "Profiles"
 msgid "Scholarly works"
 msgstr ""
 
-#: app/blueprints/admin.py:243 app/templates/works/cache_status.html:61
+#: app/blueprints/admin.py:246 app/templates/works/cache_status.html:61
 #: app/templates/works/cache_status.html:66
 #: app/templates/works/cache_status.html:130
 #: app/templates/works/cache_status.html:437
@@ -318,293 +323,291 @@ msgstr ""
 msgid "Funding and grants"
 msgstr ""
 
-#: app/blueprints/admin.py:244
+#: app/blueprints/admin.py:247
 msgid "Canonical works"
 msgstr ""
 
-#: app/blueprints/admin.py:245 app/templates/layout/sidebar.html:105
+#: app/blueprints/admin.py:248 app/templates/layout/sidebar.html:105
 #: app/templates/main/index.html:295 app/templates/works/openalex_works.html:7
 msgid "OpenAlex enrichment"
 msgstr ""
 
-#: app/blueprints/admin.py:246
+#: app/blueprints/admin.py:249
 msgid "Researcher relationships"
 msgstr ""
 
-#: app/blueprints/admin.py:250
-#, fuzzy, python-format
+#: app/blueprints/admin.py:258
+#, python-format
 msgid "Institution %(ror)s"
-msgstr "All Institutions"
+msgstr ""
 
-#: app/blueprints/admin.py:251
+#: app/blueprints/admin.py:259
 msgid "Unspecified step"
 msgstr ""
 
-#: app/blueprints/admin.py:256
-#, fuzzy
+#: app/blueprints/admin.py:264
 msgid "candidates"
-msgstr "Candidates"
+msgstr ""
 
-#: app/blueprints/admin.py:257
-#, fuzzy
+#: app/blueprints/admin.py:265
 msgid "institutions"
-msgstr "All Institutions"
+msgstr ""
 
-#: app/blueprints/admin.py:258
-#, fuzzy
+#: app/blueprints/admin.py:266
 msgid "records"
-msgstr "ROR ID"
+msgstr ""
 
-#: app/blueprints/admin.py:259 app/blueprints/admin.py:261
+#: app/blueprints/admin.py:267 app/blueprints/admin.py:269
 #: app/templates/main/orcid_profile.html:93
 msgid "items"
 msgstr ""
 
-#: app/blueprints/admin.py:269
+#: app/blueprints/admin.py:277
 msgid "Background job started."
 msgstr ""
 
-#: app/blueprints/admin.py:270
+#: app/blueprints/admin.py:278
 msgid "Background job completed."
 msgstr ""
 
-#: app/blueprints/admin.py:271
+#: app/blueprints/admin.py:279
 msgid "Background job completed with errors."
 msgstr ""
 
-#: app/blueprints/admin.py:272
+#: app/blueprints/admin.py:280
 msgid "Background job failed."
 msgstr ""
 
-#: app/blueprints/admin.py:275
+#: app/blueprints/admin.py:283
 msgid "OpenAlex candidate processing is in progress."
 msgstr ""
 
-#: app/blueprints/admin.py:277
-#, fuzzy
+#: app/blueprints/admin.py:285
 msgid "Institution processing is in progress."
-msgstr "Institution Association Rates"
+msgstr ""
 
-#: app/blueprints/admin.py:290
+#: app/blueprints/admin.py:298
 msgid "You need admin or manager role to access this section."
 msgstr ""
 
-#: app/blueprints/admin.py:535 app/blueprints/admin.py:705
+#: app/blueprints/admin.py:543 app/blueprints/admin.py:713
 msgid "The \"Username\" field is required."
 msgstr ""
 
-#: app/blueprints/admin.py:560
+#: app/blueprints/admin.py:568
 #, python-format
 msgid "GRID ID '%(g)s' automatically found for ROR %(r)s."
 msgstr ""
 
-#: app/blueprints/admin.py:564 app/blueprints/admin.py:713
+#: app/blueprints/admin.py:572 app/blueprints/admin.py:721
 #, python-format
 msgid "A user with username \"%(u)s\" already exists."
 msgstr ""
 
-#: app/blueprints/admin.py:591
+#: app/blueprints/admin.py:599
 #, python-format
 msgid "User \"%(u)s\" created%(r)s. Password: %(p)s"
 msgstr ""
 
-#: app/blueprints/admin.py:596
+#: app/blueprints/admin.py:604
 msgid "Could not create user. Check logs."
 msgstr ""
 
-#: app/blueprints/admin.py:618
+#: app/blueprints/admin.py:626
 #, python-format
 msgid "Password reset for %(u)s. New temporary: %(p)s"
 msgstr ""
 
-#: app/blueprints/admin.py:622
+#: app/blueprints/admin.py:630
 msgid "Could not reset password."
 msgstr ""
 
-#: app/blueprints/admin.py:639
+#: app/blueprints/admin.py:647
 msgid "User does not have a valid email."
 msgstr ""
 
-#: app/blueprints/admin.py:650
+#: app/blueprints/admin.py:658
 msgid "Access to Data ORCID-Chile (credentials)"
 msgstr ""
 
-#: app/blueprints/admin.py:654
+#: app/blueprints/admin.py:662
 msgid "Hello"
 msgstr ""
 
-#: app/blueprints/admin.py:655
+#: app/blueprints/admin.py:663
 msgid ""
 "Your access credentials for <strong>Data ORCID-Chile</strong> have been "
 "updated:"
 msgstr ""
 
-#: app/blueprints/admin.py:657 app/templates/admin/_user_modals.html:25
+#: app/blueprints/admin.py:665 app/templates/admin/_user_modals.html:25
 #: app/templates/admin/_user_modals.html:173
 msgid "Username"
 msgstr ""
 
-#: app/blueprints/admin.py:658
+#: app/blueprints/admin.py:666
 msgid "Temporary Password"
 msgstr ""
 
-#: app/blueprints/admin.py:659
+#: app/blueprints/admin.py:667
 msgid "For security reasons, please change your password upon login."
 msgstr ""
 
-#: app/blueprints/admin.py:682
+#: app/blueprints/admin.py:690
 #, python-format
 msgid "Credentials sent to %(r)s."
 msgstr ""
 
-#: app/blueprints/admin.py:685
+#: app/blueprints/admin.py:693
 msgid "Could not send email."
 msgstr ""
 
-#: app/blueprints/admin.py:733
+#: app/blueprints/admin.py:741
 msgid "You cannot remove admin role from your own account."
 msgstr ""
 
-#: app/blueprints/admin.py:741
+#: app/blueprints/admin.py:749
 #, python-format
 msgid "GRID ID '%(g)s' automatically found."
 msgstr ""
 
-#: app/blueprints/admin.py:762
+#: app/blueprints/admin.py:770
 #, python-format
 msgid "User \"%(u)s\" updated successfully."
 msgstr ""
 
-#: app/blueprints/admin.py:766
+#: app/blueprints/admin.py:774
 msgid "Could not update user."
 msgstr ""
 
-#: app/blueprints/admin.py:782
+#: app/blueprints/admin.py:790
 msgid "You cannot delete your own account."
 msgstr ""
 
-#: app/blueprints/admin.py:787
+#: app/blueprints/admin.py:795
 msgid "You cannot delete the main admin account."
 msgstr ""
 
-#: app/blueprints/admin.py:793
+#: app/blueprints/admin.py:801
 msgid "User deleted successfully."
 msgstr ""
 
-#: app/blueprints/admin.py:797
+#: app/blueprints/admin.py:805
 msgid "Could not delete user."
 msgstr ""
 
-#: app/blueprints/admin.py:813
+#: app/blueprints/admin.py:821
 msgid "Action not allowed"
 msgstr ""
 
-#: app/blueprints/admin.py:818
+#: app/blueprints/admin.py:826
 msgid "Invalid ROR ID."
 msgstr "Invalid ROR ID."
 
-#: app/blueprints/admin.py:823 app/blueprints/works.py:3242
-#: app/blueprints/works.py:4109
+#: app/blueprints/admin.py:831 app/blueprints/works.py:3959
+#: app/blueprints/works.py:4863
 msgid "Institution not found."
 msgstr "Institution not found."
 
-#: app/blueprints/admin.py:830
+#: app/blueprints/admin.py:838
 #, python-format
 msgid "Active institution changed to: %(r)s"
 msgstr ""
 
-#: app/blueprints/admin.py:1025 app/templates/admin/jobs.html:82
+#: app/blueprints/admin.py:1033 app/templates/admin/jobs.html:82
 msgid "System-wide"
 msgstr ""
 
-#: app/blueprints/admin.py:1026
+#: app/blueprints/admin.py:1034
 msgid "System process"
 msgstr ""
 
-#: app/blueprints/admin.py:1039
+#: app/blueprints/admin.py:1050
 msgid "No steps recorded"
 msgstr ""
 
-#: app/blueprints/admin.py:1064 app/blueprints/admin.py:1274
+#: app/blueprints/admin.py:1076 app/blueprints/admin.py:1286
 #: app/templates/admin/jobs.html:96 app/templates/admin/statistics.html:108
 msgid "Last 24 hours"
 msgstr ""
 
-#: app/blueprints/admin.py:1065 app/blueprints/admin.py:1275
+#: app/blueprints/admin.py:1077 app/blueprints/admin.py:1287
 #: app/templates/admin/jobs.html:97 app/templates/admin/statistics.html:109
 msgid "Last 7 days"
 msgstr ""
 
-#: app/blueprints/admin.py:1066 app/blueprints/admin.py:1276
+#: app/blueprints/admin.py:1078 app/blueprints/admin.py:1288
 #: app/templates/admin/jobs.html:98 app/templates/admin/statistics.html:110
 msgid "Last 30 days"
 msgstr ""
 
-#: app/blueprints/admin.py:1067 app/blueprints/admin.py:1277
+#: app/blueprints/admin.py:1079 app/blueprints/admin.py:1289
 #: app/templates/admin/jobs.html:99 app/templates/admin/statistics.html:111
 msgid "All time"
 msgstr ""
 
-#: app/blueprints/admin.py:1068 app/blueprints/admin.py:1278
+#: app/blueprints/admin.py:1080 app/blueprints/admin.py:1290
 #: app/templates/admin/jobs.html:100 app/templates/admin/statistics.html:112
 msgid "Custom range"
 msgstr ""
 
-#: app/blueprints/admin.py:1219 app/templates/admin/statistics.html:66
+#: app/blueprints/admin.py:1231 app/templates/admin/statistics.html:66
 msgid "P95 latency"
 msgstr ""
 
-#: app/blueprints/admin.py:1224 app/blueprints/admin.py:1229
+#: app/blueprints/admin.py:1236 app/blueprints/admin.py:1241
 msgid "Average latency"
 msgstr ""
 
-#: app/blueprints/admin.py:1281 app/templates/admin/statistics.html:119
+#: app/blueprints/admin.py:1293 app/templates/admin/statistics.html:119
 msgid "Interactive requests"
 msgstr ""
 
-#: app/blueprints/admin.py:1282 app/templates/admin/statistics.html:120
+#: app/blueprints/admin.py:1294 app/templates/admin/statistics.html:120
 #: app/templates/admin/statistics.html:191
 msgid "Background operations"
 msgstr ""
 
-#: app/blueprints/admin.py:1283 app/templates/admin/statistics.html:121
+#: app/blueprints/admin.py:1295 app/templates/admin/statistics.html:121
 msgid "All requests"
 msgstr ""
 
-#: app/blueprints/admin.py:1289 app/templates/admin/jobs.html:52
+#: app/blueprints/admin.py:1301 app/templates/admin/jobs.html:52
 #: app/templates/duplicates/index.html:98
 #: app/templates/main/researcher_list.html:64
+#: app/templates/works/openalex_analytics.html:136
+#: app/templates/works/openalex_global.html:93
 msgid "Search"
 msgstr ""
 
-#: app/blueprints/admin.py:1295 app/templates/admin/statistics.html:96
+#: app/blueprints/admin.py:1307 app/templates/admin/statistics.html:96
 #: app/templates/admin/statistics.html:252 app/templates/admin/users.html:239
 #: app/templates/admin/users.html:266 app/templates/admin/users.html:297
 #: app/templates/auth/_account_summary.html:16
-#: app/templates/help/index.html:299
+#: app/templates/help/index.html:316
 msgid "User"
 msgstr ""
 
-#: app/blueprints/admin.py:1301 app/templates/admin/statistics.html:126
+#: app/blueprints/admin.py:1313 app/templates/admin/statistics.html:126
 #: app/templates/admin/statistics.html:254
 msgid "Method"
 msgstr ""
 
-#: app/blueprints/admin.py:1307 app/templates/admin/statistics.html:139
+#: app/blueprints/admin.py:1319 app/templates/admin/statistics.html:139
 msgid "Success"
 msgstr "Success"
 
-#: app/blueprints/admin.py:1308 app/templates/admin/statistics.html:140
+#: app/blueprints/admin.py:1320 app/templates/admin/statistics.html:140
 msgid "Redirects"
 msgstr "Redirects"
 
-#: app/blueprints/admin.py:1309 app/blueprints/works.py:1880
+#: app/blueprints/admin.py:1321 app/blueprints/works.py:2406
 #: app/templates/admin/statistics.html:141
 #: app/templates/admin/statistics.html:426
 msgid "Errors"
 msgstr "Errors"
 
-#: app/blueprints/admin.py:1312 app/templates/admin/_jobs_table.html:36
+#: app/blueprints/admin.py:1324 app/templates/admin/_jobs_table.html:36
 #: app/templates/admin/jobs.html:59 app/templates/admin/statistics.html:136
 #: app/templates/admin/statistics.html:255
 #: app/templates/demo/authorized.html:16 app/templates/demo/projects.html:28
@@ -616,11 +619,11 @@ msgstr "Errors"
 msgid "Status"
 msgstr ""
 
-#: app/blueprints/admin.py:1318 app/templates/admin/users.html:241
+#: app/blueprints/admin.py:1330 app/templates/admin/users.html:241
 msgid "Access"
 msgstr ""
 
-#: app/blueprints/admin.py:1319
+#: app/blueprints/admin.py:1331
 msgid "Including anonymous"
 msgstr ""
 
@@ -753,8 +756,8 @@ msgstr ""
 msgid "Internal database error while saving settings."
 msgstr ""
 
-#: app/blueprints/cache_control.py:120 app/blueprints/works.py:3091
-#: app/blueprints/works.py:3603
+#: app/blueprints/cache_control.py:120 app/blueprints/works.py:3808
+#: app/blueprints/works.py:4320
 msgid "You do not have sufficient permissions to perform this action."
 msgstr ""
 
@@ -778,7 +781,8 @@ msgstr ""
 
 #: app/blueprints/duplicates.py:33 app/blueprints/duplicates.py:99
 #: app/blueprints/duplicates.py:120 app/blueprints/duplicates.py:135
-msgid "No active ROR context found. Please log in again or select an institution."
+msgid ""
+"No active ROR context found. Please log in again or select an institution."
 msgstr ""
 
 #: app/blueprints/duplicates.py:124
@@ -819,16 +823,16 @@ msgid "Duplicate case updated."
 msgstr "Duplicate case updated."
 
 #: app/blueprints/duplicates.py:262 app/blueprints/main.py:830
-#: app/templates/works/openalex_global.html:624
-#: app/templates/works/openalex_global.html:755
+#: app/templates/works/openalex_global.html:1002
+#: app/templates/works/openalex_global.html:1133
 msgid "Yes"
 msgstr "Yes"
 
 #: app/blueprints/duplicates.py:262 app/blueprints/main.py:830
-#: app/templates/help/index.html:301 app/templates/help/index.html:303
-#: app/templates/help/index.html:304
-#: app/templates/works/openalex_global.html:624
-#: app/templates/works/openalex_global.html:755
+#: app/templates/help/index.html:318 app/templates/help/index.html:319
+#: app/templates/help/index.html:321 app/templates/help/index.html:322
+#: app/templates/works/openalex_global.html:1002
+#: app/templates/works/openalex_global.html:1133
 msgid "No"
 msgstr "No"
 
@@ -844,7 +848,7 @@ msgstr ""
 msgid "ORCID Activity"
 msgstr "ORCID Activity"
 
-#: app/blueprints/duplicates.py:290 app/templates/components/ui.html:50
+#: app/blueprints/duplicates.py:290 app/templates/components/ui.html:79
 #: app/templates/duplicates/index.html:82
 msgid "Methodology"
 msgstr "Methodology"
@@ -1009,11 +1013,11 @@ msgstr "Population"
 
 #: app/blueprints/duplicates.py:405
 msgid ""
-"The analysis uses ORCID iDs found in the local works and funding caches "
-"for the selected institution scope."
+"The analysis uses ORCID iDs found in the local works and funding caches for "
+"the selected institution scope."
 msgstr ""
-"The analysis uses ORCID iDs found in the local works and funding caches "
-"for the selected institution scope."
+"The analysis uses ORCID iDs found in the local works and funding caches for "
+"the selected institution scope."
 
 #: app/blueprints/duplicates.py:408
 msgid "Candidate detection"
@@ -1042,8 +1046,8 @@ msgstr "Institutional review"
 #: app/blueprints/duplicates.py:417
 msgid ""
 "Staff can dismiss a false positive or prepare and record a notice to the "
-"researcher. A dismissal remains in the history after the candidate "
-"analysis is refreshed."
+"researcher. A dismissal remains in the history after the candidate analysis "
+"is refreshed."
 msgstr ""
 
 #: app/blueprints/duplicates.py:420
@@ -1053,8 +1057,8 @@ msgstr "Scope and limitation"
 #: app/blueprints/duplicates.py:421
 msgid ""
 "The system does not confirm identity, choose a primary ORCID iD, merge "
-"records, or send changes to ORCID. The researcher and ORCID are "
-"responsible for any record unification."
+"records, or send changes to ORCID. The researcher and ORCID are responsible "
+"for any record unification."
 msgstr ""
 
 #: app/blueprints/duplicates.py:428
@@ -1132,21 +1136,20 @@ msgstr "Shared DOI(s): %(dois)s"
 msgid ""
 "Hello %(name)s,\n"
 "\n"
-"During an institutional metadata review at %(institution)s, we identified"
-" more than one ORCID iD that may refer to you:\n"
+"During an institutional metadata review at %(institution)s, we identified "
+"more than one ORCID iD that may refer to you:\n"
 "%(profiles)s\n"
 "\n"
 "Evidence available for review:\n"
 "%(evidence)s\n"
 "\n"
-"This is an algorithmic candidate, not a confirmation that the records "
-"belong to the same person. Please review both ORCID records. If they are "
-"yours, contact ORCID Support to request guidance on unifying them. If "
-"they belong to different people, please let us know so we can dismiss the"
-" match.\n"
+"This is an algorithmic candidate, not a confirmation that the records belong "
+"to the same person. Please review both ORCID records. If they are yours, "
+"contact ORCID Support to request guidance on unifying them. If they belong "
+"to different people, please let us know so we can dismiss the match.\n"
 "\n"
-"The institution cannot merge ORCID records or choose a primary ORCID iD "
-"on your behalf."
+"The institution cannot merge ORCID records or choose a primary ORCID iD on "
+"your behalf."
 msgstr ""
 
 #: app/blueprints/duplicates.py:482
@@ -1267,8 +1270,8 @@ msgid "Not available"
 msgstr "Not available"
 
 #: app/blueprints/main.py:999 app/blueprints/main.py:1011
-#: app/blueprints/works.py:1684 app/blueprints/works.py:1691
-#: app/blueprints/works.py:2149
+#: app/blueprints/works.py:2166 app/blueprints/works.py:2185
+#: app/blueprints/works.py:2701
 msgid "Unknown type"
 msgstr "Unknown type"
 
@@ -1292,265 +1295,291 @@ msgstr ""
 msgid "Could not retrieve the list of available files."
 msgstr ""
 
-#: app/blueprints/works.py:1685
+#: app/blueprints/works.py:1519 app/blueprints/works.py:2526
+#: app/templates/works/openalex_analytics.html:1253
+msgid "Diamond"
+msgstr ""
+
+#: app/blueprints/works.py:1520 app/blueprints/works.py:2526
+#: app/templates/works/openalex_analytics.html:1261
+msgid "Green"
+msgstr "Green"
+
+#: app/blueprints/works.py:1521
+msgid "Gold"
+msgstr ""
+
+#: app/blueprints/works.py:1522
+msgid "Hybrid"
+msgstr ""
+
+#: app/blueprints/works.py:1523
+msgid "Bronze"
+msgstr ""
+
+#: app/blueprints/works.py:1524 app/blueprints/works.py:3504
+#: app/templates/works/openalex_analytics.html:1243
+#: app/templates/works/openalex_global.html:1288
+#: app/templates/works/openalex_works.html:125
+msgid "Closed"
+msgstr "Closed"
+
+#: app/blueprints/works.py:1527 app/blueprints/works.py:2167
+#: app/blueprints/works.py:2169 app/blueprints/works.py:2170
 msgid "Unknown OA status"
 msgstr "Unknown OA status"
 
-#: app/blueprints/works.py:1686
-msgid "Unknown field"
-msgstr "Unknown field"
-
-#: app/blueprints/works.py:1687
-msgid "Unknown domain"
-msgstr "Unknown domain"
-
-#: app/blueprints/works.py:1688 app/templates/works/openalex_analytics.html:378
-msgid "Unknown source"
-msgstr "Unknown source"
-
-#: app/blueprints/works.py:1689
+#: app/blueprints/works.py:1535 app/blueprints/works.py:2177
+#: app/blueprints/works.py:2179 app/blueprints/works.py:2180
 msgid "Unknown language"
 msgstr "Unknown language"
 
-#: app/blueprints/works.py:1736
+#: app/blueprints/works.py:1602 app/blueprints/works.py:2176
+#: app/templates/works/openalex_analytics.html:671
+#: app/templates/works/openalex_analytics.html:717
+#: app/templates/works/openalex_global.html:830
+msgid "Unknown source"
+msgstr "Unknown source"
+
+#: app/blueprints/works.py:2174
+msgid "Unknown field"
+msgstr "Unknown field"
+
+#: app/blueprints/works.py:2175
+msgid "Unknown domain"
+msgstr "Unknown domain"
+
+#: app/blueprints/works.py:2262
 msgid "Unknown country"
 msgstr "Unknown country"
 
-#: app/blueprints/works.py:1878 app/templates/works/openalex_works.html:26
+#: app/blueprints/works.py:2404 app/templates/works/openalex_works.html:26
 #: app/templates/works/openalex_works.html:58
 msgid "Matched"
 msgstr "Matched"
 
-#: app/blueprints/works.py:1879 app/templates/works/openalex_works.html:27
+#: app/blueprints/works.py:2405 app/templates/works/openalex_works.html:27
 msgid "Not found"
 msgstr "Not found"
 
-#: app/blueprints/works.py:1881 app/templates/admin/_jobs_table.html:3
+#: app/blueprints/works.py:2407 app/templates/admin/_jobs_table.html:3
 #: app/templates/demo/authorized.html:30
 #: app/templates/works/data_quality.html:117
 #: app/templates/works/openalex_works.html:30
 msgid "Pending"
 msgstr "Pending"
 
-#: app/blueprints/works.py:1886 app/blueprints/works.py:1965
-#: app/templates/works/openalex_analytics.html:835
+#: app/blueprints/works.py:2412 app/blueprints/works.py:2504
+#: app/templates/works/openalex_analytics.html:1191
 msgid "Selected institution"
 msgstr "Selected institution"
 
-#: app/blueprints/works.py:1887
+#: app/blueprints/works.py:2413
 msgid "Other Chile affiliation"
 msgstr "Other Chile affiliation"
 
-#: app/blueprints/works.py:1888
+#: app/blueprints/works.py:2414
 msgid "No Chile affiliation"
 msgstr "No Chile affiliation"
 
-#: app/blueprints/works.py:1947 app/templates/works/openalex_analytics.html:322
+#: app/blueprints/works.py:2479 app/templates/works/openalex_analytics.html:482
 msgid "Filtered OpenAlex Articles"
 msgstr "Filtered OpenAlex Articles"
 
-#: app/blueprints/works.py:1948 app/templates/works/openalex_analytics.html:326
+#: app/blueprints/works.py:2480 app/templates/works/openalex_analytics.html:486
 msgid "Associated with Selected Institution"
 msgstr "Associated with Selected Institution"
 
-#: app/blueprints/works.py:1949 app/templates/works/openalex_analytics.html:330
-#: app/templates/works/openalex_global.html:350
+#: app/blueprints/works.py:2481 app/templates/works/openalex_analytics.html:490
+#: app/templates/works/openalex_global.html:423
 msgid "Associated with Chile"
 msgstr "Associated with Chile"
 
-#: app/blueprints/works.py:1950
+#: app/blueprints/works.py:2482
 msgid "Selected Institution + International"
 msgstr "Selected Institution + International"
 
-#: app/blueprints/works.py:1951 app/blueprints/works.py:2791
-#: app/templates/works/openalex_analytics.html:249
-#: app/templates/works/openalex_analytics.html:878
-#: app/templates/works/openalex_global.html:326
-#: app/templates/works/openalex_global.html:550
-#: app/templates/works/openalex_global.html:859
+#: app/blueprints/works.py:2483 app/blueprints/works.py:3504
+#: app/templates/works/openalex_analytics.html:405
+#: app/templates/works/openalex_analytics.html:1235
+#: app/templates/works/openalex_global.html:399
+#: app/templates/works/openalex_global.html:928
+#: app/templates/works/openalex_global.html:1280
 #: app/templates/works/openalex_works.html:151
 msgid "Open Access"
 msgstr "Open Access"
 
-#: app/blueprints/works.py:1952 app/templates/works/openalex_global.html:351
+#: app/blueprints/works.py:2484 app/templates/works/openalex_global.html:424
+#: app/templates/works/openalex_global.html:773
 msgid "Total Citations"
 msgstr "Total Citations"
 
-#: app/blueprints/works.py:1953
+#: app/blueprints/works.py:2485
 msgid "Selected Institution Articles"
 msgstr "Selected Institution Articles"
 
-#: app/blueprints/works.py:1954
+#: app/blueprints/works.py:2486
 msgid "Chile-Affiliated Articles"
 msgstr "Chile-Affiliated Articles"
 
-#: app/blueprints/works.py:1955 app/templates/works/openalex_analytics.html:334
+#: app/blueprints/works.py:2487 app/templates/works/openalex_analytics.html:494
 msgid "International Collaboration"
 msgstr "International Collaboration"
 
-#: app/blueprints/works.py:1956 app/templates/works/openalex_global.html:599
-#: app/templates/works/openalex_global.html:656
-#: app/templates/works/openalex_global.html:724
+#: app/blueprints/works.py:2488 app/templates/works/openalex_analytics.html:609
+#: app/templates/works/openalex_global.html:722
+#: app/templates/works/openalex_global.html:977
+#: app/templates/works/openalex_global.html:1034
+#: app/templates/works/openalex_global.html:1102
 msgid "Avg. Citations"
 msgstr "Avg. Citations"
 
-#: app/blueprints/works.py:1957 app/templates/works/openalex_global.html:552
-#: app/templates/works/openalex_global.html:600
-#: app/templates/works/openalex_global.html:657
-#: app/templates/works/openalex_global.html:725
+#: app/blueprints/works.py:2489 app/templates/works/openalex_global.html:930
+#: app/templates/works/openalex_global.html:978
+#: app/templates/works/openalex_global.html:1035
+#: app/templates/works/openalex_global.html:1103
 msgid "Avg. FWCI"
 msgstr "Avg. FWCI"
 
-#: app/blueprints/works.py:1958
+#: app/blueprints/works.py:2490
 msgid "OpenAlex Institutions"
 msgstr "OpenAlex Institutions"
 
-#: app/blueprints/works.py:1966
+#: app/blueprints/works.py:2505
 msgid "Any Chile affiliation"
 msgstr "Any Chile affiliation"
 
-#: app/blueprints/works.py:1967
+#: app/blueprints/works.py:2506
 msgid "International collaboration"
 msgstr "International collaboration"
 
-#: app/blueprints/works.py:1968
+#: app/blueprints/works.py:2507
 msgid "Not associated with selected institution"
 msgstr "Not associated with selected institution"
 
-#: app/blueprints/works.py:2000 app/blueprints/works.py:2005
-#: app/blueprints/works.py:2472
+#: app/blueprints/works.py:2543 app/blueprints/works.py:2548
+#: app/blueprints/works.py:3182
 msgid "Unknown institution"
 msgstr "Unknown institution"
 
-#: app/blueprints/works.py:2010 app/blueprints/works.py:2286
-#: app/blueprints/works.py:2392 app/blueprints/works.py:2559
+#: app/blueprints/works.py:2553 app/blueprints/works.py:2996
+#: app/blueprints/works.py:3102 app/blueprints/works.py:3269
 msgid "Unknown author"
 msgstr "Unknown author"
 
-#: app/blueprints/works.py:2475
+#: app/blueprints/works.py:3185
 msgid "Unknown"
 msgstr "Unknown"
 
-#: app/blueprints/works.py:2791 app/templates/works/openalex_analytics.html:886
-#: app/templates/works/openalex_global.html:867
-#: app/templates/works/openalex_works.html:125
-msgid "Closed"
-msgstr "Closed"
-
-#: app/blueprints/works.py:3096 app/blueprints/works.py:3328
-#: app/blueprints/works.py:3467 app/blueprints/works.py:3608
-#: app/blueprints/works.py:3649 app/blueprints/works.py:3692
-#: app/blueprints/works.py:3741 app/blueprints/works.py:3794
-msgid "No active institution context found."
-msgstr ""
-
-#: app/blueprints/works.py:3118
+#: app/blueprints/works.py:3835
 #, python-format
 msgid "Full synchronization started in the background. Job ID: %(job)s"
 msgstr ""
 
-#: app/blueprints/works.py:3137
+#: app/blueprints/works.py:3854
 msgid "No institutions available for synchronization."
 msgstr "No institutions available for synchronization."
 
-#: app/blueprints/works.py:3162
+#: app/blueprints/works.py:3879
 #, python-format
 msgid ""
 "All-institution synchronization started in the background for %(count)s "
 "institutions. Job ID: %(job)s"
 msgstr ""
 
-#: app/blueprints/works.py:3260
+#: app/blueprints/works.py:3977
 #, python-format
 msgid ""
 "Full cache refresh started for %(institution)s. Researchers, profiles, "
-"works, funding, and OpenAlex will be synchronized in the background. Job "
-"ID: %(job)s"
+"works, funding, and OpenAlex will be synchronized in the background. Job ID: "
+"%(job)s"
 msgstr ""
 "Full cache refresh started for %(institution)s. Researchers, profiles, "
-"works, funding, and OpenAlex will be synchronized in the background. Job "
-"ID: %(job)s"
+"works, funding, and OpenAlex will be synchronized in the background. Job ID: "
+"%(job)s"
 
-#: app/blueprints/works.py:3294
+#: app/blueprints/works.py:4011
 msgid "Funding cache updated."
 msgstr ""
 
-#: app/blueprints/works.py:3299
+#: app/blueprints/works.py:4016
 msgid "Error updating fundings."
 msgstr ""
 
-#: app/blueprints/works.py:3313
+#: app/blueprints/works.py:4030
 #, python-format
 msgid "Profiles updated: %s"
 msgstr ""
 
-#: app/blueprints/works.py:3315
+#: app/blueprints/works.py:4032
 msgid "Error updating profiles"
 msgstr ""
 
-#: app/blueprints/works.py:3499
+#: app/blueprints/works.py:4216
 #, python-format
 msgid "Researcher relationship backfill started. Job ID: %(job)s"
 msgstr ""
 
-#: app/blueprints/works.py:3522
+#: app/blueprints/works.py:4239
 #, python-format
 msgid "Canonical work rebuild started. Job ID: %(job)s"
 msgstr ""
 
-#: app/blueprints/works.py:3613 app/blueprints/works.py:3631
+#: app/blueprints/works.py:4330 app/blueprints/works.py:4348
 msgid "Invalid OpenAlex synchronization mode."
 msgstr "Invalid OpenAlex synchronization mode."
 
-#: app/blueprints/works.py:3618
-#, python-format
-msgid "OpenAlex synchronization was queued or is already running. Job ID: %(job)s"
-msgstr "OpenAlex synchronization was queued or is already running. Job ID: %(job)s"
-
-#: app/blueprints/works.py:3636
+#: app/blueprints/works.py:4335
 #, python-format
 msgid ""
-"System-wide OpenAlex synchronization was queued or is already running. "
-"Job ID: %(job)s"
+"OpenAlex synchronization was queued or is already running. Job ID: %(job)s"
 msgstr ""
-"System-wide OpenAlex synchronization was queued or is already running. "
-"Job ID: %(job)s"
+"OpenAlex synchronization was queued or is already running. Job ID: %(job)s"
 
-#: app/blueprints/works.py:3840 app/blueprints/works.py:3920
+#: app/blueprints/works.py:4353
+#, python-format
+msgid ""
+"System-wide OpenAlex synchronization was queued or is already running. Job "
+"ID: %(job)s"
+msgstr ""
+"System-wide OpenAlex synchronization was queued or is already running. Job "
+"ID: %(job)s"
+
+#: app/blueprints/works.py:4579 app/blueprints/works.py:4665
 msgid "Invalid export table."
 msgstr "Invalid export table."
 
-#: app/blueprints/works.py:4011 app/blueprints/works.py:4115
-#: app/blueprints/works.py:4208
+#: app/blueprints/works.py:4765 app/blueprints/works.py:4869
+#: app/blueprints/works.py:4962
 msgid "The publication cache is currently empty."
 msgstr ""
 
-#: app/blueprints/works.py:4034 app/blueprints/works.py:4126
-#: app/blueprints/works.py:4231
+#: app/blueprints/works.py:4788 app/blueprints/works.py:4880
+#: app/blueprints/works.py:4985
 msgid "The funding cache is empty."
 msgstr ""
 
-#: app/blueprints/works.py:4053 app/blueprints/works.py:4137
+#: app/blueprints/works.py:4807 app/blueprints/works.py:4891
 msgid "No researcher association data available."
 msgstr ""
 
-#: app/blueprints/works.py:4073 app/templates/works/cache_status.html:565
+#: app/blueprints/works.py:4827 app/templates/works/cache_status.html:565
 msgid "No institutional cache summary is available."
 msgstr ""
 
-#: app/blueprints/works.py:4169
+#: app/blueprints/works.py:4923
 msgid "No OpenAlex cache data available."
 msgstr ""
 
-#: app/blueprints/works.py:4176
+#: app/blueprints/works.py:4930
 msgid "Invalid dataset type."
 msgstr ""
 
-#: app/blueprints/works.py:4186
+#: app/blueprints/works.py:4940
 msgid "No researcher cache data available."
 msgstr ""
 
-#: app/blueprints/works.py:4297
+#: app/blueprints/works.py:5051
 msgid "The OpenAlex cache is empty."
 msgstr "The OpenAlex cache is empty."
 
@@ -1623,12 +1652,12 @@ msgstr ""
 msgid "Open user menu"
 msgstr ""
 
-#: app/templates/base.html:110 app/templates/help/index.html:307
+#: app/templates/base.html:110 app/templates/help/index.html:325
 msgid "Edit profile"
 msgstr "Edit profile"
 
 #: app/templates/auth/change_password.html:14 app/templates/base.html:113
-#: app/templates/help/index.html:307
+#: app/templates/help/index.html:325
 msgid "Change password"
 msgstr ""
 
@@ -1653,8 +1682,8 @@ msgstr ""
 #: app/templates/main/resources.html:12
 #: app/templates/works/cache_status.html:193
 #: app/templates/works/data_quality.html:46
-#: app/templates/works/openalex_analytics.html:192
-#: app/templates/works/openalex_global.html:274
+#: app/templates/works/openalex_analytics.html:348
+#: app/templates/works/openalex_global.html:347
 #: app/templates/works/openalex_works.html:13
 msgid "Home"
 msgstr ""
@@ -1681,9 +1710,8 @@ msgstr ""
 
 #: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:30
 #: app/templates/admin/jobs.html:65
-#, fuzzy
 msgid "Successful"
-msgstr "Success"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:64
 msgid "Running"
@@ -1695,9 +1723,8 @@ msgid "Queued"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:66
-#, fuzzy
 msgid "Partial"
-msgstr "Article"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:3 app/templates/admin/jobs.html:68
 #: app/templates/works/cache_status.html:175
@@ -1722,9 +1749,9 @@ msgid "Job history"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:20
-#, fuzzy, python-format
+#, python-format
 msgid "Showing %(first)s–%(last)s of %(total)s jobs"
-msgstr "Showing %(first)s–%(last)s of %(total)s accounts"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:20
 msgid "No matching jobs"
@@ -1745,23 +1772,20 @@ msgid "Background jobs matching the selected filters"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:31 app/templates/admin/jobs.html:72
-#, fuzzy
 msgid "Job type"
-msgstr "Unknown type"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:33 app/templates/admin/jobs.html:87
-#, fuzzy
 msgid "Requested by"
-msgstr "Requests"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:34
 msgid "Started"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:35
-#, fuzzy
 msgid "Progress"
-msgstr "Profiles"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:37
 #: app/templates/admin/statistics.html:259
@@ -1770,9 +1794,8 @@ msgid "Details"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:50
-#, fuzzy
 msgid "Not started"
-msgstr "Not assigned"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:55
 msgid "Completed stages"
@@ -1787,14 +1810,13 @@ msgid "No item-level total was recorded"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:60
-#, fuzzy
 msgid "View job details"
-msgstr "Personal details"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:65
 msgid ""
-"This job is still marked as running, but its heartbeat is overdue. It may"
-" have been interrupted."
+"This job is still marked as running, but its heartbeat is overdue. It may "
+"have been interrupted."
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:66
@@ -1802,28 +1824,24 @@ msgid "Execution error"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:68
-#, fuzzy
 msgid "Job ID"
-msgstr "ROR ID"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:70
-#, fuzzy
 msgid "Last heartbeat"
-msgstr "Last year"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:71
 msgid "Finished"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:71
-#, fuzzy
 msgid "Not finished"
-msgstr "Not found"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:72
-#, fuzzy
 msgid "Latest message"
-msgstr "Last year"
+msgstr ""
 
 #: app/templates/admin/_jobs_table.html:74
 msgid "Execution stages"
@@ -1864,11 +1882,13 @@ msgstr ""
 
 #: app/templates/admin/_jobs_table.html:96
 #: app/templates/admin/statistics.html:351 app/templates/admin/users.html:350
+#: app/templates/works/openalex_analytics.html:82
 msgid "Previous page"
 msgstr ""
 
 #: app/templates/admin/_jobs_table.html:98
 #: app/templates/admin/statistics.html:371 app/templates/admin/users.html:370
+#: app/templates/works/openalex_analytics.html:94
 msgid "Next page"
 msgstr ""
 
@@ -1879,13 +1899,13 @@ msgstr ""
 #: app/templates/admin/_user_modals.html:10
 #: app/templates/admin/_user_modals.html:153
 #: app/templates/admin/_user_modals.html:301
-#: app/templates/components/ui.html:65 app/templates/duplicates/index.html:310
+#: app/templates/components/ui.html:94 app/templates/duplicates/index.html:310
 #: app/templates/duplicates/index.html:338
 #: app/templates/duplicates/index.html:349
 #: app/templates/duplicates/index.html:380
 #: app/templates/works/cache_status.html:630
-#: app/templates/works/openalex_analytics.html:315
-#: app/templates/works/openalex_global.html:368
+#: app/templates/works/openalex_analytics.html:475
+#: app/templates/works/openalex_global.html:441
 msgid "Close"
 msgstr "Close"
 
@@ -1896,8 +1916,7 @@ msgstr ""
 
 #: app/templates/admin/_user_modals.html:20
 msgid ""
-"Identity and contact details used to sign in and communicate with this "
-"user."
+"Identity and contact details used to sign in and communicate with this user."
 msgstr ""
 
 #: app/templates/admin/_user_modals.html:35
@@ -1948,8 +1967,7 @@ msgstr ""
 #: app/templates/admin/_user_modals.html:88
 #: app/templates/admin/_user_modals.html:236
 msgid ""
-"Optional. Used to identify records managed through ORCID Affiliation "
-"Manager."
+"Optional. Used to identify records managed through ORCID Affiliation Manager."
 msgstr ""
 
 #: app/templates/admin/_user_modals.html:97
@@ -1958,7 +1976,8 @@ msgid "Permissions and preferences"
 msgstr ""
 
 #: app/templates/admin/_user_modals.html:98
-msgid "Set the interface language and the administrative scope for this account."
+msgid ""
+"Set the interface language and the administrative scope for this account."
 msgstr ""
 
 #: app/templates/admin/_user_modals.html:103
@@ -1973,7 +1992,7 @@ msgstr ""
 #: app/templates/admin/_user_modals.html:115
 #: app/templates/admin/_user_modals.html:263
 #: app/templates/auth/_account_summary.html:12
-#: app/templates/help/index.html:299
+#: app/templates/help/index.html:316
 msgid "Administrator"
 msgstr ""
 
@@ -1986,7 +2005,7 @@ msgstr ""
 #: app/templates/admin/_user_modals.html:270 app/templates/admin/users.html:265
 #: app/templates/admin/users.html:296
 #: app/templates/auth/_account_summary.html:14
-#: app/templates/help/index.html:299
+#: app/templates/help/index.html:316
 msgid "Manager"
 msgstr ""
 
@@ -1997,7 +2016,8 @@ msgstr ""
 
 #: app/templates/admin/_user_modals.html:130
 #: app/templates/admin/_user_modals.html:278
-msgid "Administrators can access every institution and change all user accounts."
+msgid ""
+"Administrators can access every institution and change all user accounts."
 msgstr ""
 
 #: app/templates/admin/_user_modals.html:135
@@ -2020,8 +2040,8 @@ msgstr ""
 
 #: app/templates/admin/_user_modals.html:160
 msgid ""
-"A temporary password will be generated when the account is created. You "
-"can send a password setup link from the account actions afterward."
+"A temporary password will be generated when the account is created. You can "
+"send a password setup link from the account actions afterward."
 msgstr ""
 
 #: app/templates/admin/_user_modals.html:168
@@ -2045,9 +2065,8 @@ msgid "Continue"
 msgstr ""
 
 #: app/templates/admin/jobs.html:3
-#, fuzzy
 msgid "Background Jobs · Data ORCID-Chile"
-msgstr "My Profile · Data ORCID-Chile"
+msgstr ""
 
 #: app/templates/admin/jobs.html:7 app/templates/admin/jobs.html:15
 #: app/templates/layout/sidebar.html:181
@@ -2065,18 +2084,16 @@ msgid "Administration"
 msgstr ""
 
 #: app/templates/admin/jobs.html:19
-#, fuzzy
 msgid "Background job status summary"
-msgstr "Account summary"
+msgstr ""
 
 #: app/templates/admin/jobs.html:22
 msgid "Running now"
 msgstr ""
 
 #: app/templates/admin/jobs.html:22
-#, fuzzy
 msgid "Currently executing"
-msgstr "Current Institution"
+msgstr ""
 
 #: app/templates/admin/jobs.html:26
 msgid "Queued now"
@@ -2095,14 +2112,13 @@ msgid "Stale heartbeat"
 msgstr ""
 
 #: app/templates/admin/jobs.html:38
-#, fuzzy, python-format
+#, python-format
 msgid "More than %(count)s min"
-msgstr "%(count)s pending"
+msgstr ""
 
 #: app/templates/admin/jobs.html:44
-#, fuzzy
 msgid "Job filters"
-msgstr "Filters"
+msgstr ""
 
 #: app/templates/admin/jobs.html:45
 msgid ""
@@ -2119,16 +2135,15 @@ msgid "All statuses"
 msgstr ""
 
 #: app/templates/admin/jobs.html:62
-#, fuzzy
 msgid "Active"
-msgstr "Activity"
+msgstr ""
 
 #: app/templates/admin/jobs.html:74
 msgid "All job types"
 msgstr ""
 
 #: app/templates/admin/jobs.html:81 app/templates/admin/users.html:168
-#: app/templates/works/cache_status.html:110
+#: app/templates/help/index.html:318 app/templates/works/cache_status.html:110
 #: app/templates/works/cache_status.html:319
 #: app/templates/works/cache_status.html:381
 msgid "All institutions"
@@ -2158,17 +2173,17 @@ msgstr ""
 #: app/templates/admin/jobs.html:115 app/templates/admin/statistics.html:177
 #: app/templates/duplicates/index.html:136 app/templates/main/metrics.html:112
 #: app/templates/main/researcher_list.html:70
-#: app/templates/works/openalex_analytics.html:259
-#: app/templates/works/openalex_global.html:333
+#: app/templates/works/openalex_analytics.html:418
+#: app/templates/works/openalex_global.html:406
 #: app/templates/works/openalex_works.html:97
 msgid "Reset"
 msgstr "Reset"
 
 #: app/templates/admin/jobs.html:116 app/templates/admin/statistics.html:180
 #: app/templates/admin/users.html:207 app/templates/main/metrics.html:112
-#: app/templates/works/openalex_analytics.html:262
-#: app/templates/works/openalex_global.html:336
-#: app/templates/works/openalex_global.html:711
+#: app/templates/works/openalex_analytics.html:421
+#: app/templates/works/openalex_global.html:409
+#: app/templates/works/openalex_global.html:1089
 msgid "Apply filters"
 msgstr "Apply filters"
 
@@ -2182,9 +2197,8 @@ msgid "Updated %(date)s"
 msgstr ""
 
 #: app/templates/admin/jobs.html:129
-#, fuzzy
 msgid "Refresh now"
-msgstr "Refresh Analysis"
+msgstr ""
 
 #: app/templates/admin/jobs.html:193
 msgid "Updated just now"
@@ -2204,8 +2218,7 @@ msgstr ""
 
 #: app/templates/admin/statistics.html:20
 msgid ""
-"Review request volume, response status, users, and recent platform "
-"activity."
+"Review request volume, response status, users, and recent platform activity."
 msgstr ""
 
 #: app/templates/admin/statistics.html:26
@@ -2468,7 +2481,7 @@ msgid "User administration"
 msgstr ""
 
 #: app/templates/admin/users.html:81 app/templates/admin/users.html:88
-#: app/templates/admin/users.html:218 app/templates/help/index.html:303
+#: app/templates/admin/users.html:218 app/templates/help/index.html:321
 #: app/templates/layout/sidebar.html:168
 msgid "Institution accounts"
 msgstr ""
@@ -2478,7 +2491,8 @@ msgid "Manage access, institutional assignments, roles, and account recovery."
 msgstr ""
 
 #: app/templates/admin/users.html:82
-msgid "Review the accounts and recent activity associated with your institution."
+msgid ""
+"Review the accounts and recent activity associated with your institution."
 msgstr ""
 
 #: app/templates/admin/users.html:88
@@ -2526,7 +2540,8 @@ msgid "Account filters"
 msgstr ""
 
 #: app/templates/admin/users.html:131
-msgid "Find accounts by identity, institution, access level, or recent activity."
+msgid ""
+"Find accounts by identity, institution, access level, or recent activity."
 msgstr ""
 
 #: app/templates/admin/users.html:146
@@ -2637,7 +2652,8 @@ msgstr ""
 
 #: app/templates/admin/users.html:328
 #, python-format
-msgid "No account matched “%(query)s”. Try a broader search or clear the filters."
+msgid ""
+"No account matched “%(query)s”. Try a broader search or clear the filters."
 msgstr ""
 
 #: app/templates/admin/users.html:330
@@ -2687,8 +2703,8 @@ msgstr ""
 
 #: app/templates/auth/am_settings.html:8
 msgid ""
-"Identify the records written to ORCID through your institution’s "
-"Affiliation Manager."
+"Identify the records written to ORCID through your institution’s Affiliation "
+"Manager."
 msgstr ""
 
 #: app/templates/auth/am_settings.html:24
@@ -2703,9 +2719,9 @@ msgstr ""
 
 #: app/templates/auth/am_settings.html:39
 msgid ""
-"Enter the <strong>Client ID</strong> used by your <em>Affiliation "
-"Manager</em> tool to write to ORCID. The system will use this ID to "
-"identify which records were managed by your institution (AM Badge)."
+"Enter the <strong>Client ID</strong> used by your <em>Affiliation Manager</"
+"em> tool to write to ORCID. The system will use this ID to identify which "
+"records were managed by your institution (AM Badge)."
 msgstr ""
 
 #: app/templates/auth/am_settings.html:52
@@ -2714,8 +2730,8 @@ msgstr ""
 
 #: app/templates/auth/am_settings.html:57
 msgid ""
-"This is an application identifier, not a secret or an API key. It usually"
-" starts with the prefix"
+"This is an application identifier, not a secret or an API key. It usually "
+"starts with the prefix"
 msgstr ""
 
 #: app/templates/auth/am_settings.html:65
@@ -2918,8 +2934,8 @@ msgstr ""
 
 #: app/templates/auth/reset_password.html:8
 msgid ""
-"Please enter and confirm your new password below. Ensure it is secure and"
-" easy for you to remember."
+"Please enter and confirm your new password below. Ensure it is secure and "
+"easy for you to remember."
 msgstr ""
 
 #: app/templates/auth/reset_password.html:13
@@ -2952,23 +2968,26 @@ msgstr ""
 msgid "Download Excel"
 msgstr ""
 
-#: app/templates/components/ui.html:19
+#: app/templates/components/ui.html:19 app/templates/components/ui.html:43
+#: app/templates/components/ui.html:44
 msgid "Download chart image"
 msgstr "Download chart image"
 
 #: app/templates/components/ui.html:24 app/templates/components/ui.html:25
+#: app/templates/components/ui.html:54
 msgid "Download chart as PNG"
 msgstr "Download chart as PNG"
 
 #: app/templates/components/ui.html:32 app/templates/components/ui.html:33
+#: app/templates/components/ui.html:61
 msgid "Download chart as SVG"
 msgstr "Download chart as SVG"
 
-#: app/templates/components/ui.html:49 app/templates/components/ui.html:51
+#: app/templates/components/ui.html:78 app/templates/components/ui.html:80
 msgid "How to read this"
 msgstr "How to read this"
 
-#: app/templates/components/ui.html:50
+#: app/templates/components/ui.html:79
 msgid "What it shows"
 msgstr "What it shows"
 
@@ -2990,9 +3009,9 @@ msgstr ""
 
 #: app/templates/dashboard/index.html:20 app/templates/duplicates/index.html:45
 #: app/templates/main/metrics.html:83 app/templates/main/metrics.html:87
-#: app/templates/works/openalex_analytics.html:271
-#: app/templates/works/openalex_analytics.html:287
-#: app/templates/works/openalex_global.html:344
+#: app/templates/works/openalex_analytics.html:430
+#: app/templates/works/openalex_analytics.html:446
+#: app/templates/works/openalex_global.html:417
 #: app/templates/works/openalex_works.html:34
 msgid "Metrics"
 msgstr ""
@@ -3042,8 +3061,8 @@ msgstr ""
 
 #: app/templates/dashboard/index.html:132
 msgid ""
-"No cached data available for this institution. Please run a Cache Rebuild"
-" first."
+"No cached data available for this institution. Please run a Cache Rebuild "
+"first."
 msgstr ""
 
 #: app/templates/dashboard/index.html:144 app/templates/main/index.html:142
@@ -3095,8 +3114,8 @@ msgstr ""
 
 #: app/templates/demo/projects.html:19
 msgid ""
-"Permissions not granted yet. The researcher must authorize via the link "
-"sent to their email before pushing data."
+"Permissions not granted yet. The researcher must authorize via the link sent "
+"to their email before pushing data."
 msgstr ""
 
 #: app/templates/demo/projects.html:26
@@ -3137,8 +3156,8 @@ msgstr ""
 
 #: app/templates/demo/upload.html:15
 msgid ""
-"Select a CSV file containing researcher IDs and project data to initiate "
-"the integration flow."
+"Select a CSV file containing researcher IDs and project data to initiate the "
+"integration flow."
 msgstr ""
 
 #: app/templates/demo/upload.html:20
@@ -3252,16 +3271,17 @@ msgstr "Minimum Confidence"
 #: app/templates/duplicates/index.html:107 app/templates/main/metrics.html:106
 #: app/templates/main/metrics.html:107 app/templates/main/metrics.html:108
 #: app/templates/main/metrics.html:109
-#: app/templates/works/openalex_analytics.html:230
-#: app/templates/works/openalex_analytics.html:239
-#: app/templates/works/openalex_analytics.html:246
-#: app/templates/works/openalex_analytics.html:249
-#: app/templates/works/openalex_analytics.html:252
-#: app/templates/works/openalex_global.html:307
-#: app/templates/works/openalex_global.html:316
-#: app/templates/works/openalex_global.html:323
-#: app/templates/works/openalex_global.html:326
-#: app/templates/works/openalex_global.html:710
+#: app/templates/works/openalex_analytics.html:386
+#: app/templates/works/openalex_analytics.html:395
+#: app/templates/works/openalex_analytics.html:402
+#: app/templates/works/openalex_analytics.html:405
+#: app/templates/works/openalex_analytics.html:408
+#: app/templates/works/openalex_analytics.html:411
+#: app/templates/works/openalex_global.html:380
+#: app/templates/works/openalex_global.html:389
+#: app/templates/works/openalex_global.html:396
+#: app/templates/works/openalex_global.html:399
+#: app/templates/works/openalex_global.html:1088
 msgid "Any"
 msgstr "Any"
 
@@ -3335,8 +3355,8 @@ msgstr ""
 
 #: app/templates/duplicates/index.html:217
 msgid ""
-"Review the evidence, then dismiss a false match or prepare a neutral "
-"notice for the researcher."
+"Review the evidence, then dismiss a false match or prepare a neutral notice "
+"for the researcher."
 msgstr ""
 
 #: app/templates/duplicates/index.html:219
@@ -3355,8 +3375,8 @@ msgstr ""
 
 #: app/templates/duplicates/index.html:223
 msgid ""
-"The external follow-up was recorded as complete. The system did not merge"
-" or modify either ORCID record."
+"The external follow-up was recorded as complete. The system did not merge or "
+"modify either ORCID record."
 msgstr ""
 
 #: app/templates/duplicates/index.html:225
@@ -3420,9 +3440,9 @@ msgstr ""
 
 #: app/templates/duplicates/index.html:314
 msgid ""
-"It gathers algorithmic evidence so institutional staff can identify "
-"possible duplicate ORCID records, review false positives, and prepare a "
-"neutral notice for the researcher."
+"It gathers algorithmic evidence so institutional staff can identify possible "
+"duplicate ORCID records, review false positives, and prepare a neutral "
+"notice for the researcher."
 msgstr ""
 
 #: app/templates/duplicates/index.html:318
@@ -3433,19 +3453,19 @@ msgstr "How candidates are generated"
 msgid ""
 "The population comes from ORCID iDs in the local works, funding, and "
 "institutional researcher caches. Profiles are grouped when their cached "
-"names match after lowercasing and removing accents, punctuation, and "
-"extra spaces."
+"names match after lowercasing and removing accents, punctuation, and extra "
+"spaces."
 msgstr ""
 "The population comes from ORCID iDs in the local works, funding, and "
 "institutional researcher caches. Profiles are grouped when their cached "
-"names match after lowercasing and removing accents, punctuation, and "
-"extra spaces."
+"names match after lowercasing and removing accents, punctuation, and extra "
+"spaces."
 
 #: app/templates/duplicates/index.html:320
 msgid ""
-"Confidence increases with richer names, cached activity on every profile,"
-" Affiliation Manager evidence, and shared DOI evidence. A high score "
-"means stronger evidence to review, not a confirmed duplicate."
+"Confidence increases with richer names, cached activity on every profile, "
+"Affiliation Manager evidence, and shared DOI evidence. A high score means "
+"stronger evidence to review, not a confirmed duplicate."
 msgstr ""
 
 #: app/templates/duplicates/index.html:323
@@ -3461,8 +3481,7 @@ msgstr ""
 #: app/templates/duplicates/index.html:325
 msgid ""
 "Only the researcher can verify ownership and work with ORCID to resolve "
-"duplicate records. The institution records its review and communication "
-"only."
+"duplicate records. The institution records its review and communication only."
 msgstr ""
 
 #: app/templates/duplicates/index.html:329
@@ -3471,22 +3490,22 @@ msgstr ""
 
 #: app/templates/duplicates/index.html:331
 msgid ""
-"Compare the names, ORCID links, cached activity, affiliations, and shared"
-" works."
+"Compare the names, ORCID links, cached activity, affiliations, and shared "
+"works."
 msgstr ""
 
 #: app/templates/duplicates/index.html:332
 msgid ""
-"Dismiss the candidate when the evidence points to different people or is "
-"not sufficient. The reason remains in the history after the analysis "
-"cache is refreshed."
+"Dismiss the candidate when the evidence points to different people or is not "
+"sufficient. The reason remains in the history after the analysis cache is "
+"refreshed."
 msgstr ""
 
 #: app/templates/duplicates/index.html:333
 msgid ""
-"When the match remains plausible, prepare the notice, review its wording,"
-" send it through the institution’s usual communication channel, and only "
-"then mark the researcher as informed."
+"When the match remains plausible, prepare the notice, review its wording, "
+"send it through the institution’s usual communication channel, and only then "
+"mark the researcher as informed."
 msgstr ""
 
 #: app/templates/duplicates/index.html:334
@@ -3502,8 +3521,8 @@ msgstr "Dismiss candidate"
 
 #: app/templates/duplicates/index.html:354
 msgid ""
-"Dismissal records a false or unsupported match; it does not change either"
-" ORCID profile."
+"Dismissal records a false or unsupported match; it does not change either "
+"ORCID profile."
 msgstr ""
 
 #: app/templates/duplicates/index.html:356
@@ -3529,9 +3548,9 @@ msgstr ""
 
 #: app/templates/duplicates/index.html:385
 msgid ""
-"Review and copy this neutral draft. Send it through the institution’s "
-"usual channel. Mark the case as informed only after the message has "
-"actually been sent."
+"Review and copy this neutral draft. Send it through the institution’s usual "
+"channel. Mark the case as informed only after the message has actually been "
+"sent."
 msgstr ""
 
 #: app/templates/duplicates/index.html:387
@@ -3573,8 +3592,8 @@ msgstr ""
 
 #: app/templates/help/index.html:8
 msgid ""
-"Understand the platform, its metadata, and the workflows available to "
-"your institution."
+"Understand the platform, its metadata, and the workflows available to your "
+"institution."
 msgstr ""
 
 #: app/templates/help/index.html:21
@@ -3598,6 +3617,8 @@ msgid "Search metadata, synchronization, exports..."
 msgstr ""
 
 #: app/templates/help/index.html:35 app/templates/works/cache_status.html:476
+#: app/templates/works/openalex_analytics.html:141
+#: app/templates/works/openalex_global.html:98
 msgid "Clear search"
 msgstr ""
 
@@ -3629,7 +3650,7 @@ msgstr ""
 msgid "Synchronization and exports"
 msgstr ""
 
-#: app/templates/help/index.html:51 app/templates/help/index.html:284
+#: app/templates/help/index.html:51 app/templates/help/index.html:298
 msgid "Data dictionary"
 msgstr ""
 
@@ -3637,15 +3658,15 @@ msgstr ""
 msgid "Roles and governance"
 msgstr ""
 
-#: app/templates/help/index.html:53 app/templates/help/index.html:314
+#: app/templates/help/index.html:53 app/templates/help/index.html:332
 msgid "Technical architecture"
 msgstr ""
 
-#: app/templates/help/index.html:54 app/templates/help/index.html:339
+#: app/templates/help/index.html:54 app/templates/help/index.html:357
 msgid "Troubleshooting"
 msgstr ""
 
-#: app/templates/help/index.html:55 app/templates/help/index.html:380
+#: app/templates/help/index.html:55 app/templates/help/index.html:398
 msgid "Version 2.0 notes"
 msgstr ""
 
@@ -3655,8 +3676,7 @@ msgstr ""
 
 #: app/templates/help/index.html:64
 msgid ""
-"Open a focused guide from the topic list, or search across all "
-"documentation."
+"Open a focused guide from the topic list, or search across all documentation."
 msgstr ""
 
 #: app/templates/help/index.html:72
@@ -3720,14 +3740,14 @@ msgstr ""
 
 #: app/templates/help/index.html:124
 msgid ""
-"Researcher identifiers, public profile names, affiliations, works, "
-"funding records, and record provenance."
+"Researcher identifiers, public profile names, affiliations, works, funding "
+"records, and record provenance."
 msgstr ""
 
 #: app/templates/help/index.html:125
 msgid ""
-"Coverage depends on what each researcher has added and made visible in "
-"their ORCID record."
+"Coverage depends on what each researcher has added and made visible in their "
+"ORCID record."
 msgstr ""
 
 #: app/templates/help/index.html:129
@@ -3746,20 +3766,20 @@ msgstr ""
 
 #: app/templates/help/index.html:135
 msgid ""
-"Search results from all verified identifiers are combined and "
-"deduplicated by ORCID iD."
+"Search results from all verified identifiers are combined and deduplicated "
+"by ORCID iD."
 msgstr ""
 
 #: app/templates/help/index.html:139
 msgid ""
-"Citation counts, open-access status, FWCI, topics, authorships, sources, "
-"and institutional links."
+"Citation counts, open-access status, publication language, FWCI, topics, "
+"authorships, sources, and institutional links."
 msgstr ""
 
 #: app/templates/help/index.html:140
 msgid ""
 "OpenAlex enriches ORCID works; it does not replace the original ORCID "
-"metadata."
+"metadata. Its classifications reflect the OpenAlex update cycle."
 msgstr ""
 
 #: app/templates/help/index.html:143
@@ -3775,8 +3795,7 @@ msgstr ""
 #: app/templates/help/index.html:145
 msgid ""
 "Cached data makes dashboards and exports reproducible. Inferred "
-"relationships remain labeled separately from verified ORCID search "
-"results."
+"relationships remain labeled separately from verified ORCID search results."
 msgstr ""
 
 #: app/templates/help/index.html:153
@@ -3795,7 +3814,8 @@ msgid "How metadata moves through the platform"
 msgstr ""
 
 #: app/templates/help/index.html:164
-msgid "The complete path from institutional discovery to analytics and exports."
+msgid ""
+"The complete path from institutional discovery to analytics and exports."
 msgstr ""
 
 #: app/templates/help/index.html:170
@@ -3804,8 +3824,8 @@ msgstr ""
 
 #: app/templates/help/index.html:170
 msgid ""
-"The registry identifies the institution by ROR and loads any verified "
-"GRID and Ringgold identifiers available for broader discovery."
+"The registry identifies the institution by ROR and loads any verified GRID "
+"and Ringgold identifiers available for broader discovery."
 msgstr ""
 
 #: app/templates/help/index.html:174
@@ -3824,8 +3844,8 @@ msgstr ""
 
 #: app/templates/help/index.html:178
 msgid ""
-"Verified search results are stored before profile downloads. Legacy cache"
-" relationships can be backfilled as inferred evidence and remain clearly "
+"Verified search results are stored before profile downloads. Legacy cache "
+"relationships can be backfilled as inferred evidence and remain clearly "
 "labeled until a verified search replaces them."
 msgstr ""
 
@@ -3835,8 +3855,8 @@ msgstr ""
 
 #: app/templates/help/index.html:182
 msgid ""
-"Public profile names, works, funding records, and institutional "
-"management status are downloaded and stored with synchronization results."
+"Public profile names, works, funding records, and institutional management "
+"status are downloaded and stored with synchronization results."
 msgstr ""
 
 #: app/templates/help/index.html:186
@@ -3845,8 +3865,8 @@ msgstr ""
 
 #: app/templates/help/index.html:186
 msgid ""
-"ORCID work records are linked to a canonical output by normalized DOI or "
-"a conservative title-and-year fallback. OpenAlex then enriches eligible "
+"ORCID work records are linked to a canonical output by normalized DOI or a "
+"conservative title-and-year fallback. OpenAlex then enriches eligible "
 "outputs."
 msgstr ""
 
@@ -3882,8 +3902,8 @@ msgstr ""
 #: app/templates/help/index.html:210
 msgid ""
 "A work record is one ORCID source item. A unique output combines records "
-"sharing a normalized DOI or, when no DOI exists, a conservative "
-"normalized title and year."
+"sharing a normalized DOI or, when no DOI exists, a conservative normalized "
+"title and year."
 msgstr ""
 
 #: app/templates/help/index.html:213
@@ -3892,9 +3912,9 @@ msgstr ""
 
 #: app/templates/help/index.html:214
 msgid ""
-"The current year is compared with the same completed months of the "
-"previous year. Records without a usable month are excluded from this "
-"specific comparison."
+"The current year is compared with the same completed months of the previous "
+"year. Records without a usable month are excluded from this specific "
+"comparison."
 msgstr ""
 
 #: app/templates/help/index.html:217
@@ -3911,11 +3931,11 @@ msgstr ""
 #: app/templates/help/index.html:219
 msgid ""
 "Institutional staff may dismiss an unsupported match with a reason or "
-"prepare a neutral notice for the researcher. Only the researcher and "
-"ORCID can resolve duplicate records."
+"prepare a neutral notice for the researcher. Only the researcher and ORCID "
+"can resolve duplicate records."
 msgstr ""
 
-#: app/templates/help/index.html:222 app/templates/help/index.html:291
+#: app/templates/help/index.html:222 app/templates/help/index.html:305
 #: app/templates/works/cache_status.html:212
 #: app/templates/works/cache_status.html:490
 msgid "OpenAlex coverage"
@@ -3933,564 +3953,678 @@ msgstr ""
 
 #: app/templates/help/index.html:227
 msgid ""
-"Citation counts, FWCI, topics, and open-access fields come from OpenAlex "
-"and reflect its own update cycle and methodology."
+"Citation counts, FWCI, topics, and open-access fields come from OpenAlex and "
+"reflect its own update cycle and methodology."
 msgstr ""
 
 #: app/templates/help/index.html:230
-msgid "ORCID analytics charts"
+#: app/templates/works/openalex_analytics.html:542
+msgid "Diamond and Green Open Access"
 msgstr ""
 
 #: app/templates/help/index.html:231
 msgid ""
-"Institutional ORCID charts count cached source work or funding records "
-"after applying the visible filters. Timeline charts exclude records "
-"without a valid year; they do not silently convert source records into "
-"canonical unique outputs."
+"The ANID Open Access module counts the native OpenAlex oa_status categories "
+"diamond and green. Diamond means publication in a fully open-access journal "
+"without publication fees for authors; Green means the publisher landing page "
+"is toll-access while a free copy is available in an open-access repository."
+msgstr ""
+
+#: app/templates/help/index.html:232
+msgid ""
+"Counts and percentages follow the active dashboard filters. Percentages use "
+"all filtered OpenAlex-enriched articles as the denominator, so Diamond and "
+"Green do not represent the full Open Access total."
+msgstr ""
+
+#: app/templates/help/index.html:233
+msgid ""
+"The module also ranks journals or sources by Diamond and Green article "
+"volume and citations, provides independently paginated journal and article "
+"tables, and adds server-side search and column sorting across every matching "
+"record, not only the visible page. The global comparison includes the same "
+"controls for its university table. Green remains an article-level repository "
+"route and does not classify the complete journal as Green."
 msgstr ""
 
 #: app/templates/help/index.html:234
+msgid ""
+"For managers and administrators, the global comparison includes the same "
+"paginated rankings, annual line charts for articles and citations, and "
+"institutional statistics. Its university charts include every Chilean "
+"institution with Diamond or Green results in a vertically scrollable area. "
+"Global journal and article metrics deduplicate works by DOI, while university "
+"metrics count each article once within every local institution where it "
+"appears."
+msgstr ""
+
+#: app/templates/help/index.html:237
+msgid "Publication languages"
+msgstr "Publication languages"
+
+#: app/templates/help/index.html:238
+msgid ""
+"OpenAlex reports the publication language using ISO 639-1 codes. The "
+"analytics panel displays localized names with their source code, groups "
+"missing values as unknown, and allows one or more languages to be selected "
+"as a filter."
+msgstr ""
+
+#: app/templates/help/index.html:241
+msgid "ORCID analytics charts"
+msgstr ""
+
+#: app/templates/help/index.html:242
+msgid ""
+"Institutional ORCID charts count cached source work or funding records after "
+"applying the visible filters. Timeline charts exclude records without a "
+"valid year; they do not silently convert source records into canonical "
+"unique outputs."
+msgstr ""
+
+#: app/templates/help/index.html:245
 msgid "Individual researcher charts"
 msgstr ""
 
-#: app/templates/help/index.html:235
+#: app/templates/help/index.html:246
 msgid ""
-"Profile charts are built from the public ORCID work and funding summaries"
-" visible when the profile is loaded. Use the information button on each "
-"chart to review its unit, grouping rule, and exclusions."
+"Profile charts are built from the public ORCID work and funding summaries "
+"visible when the profile is loaded. Use the information button on each chart "
+"to review its unit, grouping rule, and exclusions."
 msgstr ""
 
-#: app/templates/help/index.html:239
+#: app/templates/help/index.html:250
 msgid "Open the duplicate-profile methodology"
 msgstr ""
 
-#: app/templates/help/index.html:247
+#: app/templates/help/index.html:253
+msgid "Open the ANID Open Access module"
+msgstr ""
+
+#: app/templates/help/index.html:261
 msgid "Synchronization, freshness, and exports"
 msgstr ""
 
-#: app/templates/help/index.html:248
+#: app/templates/help/index.html:262
 msgid "What an update does and how to evaluate whether a dataset is current."
 msgstr ""
 
-#: app/templates/help/index.html:252
+#: app/templates/help/index.html:266
 msgid ""
 "A full institutional synchronization discovers researchers, refreshes "
-"profiles, works, funding and management status, rebuilds canonical "
-"outputs, and enriches eligible works with OpenAlex. Every background job "
-"and step is stored with progress and result metadata."
+"profiles, works, funding and management status, rebuilds canonical outputs, "
+"and enriches eligible works with OpenAlex. Every background job and step is "
+"stored with progress and result metadata."
 msgstr ""
 
-#: app/templates/help/index.html:254
+#: app/templates/help/index.html:268
 msgid ""
-"Use the displayed last-update timestamp rather than assuming a fixed "
-"refresh schedule."
+"Use the displayed last-update timestamp rather than assuming a fixed refresh "
+"schedule."
 msgstr ""
 
-#: app/templates/help/index.html:255
+#: app/templates/help/index.html:269
 msgid ""
 "Administrators and managers may start synchronization jobs from the web "
 "interface."
 msgstr ""
 
-#: app/templates/help/index.html:256
+#: app/templates/help/index.html:270
 msgid ""
-"OpenAlex-only updates also run in the background. Transient failures wait"
-" progressively longer before another automatic attempt, while an explicit"
-" full refresh bypasses that waiting period."
+"OpenAlex-only updates also run in the background. Transient failures wait "
+"progressively longer before another automatic attempt, while an explicit "
+"full refresh bypasses that waiting period."
 msgstr ""
-"OpenAlex-only updates also run in the background. Transient failures wait"
-" progressively longer before another automatic attempt, while an explicit"
-" full refresh bypasses that waiting period."
+"OpenAlex-only updates also run in the background. Transient failures wait "
+"progressively longer before another automatic attempt, while an explicit "
+"full refresh bypasses that waiting period."
 
-#: app/templates/help/index.html:257
+#: app/templates/help/index.html:271
 msgid ""
 "The interface uses current, stale, running, partial, failed, and empty "
 "states consistently across the overview and data-management views."
 msgstr ""
 
-#: app/templates/help/index.html:258
+#: app/templates/help/index.html:272
 msgid ""
-"Exports are generated from the current local cache and therefore share "
-"its update timestamp and limitations."
+"Exports are generated from the current local cache and therefore share its "
+"update timestamp and limitations."
 msgstr ""
 
-#: app/templates/help/index.html:259
+#: app/templates/help/index.html:273
 msgid ""
 "When a verified Ringgold identifier is available, authorized users can "
-"download the institution search results used to discover authors; results"
-" are deduplicated by ORCID iD."
+"download the institution search results used to discover authors; results "
+"are deduplicated by ORCID iD."
 msgstr ""
 
-#: app/templates/help/index.html:265 app/templates/layout/sidebar.html:87
+#: app/templates/help/index.html:279 app/templates/layout/sidebar.html:87
 #: app/templates/works/cache_status.html:187
 #: app/templates/works/cache_status.html:194
 #: app/templates/works/data_quality.html:47
 msgid "Synchronization and datasets"
 msgstr ""
 
-#: app/templates/help/index.html:265
+#: app/templates/help/index.html:279
 msgid "Review runs, refresh caches, and export records."
 msgstr ""
 
-#: app/templates/help/index.html:270
+#: app/templates/help/index.html:284
 msgid "OpenAlex enrichment coverage"
 msgstr ""
 
-#: app/templates/help/index.html:270
+#: app/templates/help/index.html:284
 msgid "Review matched, unmatched, and pending works."
 msgstr ""
 
-#: app/templates/help/index.html:276
+#: app/templates/help/index.html:290
 msgid "Monitor background jobs"
 msgstr ""
 
-#: app/templates/help/index.html:276
+#: app/templates/help/index.html:290
 msgid "Review live progress, execution stages, heartbeats, and errors."
 msgstr ""
 
-#: app/templates/help/index.html:284
+#: app/templates/help/index.html:298
 msgid ""
-"The unit, source, and interpretation of the principal fields and "
-"indicators."
+"The unit, source, and interpretation of the principal fields and indicators."
 msgstr ""
 
-#: app/templates/help/index.html:285
+#: app/templates/help/index.html:299
 msgid "Term"
 msgstr ""
 
-#: app/templates/help/index.html:285
+#: app/templates/help/index.html:299
 msgid "Definition"
 msgstr ""
 
-#: app/templates/help/index.html:285
+#: app/templates/help/index.html:299
 msgid "Source and limitation"
 msgstr ""
 
-#: app/templates/help/index.html:286
+#: app/templates/help/index.html:300
 msgid "ORCID work record"
 msgstr ""
 
-#: app/templates/help/index.html:286
+#: app/templates/help/index.html:300
 msgid "One visible work item from one ORCID profile."
 msgstr ""
 
-#: app/templates/help/index.html:286
+#: app/templates/help/index.html:300
 msgid "May describe the same output as another ORCID record."
 msgstr ""
 
-#: app/templates/help/index.html:287
+#: app/templates/help/index.html:301
 msgid "Unique scholarly output"
 msgstr ""
 
-#: app/templates/help/index.html:287
+#: app/templates/help/index.html:301
 msgid "Canonical work linked by DOI or a conservative title-and-year fallback."
 msgstr ""
 
-#: app/templates/help/index.html:287
+#: app/templates/help/index.html:301
 msgid "Fallback matches should be treated with more caution than DOI matches."
 msgstr ""
 
-#: app/templates/help/index.html:288
+#: app/templates/help/index.html:302
 msgid "Institution-output relationship"
 msgstr ""
 
-#: app/templates/help/index.html:288
+#: app/templates/help/index.html:302
 msgid "One canonical output observed within one institutional cache."
 msgstr ""
 
-#: app/templates/help/index.html:288
+#: app/templates/help/index.html:302
 msgid ""
-"A global relationship count can exceed the number of globally unique "
-"outputs."
+"A global relationship count can exceed the number of globally unique outputs."
 msgstr ""
 
-#: app/templates/help/index.html:289
+#: app/templates/help/index.html:303
 msgid "Verified researcher relationship"
 msgstr ""
 
-#: app/templates/help/index.html:289
+#: app/templates/help/index.html:303
 msgid ""
 "An ORCID iD returned by a search using a verified ROR, GRID, or Ringgold "
 "identifier."
 msgstr ""
 
-#: app/templates/help/index.html:289
+#: app/templates/help/index.html:303
 msgid "Can include current or historical public affiliations."
 msgstr ""
 
-#: app/templates/help/index.html:290
+#: app/templates/help/index.html:304
 msgid "Inferred researcher relationship"
 msgstr ""
 
-#: app/templates/help/index.html:290
+#: app/templates/help/index.html:304
 msgid ""
 "A relationship reconstructed from existing works, funding, or management-"
 "status caches."
 msgstr ""
 
-#: app/templates/help/index.html:290
+#: app/templates/help/index.html:304
 msgid "Useful for continuity, but not equivalent to verified search evidence."
 msgstr ""
 
-#: app/templates/help/index.html:291
+#: app/templates/help/index.html:305
 msgid ""
-"Unique eligible DOI outputs with normalized OpenAlex metadata divided by "
-"all eligible DOI outputs."
+"Unique eligible DOI outputs with normalized OpenAlex metadata divided by all "
+"eligible DOI outputs."
 msgstr ""
 
-#: app/templates/help/index.html:291
+#: app/templates/help/index.html:305
 msgid "OpenAlex and ORCID have independent update cycles."
 msgstr ""
 
-#: app/templates/help/index.html:292
-#: app/templates/works/openalex_analytics.html:338
+#: app/templates/help/index.html:306
+#: app/templates/works/openalex_analytics.html:502
+#: app/templates/works/openalex_analytics.html:546
+msgid "Diamond Open Access"
+msgstr "Diamond Open Access"
+
+#: app/templates/help/index.html:306
+msgid ""
+"An article whose native OpenAlex oa_status value is diamond: published in a "
+"fully open-access journal without publication fees for authors."
+msgstr ""
+
+#: app/templates/help/index.html:306
+msgid ""
+"The platform uses the OpenAlex classification directly and does not infer "
+"Diamond status from DOAJ membership."
+msgstr ""
+
+#: app/templates/help/index.html:307
+#: app/templates/works/openalex_analytics.html:506
+#: app/templates/works/openalex_analytics.html:554
+msgid "Green Open Access"
+msgstr "Green Open Access"
+
+#: app/templates/help/index.html:307
+msgid ""
+"An article whose native OpenAlex oa_status value is green: the publisher "
+"landing page is toll-access, while a free copy is available in an open-"
+"access repository."
+msgstr ""
+
+#: app/templates/help/index.html:307
+msgid ""
+"Repository availability and status may change when OpenAlex refreshes its "
+"sources."
+msgstr ""
+
+#: app/templates/help/index.html:308
+#: app/templates/works/openalex_analytics.html:510
+msgid "Publication language"
+msgstr "Publication language"
+
+#: app/templates/help/index.html:308
+msgid ""
+"The ISO 639-1 language code supplied by OpenAlex, displayed with a localized "
+"language name in the analytics panel."
+msgstr ""
+
+#: app/templates/help/index.html:308
+msgid ""
+"A missing or unknown value is kept explicit and is not inferred from the "
+"title or journal."
+msgstr ""
+
+#: app/templates/help/index.html:309
+#: app/templates/works/openalex_analytics.html:498
 msgid "FWCI"
 msgstr "FWCI"
 
-#: app/templates/help/index.html:292
+#: app/templates/help/index.html:309
 msgid "Field-weighted citation impact supplied by OpenAlex."
 msgstr ""
 
-#: app/templates/help/index.html:292
+#: app/templates/help/index.html:309
 msgid ""
-"Interpret using OpenAlex methodology and the displayed coverage "
-"denominator."
+"Interpret using OpenAlex methodology and the displayed coverage denominator."
 msgstr ""
 
-#: app/templates/help/index.html:293
+#: app/templates/help/index.html:310
 msgid "Year-to-date change"
 msgstr ""
 
-#: app/templates/help/index.html:293
+#: app/templates/help/index.html:310
 msgid ""
-"Current completed months compared with the same months of the previous "
-"year."
+"Current completed months compared with the same months of the previous year."
 msgstr ""
 
-#: app/templates/help/index.html:293
+#: app/templates/help/index.html:310
 msgid "Records without a usable month are excluded from this comparison."
 msgstr ""
 
-#: app/templates/help/index.html:298
+#: app/templates/help/index.html:315
 msgid "Roles, permissions, and data governance"
 msgstr ""
 
-#: app/templates/help/index.html:298
+#: app/templates/help/index.html:315
 msgid "Who can perform each operation and what operational data is retained."
 msgstr ""
 
-#: app/templates/help/index.html:299
+#: app/templates/help/index.html:316
 msgid "Capability"
 msgstr ""
 
-#: app/templates/help/index.html:300
+#: app/templates/help/index.html:317
 msgid "View institutional analytics and exports"
 msgstr ""
 
-#: app/templates/help/index.html:300 app/templates/help/index.html:301
-#: app/templates/help/index.html:302
+#: app/templates/help/index.html:317 app/templates/help/index.html:319
+#: app/templates/help/index.html:320
 msgid "Assigned institution"
 msgstr ""
 
-#: app/templates/help/index.html:300
+#: app/templates/help/index.html:317
 msgid "Any selected institution"
 msgstr ""
 
-#: app/templates/help/index.html:301
+#: app/templates/help/index.html:318
+msgid "Compare institutions with OpenAlex"
+msgstr "Compare institutions with OpenAlex"
+
+#: app/templates/help/index.html:319
 msgid "Start synchronization"
 msgstr ""
 
-#: app/templates/help/index.html:301
+#: app/templates/help/index.html:319
 msgid "Any or all institutions"
 msgstr ""
 
-#: app/templates/help/index.html:302
+#: app/templates/help/index.html:320
 msgid "Review duplicate decisions"
 msgstr ""
 
-#: app/templates/help/index.html:302
+#: app/templates/help/index.html:320
 msgid "Read only"
 msgstr ""
 
-#: app/templates/help/index.html:302
+#: app/templates/help/index.html:320
 msgid "Any institution"
 msgstr ""
 
-#: app/templates/help/index.html:303
+#: app/templates/help/index.html:321
 msgid "Manage accounts and system activity"
 msgstr ""
 
-#: app/templates/help/index.html:303
+#: app/templates/help/index.html:321
 msgid "All accounts and activity"
 msgstr ""
 
-#: app/templates/help/index.html:304
+#: app/templates/help/index.html:322
 msgid "Monitor all background jobs"
 msgstr ""
 
-#: app/templates/help/index.html:304
+#: app/templates/help/index.html:322
 msgid "Live and historical access"
 msgstr ""
 
-#: app/templates/help/index.html:306
+#: app/templates/help/index.html:324
 msgid "Privacy and operational logs"
 msgstr ""
 
-#: app/templates/help/index.html:306
+#: app/templates/help/index.html:324
 msgid ""
 "ORCID metadata shown by the platform comes from public source records. "
-"Request logs can include user, institution, role, path, IP address, and "
-"user-agent information and should follow the organization’s retention, "
-"access, correction, and deletion policy."
+"Request logs can include user, institution, role, path, IP address, and user-"
+"agent information and should follow the organization’s retention, access, "
+"correction, and deletion policy."
 msgstr ""
 
-#: app/templates/help/index.html:306
+#: app/templates/help/index.html:324
 msgid ""
 "The default local retention period is 90 days and can be changed in the "
-"private runtime configuration. Administrators can apply it with the "
-"cleanup-tracking-logs command."
+"private runtime configuration. Administrators can apply it with the cleanup-"
+"tracking-logs command."
 msgstr ""
 
-#: app/templates/help/index.html:307
+#: app/templates/help/index.html:325
 msgid "Update your name, position, and email."
 msgstr ""
 
-#: app/templates/help/index.html:307
+#: app/templates/help/index.html:325
 msgid "Keep account credentials current."
 msgstr ""
 
-#: app/templates/help/index.html:315
+#: app/templates/help/index.html:333
 msgid "A maintainable overview of how the application is constructed."
 msgstr ""
 
-#: app/templates/help/index.html:319
+#: app/templates/help/index.html:337
 msgid "Application"
 msgstr ""
 
-#: app/templates/help/index.html:319
+#: app/templates/help/index.html:337
 msgid ""
 "Routes are separated by authentication, administration, dashboards, data "
 "management, exports, and integrations."
 msgstr ""
 
-#: app/templates/help/index.html:320
+#: app/templates/help/index.html:338
 msgid "Interface"
 msgstr ""
 
-#: app/templates/help/index.html:320
+#: app/templates/help/index.html:338
 msgid ""
 "Server-rendered templates use shared layout components, Chart.js, "
 "DataTables, Font Awesome, and responsive CSS."
 msgstr ""
 
-#: app/templates/help/index.html:321
+#: app/templates/help/index.html:339
 msgid "Persistence"
 msgstr ""
 
-#: app/templates/help/index.html:321
+#: app/templates/help/index.html:339
 msgid ""
 "PostgreSQL stores operational metadata, canonical outputs, durable "
 "synchronization jobs, review decisions, and analytical caches. SQLite "
 "remains supported for isolated tests."
 msgstr ""
 
-#: app/templates/help/index.html:322
+#: app/templates/help/index.html:340
 msgid "External services"
 msgstr ""
 
-#: app/templates/help/index.html:322
+#: app/templates/help/index.html:340
 msgid ""
 "HTTP clients include retry handling, rate-limit awareness, normalized "
 "identifiers, and conservative matching rules."
 msgstr ""
 
-#: app/templates/help/index.html:323
+#: app/templates/help/index.html:341
 msgid "Exports"
 msgstr ""
 
-#: app/templates/help/index.html:323
+#: app/templates/help/index.html:341
 msgid ""
-"Tabular datasets are generated as CSV or Excel-compatible files from "
-"cached records."
+"Tabular datasets are generated as CSV or Excel-compatible files from cached "
+"records."
 msgstr ""
 
-#: app/templates/help/index.html:324
+#: app/templates/help/index.html:342
 msgid "Localization"
 msgstr ""
 
-#: app/templates/help/index.html:324
+#: app/templates/help/index.html:342
 msgid ""
-"English is the source language and Spanish translations are compiled from"
-" Babel catalogs."
+"English is the source language and Spanish translations are compiled from "
+"Babel catalogs."
 msgstr ""
 
-#: app/templates/help/index.html:329
+#: app/templates/help/index.html:347
 msgid "Security model"
 msgstr ""
 
-#: app/templates/help/index.html:330
+#: app/templates/help/index.html:348
 msgid ""
 "Passwords use bcrypt, state-changing forms use CSRF protection, sessions "
-"support secure cookie settings, and role checks restrict institutional "
-"and administrative operations. Secrets belong in environment variables or"
-" the private runtime configuration, never in the repository."
+"support secure cookie settings, and role checks restrict institutional and "
+"administrative operations. Secrets belong in environment variables or the "
+"private runtime configuration, never in the repository."
 msgstr ""
 
-#: app/templates/help/index.html:340
+#: app/templates/help/index.html:358
 msgid "Common situations and the first checks to perform."
 msgstr ""
 
-#: app/templates/help/index.html:345
+#: app/templates/help/index.html:363
 msgid "No researchers appear for an institution"
 msgstr ""
 
-#: app/templates/help/index.html:345
+#: app/templates/help/index.html:363
 msgid ""
 "Confirm that the active institution has a ROR ID and verified legacy "
 "identifiers. Then review the latest synchronization result for an ORCID "
 "authentication, search, or rate-limit error."
 msgstr ""
 
-#: app/templates/help/index.html:346
+#: app/templates/help/index.html:364
 msgid "Works or funding totals look incomplete"
 msgstr ""
 
-#: app/templates/help/index.html:346
+#: app/templates/help/index.html:364
 msgid ""
 "Check the cache update time and the source ORCID profiles. Only visible "
-"source records can be synchronized, and some researchers may have no "
-"public activity."
+"source records can be synchronized, and some researchers may have no public "
+"activity."
 msgstr ""
 
-#: app/templates/help/index.html:347
+#: app/templates/help/index.html:365
 msgid "OpenAlex coverage is low"
 msgstr ""
 
-#: app/templates/help/index.html:347
+#: app/templates/help/index.html:365
 msgid ""
-"Review how many ORCID works contain a DOI. Records without a DOI require "
-"a strict title match and may remain unmatched to avoid false "
-"associations."
+"Review how many ORCID works contain a DOI. Records without a DOI require a "
+"strict title match and may remain unmatched to avoid false associations."
 msgstr ""
 
-#: app/templates/help/index.html:348
+#: app/templates/help/index.html:366
 msgid "A synchronization remains in progress"
 msgstr ""
 
-#: app/templates/help/index.html:348
+#: app/templates/help/index.html:366
 msgid ""
-"Administrators can open Background jobs to inspect its durable state, "
-"item progress, and individual stages. A stale heartbeat warns that the "
-"process may have been interrupted; after an application restart, "
-"abandoned jobs and their open stages are closed as interrupted."
+"Administrators can open Background jobs to inspect its durable state, item "
+"progress, and individual stages. A stale heartbeat warns that the process "
+"may have been interrupted; after an application restart, abandoned jobs and "
+"their open stages are closed as interrupted."
 msgstr ""
 
-#: app/templates/help/index.html:349
+#: app/templates/help/index.html:367
 msgid "An export is empty"
 msgstr ""
 
-#: app/templates/help/index.html:349
+#: app/templates/help/index.html:367
 msgid ""
 "Verify that the corresponding cache contains records for the active "
 "institution and that the selected institutional context has not changed."
 msgstr ""
 
-#: app/templates/help/index.html:373
+#: app/templates/help/index.html:391
 msgid "ORCID resources and consortium guidance"
 msgstr ""
 
-#: app/templates/help/index.html:373
+#: app/templates/help/index.html:391
 msgid ""
 "Member Portal roles, API credentials, Affiliation Manager, and external "
 "integration guides."
 msgstr ""
 
-#: app/templates/help/index.html:375
+#: app/templates/help/index.html:393
 msgid "Open resources"
 msgstr ""
 
-#: app/templates/help/index.html:380
+#: app/templates/help/index.html:398
 msgid ""
 "Major changes that affect interpretation, synchronization, and daily "
 "workflows."
 msgstr ""
 
-#: app/templates/help/index.html:382
+#: app/templates/help/index.html:400
 msgid ""
 "A shared data-health state now drives the overview, top navigation, and "
 "synchronization view."
 msgstr ""
 
-#: app/templates/help/index.html:383
+#: app/templates/help/index.html:401
 msgid ""
 "Researcher relationships distinguish verified ORCID search evidence from "
 "cache-derived inference."
 msgstr ""
 
-#: app/templates/help/index.html:384
+#: app/templates/help/index.html:402
 msgid ""
 "Canonical outputs separate unique scholarly results from ORCID source "
 "records and institution-output relationships."
 msgstr ""
 
-#: app/templates/help/index.html:385
+#: app/templates/help/index.html:403
 msgid ""
-"Background synchronization jobs and their steps are durable and "
-"reviewable after the request finishes."
+"Background synchronization jobs and their steps are durable and reviewable "
+"after the request finishes."
 msgstr ""
 
-#: app/templates/help/index.html:386
+#: app/templates/help/index.html:404
 msgid ""
-"Administrators have a live background-job monitor with filters, stage and"
-" item progress, heartbeat warnings, and execution errors."
+"Administrators have a live background-job monitor with filters, stage and "
+"item progress, heartbeat warnings, and execution errors."
 msgstr ""
 
-#: app/templates/help/index.html:387
+#: app/templates/help/index.html:405
 msgid ""
-"Duplicate decisions persist independently from the candidate-analysis "
-"cache."
+"Duplicate decisions persist independently from the candidate-analysis cache."
 msgstr ""
 
-#: app/templates/help/index.html:388
+#: app/templates/help/index.html:406
 msgid ""
-"The data-quality center exposes coverage and known limitations before "
-"users export or compare data."
+"The data-quality center exposes coverage and known limitations before users "
+"export or compare data."
 msgstr ""
 
-#: app/templates/help/index.html:389
+#: app/templates/help/index.html:407
 msgid ""
 "Version 2.0 integrates OpenAlex through the normalized DOI of ORCID "
-"articles, adding citation, open-access, topic, authorship, and "
-"institutional metadata without replacing the ORCID source record."
+"articles, adding citation, open-access, topic, authorship, and institutional "
+"metadata without replacing the ORCID source record."
 msgstr ""
 
-#: app/templates/help/index.html:390
+#: app/templates/help/index.html:408
 msgid ""
-"Version 2.0 includes author discovery and download through the "
-"institution’s verified Ringgold identifier, with results deduplicated by "
-"ORCID iD."
+"OpenAlex analytics now highlights Diamond and Green Open Access for ANID and "
+"presents publication languages with localized ISO 639-1 labels and filters."
 msgstr ""
 
-#: app/templates/help/index.html:392
+#: app/templates/help/index.html:409
+msgid ""
+"Version 2.0 includes author discovery and download through the institution’s "
+"verified Ringgold identifier, with results deduplicated by ORCID iD."
+msgstr ""
+
+#: app/templates/help/index.html:411
 msgid "Backfill status"
 msgstr ""
 
-#: app/templates/help/index.html:392
+#: app/templates/help/index.html:411
 msgid ""
 "Existing cache relationships and canonical outputs require a one-time "
 "rebuild. Until that job is complete, affected indicators remain partial "
 "rather than being presented as current."
 msgstr ""
 
-#: app/templates/help/index.html:397
+#: app/templates/help/index.html:416
 msgid "No help topics matched your search"
 msgstr ""
 
-#: app/templates/help/index.html:398
+#: app/templates/help/index.html:417
 msgid "Try a broader term such as ORCID, metadata, synchronization, or export."
 msgstr ""
 
-#: app/templates/help/index.html:435
+#: app/templates/help/index.html:454
 #, python-format
 msgid "%(count)s help sections found"
 msgstr ""
@@ -4501,7 +4635,7 @@ msgstr ""
 
 #: app/templates/layout/sidebar.html:33 app/templates/main/metrics.html:119
 #: app/templates/works/data_quality.html:61
-#: app/templates/works/openalex_analytics.html:301
+#: app/templates/works/openalex_analytics.html:460
 msgid "Overview"
 msgstr ""
 
@@ -4516,12 +4650,12 @@ msgstr ""
 
 #: app/templates/layout/sidebar.html:61
 #: app/templates/works/cache_status.html:429
-#: app/templates/works/openalex_analytics.html:70
+#: app/templates/works/openalex_analytics.html:150
 msgid "OpenAlex analytics"
 msgstr "OpenAlex analytics"
 
 #: app/templates/layout/sidebar.html:68
-#: app/templates/works/openalex_global.html:129
+#: app/templates/works/openalex_global.html:161
 msgid "Institution comparison"
 msgstr ""
 
@@ -4623,21 +4757,21 @@ msgstr ""
 #: app/templates/main/index.html:63
 #, python-format
 msgid ""
-"Year-to-date publication activity is %(percent)s%% above the same period "
-"in %(year)s (through %(date)s)."
+"Year-to-date publication activity is %(percent)s%% above the same period in "
+"%(year)s (through %(date)s)."
 msgstr ""
 
 #: app/templates/main/index.html:65
 #, python-format
 msgid ""
-"Year-to-date publication activity is %(percent)s%% below the same period "
-"in %(year)s (through %(date)s)."
+"Year-to-date publication activity is %(percent)s%% below the same period in "
+"%(year)s (through %(date)s)."
 msgstr ""
 
 #: app/templates/main/index.html:67
 msgid ""
-"Not enough dated publication records are available for an equivalent "
-"year-to-date comparison."
+"Not enough dated publication records are available for an equivalent year-to-"
+"date comparison."
 msgstr ""
 
 #: app/templates/main/index.html:75
@@ -4709,7 +4843,8 @@ msgstr ""
 
 #: app/templates/main/index.html:159 app/templates/main/index.html:167
 #, python-format
-msgid "year to date through %(date)s, compared with the same period in %(year)s"
+msgid ""
+"year to date through %(date)s, compared with the same period in %(year)s"
 msgstr ""
 
 #: app/templates/main/index.html:171
@@ -4719,8 +4854,8 @@ msgstr ""
 #: app/templates/main/index.html:172
 #, python-format
 msgid ""
-"%(matched)s matched works · %(citations)s citations · %(open_access)s "
-"open access"
+"%(matched)s matched works · %(citations)s citations · %(open_access)s open "
+"access"
 msgstr ""
 
 #: app/templates/main/index.html:175
@@ -4737,8 +4872,8 @@ msgstr ""
 
 #: app/templates/main/index.html:189
 msgid ""
-"Coverage shows how completely known researchers are described; quality "
-"flags records that may need institutional review."
+"Coverage shows how completely known researchers are described; quality flags "
+"records that may need institutional review."
 msgstr ""
 
 #: app/templates/main/index.html:197 app/templates/main/index.html:200
@@ -4758,8 +4893,8 @@ msgstr ""
 
 #: app/templates/main/index.html:216
 msgid ""
-"Percentage of known institutional ORCID profiles with a credit, given, or"
-" family name in the local cache."
+"Percentage of known institutional ORCID profiles with a credit, given, or "
+"family name in the local cache."
 msgstr ""
 
 #: app/templates/main/index.html:223
@@ -4851,11 +4986,10 @@ msgstr ""
 
 #: app/templates/main/integration_guide.html:27
 msgid ""
-"This guide provides a functional boilerplate to implement the "
-"<strong>OAuth2 3-legged flow</strong>. This process is essential for "
-"obtaining persistent permissions from researchers, allowing your "
-"institution to push <strong>funding (grants)</strong> records directly to"
-" their ORCID profiles."
+"This guide provides a functional boilerplate to implement the <strong>OAuth2 "
+"3-legged flow</strong>. This process is essential for obtaining persistent "
+"permissions from researchers, allowing your institution to push "
+"<strong>funding (grants)</strong> records directly to their ORCID profiles."
 msgstr ""
 
 #: app/templates/main/integration_guide.html:34
@@ -4864,8 +4998,8 @@ msgstr ""
 
 #: app/templates/main/integration_guide.html:35
 msgid ""
-"The ZIP includes the Flask application, database models, "
-"requirements.txt, and a template .env file."
+"The ZIP includes the Flask application, database models, requirements.txt, "
+"and a template .env file."
 msgstr ""
 
 #: app/templates/main/integration_guide.html:37
@@ -4878,8 +5012,7 @@ msgstr ""
 
 #: app/templates/main/integration_guide.html:60
 msgid ""
-"This guide is designed for local testing using the ORCID Sandbox "
-"environment."
+"This guide is designed for local testing using the ORCID Sandbox environment."
 msgstr ""
 
 #: app/templates/main/integration_guide.html:72
@@ -4890,8 +5023,8 @@ msgstr ""
 msgid ""
 "To send authorization invites without using a real institutional mail "
 "server, we use <strong>Ethereal Mail</strong>. It is a fake SMTP service "
-"where messages are \"caught\" and displayed in a web dashboard instead of"
-" being sent to real inboxes."
+"where messages are \"caught\" and displayed in a web dashboard instead of "
+"being sent to real inboxes."
 msgstr ""
 
 #: app/templates/main/integration_guide.html:81
@@ -5018,7 +5151,8 @@ msgid "Read from the ORCID API"
 msgstr ""
 
 #: app/templates/main/integration_pull.html:7
-msgid "Query public ORCID metadata and understand the available read endpoints."
+msgid ""
+"Query public ORCID metadata and understand the available read endpoints."
 msgstr ""
 
 #: app/templates/main/integration_pull.html:13
@@ -5031,10 +5165,9 @@ msgstr ""
 
 #: app/templates/main/integration_pull.html:27
 msgid ""
-"The ORCID Public API allows any system to <strong>retrieve public "
-"researcher data</strong>. It works over HTTP using standard REST methods."
-" You only need the <strong>ORCID iD</strong> to start pulling "
-"information."
+"The ORCID Public API allows any system to <strong>retrieve public researcher "
+"data</strong>. It works over HTTP using standard REST methods. You only need "
+"the <strong>ORCID iD</strong> to start pulling information."
 msgstr ""
 
 #: app/templates/main/integration_pull.html:31
@@ -5051,8 +5184,8 @@ msgstr ""
 
 #: app/templates/main/integration_pull.html:46
 msgid ""
-"Always include the Accept header to receive data in JSON format, which is"
-" easier to parse than the default XML."
+"Always include the Accept header to receive data in JSON format, which is "
+"easier to parse than the default XML."
 msgstr ""
 
 #: app/templates/main/integration_pull.html:48
@@ -5217,8 +5350,8 @@ msgstr ""
 
 #: app/templates/main/integration_pull.html:205
 msgid ""
-"The Public API only returns data set to \"Everyone\" by the researcher. "
-"Data marked as \"Trusted Parties\" or \"Private\" is invisible."
+"The Public API only returns data set to \"Everyone\" by the researcher. Data "
+"marked as \"Trusted Parties\" or \"Private\" is invisible."
 msgstr ""
 
 #: app/templates/main/integration_pull.html:206
@@ -5235,9 +5368,9 @@ msgstr ""
 
 #: app/templates/main/integration_pull.html:207
 msgid ""
-"The Public API is limited to <strong>24 requests per second</strong>. For"
-" batch processing, we recommend a small delay (sleep) between requests to"
-" avoid being temporarily blocked."
+"The Public API is limited to <strong>24 requests per second</strong>. For "
+"batch processing, we recommend a small delay (sleep) between requests to "
+"avoid being temporarily blocked."
 msgstr ""
 
 #: app/templates/main/integration_pull.html:217
@@ -5265,20 +5398,20 @@ msgid "Select the command and copy it manually."
 msgstr ""
 
 #: app/templates/main/metrics.html:7
-msgid "Annual number of cached ORCID work records that match the active filters."
+msgid ""
+"Annual number of cached ORCID work records that match the active filters."
 msgstr ""
 
 #: app/templates/main/metrics.html:8
 msgid ""
-"Groups ORCID work records by publication year. Records without a valid "
-"year are excluded; this is a source-record count, not a count of "
-"canonical unique outputs."
+"Groups ORCID work records by publication year. Records without a valid year "
+"are excluded; this is a source-record count, not a count of canonical unique "
+"outputs."
 msgstr ""
 
 #: app/templates/main/metrics.html:12
 msgid ""
-"Distribution of the cached ORCID work records that match the active "
-"filters."
+"Distribution of the cached ORCID work records that match the active filters."
 msgstr ""
 
 #: app/templates/main/metrics.html:13
@@ -5289,14 +5422,13 @@ msgstr ""
 
 #: app/templates/main/metrics.html:17
 msgid ""
-"Annual number of cached ORCID funding records that match the active "
-"filters."
+"Annual number of cached ORCID funding records that match the active filters."
 msgstr ""
 
 #: app/templates/main/metrics.html:18
 msgid ""
-"Groups funding records by their ORCID start year. Records without a valid"
-" start year are excluded from the timeline."
+"Groups funding records by their ORCID start year. Records without a valid "
+"start year are excluded from the timeline."
 msgstr ""
 
 #: app/templates/main/metrics.html:22
@@ -5313,14 +5445,14 @@ msgstr ""
 
 #: app/templates/main/metrics.html:27
 msgid ""
-"The ten journals or venues with the most cached ORCID work records in the"
-" filtered set."
+"The ten journals or venues with the most cached ORCID work records in the "
+"filtered set."
 msgstr ""
 
 #: app/templates/main/metrics.html:28
 msgid ""
-"Groups work records by the journal title supplied by ORCID, excludes "
-"empty titles, sorts by record count, and displays the first ten values."
+"Groups work records by the journal title supplied by ORCID, excludes empty "
+"titles, sorts by record count, and displays the first ten values."
 msgstr ""
 
 #: app/templates/main/metrics.html:32
@@ -5331,16 +5463,15 @@ msgstr ""
 
 #: app/templates/main/metrics.html:33
 msgid ""
-"Groups funding records by the organization name supplied by ORCID, "
-"excludes empty names, sorts by record count, and displays the first ten "
-"values."
+"Groups funding records by the organization name supplied by ORCID, excludes "
+"empty names, sorts by record count, and displays the first ten values."
 msgstr ""
 
 #: app/templates/main/metrics.html:51
 #: app/templates/works/openalex_analytics.html:33
 #: app/templates/works/openalex_analytics.html:40
-#: app/templates/works/openalex_global.html:92
-#: app/templates/works/openalex_global.html:99
+#: app/templates/works/openalex_global.html:124
+#: app/templates/works/openalex_global.html:131
 msgid "selected"
 msgstr "selected"
 
@@ -5363,8 +5494,8 @@ msgid "filtered result"
 msgstr ""
 
 #: app/templates/main/metrics.html:98
-#: app/templates/works/openalex_analytics.html:201
-#: app/templates/works/openalex_global.html:283
+#: app/templates/works/openalex_analytics.html:357
+#: app/templates/works/openalex_global.html:356
 msgid "Filters"
 msgstr "Filters"
 
@@ -5374,20 +5505,20 @@ msgstr ""
 
 #: app/templates/main/metrics.html:99
 #: app/templates/main/researcher_list.html:53
-#: app/templates/works/openalex_analytics.html:205
-#: app/templates/works/openalex_global.html:287
+#: app/templates/works/openalex_analytics.html:361
+#: app/templates/works/openalex_global.html:360
 msgid "Show filters"
 msgstr ""
 
 #: app/templates/main/metrics.html:106
-#: app/templates/works/openalex_analytics.html:228
-#: app/templates/works/openalex_global.html:305
+#: app/templates/works/openalex_analytics.html:384
+#: app/templates/works/openalex_global.html:378
 msgid "From year"
 msgstr "From year"
 
 #: app/templates/main/metrics.html:107
-#: app/templates/works/openalex_analytics.html:237
-#: app/templates/works/openalex_global.html:314
+#: app/templates/works/openalex_analytics.html:393
+#: app/templates/works/openalex_global.html:387
 msgid "To year"
 msgstr "To year"
 
@@ -5455,8 +5586,7 @@ msgstr ""
 
 #: app/templates/main/orcid_profile.html:35
 msgid ""
-"Review public ORCID profile details, identifiers, works, and funding "
-"records."
+"Review public ORCID profile details, identifiers, works, and funding records."
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:69
@@ -5499,14 +5629,15 @@ msgid "Works by Type"
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:173
-msgid "Distribution of the public work summaries visible in this ORCID profile."
+msgid ""
+"Distribution of the public work summaries visible in this ORCID profile."
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:174
 msgid ""
 "Counts each visible ORCID work summary by its source work type. Missing "
-"types are grouped as other; this profile view does not deduplicate "
-"canonical outputs."
+"types are grouped as other; this profile view does not deduplicate canonical "
+"outputs."
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:184
@@ -5515,14 +5646,14 @@ msgid "Production Timeline"
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:186
-msgid "Annual volume of the public work summaries visible in this ORCID profile."
+msgid ""
+"Annual volume of the public work summaries visible in this ORCID profile."
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:187
 msgid ""
-"Counts visible ORCID work summaries by publication year and excludes "
-"records without a valid numeric year. The most recent year may still be "
-"incomplete."
+"Counts visible ORCID work summaries by publication year and excludes records "
+"without a valid numeric year. The most recent year may still be incomplete."
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:200
@@ -5532,15 +5663,14 @@ msgstr ""
 
 #: app/templates/main/orcid_profile.html:202
 msgid ""
-"Distribution of the public funding summaries visible in this ORCID "
-"profile."
+"Distribution of the public funding summaries visible in this ORCID profile."
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:203
 msgid ""
 "Counts each visible ORCID funding summary by its source funding type. "
-"Missing types are grouped as other; amounts and grant relationships are "
-"not inferred."
+"Missing types are grouped as other; amounts and grant relationships are not "
+"inferred."
 msgstr ""
 
 #: app/templates/main/orcid_profile.html:216
@@ -5723,6 +5853,7 @@ msgid "Open a profile to review its public ORCID information."
 msgstr ""
 
 #: app/templates/main/researcher_list.html:77
+#: app/templates/works/openalex_analytics.html:75
 #: app/templates/works/openalex_global.html:45
 msgid "Rows per page"
 msgstr "Rows per page"
@@ -5782,8 +5913,8 @@ msgstr ""
 
 #: app/templates/main/resources.html:38
 msgid ""
-"Assert your institution name on researcher records to prevent name "
-"ambiguity and fragmentation."
+"Assert your institution name on researcher records to prevent name ambiguity "
+"and fragmentation."
 msgstr ""
 
 #: app/templates/main/resources.html:43
@@ -5802,8 +5933,8 @@ msgstr ""
 
 #: app/templates/main/resources.html:50
 msgid ""
-"Access the Member Portal to get advanced statistics and manage "
-"institutional affiliations."
+"Access the Member Portal to get advanced statistics and manage institutional "
+"affiliations."
 msgstr ""
 
 #: app/templates/main/resources.html:65
@@ -5826,8 +5957,8 @@ msgstr ""
 
 #: app/templates/main/resources.html:89
 msgid ""
-"The legal authority authorized to sign formal agreements on behalf of the"
-" institution."
+"The legal authority authorized to sign formal agreements on behalf of the "
+"institution."
 msgstr ""
 
 #: app/templates/main/resources.html:94
@@ -5838,14 +5969,14 @@ msgstr ""
 
 #: app/templates/main/resources.html:99
 msgid ""
-"Authorized to cast institutional ballots in ORCID board elections and "
-"policy decisions."
+"Authorized to cast institutional ballots in ORCID board elections and policy "
+"decisions."
 msgstr ""
 
 #: app/templates/main/resources.html:104
 msgid ""
-"Primary contact for API implementation, client credentials, and technical"
-" alerts."
+"Primary contact for API implementation, client credentials, and technical "
+"alerts."
 msgstr ""
 
 #: app/templates/main/resources.html:109
@@ -5855,13 +5986,13 @@ msgid ""
 msgstr ""
 
 #: app/templates/main/resources.html:114
-msgid "Receives community newsletters, outreach materials, and marketing updates."
+msgid ""
+"Receives community newsletters, outreach materials, and marketing updates."
 msgstr ""
 
 #: app/templates/main/resources.html:119
 msgid ""
-"Receives information about new ORCID features and beta testing "
-"opportunities."
+"Receives information about new ORCID features and beta testing opportunities."
 msgstr ""
 
 #: app/templates/main/resources.html:135
@@ -5870,14 +6001,14 @@ msgstr ""
 
 #: app/templates/main/resources.html:139
 msgid ""
-"Consortium members are entitled to <strong>5 production API "
-"Keys</strong>. These can be used across multiple institutional platforms."
+"Consortium members are entitled to <strong>5 production API Keys</strong>. "
+"These can be used across multiple institutional platforms."
 msgstr ""
 
 #: app/templates/main/resources.html:143
 msgid ""
-"Note: Activating the Affiliation Manager consumes <strong>one</strong> of"
-" your 5 available API slots."
+"Note: Activating the Affiliation Manager consumes <strong>one</strong> of "
+"your 5 available API slots."
 msgstr ""
 
 #: app/templates/main/resources.html:147
@@ -5898,16 +6029,16 @@ msgstr ""
 
 #: app/templates/main/resources.html:167
 msgid ""
-"A \"No-Code\" solution to write verified institutional affiliations "
-"directly into researcher records via CSV upload. Researchers must accept "
-"the invitation sent via email."
+"A \"No-Code\" solution to write verified institutional affiliations directly "
+"into researcher records via CSV upload. Researchers must accept the "
+"invitation sent via email."
 msgstr ""
 
 #: app/templates/main/resources.html:171
 msgid ""
-"Activation is managed directly through the <strong>ORCID Member "
-"Portal</strong>. Please note this tool uses one of your institutional API"
-" credentials."
+"Activation is managed directly through the <strong>ORCID Member Portal</"
+"strong>. Please note this tool uses one of your institutional API "
+"credentials."
 msgstr ""
 
 #: app/templates/main/resources.html:174
@@ -5988,20 +6119,20 @@ msgstr ""
 
 #: app/templates/main/resources.html:242
 msgid ""
-"Confirm your institution ROR (Research Organization Registry) ID. ROR is "
-"the global standard for identifying institutions in ORCID."
+"Confirm your institution ROR (Research Organization Registry) ID. ROR is the "
+"global standard for identifying institutions in ORCID."
 msgstr ""
 
 #: app/templates/main/resources.html:243
 msgid ""
-"Ensure your technical environment supports <strong>HTTPS "
-"callbacks</strong>. ORCID requires secure redirects for data security."
+"Ensure your technical environment supports <strong>HTTPS callbacks</strong>. "
+"ORCID requires secure redirects for data security."
 msgstr ""
 
 #: app/templates/main/resources.html:244
 msgid ""
-"Use the Sandbox environment first. It is a mirrored copy of ORCID where "
-"you can test without affecting real records."
+"Use the Sandbox environment first. It is a mirrored copy of ORCID where you "
+"can test without affecting real records."
 msgstr ""
 
 #: app/templates/works/cache_status.html:4
@@ -6041,9 +6172,11 @@ msgstr ""
 #: app/templates/works/cache_status.html:139
 #: app/templates/works/cache_status.html:536
 #: app/templates/works/cache_status.html:590
-#: app/templates/works/openalex_analytics.html:378
-#: app/templates/works/openalex_global.html:379
-#: app/templates/works/openalex_global.html:545
+#: app/templates/works/openalex_analytics.html:663
+#: app/templates/works/openalex_analytics.html:717
+#: app/templates/works/openalex_global.html:452
+#: app/templates/works/openalex_global.html:824
+#: app/templates/works/openalex_global.html:923
 msgid "OpenAlex"
 msgstr "OpenAlex"
 
@@ -6106,8 +6239,8 @@ msgstr ""
 
 #: app/templates/works/cache_status.html:188
 msgid ""
-"Monitor cache health, refresh institutional metadata, and download "
-"reusable datasets."
+"Monitor cache health, refresh institutional metadata, and download reusable "
+"datasets."
 msgstr ""
 
 #: app/templates/works/cache_status.html:198
@@ -6157,29 +6290,28 @@ msgstr ""
 #: app/templates/works/cache_status.html:271
 #, python-format
 msgid ""
-"The institutional cache is older than %(days)s days. Refresh it before "
-"using time-sensitive exports."
+"The institutional cache is older than %(days)s days. Refresh it before using "
+"time-sensitive exports."
 msgstr ""
 
 #: app/templates/works/cache_status.html:273
 msgid ""
-"Some institutional datasets have not completed a successful "
-"synchronization."
+"Some institutional datasets have not completed a successful synchronization."
 msgstr ""
 
 #: app/templates/works/cache_status.html:275
 msgid ""
-"The latest synchronization failed. Review the recent runs before "
-"exporting time-sensitive data."
+"The latest synchronization failed. Review the recent runs before exporting "
+"time-sensitive data."
 msgstr ""
 
 #: app/templates/works/cache_status.html:277
 msgid ""
-"Synchronization refreshes researchers, public ORCID profiles, works, "
-"funding records, and OpenAlex metadata."
+"Synchronization refreshes researchers, public ORCID profiles, works, funding "
+"records, and OpenAlex metadata."
 msgstr ""
-"Synchronization refreshes researchers, public ORCID profiles, works, "
-"funding records, and OpenAlex metadata."
+"Synchronization refreshes researchers, public ORCID profiles, works, funding "
+"records, and OpenAlex metadata."
 
 #: app/templates/works/cache_status.html:287
 msgid "Sync active institution"
@@ -6192,7 +6324,7 @@ msgstr ""
 #: app/templates/works/cache_status.html:298
 #: app/templates/works/cache_status.html:377
 #: app/templates/works/cache_status.html:385
-#: app/templates/works/openalex_global.html:293
+#: app/templates/works/openalex_global.html:366
 msgid "Active institution"
 msgstr "Active institution"
 
@@ -6416,11 +6548,11 @@ msgstr ""
 #: app/templates/works/cache_status.html:641
 #, python-format
 msgid ""
-"Refresh all data for %(institution)s? Researchers, profiles, works, "
-"funding, and OpenAlex will be synchronized in the background."
+"Refresh all data for %(institution)s? Researchers, profiles, works, funding, "
+"and OpenAlex will be synchronized in the background."
 msgstr ""
-"Refresh all data for %(institution)s? Researchers, profiles, works, "
-"funding, and OpenAlex will be synchronized in the background."
+"Refresh all data for %(institution)s? Researchers, profiles, works, funding, "
+"and OpenAlex will be synchronized in the background."
 
 #: app/templates/works/cache_status.html:656
 msgid ""
@@ -6434,26 +6566,25 @@ msgstr ""
 
 #: app/templates/works/cache_status.html:657
 msgid ""
-"Synchronize only missing OpenAlex article records for the active "
-"institution?"
+"Synchronize only missing OpenAlex article records for the active institution?"
 msgstr ""
-"Synchronize only missing OpenAlex article records for the active "
-"institution?"
+"Synchronize only missing OpenAlex article records for the active institution?"
 
 #: app/templates/works/cache_status.html:658
-msgid "Search OpenAlex by title for unmatched articles in the active institution?"
+msgid ""
+"Search OpenAlex by title for unmatched articles in the active institution?"
 msgstr ""
 
 #: app/templates/works/cache_status.html:659
 msgid ""
-"Refresh every eligible OpenAlex article for the active institution? This "
-"can take a long time."
+"Refresh every eligible OpenAlex article for the active institution? This can "
+"take a long time."
 msgstr ""
 
 #: app/templates/works/cache_status.html:660
 msgid ""
-"Synchronize every registered institution? This is a system-wide operation"
-" and can take a long time."
+"Synchronize every registered institution? This is a system-wide operation "
+"and can take a long time."
 msgstr ""
 
 #: app/templates/works/cache_status.html:661
@@ -6461,13 +6592,14 @@ msgid "Synchronize missing OpenAlex article records across all institutions?"
 msgstr "Synchronize missing OpenAlex article records across all institutions?"
 
 #: app/templates/works/cache_status.html:662
-msgid "Search OpenAlex by title for unmatched articles across all institutions?"
+msgid ""
+"Search OpenAlex by title for unmatched articles across all institutions?"
 msgstr ""
 
 #: app/templates/works/cache_status.html:663
 msgid ""
-"Refresh every eligible OpenAlex article across all institutions? This can"
-" take a very long time."
+"Refresh every eligible OpenAlex article across all institutions? This can "
+"take a very long time."
 msgstr ""
 
 #: app/templates/works/data_quality.html:3
@@ -6594,8 +6726,8 @@ msgstr ""
 
 #: app/templates/works/data_quality.html:89
 msgid ""
-"Missing source fields are reported as coverage gaps; they are not treated"
-" as parser defects without source verification."
+"Missing source fields are reported as coverage gaps; they are not treated as "
+"parser defects without source verification."
 msgstr ""
 
 #: app/templates/works/data_quality.html:94
@@ -6638,8 +6770,8 @@ msgstr ""
 
 #: app/templates/works/data_quality.html:106
 msgid ""
-"This is an activity overlap, not evidence that a grant caused or funded a"
-" specific output."
+"This is an activity overlap, not evidence that a grant caused or funded a "
+"specific output."
 msgstr ""
 
 #: app/templates/works/data_quality.html:110
@@ -6683,96 +6815,111 @@ msgstr ""
 msgid "Open duplicate review"
 msgstr ""
 
-#: app/templates/works/openalex_analytics.html:66
+#: app/templates/works/openalex_analytics.html:72
+#: app/templates/works/openalex_global.html:42
+#, python-format
+msgid "Showing %(start)s-%(end)s of %(total)s records"
+msgstr "Showing %(start)s-%(end)s of %(total)s records"
+
+#: app/templates/works/openalex_analytics.html:146
 msgid "OpenAlex analytics · Data ORCID-Chile"
 msgstr ""
 
-#: app/templates/works/openalex_analytics.html:71
+#: app/templates/works/openalex_analytics.html:151
 msgid ""
 "Explore citations, open access, topics, authorships, and institutional "
 "connections."
 msgstr ""
 
-#: app/templates/works/openalex_analytics.html:193
+#: app/templates/works/openalex_analytics.html:349
 #: app/templates/works/openalex_works.html:14
 msgid "OpenAlex Enrichment"
 msgstr "OpenAlex Enrichment"
 
-#: app/templates/works/openalex_analytics.html:194
-#: app/templates/works/openalex_global.html:275
+#: app/templates/works/openalex_analytics.html:350
+#: app/templates/works/openalex_global.html:348
 msgid "OpenAlex Analytics"
 msgstr "OpenAlex Analytics"
 
-#: app/templates/works/openalex_analytics.html:209
-#: app/templates/works/openalex_global.html:276
+#: app/templates/works/openalex_analytics.html:365
+#: app/templates/works/openalex_global.html:349
 msgid "Global comparison"
 msgstr "Global comparison"
 
-#: app/templates/works/openalex_analytics.html:213
-#: app/templates/works/openalex_global.html:290
+#: app/templates/works/openalex_analytics.html:369
+#: app/templates/works/openalex_global.html:363
 msgid "Metric guide"
 msgstr "Metric guide"
 
-#: app/templates/works/openalex_analytics.html:216
+#: app/templates/works/openalex_analytics.html:372
 msgid "Detail"
 msgstr "Detail"
 
-#: app/templates/works/openalex_analytics.html:246
-#: app/templates/works/openalex_global.html:323
+#: app/templates/works/openalex_analytics.html:402
+#: app/templates/works/openalex_global.html:396
 msgid "Document type"
 msgstr "Document type"
 
-#: app/templates/works/openalex_analytics.html:252
+#: app/templates/works/openalex_analytics.html:408
+msgid "Language"
+msgstr "Language"
+
+#: app/templates/works/openalex_analytics.html:411
 msgid "Affiliation"
 msgstr "Affiliation"
 
-#: app/templates/works/openalex_analytics.html:256
-#: app/templates/works/openalex_global.html:330
-msgid "Multiple-selection filters include all values when no option is selected."
-msgstr "Multiple-selection filters include all values when no option is selected."
+#: app/templates/works/openalex_analytics.html:415
+#: app/templates/works/openalex_global.html:403
+msgid ""
+"Multiple-selection filters include all values when no option is selected."
+msgstr ""
+"Multiple-selection filters include all values when no option is selected."
 
-#: app/templates/works/openalex_analytics.html:274
+#: app/templates/works/openalex_analytics.html:433
 msgid "Visible metrics"
 msgstr "Visible metrics"
 
-#: app/templates/works/openalex_analytics.html:299
+#: app/templates/works/openalex_analytics.html:458
 msgid "OpenAlex analytics sections"
 msgstr ""
 
-#: app/templates/works/openalex_analytics.html:302
+#: app/templates/works/openalex_analytics.html:461
+#: app/templates/works/openalex_global.html:493
+msgid "Open Access · ANID"
+msgstr "Open Access · ANID"
+
+#: app/templates/works/openalex_analytics.html:462
 msgid "Collaboration"
 msgstr ""
 
-#: app/templates/works/openalex_analytics.html:303
+#: app/templates/works/openalex_analytics.html:463
 msgid "Topics and sources"
 msgstr ""
 
-#: app/templates/works/openalex_analytics.html:304
+#: app/templates/works/openalex_analytics.html:464
 msgid "Citation impact"
 msgstr ""
 
-#: app/templates/works/openalex_analytics.html:314
-#: app/templates/works/openalex_global.html:367
+#: app/templates/works/openalex_analytics.html:474
+#: app/templates/works/openalex_global.html:440
 msgid "OpenAlex metric guide"
 msgstr "OpenAlex metric guide"
 
-#: app/templates/works/openalex_analytics.html:323
+#: app/templates/works/openalex_analytics.html:483
 msgid ""
-"Local journal articles with OpenAlex metadata that match the active "
-"filters."
+"Local journal articles with OpenAlex metadata that match the active filters."
 msgstr ""
-"Local journal articles with OpenAlex metadata that match the active "
-"filters."
+"Local journal articles with OpenAlex metadata that match the active filters."
 
-#: app/templates/works/openalex_analytics.html:327
+#: app/templates/works/openalex_analytics.html:487
 msgid ""
-"Percent of filtered articles where OpenAlex reports an institution with "
-"the same ROR as the active university."
+"Percent of filtered articles where OpenAlex reports an institution with the "
+"same ROR as the active university."
 msgstr ""
-"Percent of filtered articles where OpenAlex reports an institution with "
-"the same ROR as the active university."
+"Percent of filtered articles where OpenAlex reports an institution with the "
+"same ROR as the active university."
 
-#: app/templates/works/openalex_analytics.html:331
+#: app/templates/works/openalex_analytics.html:491
 msgid ""
 "Percent of filtered articles with at least one Chilean institution in "
 "OpenAlex affiliations."
@@ -6780,7 +6927,7 @@ msgstr ""
 "Percent of filtered articles with at least one Chilean institution in "
 "OpenAlex affiliations."
 
-#: app/templates/works/openalex_analytics.html:335
+#: app/templates/works/openalex_analytics.html:495
 msgid ""
 "Articles with a Chilean affiliation and at least one institution from "
 "another country in OpenAlex."
@@ -6788,98 +6935,117 @@ msgstr ""
 "Articles with a Chilean affiliation and at least one institution from "
 "another country in OpenAlex."
 
-#: app/templates/works/openalex_analytics.html:339
+#: app/templates/works/openalex_analytics.html:499
 msgid ""
-"Field-Weighted Citation Impact reported by OpenAlex. Values above 1 "
-"suggest impact above the field average."
+"Field-Weighted Citation Impact reported by OpenAlex. Values above 1 suggest "
+"impact above the field average."
 msgstr ""
-"Field-Weighted Citation Impact reported by OpenAlex. Values above 1 "
-"suggest impact above the field average."
+"Field-Weighted Citation Impact reported by OpenAlex. Values above 1 suggest "
+"impact above the field average."
 
-#: app/templates/works/openalex_analytics.html:342
+#: app/templates/works/openalex_analytics.html:503
+msgid ""
+"Articles classified as diamond by OpenAlex: published in a fully open-access "
+"journal without publication fees for authors."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:507
+msgid ""
+"Articles classified as green by OpenAlex: the publisher landing page is toll-"
+"access, while a free copy is available in an open-access repository."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:511
+msgid ""
+"OpenAlex supplies the work language as an ISO 639-1 code. The dashboard "
+"expands that code in the interface language and keeps it visible in "
+"parentheses."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:514
 msgid "Chile-Affiliated Authors"
 msgstr "Chile-Affiliated Authors"
 
-#: app/templates/works/openalex_analytics.html:343
+#: app/templates/works/openalex_analytics.html:515
 msgid ""
-"Authors are stored here only when the OpenAlex authorship includes "
-"country CL; this is not a census of all university ORCID profiles."
+"Authors are stored here only when the OpenAlex authorship includes country "
+"CL; this is not a census of all university ORCID profiles."
 msgstr ""
-"Authors are stored here only when the OpenAlex authorship includes "
-"country CL; this is not a census of all university ORCID profiles."
+"Authors are stored here only when the OpenAlex authorship includes country "
+"CL; this is not a census of all university ORCID profiles."
 
-#: app/templates/works/openalex_analytics.html:352
-#: app/templates/works/openalex_global.html:406
+#: app/templates/works/openalex_analytics.html:524
+#: app/templates/works/openalex_global.html:487
 msgid "No OpenAlex metadata is available for the selected filters."
 msgstr "No OpenAlex metadata is available for the selected filters."
 
-#: app/templates/works/openalex_analytics.html:355
+#: app/templates/works/openalex_analytics.html:527
 msgid "Publication, Affiliation, and Citation Trend"
 msgstr "Publication, Affiliation, and Citation Trend"
 
-#: app/templates/works/openalex_analytics.html:355
+#: app/templates/works/openalex_analytics.html:527
 msgid ""
-"Annual evolution of article volume, institutional or Chilean affiliation,"
-" and citations."
+"Annual evolution of article volume, institutional or Chilean affiliation, "
+"and citations."
 msgstr ""
-"Annual evolution of article volume, institutional or Chilean affiliation,"
-" and citations."
+"Annual evolution of article volume, institutional or Chilean affiliation, "
+"and citations."
 
-#: app/templates/works/openalex_analytics.html:355
+#: app/templates/works/openalex_analytics.html:527
 msgid ""
-"Counts filtered OpenAlex works by publication year. Citations are summed "
-"by year and use the right axis."
+"Counts filtered OpenAlex works by publication year. Citations are summed by "
+"year and use the right axis."
 msgstr ""
-"Counts filtered OpenAlex works by publication year. Citations are summed "
-"by year and use the right axis."
+"Counts filtered OpenAlex works by publication year. Citations are summed by "
+"year and use the right axis."
 
-#: app/templates/works/openalex_analytics.html:356
+#: app/templates/works/openalex_analytics.html:528
 msgid "Affiliation Coverage"
 msgstr "Affiliation Coverage"
 
-#: app/templates/works/openalex_analytics.html:356
+#: app/templates/works/openalex_analytics.html:528
 msgid ""
-"Distribution of articles by their relationship with the active "
-"institution and Chile."
+"Distribution of articles by their relationship with the active institution "
+"and Chile."
 msgstr ""
-"Distribution of articles by their relationship with the active "
-"institution and Chile."
+"Distribution of articles by their relationship with the active institution "
+"and Chile."
 
-#: app/templates/works/openalex_analytics.html:356
+#: app/templates/works/openalex_analytics.html:528
 msgid ""
-"Each filtered article is classified as selected institution, other "
-"Chilean affiliation, or no Chilean affiliation recorded in OpenAlex."
+"Each filtered article is classified as selected institution, other Chilean "
+"affiliation, or no Chilean affiliation recorded in OpenAlex."
 msgstr ""
-"Each filtered article is classified as selected institution, other "
-"Chilean affiliation, or no Chilean affiliation recorded in OpenAlex."
+"Each filtered article is classified as selected institution, other Chilean "
+"affiliation, or no Chilean affiliation recorded in OpenAlex."
 
-#: app/templates/works/openalex_analytics.html:357
-#: app/templates/works/openalex_global.html:430
+#: app/templates/works/openalex_analytics.html:529
+#: app/templates/works/openalex_global.html:512
 msgid "Document Type Evolution"
 msgstr "Document Type Evolution"
 
-#: app/templates/works/openalex_analytics.html:357
+#: app/templates/works/openalex_analytics.html:529
 msgid "Annual changes in the main OpenAlex document types."
 msgstr "Annual changes in the main OpenAlex document types."
 
-#: app/templates/works/openalex_analytics.html:357
+#: app/templates/works/openalex_analytics.html:529
 msgid ""
-"Filtered works are grouped by publication year and OpenAlex type; the six"
-" highest-volume types in the filtered period are shown."
+"Filtered works are grouped by publication year and OpenAlex type; the six "
+"highest-volume types in the filtered period are shown."
 msgstr ""
-"Filtered works are grouped by publication year and OpenAlex type; the six"
-" highest-volume types in the filtered period are shown."
+"Filtered works are grouped by publication year and OpenAlex type; the six "
+"highest-volume types in the filtered period are shown."
 
-#: app/templates/works/openalex_analytics.html:358
-#: app/templates/works/openalex_global.html:446
+#: app/templates/works/openalex_analytics.html:530
+#: app/templates/works/openalex_global.html:528
 msgid "Open Access Evolution"
 msgstr "Open Access Evolution"
 
-#: app/templates/works/openalex_analytics.html:358
+#: app/templates/works/openalex_analytics.html:530
 msgid "Annual evolution of open and closed articles."
 msgstr "Annual evolution of open and closed articles."
 
-#: app/templates/works/openalex_analytics.html:358
+#: app/templates/works/openalex_analytics.html:530
 msgid ""
 "Uses the OpenAlex is_oa field. Open means is_oa=true; closed means "
 "is_oa=false for the filtered works."
@@ -6887,259 +7053,469 @@ msgstr ""
 "Uses the OpenAlex is_oa field. Open means is_oa=true; closed means "
 "is_oa=false for the filtered works."
 
-#: app/templates/works/openalex_analytics.html:362
-msgid "Top Chile-Affiliated Authors"
-msgstr "Top Chile-Affiliated Authors"
+#: app/templates/works/openalex_analytics.html:538
+msgid "Open Access focus for ANID"
+msgstr "Open Access focus for ANID"
 
-#: app/templates/works/openalex_analytics.html:362
-msgid "Chilean-affiliated authors with the most articles in the filtered set."
-msgstr "Chilean-affiliated authors with the most articles in the filtered set."
-
-#: app/templates/works/openalex_analytics.html:362
+#: app/templates/works/openalex_analytics.html:539
 msgid ""
-"Counts authors stored from OpenAlex when the authorship has country CL. "
-"This is not a census of all ORCID researchers."
+"A dedicated view of Diamond and Green Open Access within the filtered "
+"institutional output."
 msgstr ""
-"Counts authors stored from OpenAlex when the authorship has country CL. "
-"This is not a census of all ORCID researchers."
 
-#: app/templates/works/openalex_analytics.html:363
-msgid "Affiliation Countries"
-msgstr "Affiliation Countries"
+#: app/templates/works/openalex_analytics.html:548
+#: app/templates/works/openalex_analytics.html:556
+#: app/templates/works/openalex_analytics.html:564
+#, python-format
+msgid "%(percent)s%% of filtered articles"
+msgstr "%(percent)s%% of filtered articles"
 
-#: app/templates/works/openalex_analytics.html:363
-msgid "Affiliation countries present in the filtered articles."
-msgstr "Affiliation countries present in the filtered articles."
+#: app/templates/works/openalex_analytics.html:562
+msgid "Diamond + Green"
+msgstr ""
 
-#: app/templates/works/openalex_analytics.html:363
+#: app/templates/works/openalex_analytics.html:568
 msgid ""
-"Counts countries from OpenAlex institutions by article. A single article "
-"can appear in more than one country when it has international "
-"collaboration."
+"Percentages use all OpenAlex-enriched articles matching the active filters "
+"as the denominator. The categories are mutually exclusive according to the "
+"OpenAlex oa_status field."
 msgstr ""
-"Counts countries from OpenAlex institutions by article. A single article "
-"can appear in more than one country when it has international "
-"collaboration."
 
-#: app/templates/works/openalex_analytics.html:364
-msgid "Top OpenAlex Institutions"
-msgstr "Top OpenAlex Institutions"
+#: app/templates/works/openalex_analytics.html:572
+msgid "Diamond and Green Open Access Evolution"
+msgstr "Diamond and Green Open Access Evolution"
 
-#: app/templates/works/openalex_analytics.html:364
-msgid "OpenAlex institutions with the highest presence in the filtered articles."
-msgstr "OpenAlex institutions with the highest presence in the filtered articles."
-
-#: app/templates/works/openalex_analytics.html:364
+#: app/templates/works/openalex_analytics.html:572
 msgid ""
-"Counts institutions present in OpenAlex authorships, deduplicated by "
-"article. A publication can count toward more than one institution."
+"Annual evolution of the two open-access types prioritized in this module."
 msgstr ""
-"Counts institutions present in OpenAlex authorships, deduplicated by "
-"article. A publication can count toward more than one institution."
+"Annual evolution of the two open-access types prioritized in this module."
 
-#: app/templates/works/openalex_analytics.html:365
-msgid "Top Chilean Institutions"
-msgstr "Top Chilean Institutions"
-
-#: app/templates/works/openalex_analytics.html:365
-msgid "Most frequent Chilean institutions in the filtered articles."
-msgstr "Most frequent Chilean institutions in the filtered articles."
-
-#: app/templates/works/openalex_analytics.html:365
+#: app/templates/works/openalex_analytics.html:572
 msgid ""
-"Filters OpenAlex institutions with country_code=CL and counts unique "
-"articles per institution."
+"Groups filtered articles by publication year and the native OpenAlex "
+"oa_status values diamond and green. Years without classified articles are "
+"shown as zero."
 msgstr ""
-"Filters OpenAlex institutions with country_code=CL and counts unique "
-"articles per institution."
 
-#: app/templates/works/openalex_analytics.html:369
-msgid "Topic Domains"
-msgstr "Topic Domains"
+#: app/templates/works/openalex_analytics.html:573
+msgid "Diamond and Green Composition"
+msgstr ""
 
-#: app/templates/works/openalex_analytics.html:369
-msgid "Distribution by OpenAlex topic domains."
-msgstr "Distribution by OpenAlex topic domains."
+#: app/templates/works/openalex_analytics.html:573
+msgid "Number of filtered articles classified as Diamond or Green Open Access."
+msgstr ""
 
-#: app/templates/works/openalex_analytics.html:369
+#: app/templates/works/openalex_analytics.html:573
 msgid ""
-"Uses primary_topic_domain from each enriched work. Missing "
-"classifications are grouped as unknown."
+"Uses the native OpenAlex oa_status field. Diamond identifies publication in "
+"a fully open-access journal without author publication fees; Green "
+"identifies a free repository copy when the publisher page is toll-access."
 msgstr ""
-"Uses primary_topic_domain from each enriched work. Missing "
-"classifications are grouped as unknown."
 
-#: app/templates/works/openalex_analytics.html:370
-msgid "Topic Fields"
-msgstr "Topic Fields"
+#: app/templates/works/openalex_analytics.html:574
+msgid "All Open Access Types"
+msgstr "All Open Access Types"
 
-#: app/templates/works/openalex_analytics.html:370
-msgid "Most frequent OpenAlex topic fields."
-msgstr "Most frequent OpenAlex topic fields."
-
-#: app/templates/works/openalex_analytics.html:370
+#: app/templates/works/openalex_analytics.html:574
 msgid ""
-"Uses primary_topic_field from each enriched work and counts articles by "
-"field."
+"Distribution across every open-access status present in the filtered set."
 msgstr ""
-"Uses primary_topic_field from each enriched work and counts articles by "
-"field."
 
-#: app/templates/works/openalex_analytics.html:371
-msgid "Document Types"
-msgstr "Document Types"
-
-#: app/templates/works/openalex_analytics.html:371
-msgid "Composition of the filtered set by document type."
-msgstr "Composition of the filtered set by document type."
-
-#: app/templates/works/openalex_analytics.html:371
+#: app/templates/works/openalex_analytics.html:574
 msgid ""
-"Uses the OpenAlex type field and shows the most frequent types in the "
-"selected period."
+"Uses the native OpenAlex oa_status field, including diamond, green, gold, "
+"hybrid, bronze, closed, and any future status returned by OpenAlex."
 msgstr ""
-"Uses the OpenAlex type field and shows the most frequent types in the "
-"selected period."
+"Uses the native OpenAlex oa_status field, including diamond, green, gold, "
+"hybrid, bronze, closed, and any future status returned by OpenAlex."
 
-#: app/templates/works/openalex_analytics.html:372
-msgid "Open Access Status"
-msgstr "Open Access Status"
+#: app/templates/works/openalex_analytics.html:578
+#: app/templates/works/openalex_global.html:642
+msgid "Diamond and Green Articles by Journal"
+msgstr ""
 
-#: app/templates/works/openalex_analytics.html:372
-msgid "Distribution of OpenAlex open access status."
-msgstr "Distribution of OpenAlex open access status."
-
-#: app/templates/works/openalex_analytics.html:372
+#: app/templates/works/openalex_analytics.html:578
 msgid ""
-"Uses oa_status when available. It can distinguish gold, green, hybrid, "
-"bronze, closed, or other statuses defined by OpenAlex."
+"Journals or sources with the most Diamond and Green articles in the filtered "
+"institutional output."
 msgstr ""
-"Uses oa_status when available. It can distinguish gold, green, hybrid, "
-"bronze, closed, or other statuses defined by OpenAlex."
 
-#: app/templates/works/openalex_analytics.html:373
-msgid "Sources"
-msgstr "Sources"
-
-#: app/templates/works/openalex_analytics.html:373
-msgid "Most frequent sources or journals in the filtered set."
-msgstr "Most frequent sources or journals in the filtered set."
-
-#: app/templates/works/openalex_analytics.html:373
+#: app/templates/works/openalex_analytics.html:578
 msgid ""
-"Uses source_name from OpenAlex. Empty values are grouped as unknown "
-"source."
+"Groups filtered works by source_name, ISSN-L, and native OpenAlex oa_status. "
+"Each article is counted once; the chart shows the ten sources with the "
+"largest combined Diamond and Green volume."
 msgstr ""
-"Uses source_name from OpenAlex. Empty values are grouped as unknown "
-"source."
 
-#: app/templates/works/openalex_analytics.html:377
-msgid "Top Cited OpenAlex Articles"
-msgstr "Top Cited OpenAlex Articles"
-
-#: app/templates/works/openalex_analytics.html:377
-msgid "Filtered articles with the highest OpenAlex citation counts."
-msgstr "Filtered articles with the highest OpenAlex citation counts."
-
-#: app/templates/works/openalex_analytics.html:377
-msgid ""
-"Sorts by cited_by_count descending. Citations use the current counter "
-"stored from OpenAlex."
-msgstr ""
-"Sorts by cited_by_count descending. Citations use the current counter "
-"stored from OpenAlex."
-
-#: app/templates/works/openalex_analytics.html:378
-#: app/templates/works/openalex_works.html:115
-msgid "Article"
-msgstr "Article"
-
-#: app/templates/works/openalex_analytics.html:378
-#: app/templates/works/openalex_analytics.html:853
-#: app/templates/works/openalex_global.html:551
-#: app/templates/works/openalex_global.html:598
+#: app/templates/works/openalex_analytics.html:579
 #: app/templates/works/openalex_global.html:655
-#: app/templates/works/openalex_global.html:723
-#: app/templates/works/openalex_global.html:855
+msgid "Diamond and Green Citations by Journal"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:579
+msgid ""
+"Journals or sources accumulating the most citations from Diamond and Green "
+"articles."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:579
+msgid ""
+"Sums the current OpenAlex cited_by_count for filtered Diamond and Green "
+"articles, grouped by source. The chart shows the ten sources with the "
+"largest combined citation count."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:583
+msgid "Diamond and Green Journal Statistics"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:587
+msgid ""
+"Journal-level production and citation metrics for the ANID Open Access focus."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:588
+msgid ""
+"Rows are grouped by source and OpenAlex oa_status. Green is an article-level "
+"repository route and does not imply that the complete journal is Green Open "
+"Access."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:597
+#: app/templates/works/openalex_global.html:710
+msgid "Search journal statistics"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:598
+#: app/templates/works/openalex_global.html:711
+msgid "Search by journal, source, ISSN-L, or Open Access type"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:605
+#: app/templates/works/openalex_global.html:718
+msgid "Journal or source"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:606
+#: app/templates/works/openalex_analytics.html:660
+#: app/templates/works/openalex_global.html:719
+#: app/templates/works/openalex_global.html:821
+msgid "Open Access type"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:607
+#: app/templates/works/openalex_analytics.html:1130
+#: app/templates/works/openalex_analytics.html:1182
+#: app/templates/works/openalex_global.html:497
+#: app/templates/works/openalex_global.html:720
+#: app/templates/works/openalex_global.html:975
+#: app/templates/works/openalex_global.html:1030
+#: app/templates/works/openalex_global.html:1100
+#: app/templates/works/openalex_global.html:1249
+#: app/templates/works/openalex_works.html:104
+msgid "Articles"
+msgstr "Articles"
+
+#: app/templates/works/openalex_analytics.html:608
+#: app/templates/works/openalex_analytics.html:661
+#: app/templates/works/openalex_analytics.html:717
+#: app/templates/works/openalex_analytics.html:1209
+#: app/templates/works/openalex_global.html:721
+#: app/templates/works/openalex_global.html:822
+#: app/templates/works/openalex_global.html:929
+#: app/templates/works/openalex_global.html:976
+#: app/templates/works/openalex_global.html:1033
+#: app/templates/works/openalex_global.html:1101
+#: app/templates/works/openalex_global.html:1250
 #: app/templates/works/openalex_works.html:82
 #: app/templates/works/openalex_works.html:117
 #: app/templates/works/openalex_works.html:151
 msgid "Citations"
 msgstr "Citations"
 
-#: app/templates/works/openalex_analytics.html:378
+#: app/templates/works/openalex_analytics.html:617
+#: app/templates/works/openalex_global.html:728
+msgid "ISSN-L not available"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:627
+#: app/templates/works/openalex_analytics.html:685
+#: app/templates/works/openalex_global.html:735
+#: app/templates/works/openalex_global.html:788
+#: app/templates/works/openalex_global.html:843
+msgid "No records match your search."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:637
+msgid "Most Cited Diamond and Green Articles"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:641
+msgid ""
+"Diamond and Green articles with the highest current OpenAlex citation counts."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:642
+msgid ""
+"Articles are ranked by cited_by_count after applying every active "
+"institutional dashboard filter."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:651
+#: app/templates/works/openalex_global.html:812
+msgid "Search cited articles"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:652
+#: app/templates/works/openalex_global.html:813
+msgid "Search by article, source, DOI, OpenAlex, or Open Access type"
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:659
+#: app/templates/works/openalex_analytics.html:717
+#: app/templates/works/openalex_global.html:820
+#: app/templates/works/openalex_works.html:115
+msgid "Article"
+msgstr "Article"
+
+#: app/templates/works/openalex_analytics.html:670
+#: app/templates/works/openalex_analytics.html:717
+#: app/templates/works/openalex_global.html:830
 #: app/templates/works/openalex_works.html:124
 #: app/templates/works/openalex_works.html:149
 msgid "Untitled work"
 msgstr "Untitled work"
 
-#: app/templates/works/openalex_analytics.html:791
-#: app/templates/works/openalex_analytics.html:826
-#: app/templates/works/openalex_global.html:415
-#: app/templates/works/openalex_global.html:597
-#: app/templates/works/openalex_global.html:652
-#: app/templates/works/openalex_global.html:722
-#: app/templates/works/openalex_global.html:854
-#: app/templates/works/openalex_works.html:104
-msgid "Articles"
-msgstr "Articles"
+#: app/templates/works/openalex_analytics.html:695
+msgid "No Diamond or Green articles are available for the active filters."
+msgstr ""
 
-#: app/templates/works/openalex_analytics.html:844
+#: app/templates/works/openalex_analytics.html:700
+msgid "Top Chile-Affiliated Authors"
+msgstr "Top Chile-Affiliated Authors"
+
+#: app/templates/works/openalex_analytics.html:700
+msgid "Chilean-affiliated authors with the most articles in the filtered set."
+msgstr "Chilean-affiliated authors with the most articles in the filtered set."
+
+#: app/templates/works/openalex_analytics.html:700
+msgid ""
+"Counts authors stored from OpenAlex when the authorship has country CL. This "
+"is not a census of all ORCID researchers."
+msgstr ""
+"Counts authors stored from OpenAlex when the authorship has country CL. This "
+"is not a census of all ORCID researchers."
+
+#: app/templates/works/openalex_analytics.html:701
+msgid "Affiliation Countries"
+msgstr "Affiliation Countries"
+
+#: app/templates/works/openalex_analytics.html:701
+msgid "Affiliation countries present in the filtered articles."
+msgstr "Affiliation countries present in the filtered articles."
+
+#: app/templates/works/openalex_analytics.html:701
+msgid ""
+"Counts countries from OpenAlex institutions by article. A single article can "
+"appear in more than one country when it has international collaboration."
+msgstr ""
+"Counts countries from OpenAlex institutions by article. A single article can "
+"appear in more than one country when it has international collaboration."
+
+#: app/templates/works/openalex_analytics.html:702
+msgid "Top OpenAlex Institutions"
+msgstr "Top OpenAlex Institutions"
+
+#: app/templates/works/openalex_analytics.html:702
+msgid ""
+"OpenAlex institutions with the highest presence in the filtered articles."
+msgstr ""
+"OpenAlex institutions with the highest presence in the filtered articles."
+
+#: app/templates/works/openalex_analytics.html:702
+msgid ""
+"Counts institutions present in OpenAlex authorships, deduplicated by "
+"article. A publication can count toward more than one institution."
+msgstr ""
+"Counts institutions present in OpenAlex authorships, deduplicated by "
+"article. A publication can count toward more than one institution."
+
+#: app/templates/works/openalex_analytics.html:703
+msgid "Top Chilean Institutions"
+msgstr "Top Chilean Institutions"
+
+#: app/templates/works/openalex_analytics.html:703
+msgid "Most frequent Chilean institutions in the filtered articles."
+msgstr "Most frequent Chilean institutions in the filtered articles."
+
+#: app/templates/works/openalex_analytics.html:703
+msgid ""
+"Filters OpenAlex institutions with country_code=CL and counts unique "
+"articles per institution."
+msgstr ""
+"Filters OpenAlex institutions with country_code=CL and counts unique "
+"articles per institution."
+
+#: app/templates/works/openalex_analytics.html:707
+msgid "Topic Domains"
+msgstr "Topic Domains"
+
+#: app/templates/works/openalex_analytics.html:707
+msgid "Distribution by OpenAlex topic domains."
+msgstr "Distribution by OpenAlex topic domains."
+
+#: app/templates/works/openalex_analytics.html:707
+msgid ""
+"Uses primary_topic_domain from each enriched work. Missing classifications "
+"are grouped as unknown."
+msgstr ""
+"Uses primary_topic_domain from each enriched work. Missing classifications "
+"are grouped as unknown."
+
+#: app/templates/works/openalex_analytics.html:708
+msgid "Topic Fields"
+msgstr "Topic Fields"
+
+#: app/templates/works/openalex_analytics.html:708
+msgid "Most frequent OpenAlex topic fields."
+msgstr "Most frequent OpenAlex topic fields."
+
+#: app/templates/works/openalex_analytics.html:708
+msgid ""
+"Uses primary_topic_field from each enriched work and counts articles by "
+"field."
+msgstr ""
+"Uses primary_topic_field from each enriched work and counts articles by "
+"field."
+
+#: app/templates/works/openalex_analytics.html:709
+msgid "Document Types"
+msgstr "Document Types"
+
+#: app/templates/works/openalex_analytics.html:709
+msgid "Composition of the filtered set by document type."
+msgstr "Composition of the filtered set by document type."
+
+#: app/templates/works/openalex_analytics.html:709
+msgid ""
+"Uses the OpenAlex type field and shows the most frequent types in the "
+"selected period."
+msgstr ""
+"Uses the OpenAlex type field and shows the most frequent types in the "
+"selected period."
+
+#: app/templates/works/openalex_analytics.html:710
+msgid "Open Access Status"
+msgstr "Open Access Status"
+
+#: app/templates/works/openalex_analytics.html:710
+msgid "Distribution of OpenAlex open access status."
+msgstr "Distribution of OpenAlex open access status."
+
+#: app/templates/works/openalex_analytics.html:710
+msgid ""
+"Uses oa_status when available. It can distinguish diamond, green, gold, "
+"hybrid, bronze, closed, or other statuses defined by OpenAlex."
+msgstr ""
+"Uses oa_status when available. It can distinguish diamond, green, gold, "
+"hybrid, bronze, closed, or other statuses defined by OpenAlex."
+
+#: app/templates/works/openalex_analytics.html:711
+msgid "Publication Languages"
+msgstr "Publication Languages"
+
+#: app/templates/works/openalex_analytics.html:711
+msgid "Most frequent publication languages in the filtered set."
+msgstr "Most frequent publication languages in the filtered set."
+
+#: app/templates/works/openalex_analytics.html:711
+msgid ""
+"Uses the OpenAlex language field in ISO 639-1 format. Codes are expanded "
+"into localized language names; missing values are grouped as unknown."
+msgstr ""
+
+#: app/templates/works/openalex_analytics.html:712
+msgid "Sources"
+msgstr "Sources"
+
+#: app/templates/works/openalex_analytics.html:712
+msgid "Most frequent sources or journals in the filtered set."
+msgstr "Most frequent sources or journals in the filtered set."
+
+#: app/templates/works/openalex_analytics.html:712
+msgid ""
+"Uses source_name from OpenAlex. Empty values are grouped as unknown source."
+msgstr ""
+"Uses source_name from OpenAlex. Empty values are grouped as unknown source."
+
+#: app/templates/works/openalex_analytics.html:716
+msgid "Top Cited OpenAlex Articles"
+msgstr "Top Cited OpenAlex Articles"
+
+#: app/templates/works/openalex_analytics.html:716
+msgid "Filtered articles with the highest OpenAlex citation counts."
+msgstr "Filtered articles with the highest OpenAlex citation counts."
+
+#: app/templates/works/openalex_analytics.html:716
+msgid ""
+"Sorts by cited_by_count descending. Citations use the current counter stored "
+"from OpenAlex."
+msgstr ""
+"Sorts by cited_by_count descending. Citations use the current counter stored "
+"from OpenAlex."
+
+#: app/templates/works/openalex_analytics.html:1200
 msgid "Chile affiliation"
 msgstr "Chile affiliation"
 
-#: app/templates/works/openalex_global.html:42
-#, python-format
-msgid "Showing %(start)s-%(end)s of %(total)s records"
-msgstr "Showing %(start)s-%(end)s of %(total)s records"
-
-#: app/templates/works/openalex_global.html:125
+#: app/templates/works/openalex_global.html:157
 msgid "Global OpenAlex comparison · Data ORCID-Chile"
 msgstr ""
 
-#: app/templates/works/openalex_global.html:130
+#: app/templates/works/openalex_global.html:162
 msgid ""
-"Compare OpenAlex-enriched production, citations, and collaboration across"
-" institutions."
+"Compare OpenAlex-enriched production, citations, and collaboration across "
+"institutions."
 msgstr ""
 
-#: app/templates/works/openalex_global.html:346
-#: app/templates/works/openalex_global.html:412
+#: app/templates/works/openalex_global.html:419
+#: app/templates/works/openalex_global.html:494
 msgid "Universities"
 msgstr "Universities"
 
-#: app/templates/works/openalex_global.html:347
+#: app/templates/works/openalex_global.html:420
 msgid "OpenAlex Articles"
 msgstr "OpenAlex Articles"
 
-#: app/templates/works/openalex_global.html:348
+#: app/templates/works/openalex_global.html:421
 msgid "Overall OpenAlex Coverage"
 msgstr "Overall OpenAlex Coverage"
 
-#: app/templates/works/openalex_global.html:349
+#: app/templates/works/openalex_global.html:422
 msgid "Own Institution Match"
 msgstr "Own Institution Match"
 
-#: app/templates/works/openalex_global.html:375
-#: app/templates/works/openalex_global.html:544
+#: app/templates/works/openalex_global.html:448
+#: app/templates/works/openalex_global.html:922
 msgid "ORCID Articles"
 msgstr "ORCID Articles"
 
-#: app/templates/works/openalex_global.html:376
+#: app/templates/works/openalex_global.html:449
 msgid "Total journal articles in the local ORCID cache for each university."
 msgstr "Total journal articles in the local ORCID cache for each university."
 
-#: app/templates/works/openalex_global.html:380
+#: app/templates/works/openalex_global.html:453
 msgid "Local articles with OpenAlex metadata that match the active filters."
 msgstr "Local articles with OpenAlex metadata that match the active filters."
 
-#: app/templates/works/openalex_global.html:383
-#: app/templates/works/openalex_global.html:546
-#: app/templates/works/openalex_global.html:883
+#: app/templates/works/openalex_global.html:456
+#: app/templates/works/openalex_global.html:924
+#: app/templates/works/openalex_global.html:1304
 msgid "Overall Coverage"
 msgstr "Overall Coverage"
 
-#: app/templates/works/openalex_global.html:384
+#: app/templates/works/openalex_global.html:457
 msgid ""
 "Percent of local candidates with an OpenAlex match, calculated without "
 "restricting by year, type, or OA filters."
@@ -7147,29 +7523,27 @@ msgstr ""
 "Percent of local candidates with an OpenAlex match, calculated without "
 "restricting by year, type, or OA filters."
 
-#: app/templates/works/openalex_global.html:387
-#: app/templates/works/openalex_global.html:547
-#: app/templates/works/openalex_global.html:884
+#: app/templates/works/openalex_global.html:460
+#: app/templates/works/openalex_global.html:925
+#: app/templates/works/openalex_global.html:1305
 msgid "Own Institution"
 msgstr "Own Institution"
 
-#: app/templates/works/openalex_global.html:388
+#: app/templates/works/openalex_global.html:461
 msgid ""
-"Percent of filtered articles where OpenAlex includes the same university "
-"ROR."
+"Percent of filtered articles where OpenAlex includes the same university ROR."
 msgstr ""
-"Percent of filtered articles where OpenAlex includes the same university "
-"ROR."
+"Percent of filtered articles where OpenAlex includes the same university ROR."
 
-#: app/templates/works/openalex_global.html:391
-#: app/templates/works/openalex_global.html:548
-#: app/templates/works/openalex_global.html:601
-#: app/templates/works/openalex_global.html:727
-#: app/templates/works/openalex_global.html:885
+#: app/templates/works/openalex_global.html:464
+#: app/templates/works/openalex_global.html:926
+#: app/templates/works/openalex_global.html:979
+#: app/templates/works/openalex_global.html:1105
+#: app/templates/works/openalex_global.html:1306
 msgid "Chile"
 msgstr "Chile"
 
-#: app/templates/works/openalex_global.html:392
+#: app/templates/works/openalex_global.html:465
 msgid ""
 "Percent of filtered articles with at least one Chilean institution in "
 "OpenAlex."
@@ -7177,72 +7551,94 @@ msgstr ""
 "Percent of filtered articles with at least one Chilean institution in "
 "OpenAlex."
 
-#: app/templates/works/openalex_global.html:395
-#: app/templates/works/openalex_global.html:549
-#: app/templates/works/openalex_global.html:886
+#: app/templates/works/openalex_global.html:468
+#: app/templates/works/openalex_global.html:927
+#: app/templates/works/openalex_global.html:1307
 msgid "International"
 msgstr "International"
 
-#: app/templates/works/openalex_global.html:396
+#: app/templates/works/openalex_global.html:469
 msgid ""
-"Percent of articles with a Chilean affiliation that also have at least "
-"one institution from another country."
+"Percent of articles with a Chilean affiliation that also have at least one "
+"institution from another country."
 msgstr ""
-"Percent of articles with a Chilean affiliation that also have at least "
-"one institution from another country."
+"Percent of articles with a Chilean affiliation that also have at least one "
+"institution from another country."
 
-#: app/templates/works/openalex_global.html:409
+#: app/templates/works/openalex_global.html:472
+#: app/templates/works/openalex_global.html:571
+msgid "Diamond and Green global statistics"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:473
+msgid ""
+"Global source and article rankings deduplicate works by DOI across "
+"institutions. University comparisons count each article once for every local "
+"institution where it appears."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:476
+msgid "Green sources"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:477
+msgid ""
+"Green is an article-level repository route in OpenAlex. A journal listed "
+"with Green articles is not necessarily a fully Green Open Access journal."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:490
 msgid "Global OpenAlex sections"
 msgstr ""
 
-#: app/templates/works/openalex_global.html:411
+#: app/templates/works/openalex_global.html:492
 msgid "Summary"
 msgstr "Summary"
 
-#: app/templates/works/openalex_global.html:413
+#: app/templates/works/openalex_global.html:495
 msgid "Production"
 msgstr "Production"
 
-#: app/templates/works/openalex_global.html:414
-#: app/templates/works/openalex_global.html:694
+#: app/templates/works/openalex_global.html:496
+#: app/templates/works/openalex_global.html:1072
 msgid "Authors by Institution"
 msgstr "Authors by Institution"
 
-#: app/templates/works/openalex_global.html:432
+#: app/templates/works/openalex_global.html:514
 msgid "Annual evolution of OpenAlex document types across the full system."
 msgstr "Annual evolution of OpenAlex document types across the full system."
 
-#: app/templates/works/openalex_global.html:433
+#: app/templates/works/openalex_global.html:515
 msgid ""
-"Groups university-article pairs by publication year and OpenAlex type. "
-"The six highest-volume types in the filtered period are shown."
+"Groups university-article pairs by publication year and OpenAlex type. The "
+"six highest-volume types in the filtered period are shown."
 msgstr ""
-"Groups university-article pairs by publication year and OpenAlex type. "
-"The six highest-volume types in the filtered period are shown."
+"Groups university-article pairs by publication year and OpenAlex type. The "
+"six highest-volume types in the filtered period are shown."
 
-#: app/templates/works/openalex_global.html:448
+#: app/templates/works/openalex_global.html:530
 msgid "Annual evolution of open and closed articles across all universities."
 msgstr "Annual evolution of open and closed articles across all universities."
 
-#: app/templates/works/openalex_global.html:449
+#: app/templates/works/openalex_global.html:531
 msgid ""
-"Counts university-article pairs by year using OpenAlex is_oa. If an "
-"article appears in multiple universities, it contributes to each "
-"university-article pair."
+"Counts university-article pairs by year using OpenAlex is_oa. If an article "
+"appears in multiple universities, it contributes to each university-article "
+"pair."
 msgstr ""
-"Counts university-article pairs by year using OpenAlex is_oa. If an "
-"article appears in multiple universities, it contributes to each "
-"university-article pair."
+"Counts university-article pairs by year using OpenAlex is_oa. If an article "
+"appears in multiple universities, it contributes to each university-article "
+"pair."
 
-#: app/templates/works/openalex_global.html:464
+#: app/templates/works/openalex_global.html:546
 msgid "Open Access Mix"
 msgstr "Open Access Mix"
 
-#: app/templates/works/openalex_global.html:466
+#: app/templates/works/openalex_global.html:548
 msgid "Global share of open and closed articles."
 msgstr "Global share of open and closed articles."
 
-#: app/templates/works/openalex_global.html:467
+#: app/templates/works/openalex_global.html:549
 msgid ""
 "Uses OpenAlex is_oa over the global filtered set. Open means is_oa=true; "
 "closed means is_oa=false."
@@ -7250,167 +7646,372 @@ msgstr ""
 "Uses OpenAlex is_oa over the global filtered set. Open means is_oa=true; "
 "closed means is_oa=false."
 
-#: app/templates/works/openalex_global.html:483
-msgid "OpenAlex Articles by University"
-msgstr "OpenAlex Articles by University"
-
-#: app/templates/works/openalex_global.html:485
-msgid "OpenAlex article volume by university."
-msgstr "OpenAlex article volume by university."
-
-#: app/templates/works/openalex_global.html:486
-msgid ""
-"Counts university-article pairs with OpenAlex metadata that match the "
-"active filters. A publication can be associated with more than one "
-"university if it appears in multiple local caches."
+#: app/templates/works/openalex_global.html:567
+msgid "Global Open Access focus for ANID"
 msgstr ""
-"Counts university-article pairs with OpenAlex metadata that match the "
-"active filters. A publication can be associated with more than one "
-"university if it appears in multiple local caches."
 
-#: app/templates/works/openalex_global.html:499
-msgid "Citations by University"
-msgstr "Citations by University"
-
-#: app/templates/works/openalex_global.html:501
-msgid "Accumulated OpenAlex citations by university."
-msgstr "Accumulated OpenAlex citations by university."
-
-#: app/templates/works/openalex_global.html:502
+#: app/templates/works/openalex_global.html:568
 msgid ""
-"Sums cited_by_count for the filtered articles. If an article is locally "
-"associated with multiple universities, it contributes to each one total."
+"Diamond and Green production, citations, journals, articles, and "
+"institutional distribution across the complete filtered system."
 msgstr ""
-"Sums cited_by_count for the filtered articles. If an article is locally "
-"associated with multiple universities, it contributes to each one total."
 
-#: app/templates/works/openalex_global.html:515
-msgid "Institution Association Rates"
-msgstr "Institution Association Rates"
+#: app/templates/works/openalex_global.html:575
+#: app/templates/works/openalex_global.html:768
+msgid "Diamond Articles"
+msgstr ""
 
-#: app/templates/works/openalex_global.html:517
-msgid "Percent comparison between universities."
-msgstr "Percent comparison between universities."
+#: app/templates/works/openalex_global.html:577
+#: app/templates/works/openalex_global.html:585
+#, python-format
+msgid "%(count)s citations"
+msgstr ""
 
-#: app/templates/works/openalex_global.html:518
+#: app/templates/works/openalex_global.html:583
+#: app/templates/works/openalex_global.html:769
+msgid "Green Articles"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:591
+msgid "Unique Diamond + Green Articles"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:598
+msgid "Diamond + Green Citations"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:604
 msgid ""
-"Overall coverage uses OpenAlex matches over total candidates. Own "
-"institution, Chile, and International are calculated over each university"
-" filtered OpenAlex articles."
+"Global article and journal metrics deduplicate works by DOI across "
+"institutions. University metrics count each article once within each local "
+"institution."
 msgstr ""
-"Overall coverage uses OpenAlex matches over total candidates. Own "
-"institution, Chile, and International are calculated over each university"
-" filtered OpenAlex articles."
 
-#: app/templates/works/openalex_global.html:529
-msgid "University Comparison Table"
-msgstr "University Comparison Table"
+#: app/templates/works/openalex_global.html:614
+msgid "Diamond and Green Article Evolution"
+msgstr ""
 
-#: app/templates/works/openalex_global.html:533
-msgid "Detailed comparison by university."
-msgstr "Detailed comparison by university."
-
-#: app/templates/works/openalex_global.html:534
+#: app/templates/works/openalex_global.html:617
 msgid ""
-"Each row summarizes the local ORCID cache and its OpenAlex cross-checks. "
-"Small counts under percentages show the numerator used for that rate."
+"Annual evolution of unique Diamond and Green articles across the filtered "
+"system."
 msgstr ""
-"Each row summarizes the local ORCID cache and its OpenAlex cross-checks. "
-"Small counts under percentages show the numerator used for that rate."
 
-#: app/templates/works/openalex_global.html:543
-#: app/templates/works/openalex_global.html:710
-#: app/templates/works/openalex_global.html:719
+#: app/templates/works/openalex_global.html:618
+msgid ""
+"Deduplicates works by DOI and groups them by publication_year and native "
+"OpenAlex oa_status. Years without articles in a category are shown as zero."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:627
+msgid "Diamond and Green Citation Evolution"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:630
+msgid ""
+"Annual evolution of citations accumulated by unique Diamond and Green "
+"articles."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:631
+msgid ""
+"Deduplicates works by DOI, groups them by publication_year and oa_status, "
+"and sums the current OpenAlex cited_by_count. Citation totals reflect the "
+"current counter, not citations received during each year."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:645
+msgid ""
+"Journals or sources with the most unique Diamond and Green articles across "
+"the filtered system."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:646
+msgid ""
+"Deduplicates works by DOI, then groups them by source_name, ISSN-L, and "
+"native OpenAlex oa_status. The ten sources with the largest combined volume "
+"are shown."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:658
+msgid ""
+"Journals or sources accumulating the most citations from unique Diamond and "
+"Green articles."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:659
+msgid ""
+"Deduplicates works by DOI and sums their current OpenAlex cited_by_count by "
+"source and oa_status. The ten sources with the largest combined citation "
+"count are shown."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:670
+msgid "Diamond and Green Articles by University"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:673
+msgid "Institutional comparison of Diamond and Green article volume."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:674
+msgid ""
+"Counts each DOI once per local Chilean institution and OpenAlex oa_status "
+"under the active global filters. Every institution with Diamond or Green "
+"articles is shown, ordered by combined volume."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:683
+msgid "Diamond and Green Citations by University"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:686
+msgid ""
+"Institutional comparison of citations received by Diamond and Green articles."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:687
+msgid ""
+"Sums the current OpenAlex cited_by_count once per Chilean institution-article "
+"pair. Every institution with Diamond or Green articles is shown, ordered by "
+"combined citation count."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:697
+msgid "Global Diamond and Green Journal Statistics"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:701
+msgid ""
+"Journal-level production and citation metrics across the filtered system."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:702
+msgid ""
+"Rows are deduplicated by DOI and grouped by source and OpenAlex oa_status. "
+"Green describes repository availability for an article, not the access model "
+"of the complete journal."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:746
+msgid "Diamond and Green Statistics by University"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:750
+msgid "Institutional comparison of Diamond and Green output and citations."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:751
+msgid ""
+"Each DOI is counted once for every local institution where it appears. "
+"Consequently, system-wide university totals can exceed the unique global "
+"article count."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:759
+msgid "Search university statistics"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:760
+msgid "Search by university or ROR ID"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:767
+#: app/templates/works/openalex_global.html:921
+#: app/templates/works/openalex_global.html:1088
+#: app/templates/works/openalex_global.html:1097
 msgid "University"
 msgstr "University"
 
-#: app/templates/works/openalex_global.html:581
+#: app/templates/works/openalex_global.html:770
+msgid "Total Articles"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:771
+msgid "Diamond Citations"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:772
+msgid "Green Citations"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:799
+msgid "Globally Most Cited Diamond and Green Articles"
+msgstr ""
+
+#: app/templates/works/openalex_global.html:803
+msgid ""
+"Unique Diamond and Green articles with the highest OpenAlex citation counts "
+"across the filtered system."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:804
+msgid ""
+"Articles are deduplicated by DOI and ranked by the current cited_by_count "
+"value after applying the global filters."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:853
+msgid ""
+"No Diamond or Green articles are available for the active global filters."
+msgstr ""
+
+#: app/templates/works/openalex_global.html:861
+msgid "OpenAlex Articles by University"
+msgstr "OpenAlex Articles by University"
+
+#: app/templates/works/openalex_global.html:863
+msgid "OpenAlex article volume by university."
+msgstr "OpenAlex article volume by university."
+
+#: app/templates/works/openalex_global.html:864
+msgid ""
+"Counts university-article pairs with OpenAlex metadata that match the active "
+"filters. A publication can be associated with more than one university if it "
+"appears in multiple local caches."
+msgstr ""
+"Counts university-article pairs with OpenAlex metadata that match the active "
+"filters. A publication can be associated with more than one university if it "
+"appears in multiple local caches."
+
+#: app/templates/works/openalex_global.html:877
+msgid "Citations by University"
+msgstr "Citations by University"
+
+#: app/templates/works/openalex_global.html:879
+msgid "Accumulated OpenAlex citations by university."
+msgstr "Accumulated OpenAlex citations by university."
+
+#: app/templates/works/openalex_global.html:880
+msgid ""
+"Sums cited_by_count for the filtered articles. If an article is locally "
+"associated with multiple universities, it contributes to each one total."
+msgstr ""
+"Sums cited_by_count for the filtered articles. If an article is locally "
+"associated with multiple universities, it contributes to each one total."
+
+#: app/templates/works/openalex_global.html:893
+msgid "Institution Association Rates"
+msgstr "Institution Association Rates"
+
+#: app/templates/works/openalex_global.html:895
+msgid "Percent comparison between universities."
+msgstr "Percent comparison between universities."
+
+#: app/templates/works/openalex_global.html:896
+msgid ""
+"Overall coverage uses OpenAlex matches over total candidates. Own "
+"institution, Chile, and International are calculated over each university "
+"filtered OpenAlex articles."
+msgstr ""
+"Overall coverage uses OpenAlex matches over total candidates. Own "
+"institution, Chile, and International are calculated over each university "
+"filtered OpenAlex articles."
+
+#: app/templates/works/openalex_global.html:907
+msgid "University Comparison Table"
+msgstr "University Comparison Table"
+
+#: app/templates/works/openalex_global.html:911
+msgid "Detailed comparison by university."
+msgstr "Detailed comparison by university."
+
+#: app/templates/works/openalex_global.html:912
+msgid ""
+"Each row summarizes the local ORCID cache and its OpenAlex cross-checks. "
+"Small counts under percentages show the numerator used for that rate."
+msgstr ""
+"Each row summarizes the local ORCID cache and its OpenAlex cross-checks. "
+"Small counts under percentages show the numerator used for that rate."
+
+#: app/templates/works/openalex_global.html:959
 msgid "Global Author Production"
 msgstr "Global Author Production"
 
-#: app/templates/works/openalex_global.html:585
+#: app/templates/works/openalex_global.html:963
 msgid "Authors by production and citations across all filtered OpenAlex works."
-msgstr "Authors by production and citations across all filtered OpenAlex works."
-
-#: app/templates/works/openalex_global.html:586
-msgid ""
-"Works are deduplicated by DOI across all universities before aggregating."
-" A cited work contributes its full OpenAlex cited_by_count to each listed"
-" author."
 msgstr ""
-"Works are deduplicated by DOI across all universities before aggregating."
-" A cited work contributes its full OpenAlex cited_by_count to each listed"
-" author."
+"Authors by production and citations across all filtered OpenAlex works."
 
-#: app/templates/works/openalex_global.html:595
-#: app/templates/works/openalex_global.html:720
+#: app/templates/works/openalex_global.html:964
+msgid ""
+"Works are deduplicated by DOI across all universities before aggregating. A "
+"cited work contributes its full OpenAlex cited_by_count to each listed "
+"author."
+msgstr ""
+"Works are deduplicated by DOI across all universities before aggregating. A "
+"cited work contributes its full OpenAlex cited_by_count to each listed "
+"author."
+
+#: app/templates/works/openalex_global.html:973
+#: app/templates/works/openalex_global.html:1098
 msgid "Author"
 msgstr "Author"
 
-#: app/templates/works/openalex_global.html:596
-#: app/templates/works/openalex_global.html:721
+#: app/templates/works/openalex_global.html:974
+#: app/templates/works/openalex_global.html:1099
 msgid "Associated Institutions"
 msgstr "Associated Institutions"
 
-#: app/templates/works/openalex_global.html:635
+#: app/templates/works/openalex_global.html:1013
 msgid "Global Institution Production"
 msgstr "Global Institution Production"
 
-#: app/templates/works/openalex_global.html:639
+#: app/templates/works/openalex_global.html:1017
 msgid ""
-"OpenAlex institutions by production and citations across all filtered "
-"works."
+"OpenAlex institutions by production and citations across all filtered works."
 msgstr ""
-"OpenAlex institutions by production and citations across all filtered "
-"works."
+"OpenAlex institutions by production and citations across all filtered works."
 
-#: app/templates/works/openalex_global.html:640
+#: app/templates/works/openalex_global.html:1018
 msgid ""
-"Works are deduplicated by DOI across all universities. A work contributes"
-" to every institution listed in its OpenAlex authorships; author links "
-"sum the number of authors associated with that institution."
+"Works are deduplicated by DOI across all universities. A work contributes to "
+"every institution listed in its OpenAlex authorships; author links sum the "
+"number of authors associated with that institution."
 msgstr ""
-"Works are deduplicated by DOI across all universities. A work contributes"
-" to every institution listed in its OpenAlex authorships; author links "
-"sum the number of authors associated with that institution."
+"Works are deduplicated by DOI across all universities. A work contributes to "
+"every institution listed in its OpenAlex authorships; author links sum the "
+"number of authors associated with that institution."
 
-#: app/templates/works/openalex_global.html:651
+#: app/templates/works/openalex_global.html:1029
 msgid "Associated Authors"
 msgstr "Associated Authors"
 
-#: app/templates/works/openalex_global.html:653
+#: app/templates/works/openalex_global.html:1031
 msgid "Author links"
 msgstr "Author links"
 
-#: app/templates/works/openalex_global.html:654
+#: app/templates/works/openalex_global.html:1032
 msgid "Corresponding"
 msgstr "Corresponding"
 
-#: app/templates/works/openalex_global.html:698
-msgid "Authors ranked within each local university by production and citations."
-msgstr "Authors ranked within each local university by production and citations."
-
-#: app/templates/works/openalex_global.html:699
+#: app/templates/works/openalex_global.html:1076
 msgid ""
-"Rows are grouped by local university and OpenAlex author. Works are "
-"counted once per university-author pair under the active filters."
+"Authors ranked within each local university by production and citations."
 msgstr ""
-"Rows are grouped by local university and OpenAlex author. Works are "
-"counted once per university-author pair under the active filters."
+"Authors ranked within each local university by production and citations."
 
-#: app/templates/works/openalex_global.html:710
+#: app/templates/works/openalex_global.html:1077
+msgid ""
+"Rows are grouped by local university and OpenAlex author. Works are counted "
+"once per university-author pair under the active filters."
+msgstr ""
+"Rows are grouped by local university and OpenAlex author. Works are counted "
+"once per university-author pair under the active filters."
+
+#: app/templates/works/openalex_global.html:1088
 msgid "Leave empty to include all"
 msgstr "Leave empty to include all"
 
-#: app/templates/works/openalex_global.html:726
+#: app/templates/works/openalex_global.html:1104
 msgid "Last year"
 msgstr "Last year"
 
-#: app/templates/works/openalex_global.html:767
+#: app/templates/works/openalex_global.html:1145
 msgid "OpenAlex Article Detail"
 msgstr "OpenAlex Article Detail"
 
-#: app/templates/works/openalex_global.html:771
+#: app/templates/works/openalex_global.html:1149
 msgid "Open article detail"
 msgstr "Open article detail"
 
@@ -7548,72 +8149,6 @@ msgstr ""
 msgid "OpenAlex pagination"
 msgstr "OpenAlex pagination"
 
-#~ msgid ""
-#~ "Full synchronization complete: %(r)s "
-#~ "researchers, %(w)s works, %(f)s fundings, "
-#~ "and %(p)s profiles downloaded."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "All-institution synchronization completed with"
-#~ " %(failed)s institution errors. Totals: "
-#~ "%(r)s researchers, %(w)s works, %(f)s "
-#~ "fundings, %(p)s profiles."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "All-institution synchronization complete: "
-#~ "%(count)s institutions, %(r)s researchers, "
-#~ "%(w)s works, %(f)s fundings, %(p)s "
-#~ "profiles."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Cache refresh started for %(institution)s "
-#~ "and will continue in the background. "
-#~ "Job ID: %(job)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Synchronization refreshes researcher associations,"
-#~ " public ORCID metadata, works, and "
-#~ "funding records."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Refresh the complete cache for "
-#~ "%(institution)s? The synchronization will "
-#~ "continue in the background."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Start a full synchronization for the "
-#~ "active institution? This refreshes public "
-#~ "ORCID researchers, works, funding records, "
-#~ "and management status."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "For your security, please do not "
-#~ "share your credentials. Use a strong "
-#~ "password with at least 8 characters."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "If you have forgotten your password, "
-#~ "please contact your institutional "
-#~ "administrator."
-#~ msgstr ""
-
-#~ msgid "Change Password"
-#~ msgstr ""
-
-#~ msgid "Update Password"
-#~ msgstr ""
-
-#~ msgid "Current Password"
-#~ msgstr ""
-
 #~ msgid "Candidate Works"
 #~ msgstr "Candidate Works"
 
@@ -7629,9 +8164,6 @@ msgstr "OpenAlex pagination"
 #~ msgid "Downloads"
 #~ msgstr "Downloads"
 
-#~ msgid "Search duplicate profiles"
-#~ msgstr ""
-
 #~ msgid "Analysis"
 #~ msgstr "Analysis"
 
@@ -7646,11 +8178,6 @@ msgstr "OpenAlex pagination"
 
 #~ msgid "Candidate"
 #~ msgstr "Candidate"
-
-#~ msgid ""
-#~ "Review coverage and matching status for"
-#~ " ORCID works enriched with OpenAlex."
-#~ msgstr ""
 
 #~ msgid "Unique Article DOIs"
 #~ msgstr "Unique Article DOIs"
@@ -7670,447 +8197,106 @@ msgstr "OpenAlex pagination"
 #~ msgid "No type"
 #~ msgstr "No type"
 
-#~ msgid ""
-#~ "Explore publication, funding, venue, and "
-#~ "researcher trends from the institutional "
-#~ "cache."
-#~ msgstr ""
-
-#~ msgid "Top Funding Orgs"
-#~ msgstr ""
-
-#~ msgid "Browse ORCID researchers associated with the active institution."
-#~ msgstr ""
-
-#~ msgid "Affiliated Researchers"
-#~ msgstr ""
-
-#~ msgid "Manage synchronization"
-#~ msgstr ""
-
-#~ msgid "First Names"
-#~ msgstr ""
-
-#~ msgid "Last Names"
-#~ msgstr ""
-
-#~ msgid "Managed via Affiliation Manager"
-#~ msgstr ""
-
-#~ msgid "Not public"
-#~ msgstr ""
-
-#~ msgid "Export Excel"
-#~ msgstr ""
-
-#~ msgid "Affiliation Manager settings updated."
-#~ msgstr ""
-
-#~ msgid "With DOI"
-#~ msgstr ""
-
-#~ msgid "An error occurred while generating publication statistics."
-#~ msgstr ""
-
-#~ msgid "User Administration"
-#~ msgstr ""
-
-#~ msgid "Affiliation Manager Settings"
-#~ msgstr ""
-
-#~ msgid "Member API credentials"
-#~ msgstr ""
-
-#~ msgid "Configure the institutional client used for ORCID member operations."
-#~ msgstr ""
-
-#~ msgid "Affiliation Manager Key"
-#~ msgstr ""
-
-#~ msgid "Institutional Manager Identifier"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "To correctly identify and highlight "
-#~ "records managed by your institution, "
-#~ "please provide your integration credentials."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Note: This is different from your "
-#~ "Public or Member API Key. It "
-#~ "usually starts with the prefix"
-#~ msgstr ""
-
-#~ msgid "Save Configuration"
-#~ msgstr ""
-
-#~ msgid "Download Full Report"
-#~ msgstr ""
-
-#~ msgid "Visual Summary"
-#~ msgstr ""
-
-#~ msgid "Full Timeline"
-#~ msgstr ""
-
-#~ msgid "Showing %(visible)s of %(total)s institutions"
-#~ msgstr ""
-
-#~ msgid "Sort ascending"
-#~ msgstr ""
-
-#~ msgid "Change sort direction"
-#~ msgstr ""
-
-#~ msgid "Sort by OpenAlex coverage"
-#~ msgstr ""
-
-#~ msgid "Sort descending"
-#~ msgstr ""
-
 #~ msgid "OpenAlex Analytics - Data ORCID-Chile"
 #~ msgstr "OpenAlex Analytics - Data ORCID-Chile"
 
 #~ msgid "Global OpenAlex Comparison - Data ORCID-Chile"
 #~ msgstr "Global OpenAlex Comparison - Data ORCID-Chile"
 
-#~ msgid "On this page"
+#~ msgid ""
+#~ "Full synchronization complete: %(r)s researchers, %(w)s works, %(f)s "
+#~ "fundings, %(p)s profiles, and %(o)s OpenAlex records matched."
 #~ msgstr ""
-
-#~ msgid "Cache coverage and downloads for every institution"
-#~ msgstr ""
+#~ "Full synchronization complete: %(r)s researchers, %(w)s works, %(f)s "
+#~ "fundings, %(p)s profiles, and %(o)s OpenAlex records matched."
 
 #~ msgid ""
-#~ "Full synchronization complete: %(r)s "
-#~ "researchers, %(w)s works, %(f)s fundings, "
-#~ "%(p)s profiles, and %(o)s OpenAlex "
-#~ "records matched."
-#~ msgstr ""
-#~ "Full synchronization complete: %(r)s "
-#~ "researchers, %(w)s works, %(f)s fundings, "
-#~ "%(p)s profiles, and %(o)s OpenAlex "
-#~ "records matched."
-
-#~ msgid "Sync completed with errors in: %(err)s. Check logs."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "All-institution synchronization completed with"
-#~ " %(failed)s institution errors. Totals: "
-#~ "%(r)s researchers, %(w)s works, %(f)s "
-#~ "fundings, %(p)s profiles, and %(o)s "
-#~ "OpenAlex matches."
-#~ msgstr ""
-#~ "All-institution synchronization completed with"
-#~ " %(failed)s institution errors. Totals: "
-#~ "%(r)s researchers, %(w)s works, %(f)s "
-#~ "fundings, %(p)s profiles, and %(o)s "
-#~ "OpenAlex matches."
-
-#~ msgid ""
-#~ "All-institution synchronization complete: "
-#~ "%(count)s institutions, %(r)s researchers, "
-#~ "%(w)s works, %(f)s fundings, %(p)s "
+#~ "All-institution synchronization completed with %(failed)s institution "
+#~ "errors. Totals: %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s "
 #~ "profiles, and %(o)s OpenAlex matches."
 #~ msgstr ""
-#~ "All-institution synchronization complete: "
-#~ "%(count)s institutions, %(r)s researchers, "
-#~ "%(w)s works, %(f)s fundings, %(p)s "
+#~ "All-institution synchronization completed with %(failed)s institution "
+#~ "errors. Totals: %(r)s researchers, %(w)s works, %(f)s fundings, %(p)s "
 #~ "profiles, and %(o)s OpenAlex matches."
 
-#~ msgid "Last data synchronization"
-#~ msgstr ""
-
 #~ msgid ""
-#~ "Institution-researcher associations, synchronized"
-#~ " metadata, run history, and derived "
-#~ "quality indicators."
+#~ "All-institution synchronization complete: %(count)s institutions, %(r)s "
+#~ "researchers, %(w)s works, %(f)s fundings, %(p)s profiles, and %(o)s "
+#~ "OpenAlex matches."
 #~ msgstr ""
-
-#~ msgid ""
-#~ "Cached data makes dashboards and exports"
-#~ " reproducible without querying external "
-#~ "APIs on every page load."
-#~ msgstr ""
-
-#~ msgid "3. Preserve researcher associations"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "The complete institution-researcher "
-#~ "association snapshot is stored before "
-#~ "profile downloads, including researchers "
-#~ "without public works or funding records."
-#~ msgstr ""
-
-#~ msgid "5. Enrich with OpenAlex"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Works are matched by normalized DOI "
-#~ "first. A conservative title-and-year "
-#~ "search may be used when a DOI "
-#~ "is unavailable."
-#~ msgstr ""
-
-#~ msgid "Affiliated researchers"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Unique ORCID iDs discovered through "
-#~ "verified institutional identifiers. Researchers "
-#~ "remain counted even when their public"
-#~ " activity sections are empty."
-#~ msgstr ""
-
-#~ msgid "Works and funding records"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Counts represent cached ORCID records, "
-#~ "not independently verified publications or "
-#~ "awards. Duplicate source records may "
-#~ "require review."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "A full institutional synchronization discovers"
-#~ " researchers once, then refreshes "
-#~ "researcher metadata, works, funding records,"
-#~ " and management status. The data-"
-#~ "management view records the latest "
-#~ "successful or failed runs and their "
-#~ "row counts."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Long-running production updates should "
-#~ "use the CLI, a scheduler, or a "
-#~ "persistent job queue when multiple web"
-#~ " workers are deployed."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MySQL or MariaDB is recommended for "
-#~ "production; SQLite is supported for "
-#~ "local development and tests."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Web jobs run inside the application "
-#~ "process. Review server logs and use "
-#~ "the CLI or a persistent queue for"
-#~ " long-running production jobs."
-#~ msgstr ""
-
-#~ msgid "%(percent)s%% with verified affiliation"
-#~ msgstr ""
-
-#~ msgid "Cached ORCID records"
-#~ msgstr ""
-
-#~ msgid "Profiles with affiliation"
-#~ msgstr ""
+#~ "All-institution synchronization complete: %(count)s institutions, %(r)s "
+#~ "researchers, %(w)s works, %(f)s fundings, %(p)s profiles, and %(o)s "
+#~ "OpenAlex matches."
 
 #~ msgid "Any identifier"
 #~ msgstr "Sign-in identifier"
-
-#~ msgid "Incomplete cache"
-#~ msgstr ""
-
-#~ msgid "Matched through verified institutional identifiers"
-#~ msgstr ""
-
-#~ msgid "Invalid duplicate review status."
-#~ msgstr ""
-
-#~ msgid "Duplicate review saved."
-#~ msgstr ""
 
 #~ msgid "Verification"
 #~ msgstr "Verification"
 
 #~ msgid ""
-#~ "Each row keeps ORCID URLs, local "
-#~ "activity counts, Affiliation Manager status,"
-#~ " and shared DOI evidence for manual"
-#~ " review."
+#~ "Each row keeps ORCID URLs, local activity counts, Affiliation Manager "
+#~ "status, and shared DOI evidence for manual review."
 #~ msgstr ""
-#~ "Each row keeps ORCID URLs, local "
-#~ "activity counts, Affiliation Manager status,"
-#~ " and shared DOI evidence for manual"
-#~ " review."
-
-#~ msgid "Profile metadata"
-#~ msgstr ""
-
-#~ msgid "Complete"
-#~ msgstr ""
-
-#~ msgid "Incomplete"
-#~ msgstr ""
-
-#~ msgid "Reviewed Groups"
-#~ msgstr ""
-
-#~ msgid "Review decision"
-#~ msgstr ""
+#~ "Each row keeps ORCID URLs, local activity counts, Affiliation Manager "
+#~ "status, and shared DOI evidence for manual review."
 
 #~ msgid ""
-#~ "Decisions are stored separately from the"
-#~ " analysis cache and remain available "
-#~ "after refreshing candidates."
+#~ "This review uses ORCID iDs found in the local works and funding caches "
+#~ "for the selected institutional scope."
 #~ msgstr ""
-
-#~ msgid "Primary ORCID iD"
-#~ msgstr ""
-
-#~ msgid "Not selected"
-#~ msgstr ""
-
-#~ msgid "Review notes"
-#~ msgstr ""
-
-#~ msgid "Add evidence or the next action"
-#~ msgstr ""
-
-#~ msgid "Save decision"
-#~ msgstr ""
-
-#~ msgid "How candidates are detected"
-#~ msgstr ""
+#~ "This review uses ORCID iDs found in the local works and funding caches "
+#~ "for the selected institutional scope."
 
 #~ msgid ""
-#~ "This review uses ORCID iDs found "
-#~ "in the local works and funding "
-#~ "caches for the selected institutional "
-#~ "scope."
+#~ "Candidate groups are created when cached profile names match after "
+#~ "lowercasing, accent removal, punctuation removal, and whitespace "
+#~ "normalization."
 #~ msgstr ""
-#~ "This review uses ORCID iDs found "
-#~ "in the local works and funding "
-#~ "caches for the selected institutional "
-#~ "scope."
+#~ "Candidate groups are created when cached profile names match after "
+#~ "lowercasing, accent removal, punctuation removal, and whitespace "
+#~ "normalization."
 
 #~ msgid ""
-#~ "Candidate groups are created when cached"
-#~ " profile names match after lowercasing, "
-#~ "accent removal, punctuation removal, and "
-#~ "whitespace normalization."
+#~ "Scores prioritize exact normalized name matches, richer names, cached "
+#~ "activity on every profile, and shared DOI evidence. Results are "
+#~ "candidates for manual verification, not automatic merges."
 #~ msgstr ""
-#~ "Candidate groups are created when cached"
-#~ " profile names match after lowercasing, "
-#~ "accent removal, punctuation removal, and "
-#~ "whitespace normalization."
-
-#~ msgid ""
-#~ "Scores prioritize exact normalized name "
-#~ "matches, richer names, cached activity "
-#~ "on every profile, and shared DOI "
-#~ "evidence. Results are candidates for "
-#~ "manual verification, not automatic merges."
-#~ msgstr ""
-#~ "Scores prioritize exact normalized name "
-#~ "matches, richer names, cached activity "
-#~ "on every profile, and shared DOI "
-#~ "evidence. Results are candidates for "
-#~ "manual verification, not automatic merges."
-
-#~ msgid "Scientific production by year"
-#~ msgstr ""
-
-#~ msgid "Annual records available in the institutional cache."
-#~ msgstr ""
-
-#~ msgid "Institutional production trend chart"
-#~ msgstr ""
-
-#~ msgid "Signals that may require institutional review."
-#~ msgstr ""
-
-#~ msgid "Institutional records available from ORCID."
-#~ msgstr ""
-
-#~ msgid "With public name"
-#~ msgstr ""
-
-#~ msgid "Without public name"
-#~ msgstr ""
-
-#~ msgid "Profile status"
-#~ msgstr ""
-
-#~ msgid "AM managed"
-#~ msgstr ""
-
-#~ msgid "Public name available"
-#~ msgstr ""
-
-#~ msgid "Public name unavailable"
-#~ msgstr ""
-
-#~ msgid "Profile"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Candidate groups use normalized profile "
-#~ "names and supporting activity evidence. "
-#~ "They are intended for manual "
-#~ "verification and are never merged "
-#~ "automatically."
-#~ msgstr ""
+#~ "Scores prioritize exact normalized name matches, richer names, cached "
+#~ "activity on every profile, and shared DOI evidence. Results are "
+#~ "candidates for manual verification, not automatic merges."
 
 #~ msgid "Check logs."
 #~ msgstr "Check logs."
 
 #~ msgid ""
-#~ "OpenAlex title matching complete: %(fetched)s"
-#~ " searched, %(matched)s matched, %(not_found)s "
-#~ "not found, %(skipped)s skipped, %(errors)s "
-#~ "errors."
+#~ "OpenAlex title matching complete: %(fetched)s searched, %(matched)s "
+#~ "matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors."
 #~ msgstr ""
-#~ "OpenAlex title matching complete: %(fetched)s"
-#~ " searched, %(matched)s matched, %(not_found)s "
-#~ "not found, %(skipped)s skipped, %(errors)s "
-#~ "errors."
+#~ "OpenAlex title matching complete: %(fetched)s searched, %(matched)s "
+#~ "matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors."
 
 #~ msgid ""
-#~ "OpenAlex synchronization complete: %(fetched)s "
-#~ "fetched, %(matched)s matched, %(not_found)s "
-#~ "not found, %(skipped)s skipped, %(errors)s "
-#~ "errors."
+#~ "OpenAlex synchronization complete: %(fetched)s fetched, %(matched)s "
+#~ "matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors."
 #~ msgstr ""
-#~ "OpenAlex synchronization complete: %(fetched)s "
-#~ "fetched, %(matched)s matched, %(not_found)s "
-#~ "not found, %(skipped)s skipped, %(errors)s "
-#~ "errors."
+#~ "OpenAlex synchronization complete: %(fetched)s fetched, %(matched)s "
+#~ "matched, %(not_found)s not found, %(skipped)s skipped, %(errors)s errors."
 
 #~ msgid ""
-#~ "System-wide OpenAlex title matching "
-#~ "complete: %(fetched)s searched, %(matched)s "
-#~ "matched, %(not_found)s not found, %(skipped)s"
-#~ " skipped, %(errors)s errors."
+#~ "System-wide OpenAlex title matching complete: %(fetched)s searched, %"
+#~ "(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %"
+#~ "(errors)s errors."
 #~ msgstr ""
-#~ "System-wide OpenAlex title matching "
-#~ "complete: %(fetched)s searched, %(matched)s "
-#~ "matched, %(not_found)s not found, %(skipped)s"
-#~ " skipped, %(errors)s errors."
+#~ "System-wide OpenAlex title matching complete: %(fetched)s searched, %"
+#~ "(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %"
+#~ "(errors)s errors."
 
 #~ msgid ""
-#~ "System-wide OpenAlex synchronization complete:"
-#~ " %(fetched)s fetched, %(matched)s matched, "
-#~ "%(not_found)s not found, %(skipped)s skipped,"
-#~ " %(errors)s errors."
+#~ "System-wide OpenAlex synchronization complete: %(fetched)s fetched, %"
+#~ "(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %"
+#~ "(errors)s errors."
 #~ msgstr ""
-#~ "System-wide OpenAlex synchronization complete:"
-#~ " %(fetched)s fetched, %(matched)s matched, "
-#~ "%(not_found)s not found, %(skipped)s skipped,"
-#~ " %(errors)s errors."
-
-#~ msgid ""
-#~ "Open the synchronization view to inspect"
-#~ " the durable job and its individual"
-#~ " steps. If the heartbeat stops, the"
-#~ " job is marked interrupted instead of"
-#~ " remaining silently active."
-#~ msgstr ""
+#~ "System-wide OpenAlex synchronization complete: %(fetched)s fetched, %"
+#~ "(matched)s matched, %(not_found)s not found, %(skipped)s skipped, %"
+#~ "(errors)s errors."

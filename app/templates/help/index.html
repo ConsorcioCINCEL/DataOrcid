@@ -136,8 +136,8 @@
               </tr>
               <tr>
                 <th scope="row"><span class="help-source-badge is-openalex">OpenAlex</span></th>
-                <td>{{ _('Citation counts, open-access status, FWCI, topics, authorships, sources, and institutional links.') }}</td>
-                <td>{{ _('OpenAlex enriches ORCID works; it does not replace the original ORCID metadata.') }}</td>
+                <td>{{ _('Citation counts, open-access status, publication language, FWCI, topics, authorships, sources, and institutional links.') }}</td>
+                <td>{{ _('OpenAlex enriches ORCID works; it does not replace the original ORCID metadata. Its classifications reflect the OpenAlex update cycle.') }}</td>
               </tr>
               <tr>
                 <th scope="row"><span class="help-source-badge is-local">{{ _('Local cache') }}</span></th>
@@ -227,6 +227,17 @@
             <p>{{ _('Citation counts, FWCI, topics, and open-access fields come from OpenAlex and reflect its own update cycle and methodology.') }}</p>
           </article>
           <article>
+            <h3>{{ _('Diamond and Green Open Access') }}</h3>
+            <p>{{ _('The ANID Open Access module counts the native OpenAlex oa_status categories diamond and green. Diamond means publication in a fully open-access journal without publication fees for authors; Green means the publisher landing page is toll-access while a free copy is available in an open-access repository.') }}</p>
+            <p>{{ _('Counts and percentages follow the active dashboard filters. Percentages use all filtered OpenAlex-enriched articles as the denominator, so Diamond and Green do not represent the full Open Access total.') }}</p>
+            <p>{{ _('The module also ranks journals or sources by Diamond and Green article volume and citations, provides independently paginated journal and article tables, and adds server-side search and column sorting across every matching record, not only the visible page. The global comparison includes the same controls for its university table. Green remains an article-level repository route and does not classify the complete journal as Green.') }}</p>
+            <p>{{ _('For managers and administrators, the global comparison includes the same paginated rankings, annual line charts for articles and citations, and institutional statistics. Its university charts include every Chilean institution with Diamond or Green results in a vertically scrollable area. Global journal and article metrics deduplicate works by DOI, while university metrics count each article once within every local institution where it appears.') }}</p>
+          </article>
+          <article>
+            <h3>{{ _('Publication languages') }}</h3>
+            <p>{{ _('OpenAlex reports the publication language using ISO 639-1 codes. The analytics panel displays localized names with their source code, groups missing values as unknown, and allows one or more languages to be selected as a filter.') }}</p>
+          </article>
+          <article>
             <h3>{{ _('ORCID analytics charts') }}</h3>
             <p>{{ _('Institutional ORCID charts count cached source work or funding records after applying the visible filters. Timeline charts exclude records without a valid year; they do not silently convert source records into canonical unique outputs.') }}</p>
           </article>
@@ -237,6 +248,9 @@
         </div>
         <a class="help-inline-link" href="{{ url_for('duplicates.index', methodology='1') }}">
           {{ _('Open the duplicate-profile methodology') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </a>
+        <a class="help-inline-link ml-md-3" href="{{ url_for('works.openalex_analytics', section='open_access') }}">
+          {{ _('Open the ANID Open Access module') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
         </a>
       </section>
 
@@ -289,6 +303,9 @@
           <tr><th>{{ _('Verified researcher relationship') }}</th><td>{{ _('An ORCID iD returned by a search using a verified ROR, GRID, or Ringgold identifier.') }}</td><td>{{ _('Can include current or historical public affiliations.') }}</td></tr>
           <tr><th>{{ _('Inferred researcher relationship') }}</th><td>{{ _('A relationship reconstructed from existing works, funding, or management-status caches.') }}</td><td>{{ _('Useful for continuity, but not equivalent to verified search evidence.') }}</td></tr>
           <tr><th>{{ _('OpenAlex coverage') }}</th><td>{{ _('Unique eligible DOI outputs with normalized OpenAlex metadata divided by all eligible DOI outputs.') }}</td><td>{{ _('OpenAlex and ORCID have independent update cycles.') }}</td></tr>
+          <tr><th>{{ _('Diamond Open Access') }}</th><td>{{ _('An article whose native OpenAlex oa_status value is diamond: published in a fully open-access journal without publication fees for authors.') }}</td><td>{{ _('The platform uses the OpenAlex classification directly and does not infer Diamond status from DOAJ membership.') }}</td></tr>
+          <tr><th>{{ _('Green Open Access') }}</th><td>{{ _('An article whose native OpenAlex oa_status value is green: the publisher landing page is toll-access, while a free copy is available in an open-access repository.') }}</td><td>{{ _('Repository availability and status may change when OpenAlex refreshes its sources.') }}</td></tr>
+          <tr><th>{{ _('Publication language') }}</th><td>{{ _('The ISO 639-1 language code supplied by OpenAlex, displayed with a localized language name in the analytics panel.') }}</td><td>{{ _('A missing or unknown value is kept explicit and is not inferred from the title or journal.') }}</td></tr>
           <tr><th>{{ _('FWCI') }}</th><td>{{ _('Field-weighted citation impact supplied by OpenAlex.') }}</td><td>{{ _('Interpret using OpenAlex methodology and the displayed coverage denominator.') }}</td></tr>
           <tr><th>{{ _('Year-to-date change') }}</th><td>{{ _('Current completed months compared with the same months of the previous year.') }}</td><td>{{ _('Records without a usable month are excluded from this comparison.') }}</td></tr>
         </tbody></table></div>
@@ -298,6 +315,7 @@
         <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-user-shield" aria-hidden="true"></i></span><div><h2>{{ _('Roles, permissions, and data governance') }}</h2><p>{{ _('Who can perform each operation and what operational data is retained.') }}</p></div></div>
         <div class="table-responsive"><table class="table help-source-table"><thead><tr><th>{{ _('Capability') }}</th><th>{{ _('User') }}</th><th>{{ _('Manager') }}</th><th>{{ _('Administrator') }}</th></tr></thead><tbody>
           <tr><th>{{ _('View institutional analytics and exports') }}</th><td>{{ _('Assigned institution') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any selected institution') }}</td></tr>
+          <tr><th>{{ _('Compare institutions with OpenAlex') }}</th><td>{{ _('No') }}</td><td>{{ _('All institutions') }}</td><td>{{ _('All institutions') }}</td></tr>
           <tr><th>{{ _('Start synchronization') }}</th><td>{{ _('No') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any or all institutions') }}</td></tr>
           <tr><th>{{ _('Review duplicate decisions') }}</th><td>{{ _('Read only') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any institution') }}</td></tr>
           <tr><th>{{ _('Manage accounts and system activity') }}</th><td>{{ _('No') }}</td><td>{{ _('Institution accounts') }}</td><td>{{ _('All accounts and activity') }}</td></tr>
@@ -387,6 +405,7 @@
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Duplicate decisions persist independently from the candidate-analysis cache.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The data-quality center exposes coverage and known limitations before users export or compare data.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Version 2.0 integrates OpenAlex through the normalized DOI of ORCID articles, adding citation, open-access, topic, authorship, and institutional metadata without replacing the ORCID source record.') }}</li>
+          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OpenAlex analytics now highlights Diamond and Green Open Access for ANID and presents publication languages with localized ISO 639-1 labels and filters.') }}</li>
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Version 2.0 includes author discovery and download through the institution’s verified Ringgold identifier, with results deduplicated by ORCID iD.') }}</li>
         </ul></div>
         <div class="help-callout is-info"><i class="fas fa-info-circle" aria-hidden="true"></i><div><strong>{{ _('Backfill status') }}</strong><p>{{ _('Existing cache relationships and canonical outputs require a one-time rebuild. Until that job is complete, affected indicators remain partial rather than being presented as current.') }}</p></div></div>

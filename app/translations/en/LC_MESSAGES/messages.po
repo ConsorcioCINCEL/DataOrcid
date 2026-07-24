@@ -3998,6 +3998,30 @@ msgid ""
 "appears."
 msgstr ""
 
+#: app/templates/help/index.html:236
+msgid ""
+"Visual convention: IGI Global presents Platinum Open Access—also known as "
+"sponsored or Diamond Open Access—with a gray lock (#595959), and Green Open "
+"Access with a green lock (#00B050)."
+msgstr ""
+"Visual convention: IGI Global presents Platinum Open Access—also known as "
+"sponsored or Diamond Open Access—with a gray lock (#595959), and Green Open "
+"Access with a green lock (#00B050)."
+
+#: app/templates/help/index.html:237
+msgid ""
+"Compatible OpenAlex statuses also use the guide's exact Gold, Hybrid, and "
+"Bronze colors; Closed remains neutral because it is not an IGI color "
+"category."
+msgstr ""
+"Compatible OpenAlex statuses also use the guide's exact Gold, Hybrid, and "
+"Bronze colors; Closed remains neutral because it is not an IGI color "
+"category."
+
+#: app/templates/help/index.html:240
+msgid "Reference: IGI Global guide to the colors of Open Access"
+msgstr "Reference: IGI Global guide to the colors of Open Access"
+
 #: app/templates/help/index.html:237
 msgid "Publication languages"
 msgstr "Publication languages"
@@ -7053,14 +7077,22 @@ msgstr ""
 "Uses the OpenAlex is_oa field. Open means is_oa=true; closed means "
 "is_oa=false for the filtered works."
 
-#: app/templates/works/openalex_analytics.html:538
-msgid "Open Access focus for ANID"
-msgstr "Open Access focus for ANID"
+#: app/templates/works/openalex_analytics.html:544
+msgid "Focus: Open Access types recommended by the"
+msgstr "Focus: Open Access types recommended by the"
+
+#: app/templates/works/openalex_analytics.html:548
+msgid "Open Access Policy"
+msgstr "Open Access Policy"
+
+#: app/templates/works/openalex_analytics.html:549
+msgid "(promoted by ANID)"
+msgstr "(promoted by ANID)"
 
 #: app/templates/works/openalex_analytics.html:539
 msgid ""
-"A dedicated view of Diamond and Green Open Access within the filtered "
-"institutional output."
+"Production, citation, source, and trend indicators for Diamond and Green "
+"articles matching the active filters."
 msgstr ""
 
 #: app/templates/works/openalex_analytics.html:548
@@ -7646,15 +7678,15 @@ msgstr ""
 "Uses OpenAlex is_oa over the global filtered set. Open means is_oa=true; "
 "closed means is_oa=false."
 
-#: app/templates/works/openalex_global.html:567
-msgid "Global Open Access focus for ANID"
-msgstr ""
-
 #: app/templates/works/openalex_global.html:568
 msgid ""
-"Diamond and Green production, citations, journals, articles, and "
-"institutional distribution across the complete filtered system."
+"Comparative production, citation, source, and institutional distribution "
+"indicators for the filtered system."
 msgstr ""
+
+#: app/templates/works/openalex_global.html:580
+msgid "Institutional Comparison of Diamond and Green Open Access"
+msgstr "Institutional Comparison of Diamond and Green Open Access"
 
 #: app/templates/works/openalex_global.html:575
 #: app/templates/works/openalex_global.html:768

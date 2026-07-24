@@ -2017,6 +2017,34 @@ h1, h2, h3, h4, h5, h6,
 .app-kpi-icon.is-red { background: #fdecef; color: #c92f4b; }
 .app-kpi-icon.is-purple { background: #f2edfb; color: #6f42c1; }
 .app-kpi-icon.is-neutral { background: #eef1f4; color: #63707d; }
+.app-kpi-icon.is-oa-diamond { background: #f1f1f1; color: #595959; }
+.app-kpi-icon.is-oa-green { background: #e8f8ef; color: #00b050; }
+
+.openalex-oa-kpi-diamond .app-kpi-label,
+.openalex-oa-label-diamond {
+    color: #595959;
+}
+
+.openalex-oa-kpi-green .app-kpi-label,
+.openalex-oa-label-green {
+    color: #007a38;
+}
+
+.openalex-oa-badge {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.3rem;
+}
+
+.openalex-oa-badge-diamond {
+    background-color: #595959 !important;
+    color: #ffffff !important;
+}
+
+.openalex-oa-badge-green {
+    background-color: #00b050 !important;
+    color: #102a1d !important;
+}
 
 .app-kpi > div {
     display: grid;

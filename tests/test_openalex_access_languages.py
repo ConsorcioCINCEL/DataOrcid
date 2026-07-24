@@ -11,6 +11,7 @@ from app.blueprints.works import (
     _openalex_analytics,
     _openalex_global_analytics,
     _openalex_language_label,
+    _openalex_oa_status_color,
 )
 from app.models import OpenAlexSyncRun, OpenAlexWorkMetadata, WorkCache
 
@@ -130,6 +131,21 @@ class OpenAlexAccessLanguageAnalyticsTest(unittest.TestCase):
                     for dataset in priority["charts"]["sources_by_articles"]["datasets"]
                 ],
             )
+            self.assertEqual(
+                ["#595959", "#00b050"],
+                [
+                    dataset["backgroundColor"]
+                    for dataset in priority["charts"]["sources_by_articles"]["datasets"]
+                ],
+            )
+            self.assertEqual(
+                ["#595959", "#00b050"],
+                analytics["charts"]["priority_oa_colors"],
+            )
+            self.assertEqual(
+                {"#595959", "#00b050", "#bf8f00"},
+                set(analytics["charts"]["oa_colors"]),
+            )
             self.assertEqual("Work 4", priority["top_cited_articles"][0]["title"])
             self.assertEqual(
                 {"diamond", "green"},
@@ -227,8 +243,27 @@ class OpenAlexAccessLanguageAnalyticsTest(unittest.TestCase):
                 [0, 5],
                 priority["charts"]["citation_trend_datasets"][1]["data"],
             )
+            self.assertEqual(
+                ["#595959", "#00b050"],
+                [
+                    dataset["borderColor"]
+                    for dataset in priority["charts"]["article_trend_datasets"]
+                ],
+            )
             self.assertEqual("open_access", analytics["active_tab"])
             json.dumps(analytics)
+
+    def test_igi_open_access_palette_matches_the_reference_guide(self):
+        self.assertEqual("#595959", _openalex_oa_status_color("diamond"))
+        self.assertEqual("#00b050", _openalex_oa_status_color("green"))
+        self.assertEqual("#2f5496", _openalex_oa_status_color("blue"))
+        self.assertEqual("#eab200", _openalex_oa_status_color("yellow"))
+        self.assertEqual("#ed7d31", _openalex_oa_status_color("hybrid"))
+        self.assertEqual("#bf8f00", _openalex_oa_status_color("gold"))
+        self.assertEqual("#806000", _openalex_oa_status_color("bronze"))
+        self.assertEqual("#a0a0a0", _openalex_oa_status_color("white"))
+        self.assertEqual("#000000", _openalex_oa_status_color("black"))
+        self.assertEqual("#a0a0a0", _openalex_oa_status_color("closed"))
 
     def test_priority_source_and_article_tables_are_paginated_independently(self):
         with self.app.app_context(), self.app.test_request_context(

@@ -6,6 +6,11 @@
     {{ chart_info(description, methodology) }}
   </div>
 {%- endmacro %}
+{% macro priority_oa_badge(status, label) -%}
+  <span class="badge openalex-oa-badge {% if status == 'diamond' %}openalex-oa-badge-diamond{% else %}openalex-oa-badge-green{% endif %}">
+    <i class="fas fa-lock" aria-hidden="true"></i>{{ label }}
+  </span>
+{%- endmacro %}
 {% macro sort_link(label, table_key, column) -%}
   {% set table = analytics.tables[table_key] %}
   {% set active = table.sort == column %}
@@ -313,7 +318,7 @@
     padding: 0.75rem;
   }
   .openalex-oa-focus-card {
-    border-top: 3px solid #00a36c;
+    border-top: 3px solid var(--app-orange);
   }
   .openalex-oa-focus-heading {
     align-items: flex-start;
@@ -323,9 +328,9 @@
   }
   .openalex-oa-focus-icon {
     align-items: center;
-    background: #eaf6f2;
+    background: #fff2ed;
     border-radius: 8px;
-    color: #198754;
+    color: var(--app-orange);
     display: flex;
     flex: 0 0 auto;
     height: 44px;
@@ -572,21 +577,21 @@
       <div class="openalex-oa-focus-heading">
         <span class="openalex-oa-focus-icon" aria-hidden="true"><i class="fas fa-unlock-alt"></i></span>
         <div>
-          <h2>{{ _('Global Open Access focus for ANID') }}</h2>
-          <p>{{ _('Diamond and Green production, citations, journals, articles, and institutional distribution across the complete filtered system.') }}</p>
+          <h2>{{ _('Institutional Comparison of Diamond and Green Open Access') }}</h2>
+          <p>{{ _('Comparative production, citation, source, and institutional distribution indicators for the filtered system.') }}</p>
         </div>
       </div>
       <section class="app-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Diamond and Green global statistics') }}">
-        <article class="app-kpi">
-          <span class="app-kpi-icon is-green" aria-hidden="true"><i class="far fa-gem"></i></span>
+        <article class="app-kpi openalex-oa-kpi-diamond">
+          <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock"></i></span>
           <div>
             <span class="app-kpi-label">{{ _('Diamond Articles') }}</span>
             <strong>{{ priority.summary.diamond_articles }}</strong>
             <small>{{ _('%(count)s citations', count=priority.summary.diamond_citations) }}</small>
           </div>
         </article>
-        <article class="app-kpi">
-          <span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-archive"></i></span>
+        <article class="app-kpi openalex-oa-kpi-green">
+          <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock"></i></span>
           <div>
             <span class="app-kpi-label">{{ _('Green Articles') }}</span>
             <strong>{{ priority.summary.green_articles }}</strong>
@@ -742,7 +747,7 @@
             {% for row in priority.source_rows %}
             <tr>
               <td><strong>{{ row.source_name }}</strong><div class="small text-muted">{{ row.source_issn_l or _('ISSN-L not available') }}</div></td>
-              <td><span class="badge {% if row.oa_status == 'diamond' %}badge-success{% else %}badge-secondary{% endif %}">{{ row.oa_status_label }}</span></td>
+              <td>{{ priority_oa_badge(row.oa_status, row.oa_status_label) }}</td>
               <td class="text-right metric-cell">{{ row.articles }}</td>
               <td class="text-right metric-cell"><strong>{{ row.citations }}</strong></td>
               <td class="text-right metric-cell">{{ row.average_citations }}</td>
@@ -781,11 +786,11 @@
           <thead>
             <tr>
               <th>{{ sort_link(_('University'), 'priority_institutions', 'institution') }}</th>
-              <th class="text-right">{{ sort_link(_('Diamond Articles'), 'priority_institutions', 'diamond_articles') }}</th>
-              <th class="text-right">{{ sort_link(_('Green Articles'), 'priority_institutions', 'green_articles') }}</th>
+              <th class="text-right openalex-oa-label-diamond">{{ sort_link(_('Diamond Articles'), 'priority_institutions', 'diamond_articles') }}</th>
+              <th class="text-right openalex-oa-label-green">{{ sort_link(_('Green Articles'), 'priority_institutions', 'green_articles') }}</th>
               <th class="text-right">{{ sort_link(_('Total Articles'), 'priority_institutions', 'articles') }}</th>
-              <th class="text-right">{{ sort_link(_('Diamond Citations'), 'priority_institutions', 'diamond_citations') }}</th>
-              <th class="text-right">{{ sort_link(_('Green Citations'), 'priority_institutions', 'green_citations') }}</th>
+              <th class="text-right openalex-oa-label-diamond">{{ sort_link(_('Diamond Citations'), 'priority_institutions', 'diamond_citations') }}</th>
+              <th class="text-right openalex-oa-label-green">{{ sort_link(_('Green Citations'), 'priority_institutions', 'green_citations') }}</th>
               <th class="text-right">{{ sort_link(_('Total Citations'), 'priority_institutions', 'citations') }}</th>
             </tr>
           </thead>
@@ -844,7 +849,7 @@
             {% for row in priority.top_cited_articles %}
             <tr>
               <td><strong>{{ (row.title|plain_text) or _('Untitled work') }}</strong><div class="small text-muted">{{ row.source_name or _('Unknown source') }}</div></td>
-              <td><span class="badge {% if row.oa_status == 'diamond' %}badge-success{% else %}badge-secondary{% endif %}">{{ row.oa_status_label }}</span></td>
+              <td>{{ priority_oa_badge(row.oa_status, row.oa_status_label) }}</td>
               <td class="text-right metric-cell"><strong>{{ row.citations }}</strong></td>
               <td>{{ row.publication_year or '—' }}</td>
               <td>

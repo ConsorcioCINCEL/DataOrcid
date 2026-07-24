@@ -1335,24 +1335,24 @@ msgstr "No fue posible recuperar la lista de archivos disponibles."
 #: app/blueprints/works.py:1519 app/blueprints/works.py:2526
 #: app/templates/works/openalex_analytics.html:1253
 msgid "Diamond"
-msgstr "Diamante"
+msgstr "OA Diamante"
 
 #: app/blueprints/works.py:1520 app/blueprints/works.py:2526
 #: app/templates/works/openalex_analytics.html:1261
 msgid "Green"
-msgstr "Verde"
+msgstr "OA Verde"
 
 #: app/blueprints/works.py:1521
 msgid "Gold"
-msgstr "Dorado"
+msgstr "OA Dorado"
 
 #: app/blueprints/works.py:1522
 msgid "Hybrid"
-msgstr "Híbrido"
+msgstr "OA Híbrido"
 
 #: app/blueprints/works.py:1523
 msgid "Bronze"
-msgstr "Bronce"
+msgstr "OA Bronce"
 
 #: app/blueprints/works.py:1524 app/blueprints/works.py:3504
 #: app/templates/works/openalex_analytics.html:1243
@@ -4242,6 +4242,30 @@ msgstr ""
 " cuentan cada artículo una vez dentro de cada institución local donde "
 "aparece."
 
+#: app/templates/help/index.html:236
+msgid ""
+"Visual convention: IGI Global presents Platinum Open Access—also known as "
+"sponsored or Diamond Open Access—with a gray lock (#595959), and Green Open "
+"Access with a green lock (#00B050)."
+msgstr ""
+"Convención visual: IGI Global presenta el Acceso Abierto Platino —también "
+"conocido como patrocinado o Diamante— con un candado gris (#595959), y el "
+"Acceso Abierto Verde con un candado verde (#00B050)."
+
+#: app/templates/help/index.html:237
+msgid ""
+"Compatible OpenAlex statuses also use the guide's exact Gold, Hybrid, and "
+"Bronze colors; Closed remains neutral because it is not an IGI color "
+"category."
+msgstr ""
+"Los estados compatibles de OpenAlex también usan los colores exactos de la "
+"guía para Dorado, Híbrido y Bronce; Cerrado permanece neutral porque no es "
+"una categoría cromática de IGI."
+
+#: app/templates/help/index.html:240
+msgid "Reference: IGI Global guide to the colors of Open Access"
+msgstr "Referencia: guía de IGI Global sobre los colores del Acceso Abierto"
+
 #: app/templates/help/index.html:237
 msgid "Publication languages"
 msgstr "Idiomas de publicación"
@@ -4517,7 +4541,7 @@ msgstr "OpenAlex y ORCID tienen ciclos de actualización independientes."
 #: app/templates/works/openalex_analytics.html:502
 #: app/templates/works/openalex_analytics.html:546
 msgid "Diamond Open Access"
-msgstr "Acceso abierto Diamante"
+msgstr "OA Diamante"
 
 #: app/templates/help/index.html:306
 msgid ""
@@ -4540,7 +4564,7 @@ msgstr ""
 #: app/templates/works/openalex_analytics.html:506
 #: app/templates/works/openalex_analytics.html:554
 msgid "Green Open Access"
-msgstr "Acceso abierto Verde"
+msgstr "OA Verde"
 
 #: app/templates/help/index.html:307
 msgid ""
@@ -7651,17 +7675,25 @@ msgstr ""
 "Usa el campo is_oa de OpenAlex. Abierto corresponde a is_oa=true; cerrado"
 " corresponde a is_oa=false para los trabajos filtrados."
 
-#: app/templates/works/openalex_analytics.html:538
-msgid "Open Access focus for ANID"
-msgstr "Foco de Acceso Abierto para ANID"
+#: app/templates/works/openalex_analytics.html:544
+msgid "Focus: Open Access types recommended by the"
+msgstr "Foco: tipos de Acceso Abierto recomendados por la"
+
+#: app/templates/works/openalex_analytics.html:548
+msgid "Open Access Policy"
+msgstr "Política de Acceso Abierto"
+
+#: app/templates/works/openalex_analytics.html:549
+msgid "(promoted by ANID)"
+msgstr "(impulsada por ANID)"
 
 #: app/templates/works/openalex_analytics.html:539
 msgid ""
-"A dedicated view of Diamond and Green Open Access within the filtered "
-"institutional output."
+"Production, citation, source, and trend indicators for Diamond and Green "
+"articles matching the active filters."
 msgstr ""
-"Una vista dedicada al Acceso Abierto Diamante y Verde dentro de la "
-"producción institucional filtrada."
+"Indicadores de producción, citas, fuentes y evolución para los artículos "
+"Diamante y Verde que coinciden con los filtros activos."
 
 #: app/templates/works/openalex_analytics.html:548
 #: app/templates/works/openalex_analytics.html:556
@@ -8295,22 +8327,22 @@ msgstr ""
 "Usa is_oa de OpenAlex sobre el conjunto global filtrado. Abierto "
 "corresponde a is_oa=true; cerrado a is_oa=false."
 
-#: app/templates/works/openalex_global.html:567
-msgid "Global Open Access focus for ANID"
-msgstr "Foco global de Acceso Abierto para ANID"
-
 #: app/templates/works/openalex_global.html:568
 msgid ""
-"Diamond and Green production, citations, journals, articles, and "
-"institutional distribution across the complete filtered system."
+"Comparative production, citation, source, and institutional distribution "
+"indicators for the filtered system."
 msgstr ""
-"Producción, citas, revistas, artículos y distribución institucional "
-"Diamante y Verde en todo el sistema filtrado."
+"Indicadores comparados de producción, citas, fuentes y distribución "
+"institucional para el sistema filtrado."
+
+#: app/templates/works/openalex_global.html:580
+msgid "Institutional Comparison of Diamond and Green Open Access"
+msgstr "Comparación institucional de Acceso Abierto Diamante y Verde"
 
 #: app/templates/works/openalex_global.html:575
 #: app/templates/works/openalex_global.html:768
 msgid "Diamond Articles"
-msgstr "Artículos Diamante"
+msgstr "Artículos OA Diamante"
 
 #: app/templates/works/openalex_global.html:577
 #: app/templates/works/openalex_global.html:585
@@ -8321,7 +8353,7 @@ msgstr "%(count)s citas"
 #: app/templates/works/openalex_global.html:583
 #: app/templates/works/openalex_global.html:769
 msgid "Green Articles"
-msgstr "Artículos Verdes"
+msgstr "Artículos OA Verde"
 
 #: app/templates/works/openalex_global.html:591
 msgid "Unique Diamond + Green Articles"
@@ -8519,11 +8551,11 @@ msgstr "Total de artículos"
 
 #: app/templates/works/openalex_global.html:771
 msgid "Diamond Citations"
-msgstr "Citas Diamante"
+msgstr "Citas OA Diamante"
 
 #: app/templates/works/openalex_global.html:772
 msgid "Green Citations"
-msgstr "Citas Verdes"
+msgstr "Citas OA Verde"
 
 #: app/templates/works/openalex_global.html:799
 msgid "Globally Most Cited Diamond and Green Articles"

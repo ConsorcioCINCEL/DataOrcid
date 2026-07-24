@@ -44,8 +44,27 @@ _OPENALEX_INSTITUTION_ANALYTICS_CACHE = OrderedDict()
 _OPENALEX_INSTITUTION_ANALYTICS_CACHE_LOCK = RLock()
 _OPENALEX_ANALYTICS_CACHE_MAX_SIZE = 40
 _OPENALEX_ANALYTICS_CACHE_TTL = 86400
-_OPENALEX_PERSISTENT_CACHE_VERSION = 6
+_OPENALEX_PERSISTENT_CACHE_VERSION = 8
 _OPENALEX_PERSISTENT_CACHE_MAX_FILES = 120
+# Source: https://www.igi-global.com/newsroom/archive/guide-understanding-colors-open-access/4925/
+_OPENALEX_OA_COLORS = {
+    # IGI Global names Platinum OA as sponsored or Diamond OA.
+    "diamond": "#595959",
+    "green": "#00b050",
+    "blue": "#2f5496",
+    "yellow": "#eab200",
+    "hybrid": "#ed7d31",
+    "gold": "#bf8f00",
+    "bronze": "#806000",
+    "white": "#a0a0a0",
+    "black": "#000000",
+    # OpenAlex closed is not an IGI color category; use IGI's neutral gray.
+    "closed": "#a0a0a0",
+}
+_OPENALEX_PRIORITY_OA_COLORS = {
+    status: _OPENALEX_OA_COLORS[status]
+    for status in ("diamond", "green")
+}
 
 
 def _format_datetime(value):
@@ -1528,6 +1547,12 @@ def _openalex_oa_status_label(value: str | None) -> str:
     return labels.get(status, status.replace("_", " ").replace("-", " ").title())
 
 
+def _openalex_oa_status_color(value: str | None) -> str:
+    """Return the IGI Global color associated with an Open Access status."""
+    status = str(value or "").strip().lower()
+    return _OPENALEX_OA_COLORS.get(status, "#a0a0a0")
+
+
 def _openalex_language_label(value: str | None, locale=None) -> str:
     """Expand an OpenAlex ISO 639-1 language code in the active interface locale."""
     code = str(value or "").strip().lower()
@@ -1738,10 +1763,7 @@ def _priority_open_access_breakdown(doi_subquery) -> dict:
                     ],
                     "backgroundColor": color,
                 }
-                for status, color in (
-                    ("diamond", "#00a36c"),
-                    ("green", "#6f42c1"),
-                )
+                for status, color in _OPENALEX_PRIORITY_OA_COLORS.items()
             ],
         }
 
@@ -1871,10 +1893,7 @@ def _priority_open_access_breakdown(doi_subquery) -> dict:
                 "tension": 0.25,
                 "fill": False,
             }
-            for status, color in (
-                ("diamond", "#00a36c"),
-                ("green", "#6f42c1"),
-            )
+            for status, color in _OPENALEX_PRIORITY_OA_COLORS.items()
         ]
 
     diamond = summary_by_status.get("diamond", {"articles": 0, "citations": 0})
@@ -2525,10 +2544,22 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             "closed_access_year_values": [oa_year_counts.get((year, False), 0) for year in sorted_years],
             "priority_oa_labels": [_("Diamond"), _("Green")],
             "priority_oa_values": [diamond_open_access_count, green_open_access_count],
+            "priority_oa_colors": [
+                _openalex_oa_status_color("diamond"),
+                _openalex_oa_status_color("green"),
+            ],
             "diamond_oa_year_values": [priority_oa_year_counts.get((year, "diamond"), 0) for year in sorted_years],
             "green_oa_year_values": [priority_oa_year_counts.get((year, "green"), 0) for year in sorted_years],
             "oa_labels": oa_labels,
             "oa_values": oa_values,
+            "oa_colors": [
+                _openalex_oa_status_color(
+                    None
+                    if status == _("Unknown OA status")
+                    else status
+                )
+                for status in oa_statuses
+            ],
             "field_labels": field_labels,
             "field_values": field_values,
             "domain_labels": domain_labels,
@@ -2894,10 +2925,7 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
                     "data": [row[f"{status}_{metric_suffix}"] for row in ranked_rows],
                     "backgroundColor": color,
                 }
-                for status, color in (
-                    ("diamond", "#00a36c"),
-                    ("green", "#6f42c1"),
-                )
+                for status, color in _OPENALEX_PRIORITY_OA_COLORS.items()
             ],
         }
 

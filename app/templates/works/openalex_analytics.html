@@ -6,6 +6,11 @@
     {{ chart_info(description, methodology) }}
   </div>
 {%- endmacro %}
+{% macro priority_oa_badge(status, label) -%}
+  <span class="badge openalex-oa-badge {% if status == 'diamond' %}openalex-oa-badge-diamond{% else %}openalex-oa-badge-green{% endif %}">
+    <i class="fas fa-lock" aria-hidden="true"></i>{{ label }}
+  </span>
+{%- endmacro %}
 {% macro analysis_chart(chart_id, title, description, methodology, size='openalex-chart') -%}
 <div class="card openalex-analysis-card">
   <div class="card-header d-flex align-items-center justify-content-between"><h3 class="card-title text-bold mb-0">{{ title }}</h3>{{ chart_tools(chart_id, description, methodology) }}</div>
@@ -266,7 +271,7 @@
     padding: 0.75rem;
   }
   .openalex-oa-focus-card {
-    border-top: 3px solid #00a36c;
+    border-top: 3px solid var(--app-orange);
     margin-bottom: 1rem;
   }
   .openalex-oa-focus-card .card-body {
@@ -280,9 +285,9 @@
   }
   .openalex-oa-focus-icon {
     align-items: center;
-    background: #eaf6f2;
+    background: #fff2ed;
     border-radius: 8px;
-    color: #198754;
+    color: var(--app-orange);
     display: flex;
     flex: 0 0 auto;
     height: 44px;
@@ -535,21 +540,27 @@
     <div class="openalex-oa-focus-intro">
       <span class="openalex-oa-focus-icon" aria-hidden="true"><i class="fas fa-unlock-alt"></i></span>
       <div>
-        <h2>{{ _('Open Access focus for ANID') }}</h2>
-        <p>{{ _('A dedicated view of Diamond and Green Open Access within the filtered institutional output.') }}</p>
+        <h2>
+          {{ _('Focus: Open Access types recommended by the') }}
+          <a href="https://www.cincel.cl/iniciativas/ina/"
+             target="_blank"
+             rel="noopener noreferrer">{{ _('Open Access Policy') }}</a>
+          {{ _('(promoted by ANID)') }}
+        </h2>
+        <p>{{ _('Production, citation, source, and trend indicators for Diamond and Green articles matching the active filters.') }}</p>
       </div>
     </div>
     <section class="app-kpi-strip" style="--app-kpi-columns: 3" aria-label="{{ _('Diamond and Green Open Access') }}">
-      <article class="app-kpi">
-        <span class="app-kpi-icon is-green" aria-hidden="true"><i class="far fa-gem"></i></span>
+      <article class="app-kpi openalex-oa-kpi-diamond">
+        <span class="app-kpi-icon is-oa-diamond" aria-hidden="true"><i class="fas fa-lock"></i></span>
         <div>
           <span class="app-kpi-label">{{ _('Diamond Open Access') }}</span>
           <strong>{{ analytics.summary.diamond_open_access_count }}</strong>
           <small>{{ _('%(percent)s%% of filtered articles', percent=analytics.summary.diamond_open_access_percent) }}</small>
         </div>
       </article>
-      <article class="app-kpi">
-        <span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-archive"></i></span>
+      <article class="app-kpi openalex-oa-kpi-green">
+        <span class="app-kpi-icon is-oa-green" aria-hidden="true"><i class="fas fa-lock"></i></span>
         <div>
           <span class="app-kpi-label">{{ _('Green Open Access') }}</span>
           <strong>{{ analytics.summary.green_open_access_count }}</strong>
@@ -617,7 +628,7 @@
               <div class="small text-muted">{{ row.source_issn_l or _('ISSN-L not available') }}</div>
             </td>
             <td>
-              <span class="badge {% if row.oa_status == 'diamond' %}badge-success{% else %}badge-secondary{% endif %}">{{ row.oa_status_label }}</span>
+              {{ priority_oa_badge(row.oa_status, row.oa_status_label) }}
             </td>
             <td class="text-right">{{ row.articles }}</td>
             <td class="text-right"><strong>{{ row.citations }}</strong></td>
@@ -670,7 +681,7 @@
               <strong>{{ (row.title|plain_text) or _('Untitled work') }}</strong>
               <div class="small text-muted">{{ row.source_name or _('Unknown source') }}</div>
             </td>
-            <td><span class="badge {% if row.oa_status == 'diamond' %}badge-success{% else %}badge-secondary{% endif %}">{{ row.oa_status_label }}</span></td>
+            <td>{{ priority_oa_badge(row.oa_status, row.oa_status_label) }}</td>
             <td class="text-right"><strong>{{ row.citations }}</strong></td>
             <td>{{ row.publication_year or '—' }}</td>
             <td>
@@ -1112,12 +1123,12 @@
     const palette = ['#2a69b8', '#28a745', '#f39c12', '#dc3545', '#17a2b8', '#6f42c1', '#20c997', '#6c757d', '#fd7e14', '#6610f2'];
     const charts = {{ analytics.charts | tojson }};
 
-    function doughnutChart(id, labels, values) {
+    function doughnutChart(id, labels, values, colors = palette) {
       const el = document.getElementById(id);
       if (!el) return;
       new Chart(el, {
         type: 'doughnut',
-        data: { labels: labels, datasets: [{ data: values, backgroundColor: palette }] },
+        data: { labels: labels, datasets: [{ data: values, backgroundColor: colors }] },
         options: { plugins: { legend: { position: 'bottom' } } }
       });
     }
@@ -1226,8 +1237,18 @@
     });
 
     doughnutChart('chartAffiliationCoverage', charts.affiliation_labels, charts.affiliation_values);
-    doughnutChart('chartOpenAccess', charts.oa_labels, charts.oa_values);
-    doughnutChart('chartPriorityOpenAccess', charts.priority_oa_labels, charts.priority_oa_values);
+    doughnutChart(
+      'chartOpenAccess',
+      charts.oa_labels,
+      charts.oa_values,
+      charts.oa_colors
+    );
+    doughnutChart(
+      'chartPriorityOpenAccess',
+      charts.priority_oa_labels,
+      charts.priority_oa_values,
+      charts.priority_oa_colors
+    );
     doughnutChart('chartOpenAlexTypes', charts.type_labels, charts.type_values);
     lineChart('chartDocumentTypeTrend', charts.doc_type_trend_labels, charts.doc_type_trend_datasets);
     lineChart('chartOpenAccessTrend', charts.years, [
@@ -1252,16 +1273,16 @@
       {
         label: '{{ _("Diamond") }}',
         data: charts.diamond_oa_year_values,
-        borderColor: '#00a36c',
-        backgroundColor: '#00a36c',
+        borderColor: charts.priority_oa_colors[0],
+        backgroundColor: charts.priority_oa_colors[0],
         tension: 0.25,
         fill: false
       },
       {
         label: '{{ _("Green") }}',
         data: charts.green_oa_year_values,
-        borderColor: '#6f42c1',
-        backgroundColor: '#6f42c1',
+        borderColor: charts.priority_oa_colors[1],
+        backgroundColor: charts.priority_oa_colors[1],
         tension: 0.25,
         fill: false
       }

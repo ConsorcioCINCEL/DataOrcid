@@ -253,24 +253,9 @@ def _dashboard_quality_summary(ror_id, affiliated_count):
 
 def _dashboard_openalex_cache_key_expr():
     """Return the normalized OpenAlex cache key for an ORCID work row."""
-    trimmed = func.lower(func.trim(WorkCache.doi))
-    without_url = func.replace(
-        func.replace(
-            func.replace(
-                func.replace(trimmed, "https://dx.doi.org/", ""),
-                "http://dx.doi.org/",
-                "",
-            ),
-            "https://doi.org/",
-            "",
-        ),
-        "http://doi.org/",
-        "",
-    )
-    normalized_doi = func.rtrim(func.trim(func.replace(without_url, "doi:", "")), ".")
-    has_doi = and_(WorkCache.doi.isnot(None), func.trim(WorkCache.doi) != "")
+    has_doi = WorkCache.doi_normalized.isnot(None)
     return case(
-        (has_doi, normalized_doi),
+        (has_doi, WorkCache.doi_normalized),
         else_=literal("work:") + cast(WorkCache.id, String),
     )
 

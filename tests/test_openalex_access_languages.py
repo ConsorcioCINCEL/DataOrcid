@@ -14,6 +14,7 @@ from app.blueprints.works import (
     _openalex_oa_status_color,
 )
 from app.models import OpenAlexSyncRun, OpenAlexWorkMetadata, WorkCache
+from app.services.analytics_service import refresh_openalex_facts
 
 
 class OpenAlexAccessLanguageAnalyticsTest(unittest.TestCase):
@@ -169,6 +170,26 @@ class OpenAlexAccessLanguageAnalyticsTest(unittest.TestCase):
             self.assertEqual(["Español (es)"], analytics["charts"]["language_labels"])
             self.assertEqual([2], analytics["charts"]["language_values"])
             self.assertEqual("Portugués (pt)", _openalex_language_label("pt"))
+
+    def test_institution_overview_reads_materialized_facts(self):
+        with self.app.app_context(), self.app.test_request_context(
+            "/openalex/analytics?lang=es"
+        ):
+            self._seed_work("1", 2023, "es", "diamond", citations=7)
+            self._seed_work("2", 2024, "en", "closed", citations=3)
+            db.session.commit()
+            refresh_openalex_facts("01test123")
+            OpenAlexWorkMetadata.query.delete(synchronize_session=False)
+            db.session.commit()
+
+            analytics = _openalex_analytics(
+                "01test123",
+                {"section": "overview"},
+            )
+
+            self.assertEqual(2, analytics["summary"]["enriched_dois"])
+            self.assertEqual(10, analytics["summary"]["total_citations"])
+            self.assertEqual(["2023", "2024"], analytics["charts"]["years"])
 
     def test_global_priority_metrics_deduplicate_articles_and_compare_institutions(self):
         with self.app.app_context(), self.app.test_request_context(

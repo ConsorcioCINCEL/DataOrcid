@@ -1195,6 +1195,14 @@ def sync_openalex_works(
         run.status = summary["status"]
         run.finished_at = utc_now()
         _checkpoint_sync_run(run, summary)
+        if summary["status"] != "failed":
+            try:
+                from .analytics_service import refresh_openalex_facts
+
+                refresh_openalex_facts(ror_id)
+            except Exception:
+                db.session.rollback()
+                logger.exception("OpenAlex analytics fact refresh failed.")
         if progress:
             try:
                 progress(dict(summary))
@@ -1291,6 +1299,14 @@ def sync_openalex_title_matches(
         run.status = summary["status"]
         run.finished_at = utc_now()
         _checkpoint_sync_run(run, summary)
+        if summary["status"] != "failed":
+            try:
+                from .analytics_service import refresh_openalex_facts
+
+                refresh_openalex_facts(ror_id)
+            except Exception:
+                db.session.rollback()
+                logger.exception("OpenAlex analytics fact refresh failed.")
         if progress:
             try:
                 progress(dict(summary))

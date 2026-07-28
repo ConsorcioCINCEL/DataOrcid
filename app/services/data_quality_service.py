@@ -31,7 +31,7 @@ def institution_quality_report(ror_id: str) -> dict:
 
     work_total, work_with_doi, work_with_year = db.session.query(
         func.count(WorkCache.id),
-        func.count(case((func.trim(func.coalesce(WorkCache.doi, "")) != "", 1))),
+        func.count(case((WorkCache.doi_normalized.isnot(None), 1))),
         func.count(case((func.trim(func.coalesce(WorkCache.pub_year, "")) != "", 1))),
     ).filter(WorkCache.ror_id == ror_id).one()
 

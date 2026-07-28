@@ -153,30 +153,15 @@ def _chunks(items: list, size: int = 500):
 
 
 def _openalex_normalized_doi_expr(model):
-    """Build a DOI normalization expression supported by PostgreSQL and SQLite."""
-    trimmed = func.lower(func.trim(model.doi))
-    without_url = func.replace(
-        func.replace(
-            func.replace(
-                func.replace(trimmed, "https://dx.doi.org/", ""),
-                "http://dx.doi.org/",
-                "",
-            ),
-            "https://doi.org/",
-            "",
-        ),
-        "http://doi.org/",
-        "",
-    )
-    without_prefix = func.replace(without_url, "doi:", "")
-    return func.rtrim(func.trim(without_prefix), ".")
+    """Return the validated DOI key stored with the source record."""
+    return model.doi_normalized
 
 
 def _openalex_cache_key_expr(model):
     """Return the OpenAlex local cache key: DOI when present, otherwise work:<id>."""
-    has_doi = and_(model.doi.isnot(None), func.trim(model.doi) != "")
+    has_doi = model.doi_normalized.isnot(None)
     return case(
-        (has_doi, _openalex_normalized_doi_expr(model)),
+        (has_doi, model.doi_normalized),
         else_=literal("work:") + cast(model.id, String),
     )
 
@@ -309,18 +294,37 @@ def _openalex_data_signature(ror_id: str | None = None) -> dict:
 
 
 def _openalex_analytics_request_cache_key(namespace: str, filters: dict, ror_id: str | None = None) -> str:
+    from ..services.analytics_service import get_analytics_data_version
+
+    request_prefixes = ()
+    if namespace == "institution" and filters.get("section") == "open_access":
+        request_prefixes = ("priority_source_", "priority_article_")
+    elif namespace == "global":
+        requested_tab = (request.args.get("tab") or "overview").strip().lower()
+        request_prefixes = {
+            "open_access": (
+                "priority_source_",
+                "priority_article_",
+                "priority_institution_",
+            ),
+            "universities": ("university_",),
+            "production": ("author_", "institution_"),
+            "institution_authors": ("institution_author_",),
+            "articles": ("priority_article_",),
+        }.get(requested_tab, ())
     request_args = {
         key: request.args.getlist(key)
         for key in sorted(request.args.keys())
-        if key not in {"lang", "refresh_cache", "section", "tab"}
+        if request_prefixes and key.startswith(request_prefixes)
     }
+    data_version = get_analytics_data_version(ror_id)
     payload = {
         "namespace": namespace,
         "ror_id": ror_id,
         "filters": filters,
         "request_args": request_args,
         "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "en"),
-        "data_signature": _openalex_data_signature(ror_id),
+        "data_signature": data_version or _openalex_data_signature(ror_id),
     }
     encoded = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -753,8 +757,7 @@ def _institution_cache_summaries(institutions: list[dict] | None = None) -> list
         .filter(
             WorkCache.ror_id.in_(ror_ids),
             WorkCache.type == "journal-article",
-            WorkCache.doi.isnot(None),
-            WorkCache.doi != "",
+            WorkCache.doi_normalized.isnot(None),
         )
         .distinct()
         .subquery()
@@ -1146,10 +1149,142 @@ def _send_openalex_export(records_query, base_name: str = 'openalex_articles_all
     return _attach_download_token(response)
 
 
+def _openalex_fact_cache_summary(ror_id: str) -> dict:
+    from ..models import (
+        OpenAlexInstitutionWorkFact,
+        OpenAlexSyncRun,
+    )
+    from ..services.openalex_service import TITLE_MATCH_NOT_FOUND_ERROR
+
+    fact = OpenAlexInstitutionWorkFact
+    title_retryable = or_(
+        fact.raw_error.is_(None),
+        fact.raw_error != TITLE_MATCH_NOT_FOUND_ERROR,
+    )
+    title_candidate = and_(
+        fact.has_local_title.is_(True),
+        title_retryable,
+        or_(
+            and_(
+                fact.has_valid_doi.is_(False),
+                or_(
+                    fact.raw_status.is_(None),
+                    fact.raw_status != "found",
+                ),
+            ),
+            and_(
+                fact.has_valid_doi.is_(True),
+                fact.raw_status == "not_found",
+                fact.openalex_id.is_(None),
+            ),
+        ),
+    )
+    row = (
+        db.session.query(
+            func.coalesce(func.sum(fact.source_record_count), 0),
+            func.coalesce(func.sum(case(
+                (fact.has_valid_doi.is_(True), fact.source_record_count),
+                else_=0,
+            )), 0),
+            func.count(case((fact.has_valid_doi.is_(True), 1))),
+            func.count(case((
+                and_(
+                    fact.has_valid_doi.is_(True),
+                    fact.raw_status.isnot(None),
+                ),
+                1,
+            ))),
+            func.count(case((
+                and_(
+                    fact.has_valid_doi.is_(True),
+                    fact.openalex_id.isnot(None),
+                ),
+                1,
+            ))),
+            func.count(case((
+                and_(
+                    fact.has_valid_doi.is_(True),
+                    fact.raw_status == "not_found",
+                ),
+                1,
+            ))),
+            func.count(case((
+                and_(
+                    fact.has_valid_doi.is_(True),
+                    fact.raw_status == "error",
+                ),
+                1,
+            ))),
+            func.count(case((fact.openalex_id.isnot(None), 1))),
+            func.coalesce(func.sum(case(
+                (title_candidate, fact.source_record_count),
+                else_=0,
+            )), 0),
+            func.coalesce(func.sum(case((
+                and_(
+                    title_candidate,
+                    fact.has_valid_doi.is_(False),
+                ),
+                fact.source_record_count,
+            ), else_=0)), 0),
+            func.coalesce(func.sum(case((
+                and_(
+                    title_candidate,
+                    fact.has_valid_doi.is_(True),
+                ),
+                fact.source_record_count,
+            ), else_=0)), 0),
+        )
+        .filter(fact.ror_id == ror_id)
+        .one()
+    )
+    article_works = int(row[0] or 0)
+    article_doi_works = int(row[1] or 0)
+    candidate_dois = int(row[2] or 0)
+    processed = int(row[3] or 0)
+    matched = int(row[4] or 0)
+    not_found = int(row[5] or 0)
+    errors = int(row[6] or 0)
+    matched_cache_keys = int(row[7] or 0)
+    no_doi_title_candidates = int(row[9] or 0)
+    doi_not_found_title_candidates = int(row[10] or 0)
+    last_run = (
+        OpenAlexSyncRun.query
+        .filter_by(ror_id=ror_id)
+        .order_by(OpenAlexSyncRun.finished_at.desc())
+        .first()
+    )
+    return {
+        "article_works": article_works,
+        "article_doi_works": article_doi_works,
+        "candidate_dois": candidate_dois,
+        "processed_dois": processed,
+        "matched_dois": matched,
+        "matched_openalex_keys": matched_cache_keys,
+        "not_found_dois": not_found,
+        "error_dois": errors,
+        "pending_dois": max(candidate_dois - processed, 0),
+        "unmatched_dois": max(
+            candidate_dois - matched - max(candidate_dois - processed, 0) - errors,
+            0,
+        ),
+        "title_candidate_works": int(row[8] or 0),
+        "no_doi_title_candidates": no_doi_title_candidates,
+        "doi_not_found_title_candidates": doi_not_found_title_candidates,
+        "processed_percent": round((processed / candidate_dois * 100), 1) if candidate_dois else 0,
+        "matched_percent": round((matched / candidate_dois * 100), 1) if candidate_dois else 0,
+        "last_run": last_run,
+    }
+
+
 def _openalex_cache_summary(ror_id: str) -> dict:
     """Summarize OpenAlex sync status for DOI-backed journal articles."""
     from ..models import OpenAlexSyncRun, OpenAlexWorkMetadata, OpenAlexWorkRawCache, WorkCache
+    from ..services.analytics_service import openalex_fact_available
     from ..services.openalex_service import TITLE_MATCH_NOT_FOUND_ERROR
+
+    if openalex_fact_available(ror_id):
+        return _openalex_fact_cache_summary(ror_id)
 
     normalized = _openalex_normalized_doi_expr(WorkCache).label("doi_normalized")
     cache_key = _openalex_cache_key_expr(WorkCache).label("openalex_cache_key")
@@ -1159,8 +1294,7 @@ def _openalex_cache_summary(ror_id: str) -> dict:
     )
     doi_filters = (
         WorkCache.ror_id == ror_id,
-        WorkCache.doi.isnot(None),
-        WorkCache.doi != "",
+        WorkCache.doi_normalized.isnot(None),
         WorkCache.type == "journal-article",
     )
     doi_subquery = (
@@ -1224,7 +1358,7 @@ def _openalex_cache_summary(ror_id: str) -> dict:
             *article_filters,
             WorkCache.title.isnot(None),
             WorkCache.title != "",
-            (WorkCache.doi.is_(None)) | (WorkCache.doi == ""),
+            WorkCache.doi_normalized.is_(None),
             (OpenAlexWorkRawCache.id.is_(None)) |
             (
                 (OpenAlexWorkRawCache.status != "found") &
@@ -1336,14 +1470,13 @@ def _openalex_work_rows(
         query = query.filter(OpenAlexWorkMetadata.id.isnot(None))
     elif coverage == "missing":
         query = query.filter(
-            WorkCache.doi.isnot(None),
-            func.trim(WorkCache.doi) != "",
+            WorkCache.doi_normalized.isnot(None),
             OpenAlexWorkRawCache.id.is_(None),
         )
     elif coverage == "not_found":
         query = query.filter(OpenAlexWorkRawCache.status.in_(("not_found", "error")))
     elif coverage == "no_doi":
-        query = query.filter(or_(WorkCache.doi.is_(None), func.trim(WorkCache.doi) == ""))
+        query = query.filter(WorkCache.doi_normalized.is_(None))
 
     search = (search or "").strip()
     if search:
@@ -1389,7 +1522,7 @@ def _openalex_work_rows(
     for row in result_rows:
         raw_status = row.raw_status or "pending"
         openalex_id = row.openalex_id
-        has_doi = bool(row.doi and row.doi.strip())
+        has_doi = bool(row.doi_normalized)
         if openalex_id:
             status_key = "matched"
         elif raw_status == "not_found":
@@ -1426,7 +1559,7 @@ def _openalex_work_rows(
             "primary_topic_domain": row.primary_topic_domain or "",
         })
 
-    has_doi_condition = and_(WorkCache.doi.isnot(None), func.trim(WorkCache.doi) != "")
+    has_doi_condition = WorkCache.doi_normalized.isnot(None)
     coverage_row = (
         db.session.query(
             func.count(WorkCache.id),
@@ -1576,6 +1709,54 @@ def _openalex_language_label(value: str | None, locale=None) -> str:
     if not language_name:
         return code.upper()
     return f"{language_name[:1].upper()}{language_name[1:]} ({code})"
+
+
+def _empty_priority_open_access() -> dict:
+    pagination = _pagination_dict(1, 10, 0)
+    return {
+        "summary": {
+            "diamond_articles": 0,
+            "diamond_citations": 0,
+            "green_articles": 0,
+            "green_citations": 0,
+            "articles": 0,
+            "citations": 0,
+        },
+        "source_rows": [],
+        "top_cited_articles": [],
+        "tables": {
+            "sources": {
+                "pagination": pagination,
+                "per_page_options": [10, 25, 50],
+                "search": "",
+                "sort": "articles",
+                "dir": "desc",
+            },
+            "articles": {
+                "pagination": pagination,
+                "per_page_options": [10, 25, 50],
+                "search": "",
+                "sort": "citations",
+                "dir": "desc",
+            },
+            "institutions": {
+                "pagination": pagination,
+                "per_page_options": [10, 25, 50],
+                "search": "",
+                "sort": "articles",
+                "dir": "desc",
+            },
+        },
+        "charts": {
+            "sources_by_articles": {"labels": [], "datasets": []},
+            "sources_by_citations": {"labels": [], "datasets": []},
+            "institutions_by_articles": {"labels": [], "datasets": []},
+            "institutions_by_citations": {"labels": [], "datasets": []},
+            "trend_years": [],
+            "article_trend_datasets": [],
+            "citation_trend_datasets": [],
+        },
+    }
 
 
 def _priority_open_access_breakdown(doi_subquery) -> dict:
@@ -1938,11 +2119,13 @@ def _priority_open_access_breakdown(doi_subquery) -> dict:
 def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
     """Build chart-ready analytics from OpenAlex-enriched journal articles."""
     from ..models import (
+        OpenAlexInstitutionWorkFact,
         OpenAlexWorkAuthor,
         OpenAlexWorkInstitution,
         OpenAlexWorkMetadata,
         WorkCache,
     )
+    from ..services.analytics_service import openalex_fact_available
 
     filters = filters or {}
     year_from = _int_filter(filters.get("year_from"))
@@ -1950,6 +2133,16 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
     selected_types = _list_filter(filters.get("type"))
     selected_oa_statuses = _list_filter(filters.get("oa_status"))
     selected_languages = _list_filter(filters.get("language"))
+    active_section = (filters.get("section") or "all").strip().lower()
+    if active_section not in {
+        "all",
+        "overview",
+        "open_access",
+        "collaboration",
+        "topics",
+        "impact",
+    }:
+        active_section = "all"
     selected_affiliations = [
         value.lower()
         for value in _list_filter(filters.get("affiliation"))
@@ -1959,62 +2152,112 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         selected_affiliations = []
 
     summary = _openalex_cache_summary(ror_id)
-    cache_key = _openalex_cache_key_expr(WorkCache).label("doi_normalized")
-    local_key_subquery = (
-        db.session.query(cache_key)
-        .filter(
-            WorkCache.ror_id == ror_id,
-            WorkCache.type == "journal-article",
+    fact_enabled = openalex_fact_available(ror_id)
+    if fact_enabled:
+        local_key_subquery = (
+            db.session.query(
+                OpenAlexInstitutionWorkFact.openalex_cache_key.label("doi_normalized"),
+                OpenAlexInstitutionWorkFact.has_selected_affiliation,
+                OpenAlexInstitutionWorkFact.has_chile_affiliation,
+                OpenAlexInstitutionWorkFact.has_non_chile_affiliation,
+                OpenAlexInstitutionWorkFact.has_international_collaboration,
+            )
+            .filter(OpenAlexInstitutionWorkFact.ror_id == ror_id)
+            .subquery()
         )
-        .distinct()
-        .subquery()
-    )
-    base_metadata_query = (
-        db.session.query(OpenAlexWorkMetadata)
-        .join(local_key_subquery, OpenAlexWorkMetadata.doi_normalized == local_key_subquery.c.doi_normalized)
-    )
+        base_metadata_query = OpenAlexInstitutionWorkFact.query.filter(
+            OpenAlexInstitutionWorkFact.ror_id == ror_id,
+            OpenAlexInstitutionWorkFact.openalex_id.isnot(None),
+        )
+        analytics_doi = OpenAlexInstitutionWorkFact.openalex_cache_key
+        analytics_id = OpenAlexInstitutionWorkFact.id
+        analytics_year = OpenAlexInstitutionWorkFact.publication_year
+        analytics_type = OpenAlexInstitutionWorkFact.document_type
+        analytics_oa_status = OpenAlexInstitutionWorkFact.oa_status
+        analytics_language = OpenAlexInstitutionWorkFact.language
+        analytics_citations = OpenAlexInstitutionWorkFact.cited_by_count
+        analytics_fwci = OpenAlexInstitutionWorkFact.fwci
+        analytics_is_oa = OpenAlexInstitutionWorkFact.is_oa
+        analytics_source = OpenAlexInstitutionWorkFact.source_name
+        analytics_field = OpenAlexInstitutionWorkFact.primary_topic_field
+        analytics_domain = OpenAlexInstitutionWorkFact.primary_topic_domain
+        analytics_openalex_id = OpenAlexInstitutionWorkFact.openalex_id
+        analytics_title = OpenAlexInstitutionWorkFact.title
+    else:
+        cache_key = _openalex_cache_key_expr(WorkCache).label("doi_normalized")
+        local_key_subquery = (
+            db.session.query(cache_key)
+            .filter(
+                WorkCache.ror_id == ror_id,
+                WorkCache.type == "journal-article",
+            )
+            .distinct()
+            .subquery()
+        )
+        base_metadata_query = (
+            OpenAlexWorkMetadata.query
+            .join(
+                local_key_subquery,
+                OpenAlexWorkMetadata.doi_normalized
+                == local_key_subquery.c.doi_normalized,
+            )
+        )
+        analytics_doi = OpenAlexWorkMetadata.doi_normalized
+        analytics_id = OpenAlexWorkMetadata.id
+        analytics_year = OpenAlexWorkMetadata.publication_year
+        analytics_type = OpenAlexWorkMetadata.type
+        analytics_oa_status = OpenAlexWorkMetadata.oa_status
+        analytics_language = OpenAlexWorkMetadata.language
+        analytics_citations = OpenAlexWorkMetadata.cited_by_count
+        analytics_fwci = OpenAlexWorkMetadata.fwci
+        analytics_is_oa = OpenAlexWorkMetadata.is_oa
+        analytics_source = OpenAlexWorkMetadata.source_name
+        analytics_field = OpenAlexWorkMetadata.primary_topic_field
+        analytics_domain = OpenAlexWorkMetadata.primary_topic_domain
+        analytics_openalex_id = OpenAlexWorkMetadata.openalex_id
+        analytics_title = OpenAlexWorkMetadata.title
 
     option_years = [
         row[0]
         for row in (
-            db.session.query(OpenAlexWorkMetadata.publication_year)
-            .join(local_key_subquery, OpenAlexWorkMetadata.doi_normalized == local_key_subquery.c.doi_normalized)
-            .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
+            base_metadata_query
+            .with_entities(analytics_year)
+            .filter(analytics_year.isnot(None))
             .distinct()
-            .order_by(OpenAlexWorkMetadata.publication_year.desc())
+            .order_by(analytics_year.desc())
             .all()
         )
     ]
     option_types = [
         row[0]
         for row in (
-            db.session.query(OpenAlexWorkMetadata.type)
-            .join(local_key_subquery, OpenAlexWorkMetadata.doi_normalized == local_key_subquery.c.doi_normalized)
-            .filter(OpenAlexWorkMetadata.type.isnot(None), OpenAlexWorkMetadata.type != "")
+            base_metadata_query
+            .with_entities(analytics_type)
+            .filter(analytics_type.isnot(None), analytics_type != "")
             .distinct()
-            .order_by(OpenAlexWorkMetadata.type.asc())
+            .order_by(analytics_type.asc())
             .all()
         )
     ]
     option_oa_statuses = [
         row[0]
         for row in (
-            db.session.query(OpenAlexWorkMetadata.oa_status)
-            .join(local_key_subquery, OpenAlexWorkMetadata.doi_normalized == local_key_subquery.c.doi_normalized)
-            .filter(OpenAlexWorkMetadata.oa_status.isnot(None), OpenAlexWorkMetadata.oa_status != "")
+            base_metadata_query
+            .with_entities(analytics_oa_status)
+            .filter(analytics_oa_status.isnot(None), analytics_oa_status != "")
             .distinct()
-            .order_by(OpenAlexWorkMetadata.oa_status.asc())
+            .order_by(analytics_oa_status.asc())
             .all()
         )
     ]
     option_languages = [
         row[0]
         for row in (
-            db.session.query(OpenAlexWorkMetadata.language)
-            .join(local_key_subquery, OpenAlexWorkMetadata.doi_normalized == local_key_subquery.c.doi_normalized)
-            .filter(OpenAlexWorkMetadata.language.isnot(None), OpenAlexWorkMetadata.language != "")
+            base_metadata_query
+            .with_entities(analytics_language)
+            .filter(analytics_language.isnot(None), analytics_language != "")
             .distinct()
-            .order_by(OpenAlexWorkMetadata.language.asc())
+            .order_by(analytics_language.asc())
             .all()
         )
     ]
@@ -2044,43 +2287,104 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
 
     filtered_query = base_metadata_query
     if year_from is not None:
-        filtered_query = filtered_query.filter(OpenAlexWorkMetadata.publication_year >= year_from)
+        filtered_query = filtered_query.filter(analytics_year >= year_from)
     if year_to is not None:
-        filtered_query = filtered_query.filter(OpenAlexWorkMetadata.publication_year <= year_to)
+        filtered_query = filtered_query.filter(analytics_year <= year_to)
     if selected_types:
-        filtered_query = filtered_query.filter(OpenAlexWorkMetadata.type.in_(selected_types))
+        filtered_query = filtered_query.filter(analytics_type.in_(selected_types))
     if selected_oa_statuses:
-        filtered_query = filtered_query.filter(OpenAlexWorkMetadata.oa_status.in_(selected_oa_statuses))
+        filtered_query = filtered_query.filter(
+            analytics_oa_status.in_(selected_oa_statuses)
+        )
     if selected_languages:
-        filtered_query = filtered_query.filter(OpenAlexWorkMetadata.language.in_(selected_languages))
+        filtered_query = filtered_query.filter(
+            analytics_language.in_(selected_languages)
+        )
     affiliation_conditions = []
-    if "selected" in selected_affiliations:
-        affiliation_conditions.append(OpenAlexWorkMetadata.doi_normalized.in_(selected_inst_select))
-    if "chile" in selected_affiliations:
-        affiliation_conditions.append(OpenAlexWorkMetadata.doi_normalized.in_(chile_inst_select))
-    if "international" in selected_affiliations:
-        affiliation_conditions.append(and_(
-            OpenAlexWorkMetadata.doi_normalized.in_(chile_inst_select),
-            OpenAlexWorkMetadata.doi_normalized.in_(non_chile_inst_select),
-        ))
-    if "not_selected" in selected_affiliations:
-        affiliation_conditions.append(~OpenAlexWorkMetadata.doi_normalized.in_(selected_inst_select))
+    if fact_enabled:
+        if "selected" in selected_affiliations:
+            affiliation_conditions.append(
+                OpenAlexInstitutionWorkFact.has_selected_affiliation.is_(True)
+            )
+        if "chile" in selected_affiliations:
+            affiliation_conditions.append(
+                OpenAlexInstitutionWorkFact.has_chile_affiliation.is_(True)
+            )
+        if "international" in selected_affiliations:
+            affiliation_conditions.append(
+                OpenAlexInstitutionWorkFact.has_international_collaboration.is_(True)
+            )
+        if "not_selected" in selected_affiliations:
+            affiliation_conditions.append(
+                OpenAlexInstitutionWorkFact.has_selected_affiliation.is_(False)
+            )
+    else:
+        if "selected" in selected_affiliations:
+            affiliation_conditions.append(OpenAlexWorkMetadata.doi_normalized.in_(selected_inst_select))
+        if "chile" in selected_affiliations:
+            affiliation_conditions.append(OpenAlexWorkMetadata.doi_normalized.in_(chile_inst_select))
+        if "international" in selected_affiliations:
+            affiliation_conditions.append(and_(
+                OpenAlexWorkMetadata.doi_normalized.in_(chile_inst_select),
+                OpenAlexWorkMetadata.doi_normalized.in_(non_chile_inst_select),
+            ))
+        if "not_selected" in selected_affiliations:
+            affiliation_conditions.append(~OpenAlexWorkMetadata.doi_normalized.in_(selected_inst_select))
     if affiliation_conditions:
         filtered_query = filtered_query.filter(or_(*affiliation_conditions))
 
-    doi_subquery = (
+    filtered_rows = (
         filtered_query
-        .with_entities(OpenAlexWorkMetadata.doi_normalized.label("doi_normalized"))
+        .with_entities(
+            analytics_doi.label("doi_normalized"),
+            analytics_id.label("row_id"),
+            analytics_year.label("publication_year"),
+            analytics_type.label("type"),
+            analytics_oa_status.label("oa_status"),
+            analytics_language.label("language"),
+            analytics_citations.label("cited_by_count"),
+            analytics_fwci.label("fwci"),
+            analytics_is_oa.label("is_oa"),
+            analytics_source.label("source_name"),
+            analytics_field.label("primary_topic_field"),
+            analytics_domain.label("primary_topic_domain"),
+            analytics_openalex_id.label("openalex_id"),
+            analytics_title.label("title"),
+            (
+                OpenAlexInstitutionWorkFact.has_selected_affiliation
+                if fact_enabled
+                else literal(False)
+            ).label("has_selected_affiliation"),
+            (
+                OpenAlexInstitutionWorkFact.has_chile_affiliation
+                if fact_enabled
+                else literal(False)
+            ).label("has_chile_affiliation"),
+            (
+                OpenAlexInstitutionWorkFact.has_non_chile_affiliation
+                if fact_enabled
+                else literal(False)
+            ).label("has_non_chile_affiliation"),
+            (
+                OpenAlexInstitutionWorkFact.has_international_collaboration
+                if fact_enabled
+                else literal(False)
+            ).label("has_international_collaboration"),
+        )
+        .subquery()
+    )
+    doi_subquery = (
+        db.session.query(filtered_rows.c.doi_normalized)
         .distinct()
         .subquery()
     )
 
     def _counter_query(column, fallback: str, limit: int = 10):
         label_expr = func.coalesce(func.nullif(column, ""), fallback)
-        count_expr = func.count(OpenAlexWorkMetadata.id)
+        count_expr = func.count(filtered_rows.c.row_id)
         rows = (
             db.session.query(label_expr, count_expr)
-            .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+            .select_from(filtered_rows)
             .group_by(label_expr)
             .order_by(count_expr.desc())
             .limit(limit)
@@ -2088,112 +2392,207 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         )
         return [row[0] for row in rows], [row[1] for row in rows]
 
-    enriched_count = db.session.query(func.count()).select_from(doi_subquery).scalar() or 0
-    year_rows = (
+    aggregate_row = (
         db.session.query(
-            OpenAlexWorkMetadata.publication_year,
-            func.count(OpenAlexWorkMetadata.id),
-            func.coalesce(func.sum(OpenAlexWorkMetadata.cited_by_count), 0),
+            func.count(filtered_rows.c.row_id),
+            func.coalesce(func.sum(filtered_rows.c.cited_by_count), 0),
+            func.coalesce(func.sum(case(
+                (filtered_rows.c.is_oa.is_(True), 1),
+                else_=0,
+            )), 0),
+            func.avg(filtered_rows.c.fwci),
         )
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
-        .group_by(OpenAlexWorkMetadata.publication_year)
-        .order_by(OpenAlexWorkMetadata.publication_year.asc())
-        .all()
+        .select_from(filtered_rows)
+        .one()
     )
+    enriched_count = int(aggregate_row[0] or 0)
+    total_citations = int(aggregate_row[1] or 0)
+    open_access_count = int(aggregate_row[2] or 0)
+    average_fwci = aggregate_row[3]
+
+    year_rows = []
+    if active_section in {"all", "overview", "open_access"}:
+        year_rows = (
+            db.session.query(
+                filtered_rows.c.publication_year,
+                func.count(filtered_rows.c.row_id),
+                func.coalesce(func.sum(filtered_rows.c.cited_by_count), 0),
+            )
+            .select_from(filtered_rows)
+            .filter(filtered_rows.c.publication_year.isnot(None))
+            .group_by(filtered_rows.c.publication_year)
+            .order_by(filtered_rows.c.publication_year.asc())
+            .all()
+        )
     sorted_years = [str(row.publication_year) for row in year_rows]
 
-    total_citations = (
-        db.session.query(func.coalesce(func.sum(OpenAlexWorkMetadata.cited_by_count), 0))
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .scalar()
-        or 0
-    )
-    open_access_count = (
-        db.session.query(func.count(OpenAlexWorkMetadata.id))
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkMetadata.is_oa.is_(True))
-        .scalar()
-        or 0
-    )
-    average_fwci = (
-        db.session.query(func.avg(OpenAlexWorkMetadata.fwci))
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkMetadata.fwci.isnot(None))
-        .scalar()
-    )
-
-    selected_institution_count = (
-        db.session.query(func.count())
-        .select_from(doi_subquery)
-        .join(selected_inst_subquery, selected_inst_subquery.c.doi_normalized == doi_subquery.c.doi_normalized)
-        .scalar()
-        or 0
-    )
-    cl_doi_subquery = (
-        db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
-        .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkInstitution.country_code == "CL")
-        .distinct()
-        .subquery()
-    )
-    non_cl_doi_subquery = (
-        db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
-        .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkInstitution.country_code.isnot(None))
-        .filter(OpenAlexWorkInstitution.country_code != "CL")
-        .distinct()
-        .subquery()
-    )
-    chile_affiliation_count = (
-        db.session.query(func.count())
-        .select_from(cl_doi_subquery)
-        .scalar()
-        or 0
-    )
-    international_collaboration_count = (
-        db.session.query(func.count())
-        .select_from(cl_doi_subquery)
-        .join(non_cl_doi_subquery, cl_doi_subquery.c.doi_normalized == non_cl_doi_subquery.c.doi_normalized)
-        .scalar()
-        or 0
-    )
-    selected_international_count = (
-        db.session.query(func.count())
-        .select_from(doi_subquery)
-        .join(selected_inst_subquery, selected_inst_subquery.c.doi_normalized == doi_subquery.c.doi_normalized)
-        .join(non_chile_inst_subquery, non_chile_inst_subquery.c.doi_normalized == doi_subquery.c.doi_normalized)
-        .scalar()
-        or 0
-    )
+    if fact_enabled:
+        affiliation_row = (
+            db.session.query(
+                func.count(case((
+                    filtered_rows.c.has_selected_affiliation.is_(True),
+                    1,
+                ))),
+                func.count(case((
+                    filtered_rows.c.has_chile_affiliation.is_(True),
+                    1,
+                ))),
+                func.count(case((
+                    filtered_rows.c.has_international_collaboration.is_(True),
+                    1,
+                ))),
+                func.count(case((
+                    and_(
+                        filtered_rows.c.has_selected_affiliation.is_(True),
+                        filtered_rows.c.has_non_chile_affiliation.is_(True),
+                    ),
+                    1,
+                ))),
+            )
+            .select_from(filtered_rows)
+            .one()
+        )
+        selected_institution_count = int(affiliation_row[0] or 0)
+        chile_affiliation_count = int(affiliation_row[1] or 0)
+        international_collaboration_count = int(affiliation_row[2] or 0)
+        selected_international_count = int(affiliation_row[3] or 0)
+    else:
+        selected_institution_count = (
+            db.session.query(func.count())
+            .select_from(doi_subquery)
+            .join(selected_inst_subquery, selected_inst_subquery.c.doi_normalized == doi_subquery.c.doi_normalized)
+            .scalar()
+            or 0
+        )
+        cl_doi_subquery = (
+            db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
+            .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
+            .filter(OpenAlexWorkInstitution.country_code == "CL")
+            .distinct()
+            .subquery()
+        )
+        non_cl_doi_subquery = (
+            db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
+            .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
+            .filter(OpenAlexWorkInstitution.country_code.isnot(None))
+            .filter(OpenAlexWorkInstitution.country_code != "CL")
+            .distinct()
+            .subquery()
+        )
+        chile_affiliation_count = (
+            db.session.query(func.count())
+            .select_from(cl_doi_subquery)
+            .scalar()
+            or 0
+        )
+        international_collaboration_count = (
+            db.session.query(func.count())
+            .select_from(cl_doi_subquery)
+            .join(non_cl_doi_subquery, cl_doi_subquery.c.doi_normalized == non_cl_doi_subquery.c.doi_normalized)
+            .scalar()
+            or 0
+        )
+        selected_international_count = (
+            db.session.query(func.count())
+            .select_from(doi_subquery)
+            .join(selected_inst_subquery, selected_inst_subquery.c.doi_normalized == doi_subquery.c.doi_normalized)
+            .join(non_chile_inst_subquery, non_chile_inst_subquery.c.doi_normalized == doi_subquery.c.doi_normalized)
+            .scalar()
+            or 0
+        )
     chile_without_selected_count = max(chile_affiliation_count - selected_institution_count, 0)
     no_chile_count = max(enriched_count - chile_affiliation_count, 0)
 
-    unique_authors = (
-        db.session.query(func.count(func.distinct(func.coalesce(OpenAlexWorkAuthor.author_id, OpenAlexWorkAuthor.author_name))))
-        .join(doi_subquery, OpenAlexWorkAuthor.doi_normalized == doi_subquery.c.doi_normalized)
-        .scalar()
-        or 0
-    )
-    unique_institutions = (
-        db.session.query(func.count(func.distinct(func.coalesce(OpenAlexWorkInstitution.institution_id, OpenAlexWorkInstitution.ror_id, OpenAlexWorkInstitution.institution_name))))
-        .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
-        .scalar()
-        or 0
+    default_metrics = [
+        "filtered_articles",
+        "selected_percent",
+        "chile_percent",
+        "open_access_percent",
+        "total_citations",
+        "average_fwci",
+    ]
+    metric_ids = [
+        "filtered_articles",
+        "selected_percent",
+        "chile_percent",
+        "selected_international_percent",
+        "open_access_percent",
+        "total_citations",
+        "selected_articles",
+        "chile_articles",
+        "international_articles",
+        "average_citations",
+        "average_fwci",
+        "openalex_institutions",
+    ]
+    selected_metrics = _selected_values(
+        _list_filter(filters.get("metrics")),
+        metric_ids,
+        default_metrics,
     )
 
-    type_labels, type_values = _counter_query(OpenAlexWorkMetadata.type, _("Unknown type"), limit=8)
-    oa_statuses, oa_values = _counter_query(OpenAlexWorkMetadata.oa_status, _("Unknown OA status"), limit=8)
+    unique_authors = 0
+    if active_section in {"all", "collaboration"}:
+        unique_authors = (
+            db.session.query(func.count(func.distinct(func.coalesce(OpenAlexWorkAuthor.author_id, OpenAlexWorkAuthor.author_name))))
+            .join(doi_subquery, OpenAlexWorkAuthor.doi_normalized == doi_subquery.c.doi_normalized)
+            .scalar()
+            or 0
+        )
+    unique_institutions = 0
+    if active_section in {"all", "collaboration"} or "openalex_institutions" in selected_metrics:
+        unique_institutions = (
+            db.session.query(func.count(func.distinct(func.coalesce(OpenAlexWorkInstitution.institution_id, OpenAlexWorkInstitution.ror_id, OpenAlexWorkInstitution.institution_name))))
+            .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
+            .scalar()
+            or 0
+        )
+
+    type_labels, type_values = ([], [])
+    if active_section in {"all", "overview", "topics"}:
+        type_labels, type_values = _counter_query(
+            filtered_rows.c.type,
+            _("Unknown type"),
+            limit=8,
+        )
+    oa_statuses, oa_values = ([], [])
+    if active_section in {"all", "open_access", "topics"}:
+        oa_statuses, oa_values = _counter_query(
+            filtered_rows.c.oa_status,
+            _("Unknown OA status"),
+            limit=8,
+        )
     oa_labels = [
         _("Unknown OA status")
         if status == _("Unknown OA status")
         else _openalex_oa_status_label(status)
         for status in oa_statuses
     ]
-    field_labels, field_values = _counter_query(OpenAlexWorkMetadata.primary_topic_field, _("Unknown field"), limit=10)
-    domain_labels, domain_values = _counter_query(OpenAlexWorkMetadata.primary_topic_domain, _("Unknown domain"), limit=10)
-    source_labels, source_values = _counter_query(OpenAlexWorkMetadata.source_name, _("Unknown source"), limit=10)
-    language_codes, language_values = _counter_query(OpenAlexWorkMetadata.language, _("Unknown language"), limit=10)
+    field_labels, field_values = ([], [])
+    domain_labels, domain_values = ([], [])
+    source_labels, source_values = ([], [])
+    language_codes, language_values = ([], [])
+    if active_section in {"all", "topics"}:
+        field_labels, field_values = _counter_query(
+            filtered_rows.c.primary_topic_field,
+            _("Unknown field"),
+            limit=10,
+        )
+        domain_labels, domain_values = _counter_query(
+            filtered_rows.c.primary_topic_domain,
+            _("Unknown domain"),
+            limit=10,
+        )
+        source_labels, source_values = _counter_query(
+            filtered_rows.c.source_name,
+            _("Unknown source"),
+            limit=10,
+        )
+        language_codes, language_values = _counter_query(
+            filtered_rows.c.language,
+            _("Unknown language"),
+            limit=10,
+        )
     language_labels = [
         _("Unknown language")
         if code == _("Unknown language")
@@ -2201,187 +2600,231 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         for code in language_codes
     ]
 
-    type_year_label_expr = func.coalesce(OpenAlexWorkMetadata.type, _("Unknown type"))
-    type_year_rows = (
-        db.session.query(
-            OpenAlexWorkMetadata.publication_year,
-            type_year_label_expr,
-            func.count(OpenAlexWorkMetadata.id),
+    doc_type_trend_datasets = []
+    oa_year_counts = {}
+    if active_section in {"all", "overview"}:
+        type_year_label_expr = func.coalesce(
+            filtered_rows.c.type,
+            _("Unknown type"),
         )
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
-        .group_by(OpenAlexWorkMetadata.publication_year, type_year_label_expr)
-        .all()
-    )
-    type_year_counts = {
-        (str(year), label): count
-        for year, label, count in type_year_rows
-    }
-    doc_type_trend_labels = type_labels[:6]
-    doc_type_trend_datasets = [
-        {
-            "label": label,
-            "data": [type_year_counts.get((year, label), 0) for year in sorted_years],
-            "borderColor": _chart_color(index),
-            "backgroundColor": _chart_color(index),
-            "tension": 0.25,
-            "fill": False,
+        type_year_rows = (
+            db.session.query(
+                filtered_rows.c.publication_year,
+                type_year_label_expr,
+                func.count(filtered_rows.c.row_id),
+            )
+            .select_from(filtered_rows)
+            .filter(filtered_rows.c.publication_year.isnot(None))
+            .group_by(filtered_rows.c.publication_year, type_year_label_expr)
+            .all()
+        )
+        type_year_counts = {
+            (str(year), label): count
+            for year, label, count in type_year_rows
         }
-        for index, label in enumerate(doc_type_trend_labels)
-    ]
+        doc_type_trend_datasets = [
+            {
+                "label": label,
+                "data": [
+                    type_year_counts.get((year, label), 0)
+                    for year in sorted_years
+                ],
+                "borderColor": _chart_color(index),
+                "backgroundColor": _chart_color(index),
+                "tension": 0.25,
+                "fill": False,
+            }
+            for index, label in enumerate(type_labels[:6])
+        ]
+        oa_year_rows = (
+            db.session.query(
+                filtered_rows.c.publication_year,
+                filtered_rows.c.is_oa,
+                func.count(filtered_rows.c.row_id),
+            )
+            .select_from(filtered_rows)
+            .filter(filtered_rows.c.publication_year.isnot(None))
+            .group_by(filtered_rows.c.publication_year, filtered_rows.c.is_oa)
+            .all()
+        )
+        oa_year_counts = {
+            (str(year), bool(is_oa)): count
+            for year, is_oa, count in oa_year_rows
+        }
 
-    oa_year_rows = (
-        db.session.query(
-            OpenAlexWorkMetadata.publication_year,
-            OpenAlexWorkMetadata.is_oa,
-            func.count(OpenAlexWorkMetadata.id),
+    priority_oa_status_expr = func.lower(filtered_rows.c.oa_status)
+    priority_oa_rows = []
+    if active_section in {"all", "open_access"}:
+        priority_oa_rows = (
+            db.session.query(
+                priority_oa_status_expr,
+                func.count(filtered_rows.c.row_id),
+            )
+            .select_from(filtered_rows)
+            .filter(priority_oa_status_expr.in_(("diamond", "green")))
+            .group_by(priority_oa_status_expr)
+            .all()
         )
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
-        .group_by(OpenAlexWorkMetadata.publication_year, OpenAlexWorkMetadata.is_oa)
-        .all()
-    )
-    oa_year_counts = {
-        (str(year), bool(is_oa)): count
-        for year, is_oa, count in oa_year_rows
-    }
-    priority_oa_status_expr = func.lower(OpenAlexWorkMetadata.oa_status)
-    priority_oa_rows = (
-        db.session.query(
-            priority_oa_status_expr,
-            func.count(OpenAlexWorkMetadata.id),
-        )
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(priority_oa_status_expr.in_(("diamond", "green")))
-        .group_by(priority_oa_status_expr)
-        .all()
-    )
     priority_oa_counts = {status: count for status, count in priority_oa_rows}
     diamond_open_access_count = int(priority_oa_counts.get("diamond", 0) or 0)
     green_open_access_count = int(priority_oa_counts.get("green", 0) or 0)
 
-    priority_oa_year_rows = (
-        db.session.query(
-            OpenAlexWorkMetadata.publication_year,
-            priority_oa_status_expr,
-            func.count(OpenAlexWorkMetadata.id),
+    priority_oa_year_rows = []
+    if active_section in {"all", "open_access"}:
+        priority_oa_year_rows = (
+            db.session.query(
+                filtered_rows.c.publication_year,
+                priority_oa_status_expr,
+                func.count(filtered_rows.c.row_id),
+            )
+            .select_from(filtered_rows)
+            .filter(filtered_rows.c.publication_year.isnot(None))
+            .filter(priority_oa_status_expr.in_(("diamond", "green")))
+            .group_by(filtered_rows.c.publication_year, priority_oa_status_expr)
+            .all()
         )
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
-        .filter(priority_oa_status_expr.in_(("diamond", "green")))
-        .group_by(OpenAlexWorkMetadata.publication_year, priority_oa_status_expr)
-        .all()
-    )
     priority_oa_year_counts = {
         (str(year), status): count
         for year, status, count in priority_oa_year_rows
     }
-    priority_open_access = _priority_open_access_breakdown(doi_subquery)
-
-    country_label_expr = func.coalesce(OpenAlexWorkInstitution.country_code, _("Unknown country"))
-    country_count_expr = func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized))
-    country_rows = (
-        db.session.query(
-            country_label_expr,
-            country_count_expr,
-        )
-        .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
-        .group_by(country_label_expr)
-        .order_by(country_count_expr.desc())
-        .limit(12)
-        .all()
+    priority_open_access = (
+        _priority_open_access_breakdown(doi_subquery)
+        if active_section in {"all", "open_access"}
+        else _empty_priority_open_access()
     )
 
-    institution_rows = (
-        db.session.query(
-            OpenAlexWorkInstitution.institution_name,
-            OpenAlexWorkInstitution.ror_id,
+    country_rows = []
+    institution_rows = []
+    chile_institution_rows = []
+    author_rows = []
+    if active_section in {"all", "collaboration"}:
+        country_label_expr = func.coalesce(
             OpenAlexWorkInstitution.country_code,
-            func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).label("works_count"),
-            func.coalesce(func.sum(OpenAlexWorkInstitution.author_count), 0).label("author_links"),
+            _("Unknown country"),
         )
-        .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
-        .group_by(
-            OpenAlexWorkInstitution.institution_name,
-            OpenAlexWorkInstitution.ror_id,
-            OpenAlexWorkInstitution.country_code,
+        country_count_expr = func.count(
+            func.distinct(OpenAlexWorkInstitution.doi_normalized)
         )
-        .order_by(func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).desc())
-        .limit(12)
-        .all()
+        country_rows = (
+            db.session.query(
+                country_label_expr,
+                country_count_expr,
+            )
+            .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
+            .group_by(country_label_expr)
+            .order_by(country_count_expr.desc())
+            .limit(12)
+            .all()
+        )
+        institution_rows = (
+            db.session.query(
+                OpenAlexWorkInstitution.institution_name,
+                OpenAlexWorkInstitution.ror_id,
+                OpenAlexWorkInstitution.country_code,
+                func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).label("works_count"),
+                func.coalesce(func.sum(OpenAlexWorkInstitution.author_count), 0).label("author_links"),
+            )
+            .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
+            .group_by(
+                OpenAlexWorkInstitution.institution_name,
+                OpenAlexWorkInstitution.ror_id,
+                OpenAlexWorkInstitution.country_code,
+            )
+            .order_by(func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).desc())
+            .limit(12)
+            .all()
+        )
+        chile_institution_rows = (
+            db.session.query(
+                OpenAlexWorkInstitution.institution_name,
+                OpenAlexWorkInstitution.ror_id,
+                func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).label("works_count"),
+            )
+            .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
+            .filter(OpenAlexWorkInstitution.country_code == "CL")
+            .group_by(OpenAlexWorkInstitution.institution_name, OpenAlexWorkInstitution.ror_id)
+            .order_by(func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).desc())
+            .limit(10)
+            .all()
+        )
+        author_rows = (
+            db.session.query(
+                OpenAlexWorkAuthor.author_name,
+                OpenAlexWorkAuthor.author_id,
+                OpenAlexWorkAuthor.orcid,
+                OpenAlexWorkAuthor.has_chile_affiliation,
+                func.count(func.distinct(OpenAlexWorkAuthor.doi_normalized)).label("works_count"),
+            )
+            .join(doi_subquery, OpenAlexWorkAuthor.doi_normalized == doi_subquery.c.doi_normalized)
+            .group_by(
+                OpenAlexWorkAuthor.author_name,
+                OpenAlexWorkAuthor.author_id,
+                OpenAlexWorkAuthor.orcid,
+                OpenAlexWorkAuthor.has_chile_affiliation,
+            )
+            .order_by(func.count(func.distinct(OpenAlexWorkAuthor.doi_normalized)).desc())
+            .limit(12)
+            .all()
+        )
+
+    def _affiliation_year_counts(fact_column, legacy_condition) -> dict:
+        if active_section not in {"all", "overview"}:
+            return {}
+        if fact_enabled:
+            rows = (
+                db.session.query(
+                    filtered_rows.c.publication_year,
+                    func.count(filtered_rows.c.row_id),
+                )
+                .select_from(filtered_rows)
+                .filter(
+                    filtered_rows.c.publication_year.isnot(None),
+                    fact_column.is_(True),
+                )
+                .group_by(filtered_rows.c.publication_year)
+                .order_by(filtered_rows.c.publication_year.asc())
+                .all()
+            )
+            return {str(year): count for year, count in rows}
+
+        query = (
+            db.session.query(
+                OpenAlexWorkMetadata.publication_year,
+                func.count(func.distinct(OpenAlexWorkMetadata.doi_normalized)),
+            )
+            .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
+        )
+        query = query.join(
+            OpenAlexWorkInstitution,
+            OpenAlexWorkInstitution.doi_normalized
+            == OpenAlexWorkMetadata.doi_normalized,
+        ).filter(legacy_condition)
+        rows = (
+            query
+            .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
+            .group_by(OpenAlexWorkMetadata.publication_year)
+            .order_by(OpenAlexWorkMetadata.publication_year.asc())
+            .all()
+        )
+        return {str(year): count for year, count in rows}
+
+    selected_inst_year_counts = _affiliation_year_counts(
+        filtered_rows.c.has_selected_affiliation,
+        OpenAlexWorkInstitution.ror_id == ror_id,
+    )
+    chile_year_counts = _affiliation_year_counts(
+        filtered_rows.c.has_chile_affiliation,
+        OpenAlexWorkInstitution.country_code == "CL",
     )
 
-    chile_institution_rows = (
-        db.session.query(
-            OpenAlexWorkInstitution.institution_name,
-            OpenAlexWorkInstitution.ror_id,
-            func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).label("works_count"),
+    top_cited_rows = []
+    if active_section in {"all", "impact"}:
+        top_cited_rows = (
+            db.session.query(filtered_rows)
+            .order_by(filtered_rows.c.cited_by_count.desc())
+            .limit(10)
+            .all()
         )
-        .join(doi_subquery, OpenAlexWorkInstitution.doi_normalized == doi_subquery.c.doi_normalized)
-        .filter(OpenAlexWorkInstitution.country_code == "CL")
-        .group_by(OpenAlexWorkInstitution.institution_name, OpenAlexWorkInstitution.ror_id)
-        .order_by(func.count(func.distinct(OpenAlexWorkInstitution.doi_normalized)).desc())
-        .limit(10)
-        .all()
-    )
-
-    author_rows = (
-        db.session.query(
-            OpenAlexWorkAuthor.author_name,
-            OpenAlexWorkAuthor.author_id,
-            OpenAlexWorkAuthor.orcid,
-            OpenAlexWorkAuthor.has_chile_affiliation,
-            func.count(func.distinct(OpenAlexWorkAuthor.doi_normalized)).label("works_count"),
-        )
-        .join(doi_subquery, OpenAlexWorkAuthor.doi_normalized == doi_subquery.c.doi_normalized)
-        .group_by(
-            OpenAlexWorkAuthor.author_name,
-            OpenAlexWorkAuthor.author_id,
-            OpenAlexWorkAuthor.orcid,
-            OpenAlexWorkAuthor.has_chile_affiliation,
-        )
-        .order_by(func.count(func.distinct(OpenAlexWorkAuthor.doi_normalized)).desc())
-        .limit(12)
-        .all()
-    )
-
-    selected_inst_year_rows = (
-        db.session.query(
-            OpenAlexWorkMetadata.publication_year,
-            func.count(func.distinct(OpenAlexWorkMetadata.doi_normalized)),
-        )
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .join(OpenAlexWorkInstitution, OpenAlexWorkInstitution.doi_normalized == OpenAlexWorkMetadata.doi_normalized)
-        .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
-        .filter(OpenAlexWorkInstitution.ror_id == ror_id)
-        .group_by(OpenAlexWorkMetadata.publication_year)
-        .order_by(OpenAlexWorkMetadata.publication_year.asc())
-        .all()
-    )
-    selected_inst_year_counts = {str(year): count for year, count in selected_inst_year_rows}
-
-    chile_year_rows = (
-        db.session.query(
-            OpenAlexWorkMetadata.publication_year,
-            func.count(func.distinct(OpenAlexWorkMetadata.doi_normalized)),
-        )
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .join(OpenAlexWorkInstitution, OpenAlexWorkInstitution.doi_normalized == OpenAlexWorkMetadata.doi_normalized)
-        .filter(OpenAlexWorkMetadata.publication_year.isnot(None))
-        .filter(OpenAlexWorkInstitution.country_code == "CL")
-        .group_by(OpenAlexWorkMetadata.publication_year)
-        .order_by(OpenAlexWorkMetadata.publication_year.asc())
-        .all()
-    )
-    chile_year_counts = {str(year): count for year, count in chile_year_rows}
-
-    top_cited = (
-        OpenAlexWorkMetadata.query
-        .join(doi_subquery, OpenAlexWorkMetadata.doi_normalized == doi_subquery.c.doi_normalized)
-        .order_by(OpenAlexWorkMetadata.cited_by_count.desc())
-        .limit(10)
-        .all()
-    )
     top_cited = [
         {
             "title": row.title,
@@ -2396,7 +2839,7 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
             "primary_topic_field": row.primary_topic_field,
             "primary_topic_domain": row.primary_topic_domain,
         }
-        for row in top_cited
+        for row in top_cited_rows
     ]
     top_institutions = [
         {
@@ -2433,30 +2876,6 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
         _("No Chile affiliation"): no_chile_count,
     }
     affiliation_counts = {label: count for label, count in affiliation_counts.items() if count}
-    default_metrics = [
-        "filtered_articles",
-        "selected_percent",
-        "chile_percent",
-        "open_access_percent",
-        "total_citations",
-        "average_fwci",
-    ]
-    metric_ids = [
-        "filtered_articles",
-        "selected_percent",
-        "chile_percent",
-        "selected_international_percent",
-        "open_access_percent",
-        "total_citations",
-        "selected_articles",
-        "chile_articles",
-        "international_articles",
-        "average_citations",
-        "average_fwci",
-        "openalex_institutions",
-    ]
-    selected_metrics = _selected_values(_list_filter(filters.get("metrics")), metric_ids, default_metrics)
-
     return {
         "summary": {
             "candidate_dois": summary["candidate_dois"],
@@ -2596,11 +3015,13 @@ def _openalex_analytics(ror_id: str, filters: dict | None = None) -> dict:
 def _openalex_global_analytics(filters: dict | None = None) -> dict:
     """Build a staff-only cross-institution OpenAlex comparison."""
     from ..models import (
+        OpenAlexInstitutionWorkFact,
         OpenAlexWorkAuthor,
         OpenAlexWorkInstitution,
         OpenAlexWorkMetadata,
         WorkCache,
     )
+    from ..services.analytics_service import openalex_fact_available
 
     filters = filters or {}
     year_from = _int_filter(filters.get("year_from"))
@@ -2644,20 +3065,46 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
     institution_author_page, institution_author_per_page = _table_page_params("institution_author", default_per_page=50, max_per_page=250)
     selected_institution_author_rors = _list_filter(filters.get("institution_author_ror"))
 
-    cache_key = _openalex_cache_key_expr(WorkCache).label("doi_normalized")
-    local_pairs = (
-        db.session.query(
-            WorkCache.ror_id.label("ror_id"),
-            cache_key,
+    fact_enabled = openalex_fact_available()
+    if fact_enabled:
+        local_pairs = (
+            db.session.query(
+                OpenAlexInstitutionWorkFact.ror_id.label("ror_id"),
+                OpenAlexInstitutionWorkFact.openalex_cache_key.label("doi_normalized"),
+                OpenAlexInstitutionWorkFact.has_selected_affiliation.label(
+                    "has_selected_affiliation"
+                ),
+                OpenAlexInstitutionWorkFact.has_chile_affiliation.label(
+                    "has_chile_affiliation"
+                ),
+                OpenAlexInstitutionWorkFact.has_non_chile_affiliation.label(
+                    "has_non_chile_affiliation"
+                ),
+                OpenAlexInstitutionWorkFact.has_international_collaboration.label(
+                    "has_international_collaboration"
+                ),
+            )
+            .subquery()
         )
-        .filter(
-            WorkCache.ror_id.isnot(None),
-            WorkCache.ror_id != "",
-            WorkCache.type == "journal-article",
+    else:
+        cache_key = _openalex_cache_key_expr(WorkCache).label("doi_normalized")
+        local_pairs = (
+            db.session.query(
+                WorkCache.ror_id.label("ror_id"),
+                cache_key,
+                literal(False).label("has_selected_affiliation"),
+                literal(False).label("has_chile_affiliation"),
+                literal(False).label("has_non_chile_affiliation"),
+                literal(False).label("has_international_collaboration"),
+            )
+            .filter(
+                WorkCache.ror_id.isnot(None),
+                WorkCache.ror_id != "",
+                WorkCache.type == "journal-article",
+            )
+            .distinct()
+            .subquery()
         )
-        .distinct()
-        .subquery()
-    )
 
     option_years = [
         row[0]
@@ -2697,6 +3144,10 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
         db.session.query(
             local_pairs.c.ror_id,
             OpenAlexWorkMetadata.doi_normalized.label("doi_normalized"),
+            local_pairs.c.has_selected_affiliation,
+            local_pairs.c.has_chile_affiliation,
+            local_pairs.c.has_non_chile_affiliation,
+            local_pairs.c.has_international_collaboration,
         )
         .join(OpenAlexWorkMetadata, OpenAlexWorkMetadata.doi_normalized == local_pairs.c.doi_normalized)
     )
@@ -2716,7 +3167,11 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
         .distinct()
         .subquery()
     )
-    priority_open_access = _priority_open_access_breakdown(global_filtered_dois)
+    priority_open_access = (
+        _priority_open_access_breakdown(global_filtered_dois)
+        if active_tab == "open_access"
+        else _empty_priority_open_access()
+    )
 
     global_year_rows = (
         db.session.query(OpenAlexWorkMetadata.publication_year)
@@ -2789,45 +3244,48 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
 
     institutions = _institution_lookup()
     priority_status_expr = func.lower(OpenAlexWorkMetadata.oa_status)
-    priority_institution_metrics = (
-        db.session.query(
-            filtered_pairs.c.ror_id.label("ror_id"),
-            func.count(func.distinct(case(
-                (
-                    priority_status_expr == "diamond",
-                    filtered_pairs.c.doi_normalized,
-                ),
-            ))).label("diamond_articles"),
-            func.count(func.distinct(case(
-                (
-                    priority_status_expr == "green",
-                    filtered_pairs.c.doi_normalized,
-                ),
-            ))).label("green_articles"),
-            func.coalesce(func.sum(case(
-                (
-                    priority_status_expr == "diamond",
-                    OpenAlexWorkMetadata.cited_by_count,
-                ),
-                else_=0,
-            )), 0).label("diamond_citations"),
-            func.coalesce(func.sum(case(
-                (
-                    priority_status_expr == "green",
-                    OpenAlexWorkMetadata.cited_by_count,
-                ),
-                else_=0,
-            )), 0).label("green_citations"),
+    priority_institution_metrics = []
+    if active_tab == "open_access":
+        priority_institution_metrics = (
+            db.session.query(
+                filtered_pairs.c.ror_id.label("ror_id"),
+                func.count(func.distinct(case(
+                    (
+                        priority_status_expr == "diamond",
+                        filtered_pairs.c.doi_normalized,
+                    ),
+                ))).label("diamond_articles"),
+                func.count(func.distinct(case(
+                    (
+                        priority_status_expr == "green",
+                        filtered_pairs.c.doi_normalized,
+                    ),
+                ))).label("green_articles"),
+                func.coalesce(func.sum(case(
+                    (
+                        priority_status_expr == "diamond",
+                        OpenAlexWorkMetadata.cited_by_count,
+                    ),
+                    else_=0,
+                )), 0).label("diamond_citations"),
+                func.coalesce(func.sum(case(
+                    (
+                        priority_status_expr == "green",
+                        OpenAlexWorkMetadata.cited_by_count,
+                    ),
+                    else_=0,
+                )), 0).label("green_citations"),
+            )
+            .select_from(filtered_pairs)
+            .join(
+                OpenAlexWorkMetadata,
+                OpenAlexWorkMetadata.doi_normalized
+                == filtered_pairs.c.doi_normalized,
+            )
+            .filter(priority_status_expr.in_(("diamond", "green")))
+            .group_by(filtered_pairs.c.ror_id)
+            .all()
         )
-        .select_from(filtered_pairs)
-        .join(
-            OpenAlexWorkMetadata,
-            OpenAlexWorkMetadata.doi_normalized == filtered_pairs.c.doi_normalized,
-        )
-        .filter(priority_status_expr.in_(("diamond", "green")))
-        .group_by(filtered_pairs.c.ror_id)
-        .all()
-    )
     priority_institution_rows = [
         {
             "ror_id": row.ror_id,
@@ -3308,9 +3766,17 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
             for row in paged_institution_author_rows
         ]
 
-    local_article_counts = {
-        ror_id: count
-        for ror_id, count in (
+    if fact_enabled:
+        local_article_count_rows = (
+            db.session.query(
+                OpenAlexInstitutionWorkFact.ror_id,
+                func.sum(OpenAlexInstitutionWorkFact.source_record_count),
+            )
+            .group_by(OpenAlexInstitutionWorkFact.ror_id)
+            .all()
+        )
+    else:
+        local_article_count_rows = (
             db.session.query(WorkCache.ror_id, func.count(WorkCache.id))
             .filter(
                 WorkCache.ror_id.isnot(None),
@@ -3320,6 +3786,9 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
             .group_by(WorkCache.ror_id)
             .all()
         )
+    local_article_counts = {
+        current_ror: int(count or 0)
+        for current_ror, count in local_article_count_rows
     }
     local_key_counts = {
         ror_id: count
@@ -3344,36 +3813,71 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
         )
     }
 
-    selected_pairs = (
-        db.session.query(
-            filtered_pairs.c.ror_id.label("ror_id"),
-            filtered_pairs.c.doi_normalized.label("doi_normalized"),
+    if fact_enabled:
+        selected_condition = filtered_pairs.c.has_selected_affiliation.is_(True)
+        chile_condition = filtered_pairs.c.has_chile_affiliation.is_(True)
+        international_condition = (
+            filtered_pairs.c.has_international_collaboration.is_(True)
         )
-        .join(
-            OpenAlexWorkInstitution,
-            and_(
-                OpenAlexWorkInstitution.doi_normalized == filtered_pairs.c.doi_normalized,
-                OpenAlexWorkInstitution.ror_id == filtered_pairs.c.ror_id,
-            ),
+        metric_query = (
+            db.session.query(
+                filtered_pairs.c.ror_id,
+                func.count(func.distinct(filtered_pairs.c.doi_normalized)).label("enriched_count"),
+                func.count(func.distinct(case(
+                    (OpenAlexWorkMetadata.is_oa.is_(True), filtered_pairs.c.doi_normalized),
+                ))).label("open_access_count"),
+                func.coalesce(func.sum(OpenAlexWorkMetadata.cited_by_count), 0).label("total_citations"),
+                func.avg(OpenAlexWorkMetadata.fwci).label("average_fwci"),
+                func.count(func.distinct(case((
+                    selected_condition,
+                    filtered_pairs.c.doi_normalized,
+                )))).label("selected_count"),
+                func.count(func.distinct(case((
+                    chile_condition,
+                    filtered_pairs.c.doi_normalized,
+                )))).label("chile_count"),
+                func.count(func.distinct(case((
+                    international_condition,
+                    filtered_pairs.c.doi_normalized,
+                )))).label("international_count"),
+            )
+            .select_from(filtered_pairs)
+            .join(
+                OpenAlexWorkMetadata,
+                OpenAlexWorkMetadata.doi_normalized
+                == filtered_pairs.c.doi_normalized,
+            )
         )
-        .distinct()
-        .subquery()
-    )
-    chile_dois = (
-        db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
-        .filter(OpenAlexWorkInstitution.country_code == "CL")
-        .distinct()
-        .subquery()
-    )
-    non_chile_dois = (
-        db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
-        .filter(OpenAlexWorkInstitution.country_code.isnot(None))
-        .filter(OpenAlexWorkInstitution.country_code != "CL")
-        .distinct()
-        .subquery()
-    )
-
-    metric_rows = (
+    else:
+        selected_pairs = (
+            db.session.query(
+                filtered_pairs.c.ror_id.label("ror_id"),
+                filtered_pairs.c.doi_normalized.label("doi_normalized"),
+            )
+            .join(
+                OpenAlexWorkInstitution,
+                and_(
+                    OpenAlexWorkInstitution.doi_normalized == filtered_pairs.c.doi_normalized,
+                    OpenAlexWorkInstitution.ror_id == filtered_pairs.c.ror_id,
+                ),
+            )
+            .distinct()
+            .subquery()
+        )
+        chile_dois = (
+            db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
+            .filter(OpenAlexWorkInstitution.country_code == "CL")
+            .distinct()
+            .subquery()
+        )
+        non_chile_dois = (
+            db.session.query(OpenAlexWorkInstitution.doi_normalized.label("doi_normalized"))
+            .filter(OpenAlexWorkInstitution.country_code.isnot(None))
+            .filter(OpenAlexWorkInstitution.country_code != "CL")
+            .distinct()
+            .subquery()
+        )
+        metric_query = (
         db.session.query(
             filtered_pairs.c.ror_id,
             func.count(func.distinct(filtered_pairs.c.doi_normalized)).label("enriched_count"),
@@ -3409,6 +3913,9 @@ def _openalex_global_analytics(filters: dict | None = None) -> dict:
         )
         .outerjoin(chile_dois, chile_dois.c.doi_normalized == filtered_pairs.c.doi_normalized)
         .outerjoin(non_chile_dois, non_chile_dois.c.doi_normalized == filtered_pairs.c.doi_normalized)
+        )
+    metric_rows = (
+        metric_query
         .group_by(filtered_pairs.c.ror_id)
         .all()
     )
@@ -4495,6 +5002,7 @@ def openalex_analytics():
     section = request.args.get("section", "overview")
     if section not in {"overview", "open_access", "collaboration", "topics", "impact"}:
         section = "overview"
+    analytics_filters["section"] = section
     analytics = _openalex_institution_analytics_with_cache(ror_id, analytics_filters)
 
     def query_url(**updates):

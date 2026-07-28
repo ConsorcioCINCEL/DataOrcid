@@ -33,6 +33,10 @@ class DoiServiceTest(unittest.TestCase):
     def test_preserves_balanced_parentheses_in_a_doi(self):
         self.assertEqual("10.1000/example(1)", normalize_doi("10.1000/example(1)"))
 
+    def test_rejects_an_oversized_value_that_looks_like_a_doi(self):
+        value = f"10.1234/{'x' * 1000}"
+        self.assertIsNone(normalize_doi(value))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -72,6 +72,22 @@ flask rebuild-caches --dry-run
 # Sync researcher profiles only (Names/Bio)
 flask sync-researcher-names
 
+# Rebuild the indexed OpenAlex analytics fact layer
+flask rebuild-openalex-analytics
+
+# Rebuild it for one institution
+flask rebuild-openalex-analytics --ror 02ap3w078
+
+The analytics layer is refreshed automatically after Works or OpenAlex
+synchronization. When upgrading an existing database, run `flask db upgrade`
+and then `flask rebuild-openalex-analytics` so optimized filters are available
+immediately.
+
+Raw DOI values remain complete in a `TEXT` column. Searches and joins use a
+validated, normalized DOI key limited to 255 characters; invalid or oversized
+values are neither truncated nor indexed as DOI keys, preventing failures and
+identifier collisions.
+
 Web-triggered long-running syncs are started in a process-local background
 runner to avoid request timeouts. For production multi-worker deployments,
 prefer CLI/cron or a persistent job queue.

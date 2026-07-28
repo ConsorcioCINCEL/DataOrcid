@@ -174,9 +174,25 @@ flask rebuild-caches --target fundings
 
 # Dry-run (listar ROR sin ejecutar)
 flask rebuild-caches --dry-run
+
+# Reconstruir la capa intermedia de analítica OpenAlex
+flask rebuild-openalex-analytics
+
+# Reconstruirla para una sola institución
+flask rebuild-openalex-analytics --ror 02ap3w078
 ```
 
 📊 Muestra resumen por ROR (OK/Errores y conteos de filas).
+
+La capa analítica se actualiza automáticamente después de sincronizar Works u
+OpenAlex. Tras instalar esta versión sobre una base existente, ejecuta
+`flask db upgrade` y luego `flask rebuild-openalex-analytics` para disponer de
+los filtros optimizados inmediatamente.
+
+Los DOI originales se conservan completos en una columna `TEXT`. Las búsquedas
+y uniones utilizan una clave DOI validada y normalizada de hasta 255 caracteres;
+los valores inválidos o excesivamente largos no se truncan ni se indexan como
+DOI, evitando errores y posibles colisiones.
 
 Las sincronizaciones largas iniciadas desde la web se ejecutan en segundo plano
 dentro del proceso Flask para evitar timeouts. En producción con múltiples
@@ -226,6 +242,8 @@ workers, prefiere CLI/cron o una cola persistente.
 | `InstitutionIdentifier` | Identificadores ROR, GRID y Ringgold verificados |
 | `InstitutionResearcher` | Asociaciones encontradas entre instituciones y ORCID |
 | `OrcidCache` | Almacenamiento JSON por año |
+| `OpenAlexInstitutionWorkFact` | Capa intermedia indexada para filtros y métricas OpenAlex |
+| `AnalyticsDataVersion` | Versión de datos usada para invalidar cachés analíticas |
 
 ---
 

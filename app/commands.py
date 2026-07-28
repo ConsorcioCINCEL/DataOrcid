@@ -280,6 +280,7 @@ def register_commands(app):
     @with_appcontext
     def rebuild_openalex_dimensions_command(limit, batch_size, missing_only, reset):
         """Build author and institution dimensions from stored OpenAlex raw JSON."""
+        from .services.analytics_service import refresh_openalex_facts
         from .services.openalex_service import rebuild_openalex_dimensions
 
         click.echo("Rebuilding OpenAlex author and institution dimensions from raw cache...")
@@ -296,10 +297,35 @@ def register_commands(app):
             reset=reset,
             progress=_progress,
         )
+        analytics_summary = refresh_openalex_facts()
         click.echo(
             "Processed: {processed} | Author rows: {author_rows} | "
-            "Institution rows: {institution_rows}".format(**summary)
+            "Institution rows: {institution_rows} | Analytics rows: "
+            "{analytics_rows}".format(
+                **summary,
+                analytics_rows=analytics_summary["rows"],
+            )
         )
+
+    @app.cli.command("rebuild-openalex-analytics")
+    @click.option("--ror", default=None, help="Target one ROR ID; omit it to rebuild every institution.")
+    @with_appcontext
+    def rebuild_openalex_analytics_command(ror):
+        """Rebuild the filterable OpenAlex analytics fact layer."""
+        from .services.analytics_service import refresh_openalex_facts
+
+        summary = refresh_openalex_facts(ror)
+        if ror:
+            click.echo(
+                "ROR: {ror_id} | Source records: {source_records} | "
+                "Analytics rows: {rows}".format(**summary)
+            )
+        else:
+            click.echo(
+                "Institutions: {institutions} | Analytics rows: {rows}".format(
+                    **summary
+                )
+            )
 
     @app.cli.command("rebuild-data-trust")
     @click.option("--ror", default=None, help="Target one ROR ID; omit it to process every institution.")
@@ -355,12 +381,18 @@ def register_commands(app):
     @with_appcontext
     def repair_openalex_integrity_command():
         """Remove orphaned and duplicate OpenAlex dimension rows."""
+        from .services.analytics_service import refresh_openalex_facts
         from .services.openalex_service import repair_openalex_integrity
 
         summary = repair_openalex_integrity()
+        analytics_summary = refresh_openalex_facts()
         click.echo(
             "Orphan authors: {orphan_authors_removed} | Orphan institutions: "
             "{orphan_institutions_removed} | Duplicate authors: "
             "{duplicate_authors_removed} | Duplicate institutions: "
-            "{duplicate_institutions_removed}".format(**summary)
+            "{duplicate_institutions_removed} | Analytics rows: "
+            "{analytics_rows}".format(
+                **summary,
+                analytics_rows=analytics_summary["rows"],
+            )
         )

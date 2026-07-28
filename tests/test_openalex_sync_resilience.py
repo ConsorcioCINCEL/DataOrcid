@@ -110,6 +110,29 @@ class OpenAlexSyncResilienceTest(unittest.TestCase):
         self.assertEqual(2, len(doi_candidates))
         self.assertEqual(3, len(title_candidates))
 
+    def test_oversized_source_doi_is_preserved_without_becoming_a_candidate(self):
+        oversized_doi = f"10.1234/{'x' * 1000}"
+        with self.app.app_context():
+            work = WorkCache(
+                ror_id="01test123",
+                orcid="0000-0001",
+                title="Fallback title",
+                type="journal-article",
+                doi=oversized_doi,
+            )
+            db.session.add(work)
+            db.session.commit()
+
+            stored = db.session.get(WorkCache, work.id)
+            works_seen, doi_candidates = collect_work_dois()
+            _title_works_seen, title_candidates = collect_title_match_candidates()
+
+        self.assertEqual(oversized_doi, stored.doi)
+        self.assertIsNone(stored.doi_normalized)
+        self.assertEqual(1, works_seen)
+        self.assertEqual([], doi_candidates)
+        self.assertEqual(f"work:{stored.id}", title_candidates[0]["cache_key"])
+
     def test_system_cli_uses_one_unscoped_run(self):
         summary = {
             "ror_id": None,

@@ -448,9 +448,15 @@ def _build_cache_for_ror(
         # failure must fail the job, but must not relabel successfully refreshed
         # ORCID profiles as failed.
         from .canonical_work_service import rebuild_canonical_works
+        from .analytics_service import refresh_openalex_facts
 
         canonical_summary = rebuild_canonical_works(ror_id)
         result["unique_works"] = canonical_summary["unique_outputs"]
+        try:
+            result["analytics_rows"] = refresh_openalex_facts(ror_id)["rows"]
+        except Exception:
+            db.session.rollback()
+            logger.exception("Failed to refresh OpenAlex analytics facts for %s", ror_id)
 
     logger.info(
         "Finished cache build for %s: %d researchers, %d profiles, %d works, %d fundings.",

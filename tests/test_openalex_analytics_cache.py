@@ -165,6 +165,30 @@ class OpenAlexAnalyticsCacheTest(unittest.TestCase):
         self.assertEqual("open_access", open_access_result["filters"]["tab"])
         self.assertEqual("memory", open_access_result["cache"]["layer"])
 
+    def test_persisted_data_version_avoids_full_table_signatures(self):
+        builder = Mock(return_value={"summary": {"works": 12}})
+        with patch(
+            "app.services.analytics_service.get_analytics_data_version",
+            return_value={"scope": "openalex:ror:01test123", "version": 7},
+        ), patch.object(
+            works,
+            "_openalex_data_signature",
+            side_effect=AssertionError("legacy signature should not run"),
+        ):
+            with self._request_context():
+                session["locale"] = "en"
+                result = works._openalex_analytics_with_cache(
+                    "test",
+                    {},
+                    builder,
+                    self.memory_cache,
+                    self.cache_lock,
+                    ror_id="01test123",
+                )
+
+        self.assertEqual("database", result["cache"]["layer"])
+        self.assertEqual(1, builder.call_count)
+
 
 if __name__ == "__main__":
     unittest.main()

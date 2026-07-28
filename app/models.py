@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 import bcrypt
 from . import db
+from sqlalchemy.orm import validates
 
 
 def utc_now() -> datetime:
@@ -57,6 +58,9 @@ class WorkCache(db.Model):
     __tablename__ = "work_cache"
     __table_args__ = (
         db.Index("ix_work_cache_ror_type", "ror_id", "type"),
+        db.Index("ix_work_cache_ror_type_doi_normalized", "ror_id", "type", "doi_normalized"),
+        db.Index("ix_work_cache_ror_year_type", "ror_id", "pub_year", "type"),
+        db.Index("ix_work_cache_ror_orcid_year", "ror_id", "orcid", "pub_year"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -73,6 +77,7 @@ class WorkCache(db.Model):
     pub_day = db.Column(db.String(4))
     
     doi = db.Column(db.Text)
+    doi_normalized = db.Column(db.String(255), nullable=True)
     issn = db.Column(db.Text)
     other_external_ids = db.Column(db.Text) # Serialized list of other IDs
     
@@ -81,6 +86,13 @@ class WorkCache(db.Model):
     visibility = db.Column(db.String(32)) # public, limited, registered-only
     
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+    @validates("doi")
+    def _normalize_doi(self, _key, value):
+        from .services.doi_service import normalize_doi
+
+        self.doi_normalized = normalize_doi(value)
+        return value
 
 
 class WorkCacheRun(db.Model):
@@ -99,6 +111,10 @@ class WorkCacheRun(db.Model):
 class FundingCache(db.Model):
     """Cached ORCID funding summary scoped by institution ROR."""
     __tablename__ = "funding_cache"
+    __table_args__ = (
+        db.Index("ix_funding_cache_ror_year_type", "ror_id", "start_y", "type"),
+        db.Index("ix_funding_cache_ror_orcid_year", "ror_id", "orcid", "start_y"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     ror_id = db.Column(db.String(32), index=True, nullable=False)
@@ -336,6 +352,82 @@ class OpenAlexSyncRun(db.Model):
     error = db.Column(db.Text, nullable=True)
     started_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     finished_at = db.Column(db.DateTime, nullable=True)
+
+
+class AnalyticsDataVersion(db.Model):
+    """Version marker used to invalidate derived analytics caches."""
+    __tablename__ = "analytics_data_version"
+
+    scope_key = db.Column(db.String(96), primary_key=True)
+    version = db.Column(db.Integer, default=1, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class OpenAlexInstitutionWorkFact(db.Model):
+    """One filterable OpenAlex work per local institutional scope."""
+    __tablename__ = "openalex_institution_work_fact"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "ror_id",
+            "openalex_cache_key",
+            name="uq_openalex_institution_work_fact_scope_key",
+        ),
+        db.Index(
+            "ix_openalex_fact_ror_year",
+            "ror_id",
+            "publication_year",
+        ),
+        db.Index(
+            "ix_openalex_fact_ror_type",
+            "ror_id",
+            "document_type",
+        ),
+        db.Index(
+            "ix_openalex_fact_ror_oa",
+            "ror_id",
+            "oa_status",
+        ),
+        db.Index(
+            "ix_openalex_fact_ror_language",
+            "ror_id",
+            "language",
+        ),
+        db.Index(
+            "ix_openalex_fact_ror_citations",
+            "ror_id",
+            "cited_by_count",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    ror_id = db.Column(db.String(32), nullable=False, index=True)
+    openalex_cache_key = db.Column(db.String(255), nullable=False, index=True)
+    representative_work_cache_id = db.Column(db.Integer, nullable=False)
+    source_record_count = db.Column(db.Integer, default=1, nullable=False)
+    has_valid_doi = db.Column(db.Boolean, default=False, nullable=False)
+    has_local_title = db.Column(db.Boolean, default=False, nullable=False)
+    raw_status = db.Column(db.String(16), nullable=True)
+    raw_error = db.Column(db.Text, nullable=True)
+    openalex_id = db.Column(db.String(64), nullable=True)
+    title = db.Column(db.Text, nullable=True)
+    publication_year = db.Column(db.Integer, nullable=True)
+    document_type = db.Column(db.String(64), nullable=True)
+    language = db.Column(db.String(8), nullable=True)
+    cited_by_count = db.Column(db.Integer, default=0, nullable=False)
+    fwci = db.Column(db.Float, nullable=True)
+    is_oa = db.Column(db.Boolean, default=False, nullable=False)
+    oa_status = db.Column(db.String(32), nullable=True)
+    source_name = db.Column(db.Text, nullable=True)
+    source_issn_l = db.Column(db.String(32), nullable=True)
+    primary_topic_field = db.Column(db.String(255), nullable=True)
+    primary_topic_domain = db.Column(db.String(255), nullable=True)
+    has_selected_affiliation = db.Column(db.Boolean, default=False, nullable=False)
+    has_chile_affiliation = db.Column(db.Boolean, default=False, nullable=False)
+    has_non_chile_affiliation = db.Column(db.Boolean, default=False, nullable=False)
+    has_international_collaboration = db.Column(db.Boolean, default=False, nullable=False)
+    author_count = db.Column(db.Integer, default=0, nullable=False)
+    institution_count = db.Column(db.Integer, default=0, nullable=False)
+    refreshed_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class CanonicalWork(db.Model):

@@ -73,6 +73,7 @@ def upsert_table(
     pg_connection,
     table: str,
     batch_size: int,
+    minimum_id: int | None = None,
 ) -> int:
     source_columns = mysql_columns(mysql_connection, table)
     destination_columns = postgresql_columns(pg_connection, table)
@@ -97,15 +98,20 @@ def upsert_table(
         f"INSERT INTO {quote_postgresql(table)} ({quoted_columns}) "
         f"VALUES ({placeholders}) ON CONFLICT (id) {conflict_action}"
     )
+    source_filter = normalized_filter(table)
+    query_parameters: tuple[int, ...] = ()
+    if minimum_id is not None:
+        source_filter += " AND id > %s" if source_filter.strip() else " WHERE id > %s"
+        query_parameters = (minimum_id,)
     select_sql = (
         "SELECT "
         + ", ".join(quote_mysql(column) for column in columns)
-        + f" FROM {quote_mysql(table)} {normalized_filter(table)}"
+        + f" FROM {quote_mysql(table)} {source_filter}"
     )
 
     count = 0
     with mysql_connection.cursor() as source_cursor:
-        source_cursor.execute(select_sql)
+        source_cursor.execute(select_sql, query_parameters)
         with pg_connection.cursor() as target_cursor:
             while True:
                 rows = source_cursor.fetchmany(batch_size)
@@ -128,6 +134,14 @@ def upsert_table(
                 target_cursor.executemany(insert_sql, rows)
                 count += len(rows)
     return count
+
+
+def maximum_id(pg_connection, table: str) -> int:
+    with pg_connection.cursor() as cursor:
+        cursor.execute(
+            f"SELECT COALESCE(MAX(id), 0) FROM {quote_postgresql(table)}"
+        )
+        return int(cursor.fetchone()[0])
 
 
 def remove_excluded_accounts(
@@ -189,6 +203,7 @@ def main() -> int:
 
     try:
         excluded_ids = excluded_user_ids(mysql_connection)
+        latest_tracking_id = maximum_id(pg_connection, "tracking_logs")
         users_seen = upsert_table(
             mysql_connection,
             pg_connection,
@@ -200,6 +215,7 @@ def main() -> int:
             pg_connection,
             "tracking_logs",
             args.batch_size,
+            minimum_id=latest_tracking_id,
         )
         users_deleted, logs_deleted = remove_excluded_accounts(
             pg_connection,
@@ -209,7 +225,7 @@ def main() -> int:
         pg_connection.commit()
 
         print(f"Retained users synchronized: {users_seen}")
-        print(f"Tracking rows inspected: {logs_seen}")
+        print(f"Tracking rows appended after ID {latest_tracking_id}: {logs_seen}")
         print(f"Excluded users removed: {users_deleted}")
         print(f"Excluded tracking rows removed: {logs_deleted}")
         return 0

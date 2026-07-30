@@ -34,8 +34,8 @@ session_cookie_samesite = "Lax"
 # 🔹 LANGUAGES (i18n)
 # ------------------------------------------------------------
 [languages]
-supported = ["en", "es"]
-default = "en"
+supported = ["es", "en"]
+default = "es"
 
 
 # ------------------------------------------------------------

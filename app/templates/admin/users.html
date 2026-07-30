@@ -19,7 +19,7 @@
               data-am-client-id="{{ user.am_client_id or '' }}"
               data-is-admin="{{ 1 if user.is_admin else 0 }}"
               data-is-manager="{{ 1 if user.is_manager else 0 }}"
-              data-locale="{{ user.locale or 'en' }}">
+              data-locale="{{ user.locale or 'es' }}">
         <i class="fas fa-edit" aria-hidden="true"></i>
         <span>{{ _('Edit') }}</span>
       </button>
@@ -265,7 +265,7 @@
                 {% if user.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
                 {% if not user.is_admin and not user.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
               </div>
-              <span class="user-account-meta"><i class="fas fa-language" aria-hidden="true"></i>{{ (user.locale or 'en')|upper }}</span>
+              <span class="user-account-meta"><i class="fas fa-language" aria-hidden="true"></i>{{ (user.locale or 'es')|upper }}</span>
             </td>
             <td class="align-middle user-activity-cell">
               {% if activity %}
@@ -429,7 +429,7 @@ $(function () {
     $form.find("[name='ror_id']").val(rorId);
     $form.find("[name='grid_id']").val($button.data('gridId'));
     $form.find("[name='am_client_id']").val($button.data('amClientId'));
-    $form.find("[name='locale']").val($button.data('locale') || 'en');
+    $form.find("[name='locale']").val($button.data('locale') || 'es');
     $form.find("[name='is_admin']").prop('checked', Number($button.data('isAdmin')) === 1);
     $form.find("[name='is_manager']").prop('checked', Number($button.data('isManager')) === 1);
 

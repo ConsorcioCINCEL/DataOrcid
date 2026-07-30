@@ -1,6 +1,6 @@
 {% from 'components/ui.html' import flash_messages %}
 <!DOCTYPE html>
-<html lang="{{ session.get('locale') or 'en' }}">
+<html lang="{{ active_locale }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,9 +32,9 @@
     </section>
 
     <nav class="app-auth-language" aria-label="{{ _('Change language') }}">
-      <a href="{{ locale_url('en') }}" class="{% if (session.get('locale') or 'en') == 'en' %}active{% endif %}" lang="en">English</a>
+      <a href="{{ locale_url('en') }}" class="{% if active_locale == 'en' %}active{% endif %}" lang="en">English</a>
       <span aria-hidden="true">·</span>
-      <a href="{{ locale_url('es') }}" class="{% if session.get('locale') == 'es' %}active{% endif %}" lang="es">Español</a>
+      <a href="{{ locale_url('es') }}" class="{% if active_locale == 'es' %}active{% endif %}" lang="es">Español</a>
     </nav>
     {% block auth_support %}{% endblock %}
   </main>

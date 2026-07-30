@@ -30,7 +30,7 @@ def get_locale() -> str:
     """
     from flask import current_app
     
-    supported = current_app.config.get('LANGUAGES', ['en', 'es'])
+    supported = current_app.config.get('LANGUAGES', ['es', 'en'])
     
     lang_arg = request.args.get('lang')
     if lang_arg in supported:
@@ -59,7 +59,7 @@ def get_locale() -> str:
         except Exception:
             pass
 
-    return current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+    return current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
 
 
 def datetimeformat(value, format: str = "%Y-%m-%d %H:%M") -> str:
@@ -164,8 +164,8 @@ def create_app() -> Flask:
     app.config["TRACKING_RETENTION_DAYS"] = int(tracking_cfg.get("retention_days", 90))
     app.config["JOB_STALE_MINUTES"] = int(jobs_cfg.get("stale_minutes", 30))
 
-    app.config["LANGUAGES"] = config_data.get("languages", {}).get("supported", ["en", "es"])
-    app.config["BABEL_DEFAULT_LOCALE"] = config_data.get("languages", {}).get("default", "en")
+    app.config["LANGUAGES"] = config_data.get("languages", {}).get("supported", ["es", "en"])
+    app.config["BABEL_DEFAULT_LOCALE"] = config_data.get("languages", {}).get("default", "es")
     app.config["BABEL_DEFAULT_TIMEZONE"] = "America/Santiago"
 
     orcid_cfg = config_data.get("orcid", {})
@@ -254,6 +254,7 @@ def create_app() -> Flask:
         return {
             "current_year": dt.datetime.now().year,
             "institutions": institutions,
+            "active_locale": get_locale(),
             "locale_url": locale_url,
         }
 

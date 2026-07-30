@@ -56,6 +56,9 @@ htmlcov/
 .tox/
 .nox/
 
+# Local deployment regression checks
+tests/test_default_locale.py
+
 # --- Distribution / Packaging ---
 dist/
 build/

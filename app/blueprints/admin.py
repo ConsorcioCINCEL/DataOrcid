@@ -558,7 +558,7 @@ def users_new():
     # Roles and Preferences
     is_admin = bool(request.form.get('is_admin'))
     is_manager = bool(request.form.get('is_manager'))
-    locale = request.form.get('locale') or 'en'
+    locale = request.form.get('locale') or 'es'
 
     # Automatic GRID lookup via ROR service (Data Healing)
     if ror_id and not grid_id:

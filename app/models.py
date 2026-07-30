@@ -32,7 +32,7 @@ class User(db.Model):
     # Used to identify records written by the institution's Affiliation Manager.
     am_client_id = db.Column(db.String(40), nullable=True)
 
-    locale = db.Column(db.String(5), default='en', nullable=True)
+    locale = db.Column(db.String(5), default='es', nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
 
     def set_password(self, password: str) -> None:

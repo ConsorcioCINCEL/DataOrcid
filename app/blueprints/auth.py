@@ -249,7 +249,7 @@ def login():
                 'is_manager': bool(user.is_manager),
                 'institution_name': user.institution_name,
                 'ror_id': user.ror_id,
-                'locale': user.locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'en'),
+                'locale': user.locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es'),
                 'logged_in': True,
             })
 

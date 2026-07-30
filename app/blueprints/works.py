@@ -323,7 +323,7 @@ def _openalex_analytics_request_cache_key(namespace: str, filters: dict, ror_id:
         "ror_id": ror_id,
         "filters": filters,
         "request_args": request_args,
-        "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "en"),
+        "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "es"),
         "data_signature": data_version or _openalex_data_signature(ror_id),
     }
     encoded = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
@@ -1698,7 +1698,7 @@ def _openalex_language_label(value: str | None, locale=None) -> str:
             display_locale
             if isinstance(display_locale, Locale)
             else Locale.parse(
-                str(display_locale or "en"),
+                str(display_locale or "es"),
                 sep="_" if "_" in str(display_locale or "") else "-",
             )
         )

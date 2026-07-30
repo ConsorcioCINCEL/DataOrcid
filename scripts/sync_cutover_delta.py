@@ -27,6 +27,7 @@ from migrate_mysql_to_postgresql import (
 
 
 SYNC_TABLES = ("user", "tracking_logs")
+USER_BOOLEAN_COLUMNS = ("is_admin", "is_manager")
 
 
 def parse_args() -> argparse.Namespace:
@@ -110,6 +111,20 @@ def upsert_table(
                 rows = source_cursor.fetchmany(batch_size)
                 if not rows:
                     break
+                if table == "user":
+                    boolean_positions = [
+                        columns.index(column)
+                        for column in USER_BOOLEAN_COLUMNS
+                        if column in columns
+                    ]
+                    normalized_rows = []
+                    for row in rows:
+                        values = list(row)
+                        for position in boolean_positions:
+                            if values[position] is not None:
+                                values[position] = bool(values[position])
+                        normalized_rows.append(tuple(values))
+                    rows = normalized_rows
                 target_cursor.executemany(insert_sql, rows)
                 count += len(rows)
     return count

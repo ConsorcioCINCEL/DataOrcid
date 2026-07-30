@@ -46,10 +46,6 @@ TASKS = (
             "100",
         ),
     ),
-    (
-        "OpenAlex integrity",
-        ("repair-openalex-integrity",),
-    ),
 )
 
 

@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 LOCK_PATH = Path(
     os.environ.get(
         "ORCID_REFRESH_LOCK",
-        "/run/lock/orcid-cincel-cache-refresh.lock",
+        str(
+            Path(__file__).resolve().parent
+            / "instance"
+            / "cache-refresh.lock"
+        ),
     )
 )
 

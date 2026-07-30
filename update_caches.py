@@ -42,13 +42,8 @@ TASKS = (
         ),
     ),
     (
-        "OpenAlex dimensions, integrity and analytics",
-        (
-            "rebuild-openalex-dimensions",
-            "--missing-only",
-            "--batch-size",
-            "100",
-        ),
+        "OpenAlex integrity and analytics",
+        ("repair-openalex-integrity",),
     ),
 )
 

@@ -49,15 +49,15 @@ TASKS = (
 )
 
 
-def _python_executable(project_root: Path) -> Path:
+def _python_executable(project_root: Path) -> tuple[Path, bool]:
     candidates = (
         project_root / "venv" / "bin" / "python",
         project_root / "venv" / "Scripts" / "python.exe",
     )
     for candidate in candidates:
         if candidate.exists():
-            return candidate
-    return Path(sys.executable)
+            return candidate, False
+    return Path(sys.executable), True
 
 
 def _acquire_lock():
@@ -86,8 +86,8 @@ def main() -> int:
         return 75
 
     project_root = Path(__file__).resolve().parent
-    python = _python_executable(project_root)
-    if python == Path(sys.executable):
+    python, using_fallback = _python_executable(project_root)
+    if using_fallback:
         logger.warning(
             "Virtual environment not found at the expected path; using %s.",
             python,

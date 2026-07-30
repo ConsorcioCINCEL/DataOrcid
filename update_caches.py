@@ -38,7 +38,7 @@ TASKS = (
         ),
     ),
     (
-        "OpenAlex dimensions and analytics",
+        "OpenAlex dimensions, integrity and analytics",
         (
             "rebuild-openalex-dimensions",
             "--missing-only",

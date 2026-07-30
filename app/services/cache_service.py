@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import logging
+import re
 
 from flask import current_app
 from sqlalchemy import or_
@@ -23,9 +24,26 @@ from .institution_registry_service import (
 )
 from .orcid_service import get_all_profiles_concurrently, list_orcids_for_institution
 from .ror_service import fetch_grid_from_ror
+from .data_trust_service import refresh_affiliation_evidence
 
 logger = logging.getLogger(__name__)
+ISSN_RE = re.compile(r"^\d{4}-?\d{3}[\dXx]$")
 PROFILE_BATCH_SIZE = 250
+
+
+def _clean_external_id_value(value: str | None) -> str | None:
+    text = (value or "").strip()
+    return text or None
+
+
+def _is_valid_issn(value: str | None) -> bool:
+    text = _clean_external_id_value(value)
+    return bool(text and len(text) <= 64 and ISSN_RE.match(text))
+
+
+def _serialize_external_id(id_type: str, value: str) -> str:
+    label = (id_type or "external-id").strip() or "external-id"
+    return f"{label}:{value}"
 
 
 def _flush_bulk(bulk: list, model_name: str) -> int:
@@ -209,6 +227,13 @@ def _persist_discovered_researchers(ror_id: str, researchers: list[dict]) -> int
         association.matched_by_ror = bool(matches.get("ror"))
         association.matched_by_grid = bool(matches.get("grid"))
         association.matched_by_ringgold = bool(matches.get("ringgold"))
+        association.evidence_type = "verified_search"
+        association.evidence_sources = [
+            scheme
+            for scheme in ("ror", "grid", "ringgold")
+            if matches.get(scheme)
+        ]
+        association.is_verified = True
         association.is_active = True
         association.profile_status = "pending"
         association.profile_error = None
@@ -220,7 +245,12 @@ def _persist_discovered_researchers(ror_id: str, researchers: list[dict]) -> int
     return institution.id
 
 
-def build_full_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
+def build_full_cache_for_ror(
+    ror_id: str,
+    base_url: str,
+    headers: dict,
+    max_orcids: int | None = None,
+) -> dict:
     """Discover researchers once and rebuild works, fundings, names, and status."""
     return _build_cache_for_ror(
         ror_id,
@@ -228,10 +258,16 @@ def build_full_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> dict:
         headers=headers,
         include_works=True,
         include_fundings=True,
+        max_orcids=max_orcids,
     )
 
 
-def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
+def build_works_cache_for_ror(
+    ror_id: str,
+    base_url: str,
+    headers: dict,
+    max_orcids: int | None = None,
+) -> int:
     """Rebuild works while preserving every discovered researcher association."""
     result = _build_cache_for_ror(
         ror_id,
@@ -239,11 +275,17 @@ def build_works_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
         headers=headers,
         include_works=True,
         include_fundings=False,
+        max_orcids=max_orcids,
     )
     return result["works"]
 
 
-def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> int:
+def build_fundings_cache_for_ror(
+    ror_id: str,
+    base_url: str,
+    headers: dict,
+    max_orcids: int | None = None,
+) -> int:
     """Rebuild fundings while preserving every discovered researcher association."""
     result = _build_cache_for_ror(
         ror_id,
@@ -251,6 +293,7 @@ def build_fundings_cache_for_ror(ror_id: str, base_url: str, headers: dict) -> i
         headers=headers,
         include_works=False,
         include_fundings=True,
+        max_orcids=max_orcids,
     )
     return result["fundings"]
 
@@ -262,6 +305,7 @@ def _build_cache_for_ror(
     headers: dict,
     include_works: bool,
     include_fundings: bool,
+    max_orcids: int | None = None,
 ) -> dict:
     researchers, institution_id = discover_researchers_for_ror(
         ror_id,
@@ -297,6 +341,14 @@ def _build_cache_for_ror(
     if not researchers:
         db.session.commit()
         return result
+
+    if max_orcids:
+        logger.info(
+            "Cache build: limiting profile fetch to %d ORCID iDs for %s",
+            max_orcids,
+            ror_id,
+        )
+        orcid_ids = orcid_ids[:max_orcids]
 
     associations = {
         row.orcid: row
@@ -350,6 +402,12 @@ def _build_cache_for_ror(
                     association.profile_updated_at = now
 
                 _update_researcher_from_profile(orcid, profile, researcher_cache)
+                refresh_affiliation_evidence(
+                    institution_id,
+                    ror_id,
+                    orcid,
+                    profile,
+                )
                 status_buffer.append(
                     _extract_status_from_profile(profile, ror_id, orcid, trusted_ids)
                 )
@@ -384,6 +442,21 @@ def _build_cache_for_ror(
         db.session.rollback()
         _mark_pending_associations_failed(institution_id, str(exc))
         raise
+
+    if include_works:
+        # The source cache is already committed at this point. A canonical-layer
+        # failure must fail the job, but must not relabel successfully refreshed
+        # ORCID profiles as failed.
+        from .canonical_work_service import rebuild_canonical_works
+        from .analytics_service import refresh_openalex_facts
+
+        canonical_summary = rebuild_canonical_works(ror_id)
+        result["unique_works"] = canonical_summary["unique_outputs"]
+        try:
+            result["analytics_rows"] = refresh_openalex_facts(ror_id)["rows"]
+        except Exception:
+            db.session.rollback()
+            logger.exception("Failed to refresh OpenAlex analytics facts for %s", ror_id)
 
     logger.info(
         "Finished cache build for %s: %d researchers, %d profiles, %d works, %d fundings.",
@@ -536,13 +609,17 @@ def _work_rows_from_profile(ror_id: str, orcid: str, profile: dict) -> list[Work
             doi, issn, others = None, None, []
             for external_id in external_ids:
                 identifier_type = (external_id.get("external-id-type") or "").lower()
-                identifier_value = external_id.get("external-id-value")
+                identifier_value = _clean_external_id_value(
+                    external_id.get("external-id-value")
+                )
+                if not identifier_value:
+                    continue
                 if identifier_type == "doi" and not doi:
                     doi = identifier_value
-                elif identifier_type == "issn" and not issn:
+                elif identifier_type == "issn" and not issn and _is_valid_issn(identifier_value):
                     issn = identifier_value
-                elif identifier_value:
-                    others.append(f"{identifier_type}:{identifier_value}")
+                else:
+                    others.append(_serialize_external_id(identifier_type, identifier_value))
 
             rows.append(
                 WorkCache(
@@ -583,7 +660,7 @@ def _funding_rows_from_profile(
             external_ids = (summary.get("external-ids") or {}).get("external-id") or []
             grant_id = next(
                 (
-                    external_id.get("external-id-value")
+                    _clean_external_id_value(external_id.get("external-id-value"))
                     for external_id in external_ids
                     if "grant" in (external_id.get("external-id-type") or "").lower()
                 ),

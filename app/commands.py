@@ -1,7 +1,6 @@
 """Flask CLI commands for cache rebuilds and profile metadata sync."""
 
 import logging
-import datetime as dt
 import click
 from flask.cli import with_appcontext
 from flask import current_app
@@ -16,12 +15,13 @@ def register_commands(app):
     @click.option("--ror", default=None, help="Target specific ROR ID. If omitted, scans all active institutions.")
     @click.option("--start-at", default=None, help="Resume an all-institution rebuild at this ROR ID.")
     @click.option("--target", default="both", type=click.Choice(['works', 'fundings', 'both']), help="Data type to synchronize.")
+    @click.option("--limit-orcids", default=None, type=int, help="Testing only: limit profile fetches per institution.")
     @with_appcontext
-    def rebuild_caches(ror, start_at, target):
+    def rebuild_caches(ror, start_at, target, limit_orcids):
         """Rebuild works and/or funding caches for one or all institutions."""
         # Keep imports local so CLI registration does not trigger service imports early.
         from . import db
-        from .models import WorkCacheRun, FundingCacheRun
+        from .models import FundingCacheRun, WorkCacheRun, utc_now
         from .services.cache_service import (
             build_full_cache_for_ror,
             build_fundings_cache_for_ror,
@@ -74,13 +74,18 @@ def register_commands(app):
         
         total_rors = len(ror_list)
         click.echo(f"Identified {total_rors} institutional record(s) for processing.")
+        if limit_orcids:
+            click.echo(
+                "⚠️  Testing mode: each selected ROR cache will be rebuilt from only "
+                f"the first {limit_orcids} ORCID iDs found."
+            )
 
         def _log_execution_run(model_class, ror_id, status, count, error_msg=None):
             """Persist a cache-run audit record."""
             try:
                 if not ror_id: return
 
-                execution_time = dt.datetime.utcnow()
+                execution_time = utc_now()
                 run_log = model_class(
                     ror_id=ror_id,
                     status=status,
@@ -105,7 +110,12 @@ def register_commands(app):
             if target == 'both':
                 try:
                     click.echo("  > Discovering researchers and synchronizing all metadata...")
-                    result = build_full_cache_for_ror(current_ror, base_url=member_url, headers=headers)
+                    result = build_full_cache_for_ror(
+                        current_ror,
+                        base_url=member_url,
+                        headers=headers,
+                        max_orcids=limit_orcids,
+                    )
                     click.echo(
                         "  > Success: "
                         f"{result['researchers']} researchers, {result['works']} works, "
@@ -123,7 +133,12 @@ def register_commands(app):
             if target == 'works':
                 try:
                     click.echo("  > Initializing Works synchronization...")
-                    count = build_works_cache_for_ror(current_ror, base_url=member_url, headers=headers)
+                    count = build_works_cache_for_ror(
+                        current_ror,
+                        base_url=member_url,
+                        headers=headers,
+                        max_orcids=limit_orcids,
+                    )
                     click.echo(f"  > [Works] Success: {count} records synchronized.")
                     _log_execution_run(WorkCacheRun, current_ror, 'success', count)
                 except Exception as exc:
@@ -134,7 +149,12 @@ def register_commands(app):
             if target == 'fundings':
                 try:
                     click.echo(f"  > Initializing Funding synchronization...")
-                    count = build_fundings_cache_for_ror(current_ror, base_url=member_url, headers=headers)
+                    count = build_fundings_cache_for_ror(
+                        current_ror,
+                        base_url=member_url,
+                        headers=headers,
+                        max_orcids=limit_orcids,
+                    )
                     
                     click.echo(f"  > [Fundings] Success: {count} records synchronized.")
                     _log_execution_run(FundingCacheRun, current_ror, 'success', count)
@@ -175,3 +195,204 @@ def register_commands(app):
                 click.echo(f"❌ Error syncing {current_ror}: {e}")
 
         click.echo("🏁 Profile synchronization finished.")
+
+    @app.cli.command("sync-openalex-works")
+    @click.option("--ror", default=None, help="Target a specific institutional ROR ID.")
+    @click.option("--all", "all_institutions", is_flag=True, help="Scan every known institution.")
+    @click.option("--system", "system_wide", is_flag=True, help="Scan all works in one system-wide run.")
+    @click.option("--limit", default=None, type=int, help="Maximum DOI count to process per scope.")
+    @click.option("--force", is_flag=True, help="Refresh records even when the local OpenAlex cache is fresh.")
+    @click.option("--stale-days", default=None, type=int, help="Refresh cached records older than this many days.")
+    @click.option("--include-all-types", is_flag=True, help="Include every ORCID work type, not only journal articles.")
+    @click.option("--dry-run", is_flag=True, help="Count candidate DOI values without calling OpenAlex.")
+    @click.option("--workers", default=None, type=int, help="Parallel DOI fetch workers. Defaults to openalex.workers.")
+    @click.option("--title-fallback", is_flag=True, help="Search by title only for DOI misses and works without DOI.")
+    @with_appcontext
+    def sync_openalex_works_command(ror, all_institutions, system_wide, limit, force, stale_days, include_all_types, dry_run, workers, title_fallback):
+        """Enrich local DOI-backed works with OpenAlex metadata."""
+        from .services.institution_registry_service import get_institution_options
+        from .services.openalex_service import (
+            OpenAlexConfigError,
+            sync_openalex_title_matches,
+            sync_openalex_works,
+        )
+
+        selected_scopes = sum(bool(value) for value in (ror, all_institutions, system_wide))
+        if selected_scopes > 1:
+            click.echo("Use only one of --ror, --all, or --system.")
+            return
+        if not selected_scopes:
+            click.echo("Choose a scope with --ror <ROR_ID>, --all, or --system.")
+            return
+
+        if system_wide:
+            scopes = [None]
+        elif all_institutions:
+            try:
+                scopes = [item["ror_id"] for item in get_institution_options() if item.get("ror_id")]
+            except Exception as exc:
+                click.echo(f"Database Query Error: {exc}")
+                return
+        else:
+            scopes = [ror]
+
+        articles_only = not include_all_types
+        mode = "title fallback" if title_fallback else "DOI sync"
+        if dry_run:
+            mode = f"{mode} dry-run"
+        click.echo(f"Starting OpenAlex {mode} for {len(scopes)} scope(s).")
+
+        for current_ror in scopes:
+            scope_label = current_ror or "system-wide"
+            click.echo(f"\nProcessing scope: {scope_label}")
+            try:
+                sync_func = sync_openalex_title_matches if title_fallback else sync_openalex_works
+                summary = sync_func(
+                    ror_id=current_ror,
+                    limit=limit,
+                    force_refresh=force,
+                    stale_days=stale_days,
+                    articles_only=articles_only,
+                    dry_run=dry_run,
+                    workers=workers,
+                )
+            except OpenAlexConfigError as exc:
+                click.echo(f"OpenAlex configuration error: {exc}")
+                return
+
+            click.echo(
+                "Works: {works_seen} | Candidates: {dois_found} | "
+                "Workers: {workers} | "
+                "Fetched: {fetched_count} | Matched: {matched_count} | "
+                "Not found: {not_found_count} | Skipped: {skipped_count} | "
+                "Errors: {error_count} | Status: {status}".format(**summary)
+            )
+            if summary.get("error"):
+                click.echo(f"Error: {summary['error']}")
+
+        click.echo("\nOpenAlex synchronization finished.")
+
+    @app.cli.command("rebuild-openalex-dimensions")
+    @click.option("--limit", default=None, type=int, help="Maximum raw OpenAlex records to process.")
+    @click.option("--batch-size", default=50, type=int, help="Raw records to process before each commit.")
+    @click.option("--missing-only", is_flag=True, help="Only process raw records without author dimension rows.")
+    @click.option("--reset", is_flag=True, help="Delete existing OpenAlex dimensions before rebuilding.")
+    @with_appcontext
+    def rebuild_openalex_dimensions_command(limit, batch_size, missing_only, reset):
+        """Build author and institution dimensions from stored OpenAlex raw JSON."""
+        from .services.analytics_service import refresh_openalex_facts
+        from .services.openalex_service import rebuild_openalex_dimensions
+
+        click.echo("Rebuilding OpenAlex author and institution dimensions from raw cache...")
+        def _progress(processed, author_rows, institution_rows, last_id):
+            click.echo(
+                f"Processed {processed} raw records | "
+                f"authors {author_rows} | institutions {institution_rows} | last raw id {last_id}"
+            )
+
+        summary = rebuild_openalex_dimensions(
+            limit=limit,
+            batch_size=batch_size,
+            missing_only=missing_only,
+            reset=reset,
+            progress=_progress,
+        )
+        analytics_summary = refresh_openalex_facts()
+        click.echo(
+            "Processed: {processed} | Author rows: {author_rows} | "
+            "Institution rows: {institution_rows} | Analytics rows: "
+            "{analytics_rows}".format(
+                **summary,
+                analytics_rows=analytics_summary["rows"],
+            )
+        )
+
+    @app.cli.command("rebuild-openalex-analytics")
+    @click.option("--ror", default=None, help="Target one ROR ID; omit it to rebuild every institution.")
+    @with_appcontext
+    def rebuild_openalex_analytics_command(ror):
+        """Rebuild the filterable OpenAlex analytics fact layer."""
+        from .services.analytics_service import refresh_openalex_facts
+
+        summary = refresh_openalex_facts(ror)
+        if ror:
+            click.echo(
+                "ROR: {ror_id} | Source records: {source_records} | "
+                "Analytics rows: {rows}".format(**summary)
+            )
+        else:
+            click.echo(
+                "Institutions: {institutions} | Analytics rows: {rows}".format(
+                    **summary
+                )
+            )
+
+    @app.cli.command("rebuild-data-trust")
+    @click.option("--ror", default=None, help="Target one ROR ID; omit it to process every institution.")
+    @click.option("--skip-associations", is_flag=True, help="Do not rebuild inferred researcher relationships.")
+    @click.option("--skip-works", is_flag=True, help="Do not rebuild canonical scholarly outputs.")
+    @with_appcontext
+    def rebuild_data_trust_command(ror, skip_associations, skip_works):
+        """Rebuild provenance-aware researcher links and canonical works."""
+        from .services.canonical_work_service import rebuild_canonical_works
+        from .services.data_trust_service import backfill_inferred_associations
+
+        if skip_associations and skip_works:
+            raise click.UsageError("At least one rebuild must remain enabled.")
+        if not skip_associations:
+            click.echo("Rebuilding inferred institutional researcher relationships...")
+            summary = backfill_inferred_associations(ror)
+            click.echo(
+                "Relationships: {associations} | Created: {created} | Updated: {updated}".format(
+                    **summary
+                )
+            )
+        if not skip_works:
+            click.echo("Rebuilding canonical scholarly outputs...")
+            summary = rebuild_canonical_works(ror)
+            click.echo(
+                "Source records: {source_records} | Unique outputs: {unique_outputs} | "
+                "DOI-backed: {doi_outputs}".format(**summary)
+            )
+        click.echo("Data trust layers rebuilt successfully.")
+
+    @app.cli.command("cleanup-tracking-logs")
+    @click.option("--days", default=None, type=click.IntRange(min=1), help="Override the configured retention period.")
+    @click.option("--dry-run", is_flag=True, help="Count eligible rows without deleting them.")
+    @with_appcontext
+    def cleanup_tracking_logs_command(days, dry_run):
+        """Delete usage logs older than the configured retention period."""
+        from datetime import timedelta
+
+        from . import db
+        from .models import TrackingLog, utc_now
+
+        retention_days = days or int(current_app.config.get("TRACKING_RETENTION_DAYS", 90))
+        cutoff = utc_now() - timedelta(days=retention_days)
+        query = TrackingLog.query.filter(TrackingLog.timestamp < cutoff)
+        count = query.count()
+        if not dry_run and count:
+            query.delete(synchronize_session=False)
+            db.session.commit()
+        verb = "Would delete" if dry_run else "Deleted"
+        click.echo(f"{verb} {count} tracking log row(s) older than {retention_days} days.")
+
+    @app.cli.command("repair-openalex-integrity")
+    @with_appcontext
+    def repair_openalex_integrity_command():
+        """Remove orphaned and duplicate OpenAlex dimension rows."""
+        from .services.analytics_service import refresh_openalex_facts
+        from .services.openalex_service import repair_openalex_integrity
+
+        summary = repair_openalex_integrity()
+        analytics_summary = refresh_openalex_facts()
+        click.echo(
+            "Orphan authors: {orphan_authors_removed} | Orphan institutions: "
+            "{orphan_institutions_removed} | Duplicate authors: "
+            "{duplicate_authors_removed} | Duplicate institutions: "
+            "{duplicate_institutions_removed} | Analytics rows: "
+            "{analytics_rows}".format(
+                **summary,
+                analytics_rows=analytics_summary["rows"],
+            )
+        )

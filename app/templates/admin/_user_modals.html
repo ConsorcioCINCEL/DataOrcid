@@ -1,183 +1,313 @@
-<div class="modal fade" id="modalEditUser" tabindex="-1" role="dialog" aria-labelledby="modalEditUserLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade user-modal" id="modalEditUser" tabindex="-1" role="dialog" aria-labelledby="modalEditUserLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
     <form class="modal-content" method="post" id="formEditUser">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="return_to" value="{{ request.full_path }}">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="modalEditUserLabel">
-          <i class="fas fa-user-edit mr-2"></i> {{ _('Edit User Details') }}
-        </h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+        <h2 class="modal-title h5" id="modalEditUserLabel">
+          <i class="fas fa-user-edit mr-2" aria-hidden="true"></i>{{ _('Edit user') }}
+        </h2>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="{{ _('Close') }}">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group col-md-4">
-            <label>{{ _('Username') }} *</label>
-            <input type="text" name="username" class="form-control" required>
+        <section class="user-form-section" aria-labelledby="editAccountSection">
+          <div class="user-form-section-heading">
+            <span class="user-form-section-icon" aria-hidden="true"><i class="fas fa-id-card"></i></span>
+            <div>
+              <h3 id="editAccountSection">{{ _('Account') }}</h3>
+              <p>{{ _('Identity and contact details used to sign in and communicate with this user.') }}</p>
+            </div>
           </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Email') }}</label>
-            <input type="email" name="email" class="form-control">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="edit_username">{{ _('Username') }} *</label>
+              <input id="edit_username" type="text" name="username" class="form-control" required autocomplete="username">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="edit_email">{{ _('Email') }}</label>
+              <input id="edit_email" type="email" name="email" class="form-control" autocomplete="email">
+            </div>
           </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Position') }}</label>
-            <input type="text" name="position" class="form-control">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="edit_first_name">{{ _('First name') }}</label>
+              <input id="edit_first_name" type="text" name="first_name" class="form-control" autocomplete="given-name">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="edit_last_name">{{ _('Last name') }}</label>
+              <input id="edit_last_name" type="text" name="last_name" class="form-control" autocomplete="family-name">
+            </div>
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-4">
-            <label>{{ _('First Name') }}</label>
-            <input type="text" name="first_name" class="form-control">
+        </section>
+
+        <section class="user-form-section" aria-labelledby="editInstitutionSection">
+          <div class="user-form-section-heading">
+            <span class="user-form-section-icon is-purple" aria-hidden="true"><i class="fas fa-university"></i></span>
+            <div>
+              <h3 id="editInstitutionSection">{{ _('Institution') }}</h3>
+              <p>{{ _('Choose a registered institution to fill its canonical identifiers automatically.') }}</p>
+            </div>
           </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Last Name') }}</label>
-            <input type="text" name="last_name" class="form-control">
-          </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Institution') }}</label>
-            <input type="text" name="institution_name" class="form-control">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-6">
-            <label><i class="fas fa-fingerprint mr-1"></i> ROR ID</label>
-            <input type="text" name="ror_id" class="form-control" placeholder="https://ror.org/...">
-          </div>
-          <div class="form-group col-md-6">
-            <label><i class="fas fa-network-wired mr-1"></i> GRID ID</label>
-            <input type="text" name="grid_id" class="form-control">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>{{ _('Affiliation Manager Client ID') }}</label>
-          <input type="text" name="am_client_id" class="form-control" placeholder="APP-...">
-          <small class="text-muted">{{ _('Optional. Used to identify Managed Records (AM Badge).') }}</small>
-        </div>
-        <div class="form-row align-items-end">
-          <div class="form-group col-md-4">
-            <label>{{ _('Preferred Language') }}</label>
-            <select name="locale" class="form-control">
-              <option value="es">Español</option>
-              <option value="en">English</option>
+          <div class="form-group">
+            <label for="edit_institution_select">{{ _('Registered institution') }}</label>
+            <select id="edit_institution_select" class="form-control user-institution-select">
+              <option value=""></option>
+              {% for institution in institution_options %}
+                <option value="{{ institution.ror_id }}" data-name="{{ institution.name }}" data-grid="{{ institution.grid_id or '' }}">{{ institution.name }}</option>
+              {% endfor %}
             </select>
           </div>
-          <div class="form-group col-md-8">
-            <label class="d-block">{{ _('Assign Roles') }}</label>
-            <div class="d-flex pt-1">
-              <div class="custom-control custom-switch custom-switch-on-orange mr-4">
-                <input type="checkbox" class="custom-control-input" id="is_admin_edit" name="is_admin">
-                <label class="custom-control-label" for="is_admin_edit">
-                  <i class="fas fa-user-shield mr-1"></i> {{ _('Admin') }}
-                </label>
+          <div class="form-row">
+            <div class="form-group col-md-8">
+              <label for="edit_institution_name">{{ _('Institution name') }}</label>
+              <input id="edit_institution_name" type="text" name="institution_name" class="form-control" autocomplete="organization">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="edit_position">{{ _('Position') }}</label>
+              <input id="edit_position" type="text" name="position" class="form-control" autocomplete="organization-title">
+            </div>
+          </div>
+          <details class="user-advanced-fields">
+            <summary><i class="fas fa-fingerprint" aria-hidden="true"></i>{{ _('Advanced identifiers') }}</summary>
+            <p>{{ _('Review these values only when the institution is not available in the registry or requires custom metadata.') }}</p>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="edit_ror_id">ROR ID</label>
+                <input id="edit_ror_id" type="text" name="ror_id" class="form-control" placeholder="https://ror.org/...">
               </div>
-              <div class="custom-control custom-switch custom-switch-on-orange">
-                <input type="checkbox" class="custom-control-input" id="is_manager_edit" name="is_manager">
-                <label class="custom-control-label" for="is_manager_edit">
-                  <i class="fas fa-user-edit mr-1"></i> {{ _('Manager') }}
-                </label>
+              <div class="form-group col-md-6">
+                <label for="edit_grid_id">GRID ID</label>
+                <input id="edit_grid_id" type="text" name="grid_id" class="form-control">
+              </div>
+            </div>
+            <div class="form-group mb-0">
+              <label for="edit_am_client_id">{{ _('Affiliation Manager Client ID') }}</label>
+              <input id="edit_am_client_id" type="text" name="am_client_id" class="form-control" placeholder="APP-...">
+              <small class="form-text text-muted">{{ _('Optional. Used to identify records managed through ORCID Affiliation Manager.') }}</small>
+            </div>
+          </details>
+        </section>
+
+        <section class="user-form-section mb-0" aria-labelledby="editPermissionsSection">
+          <div class="user-form-section-heading">
+            <span class="user-form-section-icon is-green" aria-hidden="true"><i class="fas fa-user-shield"></i></span>
+            <div>
+              <h3 id="editPermissionsSection">{{ _('Permissions and preferences') }}</h3>
+              <p>{{ _('Set the interface language and the administrative scope for this account.') }}</p>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="edit_locale">{{ _('Preferred language') }}</label>
+              <select id="edit_locale" name="locale" class="form-control">
+                <option value="en">English</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
+            <div class="form-group col-md-8">
+              <span class="user-role-group-label">{{ _('Assigned roles') }}</span>
+              <div class="user-role-options">
+                <div class="user-role-option">
+                  <div class="custom-control custom-switch custom-switch-on-orange">
+                    <input type="checkbox" class="custom-control-input" id="is_admin_edit" name="is_admin">
+                    <label class="custom-control-label" for="is_admin_edit">{{ _('Administrator') }}</label>
+                  </div>
+                  <small>{{ _('Full access to every institution and administration tool.') }}</small>
+                </div>
+                <div class="user-role-option">
+                  <div class="custom-control custom-switch custom-switch-on-orange">
+                    <input type="checkbox" class="custom-control-input" id="is_manager_edit" name="is_manager">
+                    <label class="custom-control-label" for="is_manager_edit">{{ _('Manager') }}</label>
+                  </div>
+                  <small>{{ _('Manages accounts and data within the assigned institution.') }}</small>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+          <div class="alert alert-warning user-admin-warning d-none mb-0" role="status">
+            <i class="fas fa-exclamation-triangle mr-2" aria-hidden="true"></i>{{ _('Administrators can access every institution and change all user accounts.') }}
+          </div>
+        </section>
       </div>
       <div class="modal-footer bg-light">
         <button class="btn btn-secondary" type="button" data-dismiss="modal">{{ _('Cancel') }}</button>
         <button class="btn btn-primary" type="submit">
-          <i class="fas fa-save mr-1"></i> {{ _('Update User') }}
+          <i class="fas fa-save mr-1" aria-hidden="true"></i>{{ _('Save changes') }}
         </button>
       </div>
     </form>
   </div>
 </div>
 
-<div class="modal fade" id="modalNewUser" tabindex="-1" role="dialog" aria-labelledby="modalNewUserLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade user-modal" id="modalNewUser" tabindex="-1" role="dialog" aria-labelledby="modalNewUserLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
     <form class="modal-content" method="post" action="{{ url_for('admin.users_new') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="return_to" value="{{ request.full_path }}">
       <div class="modal-header bg-success text-white">
-        <h5 class="modal-title" id="modalNewUserLabel">
-          <i class="fas fa-user-plus mr-2"></i> {{ _('Create New User') }}
-        </h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+        <h2 class="modal-title h5" id="modalNewUserLabel">
+          <i class="fas fa-user-plus mr-2" aria-hidden="true"></i>{{ _('Create user') }}
+        </h2>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="{{ _('Close') }}">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group col-md-4">
-            <label>{{ _('Username') }} *</label>
-            <input id="new_username" type="text" name="username" class="form-control" required>
-          </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Email') }}</label>
-            <input id="new_email" type="email" name="email" class="form-control">
-          </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Position') }}</label>
-            <input type="text" name="position" class="form-control">
-          </div>
+        <div class="user-creation-note" role="note">
+          <i class="fas fa-info-circle" aria-hidden="true"></i>
+          <p>{{ _('A temporary password will be generated when the account is created. You can send a password setup link from the account actions afterward.') }}</p>
         </div>
-        <div class="form-row">
-          <div class="form-group col-md-4">
-            <label>{{ _('First Name') }}</label>
-            <input type="text" name="first_name" class="form-control">
+
+        <section class="user-form-section" aria-labelledby="newAccountSection">
+          <div class="user-form-section-heading">
+            <span class="user-form-section-icon" aria-hidden="true"><i class="fas fa-id-card"></i></span>
+            <div>
+              <h3 id="newAccountSection">{{ _('Account') }}</h3>
+              <p>{{ _('Enter the identity and contact details for the new account.') }}</p>
+            </div>
           </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Last Name') }}</label>
-            <input type="text" name="last_name" class="form-control">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="new_username">{{ _('Username') }} *</label>
+              <input id="new_username" type="text" name="username" class="form-control" required autocomplete="username">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="new_email">{{ _('Email') }}</label>
+              <input id="new_email" type="email" name="email" class="form-control" autocomplete="email">
+            </div>
           </div>
-          <div class="form-group col-md-4">
-            <label>{{ _('Institution') }}</label>
-            <input type="text" name="institution_name" class="form-control">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="new_first_name">{{ _('First name') }}</label>
+              <input id="new_first_name" type="text" name="first_name" class="form-control" autocomplete="given-name">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="new_last_name">{{ _('Last name') }}</label>
+              <input id="new_last_name" type="text" name="last_name" class="form-control" autocomplete="family-name">
+            </div>
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-6">
-            <label>ROR ID</label>
-            <input type="text" name="ror_id" class="form-control" placeholder="https://ror.org/...">
+        </section>
+
+        <section class="user-form-section" aria-labelledby="newInstitutionSection">
+          <div class="user-form-section-heading">
+            <span class="user-form-section-icon is-purple" aria-hidden="true"><i class="fas fa-university"></i></span>
+            <div>
+              <h3 id="newInstitutionSection">{{ _('Institution') }}</h3>
+              <p>{{ _('Choose a registered institution to fill its canonical identifiers automatically.') }}</p>
+            </div>
           </div>
-          <div class="form-group col-md-6">
-            <label>GRID ID</label>
-            <input type="text" name="grid_id" class="form-control">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>{{ _('Affiliation Manager Client ID') }}</label>
-          <input type="text" name="am_client_id" class="form-control" placeholder="APP-...">
-        </div>
-        <div class="form-row align-items-end">
-          <div class="form-group col-md-4">
-            <label>{{ _('Default Language') }}</label>
-            <select name="locale" class="form-control">
-              <option value="es" selected>Español</option>
-              <option value="en">English</option>
+          <div class="form-group">
+            <label for="new_institution_select">{{ _('Registered institution') }}</label>
+            <select id="new_institution_select" class="form-control user-institution-select">
+              <option value=""></option>
+              {% for institution in institution_options %}
+                <option value="{{ institution.ror_id }}" data-name="{{ institution.name }}" data-grid="{{ institution.grid_id or '' }}">{{ institution.name }}</option>
+              {% endfor %}
             </select>
           </div>
-          <div class="form-group col-md-8">
-            <label class="d-block">{{ _('Initial Roles') }}</label>
-            <div class="d-flex pt-1">
-              <div class="custom-control custom-switch custom-switch-on-orange mr-4">
-                <input type="checkbox" class="custom-control-input" id="is_admin_new" name="is_admin">
-                <label class="custom-control-label" for="is_admin_new">
-                  <i class="fas fa-user-shield mr-1"></i> {{ _('Admin') }}
-                </label>
+          <div class="form-row">
+            <div class="form-group col-md-8">
+              <label for="new_institution_name">{{ _('Institution name') }}</label>
+              <input id="new_institution_name" type="text" name="institution_name" class="form-control" autocomplete="organization">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="new_position">{{ _('Position') }}</label>
+              <input id="new_position" type="text" name="position" class="form-control" autocomplete="organization-title">
+            </div>
+          </div>
+          <details class="user-advanced-fields">
+            <summary><i class="fas fa-fingerprint" aria-hidden="true"></i>{{ _('Advanced identifiers') }}</summary>
+            <p>{{ _('Review these values only when the institution is not available in the registry or requires custom metadata.') }}</p>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="new_ror_id">ROR ID</label>
+                <input id="new_ror_id" type="text" name="ror_id" class="form-control" placeholder="https://ror.org/...">
               </div>
-              <div class="custom-control custom-switch custom-switch-on-orange">
-                <input type="checkbox" class="custom-control-input" id="is_manager_new" name="is_manager">
-                <label class="custom-control-label" for="is_manager_new">
-                  <i class="fas fa-user-edit mr-1"></i> {{ _('Manager') }}
-                </label>
+              <div class="form-group col-md-6">
+                <label for="new_grid_id">GRID ID</label>
+                <input id="new_grid_id" type="text" name="grid_id" class="form-control">
+              </div>
+            </div>
+            <div class="form-group mb-0">
+              <label for="new_am_client_id">{{ _('Affiliation Manager Client ID') }}</label>
+              <input id="new_am_client_id" type="text" name="am_client_id" class="form-control" placeholder="APP-...">
+              <small class="form-text text-muted">{{ _('Optional. Used to identify records managed through ORCID Affiliation Manager.') }}</small>
+            </div>
+          </details>
+        </section>
+
+        <section class="user-form-section mb-0" aria-labelledby="newPermissionsSection">
+          <div class="user-form-section-heading">
+            <span class="user-form-section-icon is-green" aria-hidden="true"><i class="fas fa-user-shield"></i></span>
+            <div>
+              <h3 id="newPermissionsSection">{{ _('Permissions and preferences') }}</h3>
+              <p>{{ _('Choose the initial language and administrative scope for this account.') }}</p>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="new_locale">{{ _('Preferred language') }}</label>
+              <select id="new_locale" name="locale" class="form-control">
+                <option value="en" selected>English</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
+            <div class="form-group col-md-8">
+              <span class="user-role-group-label">{{ _('Initial roles') }}</span>
+              <div class="user-role-options">
+                <div class="user-role-option">
+                  <div class="custom-control custom-switch custom-switch-on-orange">
+                    <input type="checkbox" class="custom-control-input" id="is_admin_new" name="is_admin">
+                    <label class="custom-control-label" for="is_admin_new">{{ _('Administrator') }}</label>
+                  </div>
+                  <small>{{ _('Full access to every institution and administration tool.') }}</small>
+                </div>
+                <div class="user-role-option">
+                  <div class="custom-control custom-switch custom-switch-on-orange">
+                    <input type="checkbox" class="custom-control-input" id="is_manager_new" name="is_manager">
+                    <label class="custom-control-label" for="is_manager_new">{{ _('Manager') }}</label>
+                  </div>
+                  <small>{{ _('Manages accounts and data within the assigned institution.') }}</small>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+          <div class="alert alert-warning user-admin-warning d-none mb-0" role="status">
+            <i class="fas fa-exclamation-triangle mr-2" aria-hidden="true"></i>{{ _('Administrators can access every institution and change all user accounts.') }}
+          </div>
+        </section>
       </div>
       <div class="modal-footer bg-light">
         <button class="btn btn-secondary" type="button" data-dismiss="modal">{{ _('Cancel') }}</button>
         <button class="btn btn-success" type="submit">
-          <i class="fas fa-plus-circle mr-1"></i> {{ _('Create User') }}
+          <i class="fas fa-plus-circle mr-1" aria-hidden="true"></i>{{ _('Create user') }}
         </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade user-confirm-modal" id="modalConfirmUserAction" tabindex="-1" role="dialog" aria-labelledby="modalConfirmUserActionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <form class="modal-content" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="return_to" value="{{ request.full_path }}">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="modalConfirmUserActionLabel">
+          <i class="fas fa-question-circle user-confirm-icon mr-2" aria-hidden="true"></i><span class="modal-title-text">{{ _('Confirm account action') }}</span>
+        </h2>
+        <button type="button" class="close" data-dismiss="modal" aria-label="{{ _('Close') }}">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="user-confirm-message mb-0"></p>
+      </div>
+      <div class="modal-footer bg-light">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">{{ _('Cancel') }}</button>
+        <button class="btn btn-primary user-confirm-submit" type="submit">{{ _('Continue') }}</button>
       </div>
     </form>
   </div>

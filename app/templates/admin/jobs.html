@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Background Jobs · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<div class="app-section-heading">
+  <h1>{{ _('Background jobs') }}</h1>
+  <p>{{ _('Monitor synchronization progress, completed stages, heartbeats, and execution errors.') }}</p>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item">{{ _('Administration') }}</li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Background jobs') }}</li>
+{% endblock %}
+
+{% block content %}
+<section class="app-kpi-strip jobs-kpi-strip" style="--app-kpi-columns: 5" aria-label="{{ _('Background job status summary') }}">
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-spinner"></i></span>
+    <div><span class="app-kpi-label">{{ _('Running now') }}</span><strong data-job-summary="running">{{ summary.running }}</strong><small>{{ _('Currently executing') }}</small></div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-hourglass-start"></i></span>
+    <div><span class="app-kpi-label">{{ _('Queued now') }}</span><strong data-job-summary="queued">{{ summary.queued }}</strong><small>{{ _('Waiting for a worker') }}</small></div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-check-circle"></i></span>
+    <div><span class="app-kpi-label">{{ _('Successful') }}</span><strong data-job-summary="successful">{{ summary.successful }}</strong><small>{{ period_label }}</small></div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-red" aria-hidden="true"><i class="fas fa-exclamation-triangle"></i></span>
+    <div><span class="app-kpi-label">{{ _('Needs attention') }}</span><strong data-job-summary="attention">{{ summary.attention }}</strong><small>{{ period_label }}</small></div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-amber" aria-hidden="true"><i class="fas fa-heartbeat"></i></span>
+    <div><span class="app-kpi-label">{{ _('Stale heartbeat') }}</span><strong data-job-summary="stale">{{ summary.stale }}</strong><small>{{ _('More than %(count)s min', count=stale_minutes) }}</small></div>
+  </article>
+</section>
+
+<section class="card shadow-sm mb-4 jobs-filter-card" aria-labelledby="jobFiltersTitle">
+  <div class="card-header">
+    <h2 id="jobFiltersTitle" class="card-title text-bold mb-0">{{ _('Job filters') }}</h2>
+    <p class="activity-card-subtitle mb-0">{{ _('Active jobs are always included; historical outcomes use the selected creation period.') }}</p>
+  </div>
+  <div class="card-body">
+    <form method="get" action="{{ url_for('admin.jobs') }}" id="jobFiltersForm">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="app-filter-grid app-filter-grid--jobs">
+        <div class="jobs-filter-search">
+          <label for="jobSearch">{{ _('Search') }}</label>
+          <div class="input-group">
+            <div class="input-group-prepend"><span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-search"></i></span></div>
+            <input id="jobSearch" class="form-control" type="search" name="q" value="{{ q }}" placeholder="{{ _('Job ID, institution, user, or error...') }}">
+          </div>
+        </div>
+        <div>
+          <label for="jobStatusFilter">{{ _('Status') }}</label>
+          <select id="jobStatusFilter" name="status" class="form-control">
+            <option value="all" {% if selected_status == 'all' %}selected{% endif %}>{{ _('All statuses') }}</option>
+            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>{{ _('Active') }}</option>
+            <option value="queued" {% if selected_status == 'queued' %}selected{% endif %}>{{ _('Queued') }}</option>
+            <option value="running" {% if selected_status == 'running' %}selected{% endif %}>{{ _('Running') }}</option>
+            <option value="success" {% if selected_status == 'success' %}selected{% endif %}>{{ _('Successful') }}</option>
+            <option value="partial" {% if selected_status == 'partial' %}selected{% endif %}>{{ _('Partial') }}</option>
+            <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>{{ _('Failed') }}</option>
+            <option value="interrupted" {% if selected_status == 'interrupted' %}selected{% endif %}>{{ _('Interrupted') }}</option>
+          </select>
+        </div>
+        <div>
+          <label for="jobTypeFilter">{{ _('Job type') }}</label>
+          <select id="jobTypeFilter" name="type" class="form-control">
+            <option value="">{{ _('All job types') }}</option>
+            {% for job_type in job_types %}<option value="{{ job_type.value }}" {% if selected_type == job_type.value %}selected{% endif %}>{{ job_type.label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="jobInstitutionFilter">{{ _('Institution') }}</label>
+          <select id="jobInstitutionFilter" name="institution" class="form-control">
+            <option value="">{{ _('All institutions') }}</option>
+            <option value="system" {% if selected_institution == 'system' %}selected{% endif %}>{{ _('System-wide') }}</option>
+            {% for institution in institution_options %}<option value="{{ institution.ror_id }}" {% if selected_institution == institution.ror_id %}selected{% endif %}>{{ institution.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="jobUserFilter">{{ _('Requested by') }}</label>
+          <select id="jobUserFilter" name="user" class="form-control">
+            <option value="">{{ _('All users') }}</option>
+            {% for user_id, username in requester_options %}<option value="{{ user_id }}" {% if selected_user == user_id %}selected{% endif %}>{{ username }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="jobPeriodFilter">{{ _('Period') }}</label>
+          <select id="jobPeriodFilter" name="period" class="form-control">
+            <option value="24h" {% if selected_period == '24h' %}selected{% endif %}>{{ _('Last 24 hours') }}</option>
+            <option value="7d" {% if selected_period == '7d' %}selected{% endif %}>{{ _('Last 7 days') }}</option>
+            <option value="30d" {% if selected_period == '30d' %}selected{% endif %}>{{ _('Last 30 days') }}</option>
+            <option value="all" {% if selected_period == 'all' %}selected{% endif %}>{{ _('All time') }}</option>
+            <option value="custom" {% if selected_period == 'custom' %}selected{% endif %}>{{ _('Custom range') }}</option>
+          </select>
+        </div>
+        <div class="jobs-custom-date {% if selected_period != 'custom' %}d-none{% endif %}">
+          <label for="jobDateFrom">{{ _('From date') }}</label>
+          <input id="jobDateFrom" type="date" name="date_from" value="{{ date_from }}" class="form-control" {% if selected_period != 'custom' %}disabled{% endif %}>
+        </div>
+        <div class="jobs-custom-date {% if selected_period != 'custom' %}d-none{% endif %}">
+          <label for="jobDateTo">{{ _('To date') }}</label>
+          <input id="jobDateTo" type="date" name="date_to" value="{{ date_to }}" class="form-control" {% if selected_period != 'custom' %}disabled{% endif %}>
+        </div>
+      </div>
+      <div class="app-filter-footer jobs-filter-footer">
+        <span class="jobs-filter-context"><i class="fas fa-info-circle" aria-hidden="true"></i>{{ _('Outcome cards count jobs created in %(period)s.', period=period_label) }}</span>
+        <div class="app-filter-actions">
+          <a href="{{ url_for('admin.jobs') }}" class="btn btn-outline-secondary"><i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Reset') }}</a>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-filter mr-1" aria-hidden="true"></i>{{ _('Apply filters') }}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<div class="jobs-live-toolbar" aria-live="polite">
+  <div>
+    <span class="jobs-live-dot {% if has_active %}is-active{% endif %}" data-job-live-dot aria-hidden="true"></span>
+    <strong>{{ _('Live monitoring') }}</strong>
+    <span id="jobsRefreshStatus">{{ _('Updated %(date)s', date=refreshed_at|datetimeformat) }}</span>
+  </div>
+  <button id="refreshJobsButton" type="button" class="btn btn-sm btn-outline-secondary"><i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>{{ _('Refresh now') }}</button>
+</div>
+
+<div id="jobsDashboardTable">
+  {% include 'admin/_jobs_table.html' %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const period = document.getElementById('jobPeriodFilter');
+  const customDates = Array.from(document.querySelectorAll('.jobs-custom-date'));
+  const syncCustomDates = function () {
+    const enabled = period.value === 'custom';
+    customDates.forEach(function (container) {
+      container.classList.toggle('d-none', !enabled);
+      const input = container.querySelector('input');
+      input.disabled = !enabled;
+      input.required = enabled;
+    });
+  };
+  period.addEventListener('change', syncCustomDates);
+  syncCustomDates();
+
+  const tableRoot = document.getElementById('jobsDashboardTable');
+  const refreshButton = document.getElementById('refreshJobsButton');
+  const refreshStatus = document.getElementById('jobsRefreshStatus');
+  const liveDot = document.querySelector('[data-job-live-dot]');
+  let timer = null;
+  let refreshing = false;
+
+  const schedule = function () {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(refreshJobs, document.hidden ? 30000 : 10000);
+  };
+
+  const refreshJobs = async function () {
+    if (refreshing) return;
+    refreshing = true;
+    refreshButton.disabled = true;
+    refreshButton.querySelector('i').classList.add('fa-spin');
+    const openRows = Array.from(tableRoot.querySelectorAll('.job-detail-row.show')).map(function (row) { return row.id; });
+    const url = new URL(window.location.href);
+    url.searchParams.set('fragment', '1');
+    try {
+      const response = await fetch(url.toString(), {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const payload = await response.json();
+      tableRoot.innerHTML = payload.html;
+      openRows.forEach(function (id) {
+        const row = document.getElementById(id);
+        if (row) {
+          row.classList.add('show');
+          const trigger = tableRoot.querySelector('[data-target="#' + id + '"]');
+          if (trigger) trigger.setAttribute('aria-expanded', 'true');
+        }
+      });
+      Object.keys(payload.summary).forEach(function (key) {
+        const target = document.querySelector('[data-job-summary="' + key + '"]');
+        if (target) target.textContent = Number(payload.summary[key]).toLocaleString();
+      });
+      liveDot.classList.toggle('is-active', payload.has_active);
+      refreshStatus.textContent = {{ _('Updated just now')|tojson }};
+    } catch (error) {
+      refreshStatus.textContent = {{ _('Automatic refresh failed. Try again.')|tojson }};
+    } finally {
+      refreshing = false;
+      refreshButton.disabled = false;
+      refreshButton.querySelector('i').classList.remove('fa-spin');
+      schedule();
+    }
+  };
+
+  refreshButton.addEventListener('click', refreshJobs);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshJobs(); });
+  schedule();
+});
+</script>
+{% endblock %}

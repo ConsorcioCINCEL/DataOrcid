@@ -62,6 +62,5 @@ def download_orcid():
     except Exception as exc:
         logger.exception("CRITICAL: Error processing /download_orcid for year %s: %s", year, exc)
         return jsonify({
-            "error": _("Internal server error."),
-            "details": str(exc)
+            "error": _("Internal server error.")
         }), 500

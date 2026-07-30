@@ -1,7 +1,7 @@
 """Add institution identifiers and researcher associations
 
 Revision ID: 6f8d2a41c9b7
-Revises: 3c2b6d9a1f40
+Revises: 5a6b7c8d9e0f
 Create Date: 2026-07-14 12:00:00.000000
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 revision = "6f8d2a41c9b7"
-down_revision = "3c2b6d9a1f40"
+down_revision = "5a6b7c8d9e0f"
 branch_labels = None
 depends_on = None
 

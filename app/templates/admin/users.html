@@ -1,198 +1,481 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 
-{% block title %}{{ _('User Administration') }}{% endblock %} 
+{% macro user_actions(user) %}
+  {% if session.get('is_admin') %}
+    <div class="user-row-actions">
+      <button class="btn btn-sm btn-outline-primary btn-edit-user"
+              type="button"
+              data-toggle="modal"
+              data-target="#modalEditUser"
+              data-update-url="{{ url_for('admin.users_update', user_id=user.id) }}"
+              data-username="{{ user.username }}"
+              data-email="{{ user.email or '' }}"
+              data-first-name="{{ user.first_name or '' }}"
+              data-last-name="{{ user.last_name or '' }}"
+              data-position="{{ user.position or '' }}"
+              data-institution-name="{{ user.institution_name or '' }}"
+              data-ror-id="{{ user.ror_id or '' }}"
+              data-grid-id="{{ user.grid_id or '' }}"
+              data-am-client-id="{{ user.am_client_id or '' }}"
+              data-is-admin="{{ 1 if user.is_admin else 0 }}"
+              data-is-manager="{{ 1 if user.is_manager else 0 }}"
+              data-locale="{{ user.locale or 'en' }}">
+        <i class="fas fa-edit" aria-hidden="true"></i>
+        <span>{{ _('Edit') }}</span>
+      </button>
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle user-more-action"
+                type="button" data-toggle="dropdown" data-boundary="viewport"
+                aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+          <span>{{ _('More') }}</span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-right user-action-menu">
+          <a class="dropdown-item" href="{{ url_for('admin.statistics', user=user.username) }}">
+            <i class="fas fa-history text-secondary" aria-hidden="true"></i>{{ _('View activity') }}
+          </a>
+          <button class="dropdown-item user-confirm-action" type="button"
+                  data-action-url="{{ url_for('admin.users_send_creds', user_id=user.id) }}"
+                  data-confirm-title="{{ _('Send password setup link') }}"
+                  data-confirm-message="{{ _('Generate a new temporary password and send it to %(email)s? The current password will stop working.', email=user.email or user.username) }}"
+                  data-confirm-label="{{ _('Send setup link') }}"
+                  data-confirm-variant="primary"
+                  data-confirm-icon="fa-paper-plane">
+            <i class="fas fa-paper-plane text-info" aria-hidden="true"></i>{{ _('Send setup link') }}
+          </button>
+          <button class="dropdown-item user-confirm-action" type="button"
+                  data-action-url="{{ url_for('admin.users_reset_password', user_id=user.id) }}"
+                  data-confirm-title="{{ _('Reset password') }}"
+                  data-confirm-message="{{ _('Reset the password for %(username)s? A new temporary password will be generated and the current password will stop working.', username=user.username) }}"
+                  data-confirm-label="{{ _('Reset password') }}"
+                  data-confirm-variant="warning"
+                  data-confirm-icon="fa-key">
+            <i class="fas fa-key text-warning" aria-hidden="true"></i>{{ _('Reset password') }}
+          </button>
+          {% if user.id != session.get('user_id') %}
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item text-danger user-confirm-action" type="button"
+                    data-action-url="{{ url_for('admin.users_delete', user_id=user.id) }}"
+                    data-confirm-title="{{ _('Delete user') }}"
+                    data-confirm-message="{{ _('Delete %(username)s permanently? This action cannot be undone.', username=user.username) }}"
+                    data-confirm-label="{{ _('Delete user') }}"
+                    data-confirm-variant="danger"
+                    data-confirm-icon="fa-trash">
+              <i class="fas fa-trash" aria-hidden="true"></i>{{ _('Delete user') }}
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.statistics', user=user.username) }}">
+      <i class="fas fa-history mr-1" aria-hidden="true"></i>{{ _('View activity') }}
+    </a>
+  {% endif %}
+{% endmacro %}
+
+{% block title %}{% if session.get('is_admin') %}{{ _('User administration · Data ORCID-Chile') }}{% else %}{{ _('Institution accounts · Data ORCID-Chile') }}{% endif %}{% endblock %}
 
 {% block header_title %}
-<h1 class="m-0 text-dark">{{ _('User Administration') }}</h1>
-{% endblock %} 
+<div class="app-section-heading">
+  <h1>{% if session.get('is_admin') %}{{ _('User administration') }}{% else %}{{ _('Institution accounts') }}{% endif %}</h1>
+  <p>{% if session.get('is_admin') %}{{ _('Manage access, institutional assignments, roles, and account recovery.') }}{% else %}{{ _('Review the accounts and recent activity associated with your institution.') }}{% endif %}</p>
+</div>
+{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">{{ _('Users') }}</li>
-{% endblock %} 
+<li class="breadcrumb-item active" aria-current="page">{% if session.get('is_admin') %}{{ _('Users') }}{% else %}{{ _('Institution accounts') }}{% endif %}</li>
+{% endblock %}
 
 {% block content %}
-<div class="row mb-3">
-  <div class="col-md-8">
-    <form class="form-inline" method="get">
-      <div class="input-group">
-        <input type="text" class="form-control" name="q" value="{{ q or '' }}" placeholder="{{ _('Search by username, institution, ROR or email') }}" style="min-width: 300px;">
-        <div class="input-group-append">
+<section class="app-kpi-strip user-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('User account metrics') }}">
+  <article class="app-kpi">
+    <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-users"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Total accounts') }}</span>
+      <strong>{{ summary.total }}</strong>
+      <small>{{ _('Within your administration scope') }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-user-shield"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Administrators') }}</span>
+      <strong>{{ summary.admins }}</strong>
+      <small>{{ _('Full system access') }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-user-cog"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Institutional managers') }}</span>
+      <strong>{{ summary.managers }}</strong>
+      <small>{{ _('Institution-scoped access') }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-user-check"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Active accounts') }}</span>
+      <strong>{{ summary.active }}</strong>
+      <small>{{ _('Activity during the last 30 days') }}</small>
+    </div>
+  </article>
+</section>
+
+<section class="card shadow-sm mb-4 user-filter-card" aria-labelledby="userFiltersTitle">
+  <div class="card-header d-flex align-items-center">
+    <div>
+      <h2 id="userFiltersTitle" class="card-title font-weight-bold mb-0">{{ _('Account filters') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Find accounts by identity, institution, access level, or recent activity.') }}</p>
+    </div>
+    {% if session.get('is_admin') %}
+    <div class="app-card-tools ml-auto">
+      <button class="btn btn-success shadow-sm" type="button" data-toggle="modal" data-target="#modalNewUser">
+        <i class="fas fa-user-plus mr-1" aria-hidden="true"></i>{{ _('Create user') }}
+      </button>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <form method="get" action="{{ url_for('admin.users_list') }}" id="userFiltersForm">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="app-filter-grid app-filter-grid--users">
+        <div class="user-filter-search">
+          <label for="userSearch">{{ _('Search users') }}</label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-search"></i></span>
+            </div>
+            <input id="userSearch" type="search" class="form-control" name="q" value="{{ q }}"
+                   placeholder="{{ _('Name, username, email, institution, or ROR...') }}">
+          </div>
+        </div>
+        <div>
+          <label for="userRoleFilter">{{ _('Access level') }}</label>
+          <select id="userRoleFilter" name="role" class="form-control">
+            <option value="all" {% if selected_role == 'all' %}selected{% endif %}>{{ _('All roles') }}</option>
+            <option value="admin" {% if selected_role == 'admin' %}selected{% endif %}>{{ _('Administrators') }}</option>
+            <option value="manager" {% if selected_role == 'manager' %}selected{% endif %}>{{ _('Managers') }}</option>
+            <option value="user" {% if selected_role == 'user' %}selected{% endif %}>{{ _('Standard users') }}</option>
+          </select>
+        </div>
+        {% if session.get('is_admin') %}
+        <div>
+          <label for="userInstitutionFilter">{{ _('Institution') }}</label>
+          <select id="userInstitutionFilter" name="institution" class="form-control">
+            <option value="">{{ _('All institutions') }}</option>
+            {% for institution in institution_options %}
+              <option value="{{ institution.ror_id }}" {% if institution.ror_id == selected_institution %}selected{% endif %}>{{ institution.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <div>
+          <label for="userActivityFilter">{{ _('Account activity') }}</label>
+          <select id="userActivityFilter" name="activity" class="form-control">
+            <option value="all" {% if selected_activity == 'all' %}selected{% endif %}>{{ _('Any activity') }}</option>
+            <option value="active" {% if selected_activity == 'active' %}selected{% endif %}>{{ _('Active in the last 30 days') }}</option>
+            <option value="inactive" {% if selected_activity == 'inactive' %}selected{% endif %}>{{ _('Previously active') }}</option>
+            <option value="never" {% if selected_activity == 'never' %}selected{% endif %}>{{ _('No recorded activity') }}</option>
+          </select>
+        </div>
+        <div>
+          <label for="userSortFilter">{{ _('Sort by') }}</label>
+          <select id="userSortFilter" name="sort" class="form-control">
+            <option value="created" {% if selected_sort == 'created' %}selected{% endif %}>{{ _('Recently created') }}</option>
+            <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>{{ _('Name') }}</option>
+            <option value="institution" {% if selected_sort == 'institution' %}selected{% endif %}>{{ _('Institution') }}</option>
+            <option value="activity" {% if selected_sort == 'activity' %}selected{% endif %}>{{ _('Recent activity') }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="app-filter-footer user-filter-footer">
+        <p class="mb-0 text-muted small">
+          {% if pagination.total %}
+            {{ _('%(count)s matching accounts', count=pagination.total) }}
+          {% else %}
+            {{ _('No matching accounts') }}
+          {% endif %}
+        </p>
+        <div class="app-filter-actions">
+          <a class="btn btn-outline-secondary" href="{{ url_for('admin.users_list') }}">
+            <i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Clear filters') }}
+          </a>
           <button class="btn btn-primary" type="submit">
-            <i class="fas fa-search mr-1"></i> {{ _('Search') }}
+            <i class="fas fa-filter mr-1" aria-hidden="true"></i>{{ _('Apply filters') }}
           </button>
         </div>
       </div>
     </form>
   </div>
-  <div class="col-md-4 text-right">
-    {% if session.get('is_admin') %}
-    <button class="btn btn-success shadow-sm" data-toggle="modal" data-target="#modalNewUser">
-      <i class="fas fa-user-plus mr-1"></i> {{ _('Create User') }}
-    </button>
-    {% endif %}
-  </div>
-</div>
+</section>
 
-<div class="card card-outline card-primary shadow-sm">
-  <div class="card-header border-0">
-    <h3 class="card-title"><i class="fas fa-users-cog mr-2"></i> {{ _('System Users') }}</h3>
+<section class="card card-outline card-primary shadow-sm user-list-card" aria-labelledby="systemUsersTitle">
+  <div class="card-header d-flex align-items-center border-0">
+    <div>
+      <h2 id="systemUsersTitle" class="card-title font-weight-bold mb-0"><i class="fas fa-users-cog mr-2" aria-hidden="true"></i>{% if session.get('is_admin') %}{{ _('System users') }}{% else %}{{ _('Institution accounts') }}{% endif %}</h2>
+      <p class="activity-card-subtitle mb-0">
+        {% if pagination.total %}
+          {{ _('Showing %(first)s–%(last)s of %(total)s accounts', first=pagination.first, last=pagination.last, total=pagination.total) }}
+        {% else %}
+          {{ _('No matching accounts') }}
+        {% endif %}
+      </p>
+    </div>
+    <div class="app-card-tools ml-auto">
+      <span class="badge badge-light border">{{ _('Page') }} {{ pagination.page }} {{ _('of') }} {{ pagination.pages or 1 }}</span>
+    </div>
   </div>
+
+  {% if users %}
   <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover table-striped mb-0">
-        <thead class="thead-light">
+    <div class="user-account-table-wrap d-none d-lg-block">
+      <table class="table table-hover table-striped mb-0 user-account-table">
+        <caption class="sr-only">{{ _('User accounts matching the selected filters') }}</caption>
+        <thead class="bg-light text-muted">
           <tr>
-            <th>{{ _('Username') }}</th>
-            <th>{{ _('Contact Info') }}</th>
-            <th>{{ _('Full Name') }}</th>
-            <th>{{ _('Institution / ROR') }}</th>
-            <th class="text-center">{{ _('Roles') }}</th>
-            <th class="text-center">{{ _('Last Activity') }}</th>
-            <th class="text-center">{{ _('Created') }}</th>
+            <th>{{ _('User') }}</th>
+            <th>{{ _('Institution') }}</th>
+            <th>{{ _('Access') }}</th>
+            <th>{{ _('Activity') }}</th>
             <th class="text-right">{{ _('Actions') }}</th>
           </tr>
         </thead>
         <tbody>
-          {% for u in users %}
+          {% for user in users %}
+          {% set activity = activity_by_user.get(user.username) %}
           <tr>
-            <td class="align-middle"><strong>{{ u.username }}</strong></td>
-            <td class="align-middle">
-                <small class="d-block text-muted"><i class="fas fa-envelope mr-1"></i> {{ u.email or u.username }}</small>
-                {% if u.position %}<small class="badge badge-light border">{{ u.position }}</small>{% endif %}
-            </td>
-            <td class="align-middle">{{ u.first_name or '—' }} {{ u.last_name or '' }}</td>
-            <td class="align-middle">
-              <span class="d-block">{{ u.institution_name or '—' }}</span>
-              {% if u.ror_id %}<code class="small text-primary">ROR: {{ u.ror_id }}</code>{% endif %}
-              {% set institution = institution_metadata.get(u.ror_id or '') %}
-              {% if institution and institution.ringgold_ids %}
-                <code class="small text-secondary d-block">{{ _('Ringgold ID') }}: {{ institution.ringgold_ids|join(', ') }}</code>
+            <td class="align-middle user-identity-cell">
+              <strong>{{ user.full_name }}</strong>
+              <span class="user-account-meta"><i class="fas fa-user" aria-hidden="true"></i>{{ user.username }}</span>
+              {% if user.email and user.email != user.username %}
+                <span class="user-account-meta"><i class="fas fa-envelope" aria-hidden="true"></i>{{ user.email }}</span>
               {% endif %}
+              {% if user.position %}<span class="badge badge-light border mt-1">{{ user.position }}</span>{% endif %}
             </td>
-            <td class="align-middle text-center">
-              {% if u.is_admin %}<span class="badge badge-primary">{{ _('Admin') }}</span>{% endif %}
-              {% if u.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
-              {% if not u.is_admin and not u.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
+            <td class="align-middle user-institution-cell">
+              <strong>{{ user.institution_name or '—' }}</strong>
+              {% if user.ror_id %}<code>ROR: {{ user.ror_id }}</code>{% endif %}
             </td>
-            {% set activity = activity_by_user.get(u.username) %}
-            <td class="align-middle text-center small">
-              {% if activity %}
-                <div class="font-weight-bold">{{ activity.last_seen|datetimeformat }}</div>
-                <a href="{{ url_for('admin.statistics', user=u.username) }}" class="text-muted">
-                  <i class="fas fa-history mr-1"></i>{{ _('%(count)s requests', count=activity.request_count) }}
-                </a>
-              {% else %}
-                <span class="text-muted">—</span>
-              {% endif %}
-            </td>
-            <td class="align-middle text-center small text-muted">
-                {{ u.created_at|datetimeformat if u.created_at else '—' }}
-            </td>
-            <td class="text-right align-middle">
-              <div class="btn-group">
-                <a class="btn btn-sm btn-default" href="{{ url_for('admin.statistics', user=u.username) }}" title="{{ _('View Activity') }}">
-                  <i class="fas fa-history text-secondary"></i>
-                </a>
-                {% if session.get('is_admin') %}
-                <button class="btn btn-sm btn-default btn-edit-user" data-toggle="modal" data-target="#modalEditUser" title="{{ _('Edit') }}"
-                  data-id="{{ u.id }}" data-username="{{ u.username }}" data-email="{{ u.email or '' }}" data-first_name="{{ u.first_name or '' }}"
-                  data-last_name="{{ u.last_name or '' }}" data-position="{{ u.position or '' }}" data-institution_name="{{ u.institution_name or '' }}"
-                  data-ror_id="{{ u.ror_id or '' }}" data-grid_id="{{ u.grid_id or '' }}" data-am_client_id="{{ u.am_client_id or '' }}"
-                  data-is_admin="{{ 1 if u.is_admin else 0 }}" data-is_manager="{{ 1 if u.is_manager else 0 }}" data-locale="{{ u.locale or 'es' }}">
-                  <i class="fas fa-edit text-primary"></i>
-                </button>
-                
-                <form action="{{ url_for('admin.users_reset_password', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Reset password for') }} {{ u.username }}?');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-default" type="submit" title="{{ _('Reset Password') }}"><i class="fas fa-key text-warning"></i></button>
-                </form>
-
-                <form action="{{ url_for('admin.users_send_creds', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Temporary credentials will be sent to') }} {{ u.email or u.username }}.');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-default" type="submit" title="{{ _('Send Credentials') }}"><i class="fas fa-paper-plane text-info"></i></button>
-                </form>
-
-                <form action="{{ url_for('admin.users_delete', user_id=u.id) }}" method="post" class="d-inline" onsubmit="return confirm('{{ _('Delete user') }} {{ u.username }}?');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-default" type="submit" title="{{ _('Delete') }}"><i class="fas fa-trash text-danger"></i></button>
-                </form>
-                {% endif %}
+            <td class="align-middle user-access-cell">
+              <div class="user-role-badges">
+                {% if user.is_admin %}<span class="badge badge-primary">{{ _('Admin') }}</span>{% endif %}
+                {% if user.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
+                {% if not user.is_admin and not user.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
               </div>
+              <span class="user-account-meta"><i class="fas fa-language" aria-hidden="true"></i>{{ (user.locale or 'en')|upper }}</span>
             </td>
-          </tr>
-          {% else %} 
-          <tr>
-            <td colspan="8" class="text-center py-4 text-muted">{{ _('No users found.') }}</td>
+            <td class="align-middle user-activity-cell">
+              {% if activity %}
+                <time datetime="{{ activity.last_seen.isoformat() }}">{{ activity.last_seen|datetimeformat }}</time>
+                <a href="{{ url_for('admin.statistics', user=user.username) }}">{{ _('%(count)s requests', count=activity.request_count) }}</a>
+              {% else %}
+                <span class="text-muted">{{ _('No recorded activity') }}</span>
+              {% endif %}
+            </td>
+            <td class="text-right align-middle">{{ user_actions(user) }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <div class="user-mobile-list d-lg-none">
+      {% for user in users %}
+      {% set activity = activity_by_user.get(user.username) %}
+      <article class="user-account-card">
+        <header>
+          <div>
+            <h3>{{ user.full_name }}</h3>
+            <span>{{ user.username }}</span>
+          </div>
+          <div class="user-role-badges">
+            {% if user.is_admin %}<span class="badge badge-primary">{{ _('Admin') }}</span>{% endif %}
+            {% if user.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
+            {% if not user.is_admin and not user.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
+          </div>
+        </header>
+        <dl>
+          <div>
+            <dt>{{ _('Institution') }}</dt>
+            <dd>{{ user.institution_name or '—' }}{% if user.ror_id %}<code>ROR: {{ user.ror_id }}</code>{% endif %}</dd>
+          </div>
+          <div>
+            <dt>{{ _('Recent activity') }}</dt>
+            <dd>
+              {% if activity %}
+                <time datetime="{{ activity.last_seen.isoformat() }}">{{ activity.last_seen|datetimeformat }}</time>
+                <span>{{ _('%(count)s requests', count=activity.request_count) }}</span>
+              {% else %}
+                {{ _('No recorded activity') }}
+              {% endif %}
+            </dd>
+          </div>
+        </dl>
+        <footer>{{ user_actions(user) }}</footer>
+      </article>
+      {% endfor %}
+    </div>
   </div>
-</div>
+  {% else %}
+  <div class="card-body activity-empty-state user-empty-state">
+    <i class="fas fa-user-slash" aria-hidden="true"></i>
+    <h3>{{ _('No users match these filters') }}</h3>
+    <p>
+      {% if q %}
+        {{ _('No account matched “%(query)s”. Try a broader search or clear the filters.', query=q) }}
+      {% else %}
+        {{ _('Try changing the institution, role, or activity filters.') }}
+      {% endif %}
+    </p>
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.users_list') }}">{{ _('Clear filters') }}</a>
+  </div>
+  {% endif %}
+
+  {% if pagination.total %}
+  <div class="card-footer bg-white activity-pagination-footer user-pagination-footer">
+    <div class="activity-page-size" aria-label="{{ _('Results per page') }}">
+      <span>{{ _('Rows') }}</span>
+      {% for size in per_page_options %}
+        <a class="btn btn-xs {% if per_page == size %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+           href="{{ users_url(per_page=size, page=1) }}">{{ size }}</a>
+      {% endfor %}
+    </div>
+    <nav aria-label="{{ _('User result pages') }}">
+      <ul class="pagination pagination-sm justify-content-center mb-0">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+          {% if pagination.has_prev %}
+            <a class="page-link" href="{{ users_url(page=pagination.prev_num) }}" aria-label="{{ _('Previous page') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+          {% else %}
+            <span class="page-link" aria-disabled="true"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>
+          {% endif %}
+        </li>
+        {% for page_number in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if page_number %}
+            <li class="page-item {% if page_number == pagination.page %}active{% endif %}">
+              {% if page_number == pagination.page %}
+                <span class="page-link" aria-current="page">{{ page_number }}</span>
+              {% else %}
+                <a class="page-link" href="{{ users_url(page=page_number) }}">{{ page_number }}</a>
+              {% endif %}
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link" aria-hidden="true">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+          {% if pagination.has_next %}
+            <a class="page-link" href="{{ users_url(page=pagination.next_num) }}" aria-label="{{ _('Next page') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+          {% else %}
+            <span class="page-link" aria-disabled="true"><i class="fas fa-chevron-right" aria-hidden="true"></i></span>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</section>
 
 {% include 'admin/_user_modals.html' %}
-
 {% endblock %}
 
-{% block styles %} 
-{{ super() }}
-<style>
-  /* Fix for modal z-index in AdminLTE */
-  .modal { z-index: 1065 !important; }
-  .modal-backdrop { z-index: 1060 !important; }
-  
-  /* Theming for custom switches */
-  .custom-switch-on-orange .custom-control-input:checked ~ .custom-control-label::before {
-    background-color: #EF5A2F !important;
-    border-color: #EF5A2F !important;
-  }
-  .custom-switch .custom-control-label { cursor: pointer; font-weight: 500; }
-  .btn-group .btn { border-color: #ddd; }
-</style>
-{% endblock %} 
-
-{% block scripts %} 
+{% block scripts %}
 {{ super() }}
 <script>
-  $(function () {
-    // Append modals to body for proper display
-    $("#modalEditUser, #modalNewUser").on("show.bs.modal", function () { $(this).appendTo("body"); });
+$(function () {
+  const $userModals = $('#modalEditUser, #modalNewUser, #modalConfirmUserAction');
+  $userModals.appendTo('body');
 
-    // Handle Edit User Modal population
-    $(".btn-edit-user").on("click", function () {
-      const btn = $(this);
-      const modal = $("#modalEditUser");
-      const form = modal.find("form");
-      
-      // Dynamic Action URL
-      form.attr("action", "{{ url_for('admin.users_update', user_id=0) }}".replace('0', btn.data("id")));
-      
-      // Mapping values
-      form.find("[name='username']").val(btn.data("username"));
-      form.find("[name='email']").val(btn.data("email"));
-      form.find("[name='first_name']").val(btn.data("first_name"));
-      form.find("[name='last_name']").val(btn.data("last_name"));
-      form.find("[name='position']").val(btn.data("position"));
-      form.find("[name='institution_name']").val(btn.data("institution_name"));
-      form.find("[name='ror_id']").val(btn.data("ror_id"));
-      form.find("[name='grid_id']").val(btn.data("grid_id"));
-      form.find("[name='am_client_id']").val(btn.data("am_client_id"));
-      form.find("[name='locale']").val(btn.data("locale") || "es");
-      
-      // Boolean switches
-      $("#is_admin_edit").prop("checked", btn.data("is_admin") == 1);
-      $("#is_manager_edit").prop("checked", btn.data("is_manager") == 1);
+  function initializeInstitutionSelect($modal) {
+    const $select = $modal.find('.user-institution-select');
+    if (!$select.length || !$.fn.select2) return;
+    $select.select2({
+      width: '100%',
+      allowClear: true,
+      dropdownParent: $modal,
+      placeholder: {{ _('Select an institution')|tojson }}
     });
+  }
 
-    // UX: Auto-copy username to email if looks like email
-    const $newUser = $("#new_username"), $newEmail = $("#new_email");
-    $newUser.on("blur", function() { 
-      if ($newEmail.val().trim() === "" && $newUser.val().includes('@')) {
-        $newEmail.val($newUser.val().trim()); 
-      }
-    });
+  initializeInstitutionSelect($('#modalEditUser'));
+  initializeInstitutionSelect($('#modalNewUser'));
+
+  $(document).on('change', '.user-institution-select', function () {
+    const $select = $(this);
+    const $form = $select.closest('form');
+    const $option = $select.find('option:selected');
+    $form.find("[name='institution_name']").val($option.data('name') || '');
+    $form.find("[name='ror_id']").val($option.val() || '');
+    $form.find("[name='grid_id']").val($option.data('grid') || '');
   });
+
+  $(document).on('click', '.btn-edit-user', function () {
+    const $button = $(this);
+    const $modal = $('#modalEditUser');
+    const $form = $modal.find('form');
+    const rorId = String($button.data('rorId') || '');
+    const institutionName = String($button.data('institutionName') || '');
+
+    $form.attr('action', $button.attr('data-update-url'));
+    $form.attr('data-original-admin', Number($button.data('isAdmin')) === 1 ? '1' : '0');
+    $form.find("[name='username']").val($button.data('username'));
+    $form.find("[name='email']").val($button.data('email'));
+    $form.find("[name='first_name']").val($button.data('firstName'));
+    $form.find("[name='last_name']").val($button.data('lastName'));
+    $form.find("[name='position']").val($button.data('position'));
+    $form.find("[name='institution_name']").val(institutionName);
+    $form.find("[name='ror_id']").val(rorId);
+    $form.find("[name='grid_id']").val($button.data('gridId'));
+    $form.find("[name='am_client_id']").val($button.data('amClientId'));
+    $form.find("[name='locale']").val($button.data('locale') || 'en');
+    $form.find("[name='is_admin']").prop('checked', Number($button.data('isAdmin')) === 1);
+    $form.find("[name='is_manager']").prop('checked', Number($button.data('isManager')) === 1);
+
+    const $institutionSelect = $form.find('.user-institution-select');
+    if (rorId && !$institutionSelect.find(`option[value="${CSS.escape(rorId)}"]`).length) {
+      const option = new Option(institutionName || rorId, rorId, true, true);
+      $(option).attr('data-name', institutionName).attr('data-grid', $button.data('gridId') || '');
+      $institutionSelect.append(option);
+    }
+    $institutionSelect.val(rorId || null).trigger('change.select2');
+    $form.find('.user-admin-warning').toggleClass('d-none', Number($button.data('isAdmin')) !== 1);
+  });
+
+  $(document).on('change', "[name='is_admin']", function () {
+    $(this).closest('form').find('.user-admin-warning').toggleClass('d-none', !this.checked);
+  });
+
+  $('#formEditUser').on('submit', function (event) {
+    const grantsAdministrator = $(this).attr('data-original-admin') !== '1' && $(this).find("[name='is_admin']").is(':checked');
+    if (grantsAdministrator && !window.confirm({{ _('Grant full administrator access to this user?')|tojson }})) {
+      event.preventDefault();
+    }
+  });
+
+  $(document).on('click', '.user-confirm-action', function () {
+    const $button = $(this);
+    const $modal = $('#modalConfirmUserAction');
+    const variant = $button.data('confirmVariant') || 'primary';
+    $modal.find('form').attr('action', $button.data('actionUrl'));
+    $modal.find('.modal-title-text').text($button.data('confirmTitle'));
+    $modal.find('.user-confirm-message').text($button.data('confirmMessage'));
+    $modal.find('.user-confirm-icon').attr('class', `fas ${$button.data('confirmIcon')} user-confirm-icon`);
+    $modal.find('.user-confirm-submit')
+      .removeClass('btn-primary btn-warning btn-danger')
+      .addClass(`btn-${variant}`)
+      .text($button.data('confirmLabel'));
+    $modal.modal('show');
+  });
+
+  const $newUsername = $('#new_username');
+  const $newEmail = $('#new_email');
+  $newUsername.on('blur', function () {
+    if (!$newEmail.val().trim() && $newUsername.val().includes('@')) {
+      $newEmail.val($newUsername.val().trim());
+    }
+  });
+});
 </script>
 {% endblock %}

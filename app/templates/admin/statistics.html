@@ -1,227 +1,475 @@
 {% extends "base.html" %}
+{% from "components/ui.html" import chart_exports %}
+
+{% macro sort_heading(label, key, alignment='') %}
+  {% set is_active = sort_key == key %}
+  {% set next_direction = 'asc' if not is_active or sort_direction == 'desc' else 'desc' %}
+  <th class="{{ alignment }}" {% if is_active %}aria-sort="{{ 'ascending' if sort_direction == 'asc' else 'descending' }}"{% endif %}>
+    <a class="activity-sort-link" href="{{ statistics_url(sort=key, dir=next_direction, page=1) }}">
+      <span>{{ label }}</span>
+      <i class="fas {% if is_active and sort_direction == 'asc' %}fa-sort-up{% elif is_active %}fa-sort-down{% else %}fa-sort{% endif %}" aria-hidden="true"></i>
+    </a>
+  </th>
+{% endmacro %}
 
 {% block title %}{{ _('Usage Statistics · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-<h1 class="m-0 text-dark">{{ _('System Activity Logs') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('System activity') }}</h1>
+  <p>{{ _('Review request volume, response status, users, and recent platform activity.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
-<li class="breadcrumb-item active">{{ _('Statistics') }}</li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Statistics') }}</li>
 {% endblock %}
 
 {% block content %}
+<section class="app-kpi-strip activity-kpi-strip" style="--app-kpi-columns: 5" aria-label="{{ _('Metrics for the selected period') }}">
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-stream"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Requests') }}</span>
+      <strong>{{ '{:,}'.format(summary.total_requests) }}</strong>
+      <small>{{ period_label }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-users"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Unique users') }}</span>
+      <strong>{{ summary.unique_users }}</strong>
+      <small>{{ kind_label }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-red" aria-hidden="true"><i class="fas fa-exclamation-triangle"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Error rate') }}</span>
+      <strong>{{ '%.1f%%'|format(summary.error_rate) }}</strong>
+      <small>{{ _('%(count)s error responses', count=summary.error_requests) }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-stopwatch"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('Median latency') }}</span>
+      <strong>{{ format_latency(summary.median) }}</strong>
+      <small>{{ _('Typical response') }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-amber" aria-hidden="true"><i class="fas fa-tachometer-alt"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('P95 latency') }}</span>
+      <strong>{{ format_latency(summary.p95) }}</strong>
+      <small>{{ _('95th percentile response') }}</small>
+    </div>
+  </article>
+</section>
 
-<div class="row">
-    {% for label, value, icon, color in [
-        (_('Requests'), summary.total_requests, 'fas fa-stream', 'bg-primary'),
-        (_('Active Users'), summary.unique_users, 'fas fa-users', 'bg-info'),
-        (_('Error Responses'), summary.error_requests, 'fas fa-exclamation-triangle', 'bg-danger'),
-        (_('Average Latency'), ('%.0f ms'|format(summary.average_latency)), 'fas fa-tachometer-alt', 'bg-success')
-    ] %}
-    <div class="col-sm-6 col-xl-3">
-        <div class="info-box shadow-sm">
-            <span class="info-box-icon {{ color }}"><i class="{{ icon }}"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text font-weight-bold">{{ label }}</span>
-                <span class="info-box-number">{{ value }}</span>
+<section class="card shadow-sm mb-4 activity-filter-card" aria-labelledby="activityFiltersTitle">
+  <div class="card-header d-flex align-items-center">
+    <div>
+      <h2 id="activityFiltersTitle" class="card-title text-bold mb-0">{{ _('Activity filters') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ period_label }} · {{ kind_label }}</p>
+    </div>
+  </div>
+  <div class="card-body">
+    <form method="get" action="{{ url_for('admin.statistics') }}" id="activityFiltersForm">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="app-filter-grid app-filter-grid--activity">
+        <div class="activity-filter-search">
+          <label for="activitySearch">{{ _('Search keyword') }}</label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-search"></i></span>
             </div>
+            <input id="activitySearch" type="search" name="q" value="{{ q }}" class="form-control"
+                   placeholder="{{ _('User, path, or IP...') }}">
+          </div>
         </div>
-    </div>
-    {% endfor %}
-</div>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header">
-        <h3 class="card-title text-bold mb-0">{{ _('Activity Filters') }}</h3>
-    </div>
-    <div class="card-body">
-        <form method="get" action="">
-            <div class="row align-items-end">
-                <div class="col-md-3 mb-2">
-                    <label class="small font-weight-bold text-muted">{{ _('Search Keyword') }}</label>
-                    <div class="input-group input-group-sm">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
-                        </div>
-                        <input type="text" name="q" value="{{ q }}" class="form-control"
-                               placeholder="{{ _('User, path, or IP...') }}">
-                    </div>
-                </div>
-
-                <div class="col-md-3 mb-2">
-                    <label class="small font-weight-bold text-muted">{{ _('Filter by User') }}</label>
-                    <select name="user" id="user-select" class="form-control form-control-sm select2">
-                        <option value="">{{ _('All Users') }}</option>
-                        {% for u in users %}
-                            <option value="{{ u }}" {% if u == selected_user %}selected{% endif %}>
-                                {{ u }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-2 mb-2">
-                    <label class="small font-weight-bold text-muted">{{ _('Method') }}</label>
-                    <select name="method" class="form-control form-control-sm">
-                        <option value="">{{ _('All Methods') }}</option>
-                        {% for method in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] %}
-                            <option value="{{ method }}" {% if method == selected_method %}selected{% endif %}>{{ method }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-2 mb-2">
-                    <label class="small font-weight-bold text-muted">{{ _('Status') }}</label>
-                    <select name="status" class="form-control form-control-sm">
-                        <option value="">{{ _('All Statuses') }}</option>
-                        <option value="success" {% if selected_status == 'success' %}selected{% endif %}>{{ _('Success') }}</option>
-                        <option value="redirect" {% if selected_status == 'redirect' %}selected{% endif %}>{{ _('Redirects') }}</option>
-                        <option value="error" {% if selected_status == 'error' %}selected{% endif %}>{{ _('Errors') }}</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2 mb-2">
-                    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success pt-2">
-                        <input type="checkbox" class="custom-control-input" name="show_anonymous" value="1" id="show_anonymous" {% if show_anonymous %}checked{% endif %}>
-                        <label class="custom-control-label small" for="show_anonymous">
-                            {{ _('Include anonymous (guest) access') }}
-                        </label>
-                    </div>
-                </div>
-
-                <div class="col-md-2 mb-2">
-                    <button class="btn btn-primary btn-sm btn-block shadow-sm" type="submit">
-                        <i class="fas fa-filter mr-1"></i> {{ _('Apply') }}
-                    </button>
-                    <a href="{{ url_for('admin.statistics') }}" class="btn btn-link btn-sm btn-block">{{ _('Reset') }}</a>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-{# ======= Logs Table ======= #}
-<div class="card card-outline card-primary shadow-sm">
-    <div class="card-header border-0">
-        <h3 class="card-title font-weight-bold"><i class="fas fa-history mr-2"></i> {{ _('Recent Requests') }}</h3>
-        <div class="card-tools">
-            <span class="badge badge-light border">{{ _('Page') }} {{ pagination.page }} {{ _('of') }} {{ pagination.pages }}</span>
+        <div class="activity-filter-user">
+          <label for="user-select">{{ _('User') }}</label>
+          <select name="user" id="user-select" class="form-control select2">
+            <option value="">{{ _('All users') }}</option>
+            {% for user in users %}
+              <option value="{{ user }}" {% if user == selected_user %}selected{% endif %}>{{ user }}</option>
+            {% endfor %}
+          </select>
         </div>
-    </div>
 
-    {% if logs %}
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-striped mb-0 small">
-                <thead class="bg-light text-muted">
-                    <tr>
-                        <th>{{ _('Timestamp') }}</th>
-                        <th>{{ _('User') }}</th>
-                        <th>{{ _('Request Path') }}</th>
-                        <th class="text-center">{{ _('Method') }}</th>
-                        <th class="text-center">{{ _('Status') }}</th>
-                        <th class="text-right">{{ _('Latency') }}</th>
-                        <th class="text-right">{{ _('Client') }}</th>
-                        <th class="text-right">IP</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td class="text-nowrap align-middle">{{ log.timestamp|datetimeformat }}</td>
-                        <td class="align-middle">
-                            {% if log.username %}
-                                <span class="badge badge-info"><i class="fas fa-user mr-1"></i> {{ log.username }}</span>
-                            {% else %}
-                                <span class="text-muted small"><i>anonymous</i></span>
-                            {% endif %}
-                        </td>
-                        <td class="align-middle"><code>{{ log.path }}</code></td>
-                        <td class="text-center align-middle">
-                            <span class="badge {% if log.method == 'GET' %}badge-light border{% else %}badge-dark{% endif %}">
-                                {{ log.method }}
-                            </span>
-                        </td>
-                        <td class="text-center align-middle">
-                            {% set s = log.status_code|int %}
-                            <span class="badge {% if s < 300 %}badge-success{% elif s < 400 %}badge-info{% else %}badge-danger{% endif %}">
-                                {{ s }}
-                            </span>
-                        </td>
-                        <td class="text-right align-middle font-weight-bold">
-                            {{ "%.0f"|format(log.duration_ms or 0) }}<span class="text-muted small">ms</span>
-                        </td>
-                        <td class="text-right align-middle text-muted small">
-                            {{ log.user_agent[:40] if log.user_agent else '—' }}
-                        </td>
-                        <td class="text-right align-middle text-muted small">{{ log.ip }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div>
+          <label for="periodFilter">{{ _('Period') }}</label>
+          <select id="periodFilter" name="period" class="form-control">
+            <option value="24h" {% if selected_period == '24h' %}selected{% endif %}>{{ _('Last 24 hours') }}</option>
+            <option value="7d" {% if selected_period == '7d' %}selected{% endif %}>{{ _('Last 7 days') }}</option>
+            <option value="30d" {% if selected_period == '30d' %}selected{% endif %}>{{ _('Last 30 days') }}</option>
+            <option value="all" {% if selected_period == 'all' %}selected{% endif %}>{{ _('All time') }}</option>
+            <option value="custom" {% if selected_period == 'custom' %}selected{% endif %}>{{ _('Custom range') }}</option>
+          </select>
         </div>
+
+        <div>
+          <label for="kindFilter">{{ _('Request type') }}</label>
+          <select id="kindFilter" name="kind" class="form-control">
+            <option value="interactive" {% if selected_kind == 'interactive' %}selected{% endif %}>{{ _('Interactive requests') }}</option>
+            <option value="background" {% if selected_kind == 'background' %}selected{% endif %}>{{ _('Background operations') }}</option>
+            <option value="all" {% if selected_kind == 'all' %}selected{% endif %}>{{ _('All requests') }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="methodFilter">{{ _('Method') }}</label>
+          <select id="methodFilter" name="method" class="form-control">
+            <option value="">{{ _('All methods') }}</option>
+            {% for method in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] %}
+              <option value="{{ method }}" {% if method == selected_method %}selected{% endif %}>{{ method }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="statusFilter">{{ _('Status') }}</label>
+          <select id="statusFilter" name="status" class="form-control">
+            <option value="">{{ _('All statuses') }}</option>
+            <option value="success" {% if selected_status == 'success' %}selected{% endif %}>{{ _('Success') }}</option>
+            <option value="redirect" {% if selected_status == 'redirect' %}selected{% endif %}>{{ _('Redirects') }}</option>
+            <option value="error" {% if selected_status == 'error' %}selected{% endif %}>{{ _('Errors') }}</option>
+          </select>
+        </div>
+
+        <div class="activity-custom-date {% if selected_period != 'custom' %}d-none{% endif %}">
+          <label for="dateFromFilter">{{ _('From date') }}</label>
+          <input id="dateFromFilter" type="date" name="date_from" value="{{ date_from }}" class="form-control"
+                 {% if selected_period != 'custom' %}disabled{% endif %}>
+        </div>
+
+        <div class="activity-custom-date {% if selected_period != 'custom' %}d-none{% endif %}">
+          <label for="dateToFilter">{{ _('To date') }}</label>
+          <input id="dateToFilter" type="date" name="date_to" value="{{ date_to }}" class="form-control"
+                 {% if selected_period != 'custom' %}disabled{% endif %}>
+        </div>
+
+        <div class="activity-filter-switch">
+          <div class="custom-control custom-switch custom-switch-on-success">
+            <input type="checkbox" class="custom-control-input" name="show_anonymous" value="1" id="show_anonymous" {% if show_anonymous %}checked{% endif %}>
+            <label class="custom-control-label" for="show_anonymous">{{ _('Include anonymous access') }}</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-filter-footer activity-filter-footer">
+        <div class="activity-filter-chips" aria-label="{{ _('Applied filters') }}">
+          {% for filter in active_filters %}
+            <a class="activity-filter-chip" href="{{ filter.url }}" aria-label="{{ _('Remove %(filter)s filter', filter=filter.label) }}">
+              <span>{{ filter.label }}: {{ filter.value }}</span><i class="fas fa-times" aria-hidden="true"></i>
+            </a>
+          {% else %}
+            <span class="activity-filter-empty">{{ _('No additional filters applied') }}</span>
+          {% endfor %}
+        </div>
+        <div class="app-filter-actions">
+          <a href="{{ url_for('admin.statistics') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Reset') }}
+          </a>
+          <button class="btn btn-primary shadow-sm" type="submit">
+            <i class="fas fa-filter mr-1" aria-hidden="true"></i>{{ _('Apply filters') }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="activity-operations-banner" aria-labelledby="backgroundOperationsTitle">
+  <span class="activity-operations-icon" aria-hidden="true"><i class="fas fa-cogs"></i></span>
+  <div class="activity-operations-copy">
+    <h2 id="backgroundOperationsTitle">{{ _('Background operations') }}</h2>
+    <p>
+      {{ _('%(count)s completed in this period', count=background_summary.total_requests) }}
+      <span aria-hidden="true">·</span>
+      {{ _('%(count)s errors', count=background_summary.error_requests) }}
+      <span aria-hidden="true">·</span>
+      {{ _('Median duration: %(duration)s', duration=format_latency(background_summary.median)) }}
+    </p>
+  </div>
+  {% if selected_kind == 'background' %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ statistics_url(kind='interactive', page=1) }}">{{ _('View interactive requests') }}</a>
+  {% else %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ statistics_url(kind='background', page=1) }}">{{ _('View operations') }}</a>
+  {% endif %}
+</section>
+
+<section class="card shadow-sm mb-4 activity-trend-card" aria-labelledby="activityTrendTitle">
+  <div class="card-header d-flex align-items-center">
+    <div>
+      <h2 id="activityTrendTitle" class="card-title font-weight-bold mb-0">{{ _('Activity trend') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Requests, errors, and latency for the selected period.') }}</p>
     </div>
+    <div class="app-card-tools">{{ chart_exports('activityTrendChart') }}</div>
+  </div>
+  <div class="card-body">
+    {% if trend.labels %}
+      <div class="activity-chart-wrap"><canvas id="activityTrendChart"></canvas></div>
     {% else %}
-    <div class="card-body text-center py-5">
-        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-        <p class="text-muted mb-0">{{ _('No activity logs found for the selected filters.') }}</p>
-    </div>
+      <div class="activity-empty-state">
+        <i class="fas fa-chart-line" aria-hidden="true"></i>
+        <p>{{ _('No trend data is available for the selected filters.') }}</p>
+      </div>
     {% endif %}
+  </div>
+</section>
 
-    {# ======= Pagination ======= #}
-    <div class="card-footer bg-white">
-        <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm justify-content-center mb-0">
-
-                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.prev_num, q=q, user=selected_user, method=selected_method, status=selected_status, show_anonymous=1 if show_anonymous else 0) if pagination.has_prev else '#' }}">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                </li>
-
-                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                    {% if p %}
-                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('admin.statistics', page=p, q=q, user=selected_user, method=selected_method, status=selected_status, show_anonymous=1 if show_anonymous else 0) }}">{{ p }}</a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">…</span></li>
-                    {% endif %}
-                {% endfor %}
-
-                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('admin.statistics', page=pagination.next_num, q=q, user=selected_user, method=selected_method, status=selected_status, show_anonymous=1 if show_anonymous else 0) if pagination.has_next else '#' }}">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                </li>
-
-            </ul>
-        </nav>
+<section class="card card-outline card-primary shadow-sm activity-log-card" aria-labelledby="recentRequestsTitle">
+  <div class="card-header d-flex align-items-center border-0">
+    <div>
+      <h2 id="recentRequestsTitle" class="card-title font-weight-bold mb-0"><i class="fas fa-history mr-2" aria-hidden="true"></i>{{ _('Recent requests') }}</h2>
+      <p class="activity-card-subtitle mb-0">
+        {% if pagination.total %}
+          {{ _('Showing %(first)s–%(last)s of %(total)s results', first=pagination.first, last=pagination.last, total=pagination.total) }}
+        {% else %}
+          {{ _('No matching results') }}
+        {% endif %}
+      </p>
     </div>
-</div>
-{% endblock %}
+    <div class="app-card-tools">
+      <span class="badge badge-light border">{{ _('Page') }} {{ pagination.page }} {{ _('of') }} {{ pagination.pages or 1 }}</span>
+    </div>
+  </div>
 
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .select2-container--default .select2-selection--single { height: 31px; border: 1px solid #ced4da; }
-    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px; font-size: 0.875rem; }
-    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 30px; }
-</style>
+  {% if logs %}
+  <div class="card-body p-0">
+    <div class="table-responsive d-none d-lg-block">
+      <table class="table table-hover table-striped mb-0 small activity-log-table">
+        <caption class="sr-only">{{ _('Recent HTTP requests matching the selected filters') }}</caption>
+        <thead class="bg-light text-muted">
+          <tr>
+            {{ sort_heading(_('Timestamp'), 'timestamp') }}
+            {{ sort_heading(_('User'), 'user') }}
+            {{ sort_heading(_('Request path'), 'path') }}
+            {{ sort_heading(_('Method'), 'method', 'text-center') }}
+            {{ sort_heading(_('Status'), 'status', 'text-center') }}
+            {{ sort_heading(_('Latency'), 'latency', 'text-right') }}
+            <th>{{ _('Client') }}</th>
+            <th class="text-right">IP</th>
+            <th class="text-right"><span class="sr-only">{{ _('Details') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td class="text-nowrap align-middle"><time datetime="{{ log.timestamp.isoformat() }}">{{ log.timestamp|datetimeformat }}</time></td>
+            <td class="align-middle">
+              {% if log.username %}
+                <span class="badge badge-info"><i class="fas fa-user mr-1" aria-hidden="true"></i>{{ log.username }}</span>
+              {% else %}
+                <span class="text-muted"><i>{{ _('Anonymous') }}</i></span>
+              {% endif %}
+            </td>
+            <td class="align-middle activity-path-cell"><code>{{ log.path }}</code></td>
+            <td class="text-center align-middle"><span class="badge {% if log.method == 'GET' %}badge-light border{% else %}badge-dark{% endif %}">{{ log.method }}</span></td>
+            <td class="text-center align-middle">
+              {% set status = log.status_code|int %}
+              <span class="badge {% if status < 300 %}badge-success{% elif status < 400 %}badge-info{% else %}badge-danger{% endif %}">{{ status }}</span>
+            </td>
+            <td class="text-right align-middle font-weight-bold text-nowrap">{{ format_latency(log.duration_ms) }}</td>
+            <td class="align-middle text-muted activity-client-cell" title="{{ log.user_agent or '' }}">{{ user_agent_summary(log.user_agent) }}</td>
+            <td class="text-right align-middle text-muted text-nowrap"><code>{{ log.ip or '—' }}</code></td>
+            <td class="text-right align-middle">
+              <button class="app-icon-action" type="button" data-toggle="collapse" data-target="#requestDetails{{ log.id }}"
+                      aria-expanded="false" aria-controls="requestDetails{{ log.id }}" aria-label="{{ _('View request details') }}">
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+          <tr class="collapse activity-detail-row" id="requestDetails{{ log.id }}">
+            <td colspan="9">
+              <dl class="activity-detail-grid mb-0">
+                <div><dt>{{ _('Exact timestamp') }}</dt><dd>{{ log.timestamp.isoformat() }} UTC</dd></div>
+                <div><dt>{{ _('Duration') }}</dt><dd>{{ '%.1f ms'|format(log.duration_ms or 0) }}</dd></div>
+                <div><dt>{{ _('IP address') }}</dt><dd>{{ log.ip or '—' }}</dd></div>
+                <div class="activity-detail-wide"><dt>{{ _('Full request path') }}</dt><dd><code>{{ log.path }}</code></dd></div>
+                <div class="activity-detail-wide"><dt>{{ _('Full user agent') }}</dt><dd>{{ log.user_agent or '—' }}</dd></div>
+              </dl>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="activity-mobile-list d-lg-none">
+      {% for log in logs %}
+      {% set status = log.status_code|int %}
+      <article class="activity-request-card">
+        <header>
+          <time datetime="{{ log.timestamp.isoformat() }}">{{ log.timestamp|datetimeformat }}</time>
+          <span class="badge {% if status < 300 %}badge-success{% elif status < 400 %}badge-info{% else %}badge-danger{% endif %}">{{ status }}</span>
+        </header>
+        <code class="activity-mobile-path">{{ log.path }}</code>
+        <div class="activity-mobile-meta">
+          <span><i class="fas fa-user" aria-hidden="true"></i>{{ log.username or _('Anonymous') }}</span>
+          <span><i class="fas fa-exchange-alt" aria-hidden="true"></i>{{ log.method }}</span>
+          <span><i class="fas fa-stopwatch" aria-hidden="true"></i>{{ format_latency(log.duration_ms) }}</span>
+        </div>
+        <details>
+          <summary>{{ _('More details') }}</summary>
+          <dl>
+            <div><dt>{{ _('Client') }}</dt><dd>{{ user_agent_summary(log.user_agent) }}</dd></div>
+            <div><dt>{{ _('IP address') }}</dt><dd>{{ log.ip or '—' }}</dd></div>
+            <div><dt>{{ _('Full user agent') }}</dt><dd>{{ log.user_agent or '—' }}</dd></div>
+          </dl>
+        </details>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="card-body activity-empty-state">
+    <i class="fas fa-search" aria-hidden="true"></i>
+    <p>{{ _('No activity logs found for the selected filters.') }}</p>
+  </div>
+  {% endif %}
+
+  <div class="card-footer bg-white activity-pagination-footer">
+    <div class="activity-page-size" aria-label="{{ _('Results per page') }}">
+      <span>{{ _('Rows') }}</span>
+      {% for size in per_page_options %}
+        <a class="btn btn-xs {% if per_page == size %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+           href="{{ statistics_url(per_page=size, page=1) }}">{{ size }}</a>
+      {% endfor %}
+    </div>
+
+    <nav aria-label="{{ _('Request result pages') }}">
+      <ul class="pagination pagination-sm justify-content-center mb-0">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+          {% if pagination.has_prev %}
+            <a class="page-link" href="{{ statistics_url(page=pagination.prev_num) }}" aria-label="{{ _('Previous page') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+          {% else %}
+            <span class="page-link" aria-disabled="true"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>
+          {% endif %}
+        </li>
+        {% for page_number in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if page_number %}
+            <li class="page-item {% if page_number == pagination.page %}active{% endif %}">
+              {% if page_number == pagination.page %}
+                <span class="page-link" aria-current="page">{{ page_number }}</span>
+              {% else %}
+                <a class="page-link" href="{{ statistics_url(page=page_number) }}">{{ page_number }}</a>
+              {% endif %}
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link" aria-hidden="true">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+          {% if pagination.has_next %}
+            <a class="page-link" href="{{ statistics_url(page=pagination.next_num) }}" aria-label="{{ _('Next page') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+          {% else %}
+            <span class="page-link" aria-disabled="true"><i class="fas fa-chevron-right" aria-hidden="true"></i></span>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
 $(function () {
-    $('.select2').select2({
-        theme: 'default',
-        placeholder: '{{ _("Select a user") }}',
-        allowClear: true
+  $('#user-select').select2({
+    theme: 'default',
+    placeholder: {{ _('Select a user')|tojson }},
+    allowClear: true
+  });
+
+  const period = document.getElementById('periodFilter');
+  const customDates = [...document.querySelectorAll('.activity-custom-date')];
+  const syncCustomDates = () => {
+    const isCustom = period.value === 'custom';
+    customDates.forEach(container => {
+      container.classList.toggle('d-none', !isCustom);
+      const input = container.querySelector('input');
+      input.disabled = !isCustom;
+      input.required = isCustom;
     });
+  };
+  period.addEventListener('change', syncCustomDates);
+  syncCustomDates();
+
+  const trendCanvas = document.getElementById('activityTrendChart');
+  if (trendCanvas) {
+    new Chart(trendCanvas, {
+      type: 'line',
+      data: {
+        labels: {{ trend.labels|tojson }},
+        datasets: [
+          {
+            label: {{ _('Requests')|tojson }},
+            data: {{ trend.requests|tojson }},
+            borderColor: '#0069b0',
+            backgroundColor: 'rgba(0, 105, 176, 0.12)',
+            borderWidth: 2,
+            pointRadius: 3,
+            tension: 0.25,
+            fill: true,
+            yAxisID: 'y'
+          },
+          {
+            label: {{ _('Errors')|tojson }},
+            data: {{ trend.errors|tojson }},
+            borderColor: '#c92f4b',
+            backgroundColor: '#c92f4b',
+            borderWidth: 2,
+            pointRadius: 3,
+            tension: 0.25,
+            fill: false,
+            yAxisID: 'y'
+          },
+          {
+            label: {{ trend.latency_label|tojson }},
+            data: {{ trend.latency|tojson }},
+            borderColor: '#147356',
+            backgroundColor: '#147356',
+            borderDash: [5, 4],
+            borderWidth: 2,
+            pointRadius: 2,
+            tension: 0.2,
+            fill: false,
+            yAxisID: 'latency'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: {{ _('Requests')|tojson }} },
+            ticks: { precision: 0 }
+          },
+          latency: {
+            beginAtZero: true,
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: {{ _('Milliseconds')|tojson }} }
+          }
+        }
+      }
+    });
+  }
 });
 </script>
 {% endblock %}

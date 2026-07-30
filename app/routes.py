@@ -6,7 +6,6 @@ from .blueprints.auth import bp_auth
 from .blueprints.main import bp_main
 from .blueprints.export import bp_export
 from .blueprints.works import bp_works
-from .blueprints.fundings import bp_fund
 from .blueprints.admin import bp_admin
 from .blueprints.dashboard import bp_dash
 from .blueprints.api_misc import bp_api
@@ -23,7 +22,6 @@ def init_routes(app):
         app.register_blueprint(bp_main)
         app.register_blueprint(bp_export)
         app.register_blueprint(bp_works)
-        app.register_blueprint(bp_fund)
         app.register_blueprint(bp_admin)
         app.register_blueprint(bp_dash)
         app.register_blueprint(bp_api)

@@ -1,14 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ _('Affiliation Manager Settings') }}{% endblock %}
+{% block title %}{{ _('Affiliation Manager identifier · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-<h1 class="m-0 text-dark">{{ _('Affiliation Manager Settings') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('Affiliation Manager identifier') }}</h1>
+  <p>{{ _('Identify the records written to ORCID through your institution’s Affiliation Manager.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
-<li class="breadcrumb-item active">{{ _('Affiliation Manager Key') }}</li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Affiliation Manager identifier') }}</li>
 {% endblock %}
 
 {% block content %}
@@ -18,7 +21,7 @@
       <div class="card-header border-0">
         <h3 class="card-title">
           <i class="fas fa-id-badge mr-2 text-success"></i> 
-          {{ _('Institutional Manager Identifier') }}
+          {{ _('Institutional Affiliation Manager identifier') }}
         </h3>
       </div>
       
@@ -26,12 +29,12 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="card-body">
           <p class="text-muted">
-            {{ _('To correctly identify and highlight records managed by your institution, please provide your integration credentials.') }}
+            {{ _('Add the application identifier used by your institution’s Affiliation Manager so managed records can be recognized and highlighted.') }}
           </p>
           
-          <div class="alert alert-info border-0 shadow-none bg-light-blue" style="background-color: #f0f7ff; border-left: 4px solid #007bff !important;">
+          <div class="alert alert-info border-0 shadow-none am-settings-note">
             <div class="d-flex">
-              <i class="fas fa-info-circle mr-3 mt-1 text-primary" style="font-size: 1.2rem;"></i>
+              <i class="fas fa-info-circle mr-3 mt-1 text-primary am-settings-note-icon" aria-hidden="true"></i>
               <div class="text-dark">
                 {{ _('Enter the <strong>Client ID</strong> used by your <em>Affiliation Manager</em> tool to write to ORCID. The system will use this ID to identify which records were managed by your institution (AM Badge).') | safe }}
               </div>
@@ -44,15 +47,14 @@
               <div class="input-group-prepend">
                 <span class="input-group-text bg-white"><i class="fas fa-key text-muted"></i></span>
               </div>
-              <input type="text" id="am_client_id" name="am_client_id" 
-                     class="form-control form-control-lg font-weight-bold" 
-                     placeholder="{{ _('Ex: APP-4B3XYWJHXCC1VLVV') }}" 
-                     value="{{ user.am_client_id or '' }}"
-                     style="font-family: monospace; letter-spacing: 1px;">
+              <input type="text" id="am_client_id" name="am_client_id"
+                     class="form-control form-control-lg font-weight-bold am-client-id-input"
+                     placeholder="{{ _('Ex: APP-4B3XYWJHXCC1VLVV') }}"
+                     value="{{ user.am_client_id or '' }}">
             </div>
             <small class="form-text text-muted mt-2">
               <i class="fas fa-exclamation-triangle mr-1 text-warning"></i>
-              {{ _('Note: This is different from your Public or Member API Key. It usually starts with the prefix') }} <code>APP-</code>.
+              {{ _('This is an application identifier, not a secret or an API key. It usually starts with the prefix') }} <code>APP-</code>.
             </small>
           </div>
         </div>
@@ -60,7 +62,7 @@
         <div class="card-footer bg-white text-right">
           <a href="{{ url_for('main.index') }}" class="btn btn-link text-muted mr-2">{{ _('Cancel') }}</a>
           <button type="submit" class="btn btn-success px-4 shadow-sm">
-            <i class="fas fa-save mr-1"></i> {{ _('Save Configuration') }}
+            <i class="fas fa-save mr-1" aria-hidden="true"></i> {{ _('Save identifier') }}
           </button>
         </div>
       </form>
@@ -76,15 +78,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block styles %}
-{{ super() }}
-<style>
-  .bg-light-blue { border-radius: 8px; }
-  .card-outline.card-success { border-top: 3px solid #28a745; }
-  .input-group-text { border-right: none; }
-  #am_client_id { border-left: none; }
-  #am_client_id:focus { border-color: #ced4da; box-shadow: none; border-left: none; }
-</style>
 {% endblock %}

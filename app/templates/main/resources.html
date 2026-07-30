@@ -2,7 +2,10 @@
 {% block title %}{{ _('Resources and Integrations · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-<h1 class="m-0 text-dark">{{ _('Resources & Knowledge Base') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('ORCID resources') }}</h1>
+  <p>{{ _('Consortium guidance, Member Portal roles, credentials, and external integration resources.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -140,13 +143,13 @@
             {{ _('Note: Activating the Affiliation Manager consumes <strong>one</strong> of your 5 available API slots.') }}
         </div>
         <div class="list-group list-group-flush mb-3">
-            <a href="https://info.orcid.org/documentation/api-tutorials/api-tutorial-get-and-authenticated-orcid-id/" target="_blank" class="list-group-item list-group-item-action py-2">
+            <a href="https://info.orcid.org/documentation/api-tutorials/api-tutorial-get-and-authenticated-orcid-id/" target="_blank" rel="noopener" class="list-group-item list-group-item-action py-2">
                 <i class="fas fa-graduation-cap mr-2 text-primary"></i> {{ _('API Tutorial: Get & Authenticate') }}
             </a>
-            <a href="https://info.orcid.org/register-a-client-application-sandbox-member-api/" target="_blank" class="list-group-item list-group-item-action py-2">
+            <a href="https://info.orcid.org/register-a-client-application-sandbox-member-api/" target="_blank" rel="noopener" class="list-group-item list-group-item-action py-2">
                 <i class="fas fa-vial mr-2 text-warning"></i> {{ _('Request Sandbox Credentials (Testing)') }}
             </a>
-            <a href="https://info.orcid.org/register-a-client-application-production-member-api/" target="_blank" class="list-group-item list-group-item-action py-2">
+            <a href="https://info.orcid.org/register-a-client-application-production-member-api/" target="_blank" rel="noopener" class="list-group-item list-group-item-action py-2">
                 <i class="fas fa-rocket mr-2 text-success"></i> {{ _('Request Production Credentials (Go-live)') }}
             </a>
         </div>
@@ -179,10 +182,10 @@
             </ul>
         </div>
         <div class="text-center">
-            <a href="https://docs.google.com/spreadsheets/d/1S5gfaF-Y5ydBA4u2D0Q1i4NkikbY8223ovt2wd1dcx0/edit#gid=153969246" target="_blank" class="btn btn-sm btn-outline-success">
+            <a href="https://docs.google.com/spreadsheets/d/1S5gfaF-Y5ydBA4u2D0Q1i4NkikbY8223ovt2wd1dcx0/edit#gid=153969246" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">
                 <i class="fas fa-file-csv mr-1"></i> {{ _('Download CSV Template') }}
             </a>
-            <a href="https://info.orcid.org/documentation/member-portal/member-portal-affiliation-manager-guide/" target="_blank" class="btn btn-sm btn-link ml-2">
+            <a href="https://info.orcid.org/documentation/member-portal/member-portal-affiliation-manager-guide/" target="_blank" rel="noopener" class="btn btn-sm btn-link ml-2">
                 {{ _('Official AM Guide') }}
             </a>
         </div>
@@ -204,25 +207,25 @@
               <i class="fas fa-journal-whills fa-2x mb-2 text-primary"></i>
               <h6>OJS</h6>
               <p class="x-small text-muted">{{ _('Sync journals with ORCID reviewers and authors.') }}</p>
-              <a href="https://docs.pkp.sfu.ca/orcid/en/" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('Plugin Docs') }}</a>
+              <a href="https://docs.pkp.sfu.ca/orcid/en/" target="_blank" rel="noopener" class="btn btn-xs btn-link shadow-none">{{ _('Plugin Docs') }}</a>
           </div>
           <div class="col-md-3 text-center border-right">
               <i class="fas fa-archive fa-2x mb-2 text-info"></i>
               <h6>DSpace-CRIS</h6>
               <p class="x-small text-muted">{{ _('Link repository files with validated ORCID IDs.') }}</p>
-              <a href="https://wiki.lyrasis.org/display/DSPACECRIS/ORCID+Integration" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('Wiki Guide') }}</a>
+              <a href="https://wiki.lyrasis.org/display/DSPACECRIS/ORCID+Integration" target="_blank" rel="noopener" class="btn btn-xs btn-link shadow-none">{{ _('Wiki Guide') }}</a>
           </div>
           <div class="col-md-3 text-center border-right">
               <i class="fas fa-microscope fa-2x mb-2 text-purple"></i>
               <h6>VIVO</h6>
               <p class="x-small text-muted">{{ _('Enrich researcher profiles with linked data.') }}</p>
-              <a href="https://wiki.lyrasis.org/display/VTDA/Activating+the+ORCID+integration" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('Setup Guide') }}</a>
+              <a href="https://wiki.lyrasis.org/display/VTDA/Activating+the+ORCID+integration" target="_blank" rel="noopener" class="btn btn-xs btn-link shadow-none">{{ _('Setup Guide') }}</a>
           </div>
           <div class="col-md-3 text-center">
               <i class="fas fa-server fa-2x mb-2 text-secondary"></i>
               <h6>Dataverse</h6>
               <p class="x-small text-muted">{{ _('Authenticate depositors using ORCID OAuth2.') }}</p>
-              <a href="https://guides.dataverse.org/en/latest/installation/oauth2.html" target="_blank" class="btn btn-xs btn-link shadow-none">{{ _('OAuth2 Docs') }}</a>
+              <a href="https://guides.dataverse.org/en/latest/installation/oauth2.html" target="_blank" rel="noopener" class="btn btn-xs btn-link shadow-none">{{ _('OAuth2 Docs') }}</a>
           </div>
         </div>
       </div>

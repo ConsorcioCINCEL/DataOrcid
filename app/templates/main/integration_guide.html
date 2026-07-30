@@ -2,7 +2,10 @@
 {% block title %}{{ _('Write (Push) Integration Guide · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-  <h1 class="m-0 text-dark">{{ _('ORCID Push Integration Guide') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('Write to ORCID') }}</h1>
+  <p>{{ _('Implement authorization and write trusted institutional metadata to researcher records.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -20,7 +23,7 @@
             <h3 class="card-title font-weight-bold"><i class="fas fa-rocket mr-2 text-primary"></i> {{ _('Introduction') }}</h3>
           </div>
           <div class="card-body">
-            <p class="text-justify">
+            <p>
               {{ _('This guide provides a functional boilerplate to implement the <strong>OAuth2 3-legged flow</strong>. This process is essential for obtaining persistent permissions from researchers, allowing your institution to push <strong>funding (grants)</strong> records directly to their ORCID profiles.') }}
             </p>
             
@@ -71,11 +74,11 @@
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-8">
-                        <p class="small text-justify">
+                        <p class="small">
                             {{ _('To send authorization invites without using a real institutional mail server, we use <strong>Ethereal Mail</strong>. It is a fake SMTP service where messages are "caught" and displayed in a web dashboard instead of being sent to real inboxes.') }}
                         </p>
-                        <ol class="small text-muted pl-3">
-                            <li>{{ _('Go to') }} <a href="https://ethereal.email/" target="_blank">ethereal.email</a> {{ _('and click on') }} <strong>"Create Ethereal Account"</strong>.</li>
+                        <ol class="editorial-list small text-muted pl-3">
+                            <li>{{ _('Go to') }} <a href="https://ethereal.email/" target="_blank" rel="noopener">ethereal.email</a> {{ _('and click on') }} <strong>"Create Ethereal Account"</strong>.</li>
                             <li>{{ _('Copy the generated <strong>User</strong> and <strong>Password</strong>.') }}</li>
                             <li>{{ _('Paste them into your <code>.env</code> file (see Step 3 below).') }}</li>
                         </ol>
@@ -103,16 +106,16 @@
             <div class="col-md-6 mb-3">
                 <h6 class="font-weight-bold small text-muted text-uppercase">1. {{ _('Environment Setup') }}</h6>
                 <div class="bg-light p-2 border rounded position-relative">
-                    <pre class="mb-0 x-small" id="cmd-venv"><code>python3 -m venv .venv
+                    <pre class="app-code-example mb-0 x-small" id="cmd-venv" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code>python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt</code></pre>
-                    <button class="btn btn-xs btn-outline-secondary position-absolute" style="top:5px; right:5px;" onclick="copyCode('cmd-venv')"><i class="fas fa-copy"></i></button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary position-absolute" style="top:5px; right:5px;" onclick="copyCode('cmd-venv')" aria-label="{{ _('Copy code') }}" title="{{ _('Copy code') }}"><i class="fas fa-copy" aria-hidden="true"></i></button>
                 </div>
             </div>
             <div class="col-md-6 mb-3">
                 <h6 class="font-weight-bold small text-muted text-uppercase">2. {{ _('Configuration (.env)') }}</h6>
                 <div class="bg-light p-2 border rounded position-relative">
-                    <pre class="mb-0 x-small" id="cmd-env"><code># {{ _('ORCID Sandbox Credentials') }}
+                    <pre class="app-code-example mb-0 x-small" id="cmd-env" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code># {{ _('ORCID Sandbox Credentials') }}
 ORCID_CLIENT_ID=APP-XXXX
 ORCID_CLIENT_SECRET=YYYY-ZZZZ
 
@@ -120,7 +123,7 @@ ORCID_CLIENT_SECRET=YYYY-ZZZZ
 SMTP_SERVER=smtp.ethereal.email
 SMTP_USER=your_ethereal_user
 SMTP_PASS=your_ethereal_pass</code></pre>
-                    <button class="btn btn-xs btn-outline-secondary position-absolute" style="top:5px; right:5px;" onclick="copyCode('cmd-env')"><i class="fas fa-copy"></i></button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary position-absolute" style="top:5px; right:5px;" onclick="copyCode('cmd-env')" aria-label="{{ _('Copy code') }}" title="{{ _('Copy code') }}"><i class="fas fa-copy" aria-hidden="true"></i></button>
                 </div>
             </div>
         </div>
@@ -137,11 +140,11 @@ SMTP_PASS=your_ethereal_pass</code></pre>
         <div class="card shadow-sm border-left-success">
             <div class="card-header bg-white d-flex align-items-center">
                 <h3 class="card-title font-weight-bold text-success"><i class="fas fa-file-csv mr-2"></i> {{ _('Source CSV Structure') }}</h3>
-                <button class="btn btn-xs btn-outline-success ml-auto" onclick="copyCode('csv-format')"><i class="fas fa-copy mr-1"></i> {{ _('Header') }}</button>
+                <button type="button" class="btn btn-xs btn-outline-success ml-auto" onclick="copyCode('csv-format')"><i class="fas fa-copy mr-1" aria-hidden="true"></i> {{ _('Copy header') }}</button>
             </div>
             <div class="card-body">
                 <div class="bg-dark p-3 rounded shadow-inner">
-                    <pre class="text-success mb-0 small" id="csv-format"><code>orcid_id,email,title,org_name,city,country,funding_type,amount,currency,grant_number,ror_id
+                    <pre class="app-code-example text-success mb-0 small" id="csv-format" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code>orcid_id,email,title,org_name,city,country,funding_type,amount,currency,grant_number,ror_id
 0000-0001-2345-6789,researcher@example.com,Project Title,Institution,City,CL,grant,5000,USD,GR-101,https://ror.org/XXXX</code></pre>
                 </div>
             </div>
@@ -188,21 +191,32 @@ SMTP_PASS=your_ethereal_pass</code></pre>
 <script>
   function copyCode(id) {
     const el = document.getElementById(id);
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    document.execCommand('copy');
-    sel.removeAllRanges();
-    
-    $(document).Toasts('create', {
-        class: 'bg-success',
-        title: '{{ _("Copied!") }}',
-        autohide: true,
-        delay: 2000,
-        body: '{{ _("Content copied to clipboard.") }}'
+    const showCopyToast = (success) => $(document).Toasts('create', {
+      class: success ? 'bg-success' : 'bg-danger',
+      title: success ? {{ _('Copied!')|tojson }} : {{ _('Copy failed')|tojson }},
+      autohide: true,
+      delay: 2000,
+      body: success ? {{ _('Content copied to clipboard.')|tojson }} : {{ _('Select the content and copy it manually.')|tojson }}
     });
+    const fallbackCopy = () => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      const copied = document.execCommand('copy');
+      selection.removeAllRanges();
+      if (!copied) throw new Error('Copy command was rejected');
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(el.innerText).then(() => showCopyToast(true)).catch(() => {
+        try { fallbackCopy(); showCopyToast(true); } catch (error) { showCopyToast(false); }
+      });
+      return;
+    }
+
+    try { fallbackCopy(); showCopyToast(true); } catch (error) { showCopyToast(false); }
   }
 </script>
 {% endblock %}

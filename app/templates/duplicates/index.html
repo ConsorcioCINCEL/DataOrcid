@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
+{% from 'components/ui.html' import export_links %}
 {% block title %}{{ _('Duplicate Profiles · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-  <h1 class="m-0 text-dark">{{ _('Duplicate ORCID Profiles') }}</h1>
-{% endblock %}
-
-{% block extra_css %}
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap4.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+<div class="app-section-heading">
+  <h1>{{ _('Quality and duplicate profiles') }}</h1>
+  <p>{{ _('Review potential duplicate ORCID records and the evidence behind each candidate group.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -15,115 +14,146 @@
   <li class="breadcrumb-item active">{{ _('Duplicate Profiles') }}</li>
 {% endblock %}
 
+{% macro review_pagination(pagination) %}
+  {% if pagination.pages > 1 %}
+  <nav class="app-compact-pagination" aria-label="{{ _('Review pagination') }}">
+    <span>{{ _('Showing %(start)s–%(end)s of %(total)s', start=pagination.start, end=pagination.end, total=pagination.total) }}</span>
+    <div class="btn-group btn-group-sm">
+      <a class="btn btn-outline-secondary {% if not pagination.has_prev %}disabled{% endif %}" href="{{ url_for('duplicates.index', section=section, scope=scope, q=query, min_confidence=min_confidence, case_status=case_status, page=pagination.prev_page) }}" aria-label="{{ _('Previous') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+      <span class="btn btn-light disabled">{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>
+      <a class="btn btn-outline-secondary {% if not pagination.has_next %}disabled{% endif %}" href="{{ url_for('duplicates.index', section=section, scope=scope, q=query, min_confidence=min_confidence, case_status=case_status, page=pagination.next_page) }}" aria-label="{{ _('Next') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+    </div>
+  </nav>
+  {% endif %}
+{% endmacro %}
+
+{% macro review_label(status) %}
+  {% if status == 'notified' %}{{ _('Researcher informed') }}
+  {% elif status == 'dismissed' %}{{ _('Dismissed') }}
+  {% elif status == 'resolved' %}{{ _('Resolved') }}
+  {% else %}{{ _('Pending review') }}{% endif %}
+{% endmacro %}
+
+{% macro review_hidden_fields() %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="q" value="{{ query }}">
+  <input type="hidden" name="min_confidence" value="{{ min_confidence }}">
+  <input type="hidden" name="case_status" value="{{ case_status }}">
+{% endmacro %}
+
 {% block content %}
-<div class="row">
+<section class="app-kpi-strip duplicate-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('Metrics') }}">
   {% for label, value, icon, color in [
-    (_('Candidate Groups'), report.summary.candidate_groups, 'fas fa-layer-group', 'bg-primary'),
-    (_('Duplicate Profiles'), report.summary.duplicate_profiles, 'fas fa-user-friends', 'bg-warning'),
-    (_('Extra Profiles'), report.summary.extra_profiles, 'fas fa-clone', 'bg-danger'),
-    (_('Institutions'), report.summary.institutions, 'fas fa-university', 'bg-secondary'),
-    (_('Candidate Works'), report.summary.candidate_works, 'fas fa-book', 'bg-success'),
-    (_('Candidate Fundings'), report.summary.candidate_fundings, 'fas fa-hand-holding-usd', 'bg-info')
+    (_('Candidate Groups'), overview_summary.candidate_groups, 'fas fa-layer-group', 'is-orange'),
+    (_('Profiles Involved'), overview_summary.duplicate_profiles, 'fas fa-user-friends', 'is-amber'),
+    (_('High-confidence Groups'), high_confidence_count, 'fas fa-shield-alt', 'is-green'),
+    (_('Cases requiring action'), report.review_summary.pending + report.review_summary.notified, 'fas fa-clipboard-list', 'is-neutral')
   ] %}
-  <div class="col-sm-6 col-xl-2">
-    <div class="info-box shadow-sm">
-      <span class="info-box-icon {{ color }}"><i class="{{ icon }}"></i></span>
-      <div class="info-box-content">
-        <span class="info-box-text font-weight-bold">{{ label }}</span>
-        <span class="info-box-number">{{ value }}</span>
+  <article class="app-kpi">
+    <span class="app-kpi-icon {{ color }}" aria-hidden="true"><i class="{{ icon }}"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ label }}</span>
+      <strong>{{ value }}</strong>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+<div class="card duplicate-review-card">
+  <div class="card-header duplicate-review-header">
+    <div>
+      <h2 class="card-title text-bold mb-1">{{ _('Review workspace') }}</h2>
+      <div class="duplicate-cache-status">
+        <span class="badge badge-{{ 'success' if report.cache.hit else 'secondary' }}">{{ _('Reused') if report.cache.hit else _('Updated') }}</span>
+        <span>{{ _('Generated at') }}: {{ report.cache.generated_at|datetimeformat if report.cache.generated_at else _('Not available') }}</span>
       </div>
     </div>
-  </div>
-  {% endfor %}
-</div>
-
-<div class="card card-outline card-primary shadow-sm">
-  <div class="card-header duplicate-review-header">
-    <h3 class="card-title text-bold mb-0">{{ _('Review Filters') }}</h3>
-    <div class="duplicate-cache-status">
-      <span class="font-weight-bold">{{ _('Analysis Cache') }}</span>
-      <span class="badge badge-{{ 'success' if report.cache.hit else 'secondary' }} ml-2">
-        {{ _('Reused') if report.cache.hit else _('Updated') }}
-      </span>
-      <span class="text-muted">
-        {{ _('Generated at') }}: {{ report.cache.generated_at|datetimeformat if report.cache.generated_at else _('Not available') }}
-      </span>
+    <div class="app-card-tools duplicate-toolbar-actions">
+      {{ export_links(
+        url_for('duplicates.download', scope=scope, format='csv'),
+        url_for('duplicates.download', scope=scope, format='xlsx')
+      ) }}
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="duplicateMoreActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-ellipsis-h mr-1" aria-hidden="true"></i>{{ _('More actions') }}
+        </button>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="duplicateMoreActions">
+          <a class="dropdown-item" href="{{ url_for('duplicates.index', section=section, scope=scope, q=query, min_confidence=min_confidence, case_status=case_status, refresh='1') }}"><i class="fas fa-sync-alt" aria-hidden="true"></i>{{ _('Refresh Analysis') }}</a>
+          <button class="dropdown-item" type="button" data-toggle="modal" data-target="#duplicateMethodology"><i class="fas fa-info-circle" aria-hidden="true"></i>{{ _('Methodology') }}</button>
+          {% if session.get('is_admin') or session.get('is_manager') %}
+          <div class="dropdown-divider"></div>
+          <form method="post" action="{{ url_for('duplicates.clear_cache', scope=scope) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="dropdown-item text-danger"><i class="fas fa-trash-alt" aria-hidden="true"></i>{{ _('Clear Analysis Cache') }}</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
   <div class="card-body">
-    <form method="get" class="duplicate-filter-grid">
-      <input type="hidden" name="scope" value="{{ scope }}">
+    <form method="get" class="duplicate-filter-grid duplicate-filter-grid--compact">
+      <input type="hidden" name="section" value="{{ section }}">
       <div class="duplicate-filter-search">
-        <label for="duplicateSearch" class="small text-muted">{{ _('Search') }}</label>
+        <label for="duplicateSearch">{{ _('Search') }}</label>
         <div class="input-group">
+          <div class="input-group-prepend"><span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span></div>
           <input id="duplicateSearch" name="q" type="search" class="form-control" value="{{ query }}" placeholder="{{ _('Name, ORCID iD, or institution') }}">
-          <div class="input-group-append">
-            <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
-          </div>
         </div>
       </div>
       <div>
-        <label for="confidenceFilter" class="small text-muted">{{ _('Minimum Confidence') }}</label>
+        <label for="confidenceFilter">{{ _('Minimum Confidence') }}</label>
         <select id="confidenceFilter" name="min_confidence" class="form-control">
           <option value="0" {% if min_confidence == 0 %}selected{% endif %}>{{ _('Any') }}</option>
           <option value="70" {% if min_confidence == 70 %}selected{% endif %}>{{ _('Medium') }}</option>
           <option value="85" {% if min_confidence == 85 %}selected{% endif %}>{{ _('High') }}</option>
         </select>
       </div>
-      <div class="duplicate-filter-reset">
-        <a href="{{ url_for('duplicates.index', scope=scope) }}" class="btn btn-outline-secondary btn-block duplicate-control-button">
-          <i class="fas fa-undo mr-1"></i>{{ _('Reset') }}
-        </a>
-      </div>
-    </form>
-    <div class="duplicate-action-grid">
-      <div class="duplicate-action-group">
-        <div class="small text-muted font-weight-bold text-uppercase mb-1">{{ _('Downloads') }}</div>
-        <div class="duplicate-button-row">
-          <a class="btn btn-outline-primary" href="{{ url_for('duplicates.download', scope=scope, format='csv') }}">
-            <i class="fas fa-file-csv mr-1"></i>{{ _('CSV') }}
-          </a>
-          <a class="btn btn-outline-success" href="{{ url_for('duplicates.download', scope=scope, format='xlsx') }}">
-            <i class="fas fa-file-excel mr-1"></i>{{ _('Excel') }}
-          </a>
-        </div>
-      </div>
-      <div class="duplicate-action-group">
-        <div class="small text-muted font-weight-bold text-uppercase mb-1">{{ _('Analysis') }}</div>
-        <div class="duplicate-button-row">
-          <a class="btn btn-outline-info" href="{{ url_for('duplicates.index', scope=scope, refresh='1') }}">
-            <i class="fas fa-sync-alt mr-1"></i>{{ _('Refresh Analysis') }}
-          </a>
-          {% if session.get('is_admin') or session.get('is_manager') %}
-          <form method="post" action="{{ url_for('duplicates.clear_cache', scope=scope) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline-danger">
-              <i class="fas fa-trash-alt mr-1"></i>{{ _('Clear Analysis Cache') }}
-            </button>
-          </form>
-          {% endif %}
-        </div>
+      <div>
+        <label for="caseStatusFilter">{{ _('Case status') }}</label>
+        <select id="caseStatusFilter" name="case_status" class="form-control">
+          <option value="open" {% if case_status == 'open' %}selected{% endif %}>{{ _('Open cases') }}</option>
+          <option value="pending" {% if case_status == 'pending' %}selected{% endif %}>{{ _('Pending review') }}</option>
+          <option value="notified" {% if case_status == 'notified' %}selected{% endif %}>{{ _('Researcher informed') }}</option>
+          <option value="dismissed" {% if case_status == 'dismissed' %}selected{% endif %}>{{ _('Dismissed') }}</option>
+          <option value="resolved" {% if case_status == 'resolved' %}selected{% endif %}>{{ _('Resolved') }}</option>
+          <option value="all" {% if case_status == 'all' %}selected{% endif %}>{{ _('All cases') }}</option>
+        </select>
       </div>
       {% if session.get('is_admin') %}
-      <div class="duplicate-action-group duplicate-action-group-right">
-        <div class="small text-muted font-weight-bold text-uppercase mb-1">{{ _('Scope') }}</div>
-        <div class="duplicate-button-row">
-          <a class="btn {% if scope == 'current' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('duplicates.index', scope='current') }}">
-            <i class="fas fa-university mr-1"></i>{{ _('Current Institution') }}
-          </a>
-          <a class="btn {% if scope == 'all' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('duplicates.index', scope='all') }}">
-            <i class="fas fa-globe-americas mr-1"></i>{{ _('All Institutions') }}
-          </a>
-        </div>
+      <div>
+        <label for="duplicateScope">{{ _('Scope') }}</label>
+        <select id="duplicateScope" name="scope" class="form-control">
+          <option value="current" {% if scope == 'current' %}selected{% endif %}>{{ _('Current Institution') }}</option>
+          <option value="all" {% if scope == 'all' %}selected{% endif %}>{{ _('All Institutions') }}</option>
+        </select>
       </div>
+      {% else %}
+      <input type="hidden" name="scope" value="current">
       {% endif %}
-    </div>
+      <div class="duplicate-filter-buttons">
+        <button class="btn btn-primary" type="submit"><i class="fas fa-filter mr-1" aria-hidden="true"></i>{{ _('Apply') }}</button>
+        <a href="{{ url_for('duplicates.index', section=section, scope=scope) }}" class="btn btn-outline-secondary" title="{{ _('Reset') }}"><i class="fas fa-undo" aria-hidden="true"></i><span class="sr-only">{{ _('Reset') }}</span></a>
+      </div>
+    </form>
   </div>
 </div>
 
+<nav class="app-review-tabs" aria-label="{{ _('Duplicate review sections') }}">
+  <a class="app-review-tab {% if section == 'candidates' %}active{% endif %}" href="{{ url_for('duplicates.index', section='candidates', scope=scope, q=query, min_confidence=min_confidence, case_status=case_status) }}" {% if section == 'candidates' %}aria-current="page"{% endif %}>
+    <i class="fas fa-layer-group" aria-hidden="true"></i><span>{{ _('Candidates') }}</span><span class="badge">{{ report.summary.candidate_groups }}</span>
+  </a>
+  <a class="app-review-tab {% if section == 'researchers' %}active{% endif %}" href="{{ url_for('duplicates.index', section='researchers', scope=scope, q=query, min_confidence=min_confidence, case_status=case_status) }}" {% if section == 'researchers' %}aria-current="page"{% endif %}>
+    <i class="fas fa-id-card" aria-hidden="true"></i><span>{{ _('Researchers') }}</span><span class="badge">{{ report.profile_activity|length }}</span>
+  </a>
+  <a class="app-review-tab {% if section == 'institutions' %}active{% endif %}" href="{{ url_for('duplicates.index', section='institutions', scope=scope, q=query, min_confidence=min_confidence, case_status=case_status) }}" {% if section == 'institutions' %}aria-current="page"{% endif %}>
+    <i class="fas fa-university" aria-hidden="true"></i><span>{{ _('Institutions') }}</span><span class="badge">{{ report.institutions|length }}</span>
+  </a>
+</nav>
+
 {% if report.summary.candidate_groups == 0 %}
 <div class="alert alert-info shadow-sm">
-  <i class="fas fa-info-circle mr-2"></i>
+  <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
   {% if has_active_filters %}
     {{ _('No duplicate candidates found') }}
   {% elif current_institution %}
@@ -132,210 +162,299 @@
     {{ _('Currently, no duplicate profiles are found for the selected scope.') }}
   {% endif %}
 </div>
+{% elif section == 'candidates' %}
+<section class="duplicate-candidate-list" aria-labelledby="candidateListTitle">
+  <div class="app-list-heading">
+    <div><h2 id="candidateListTitle">{{ _('Candidate groups') }}</h2><p>{{ _('Open a group to review profiles, activity, and matching evidence.') }}</p></div>
+    <span>{{ _('Showing %(start)s–%(end)s of %(total)s', start=candidate_pagination.start, end=candidate_pagination.end, total=candidate_pagination.total) }}</span>
+  </div>
+  {% for group in candidate_groups %}
+  {% set badge_class = 'badge-success' if group.confidence_level == 'high' else ('badge-warning' if group.confidence_level == 'medium' else 'badge-secondary') %}
+  <details class="duplicate-candidate" id="candidate-{{ group.group_key }}">
+    <summary>
+      <span class="duplicate-candidate-chevron" aria-hidden="true"><i class="fas fa-chevron-right"></i></span>
+      <span class="duplicate-candidate-identity"><strong>{{ group.display_name }}</strong><small>{{ group.institution_name }}</small></span>
+      <span class="duplicate-candidate-stat"><small>{{ _('Profiles') }}</small><strong>{{ group.orcid_count }}</strong></span>
+      <span class="duplicate-candidate-stat"><small>{{ _('Activity') }}</small><strong>{{ group.works_count + group.fundings_count }}</strong></span>
+      <span class="badge badge-{{ 'success' if group.review.status in ['notified', 'resolved'] else ('secondary' if group.review.status == 'dismissed' else 'light') }} border">{{ review_label(group.review.status) }}</span>
+      <span class="badge {{ badge_class }} duplicate-confidence-badge">{{ confidence_labels[group.confidence_level] }} · {{ group.confidence }}%</span>
+    </summary>
+    <div class="duplicate-candidate-body">
+      <div class="duplicate-profile-list">
+        <h3>{{ _('ORCID Profiles') }}</h3>
+        {% for profile in group.profiles %}
+        <article class="duplicate-profile-row">
+          <span class="duplicate-profile-icon"><i class="fas fa-user" aria-hidden="true"></i></span>
+          <div>
+            <strong>{{ profile.display_name }}</strong>
+            <div>
+              <a href="{{ url_for('main.orcid_profile', orcid_id=profile.orcid) }}"><i class="fas fa-id-card mr-1" aria-hidden="true"></i>{{ profile.orcid }}</a>
+              <a href="{{ profile.orcid_url }}" target="_blank" rel="noopener" class="ml-3 text-muted"><i class="fas fa-external-link-alt mr-1" aria-hidden="true"></i>ORCID</a>
+              {% if profile.managed_by_am %}<span class="badge badge-info ml-2">{{ _('AM') }}</span>{% endif %}
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <div class="duplicate-evidence-panel">
+        <h3>{{ _('Evidence') }}</h3>
+        <div>{% for evidence_key in group.evidence_keys %}<span class="badge badge-light border">{{ evidence_labels[evidence_key] }}</span>{% endfor %}</div>
+        {% if group.shared_dois %}<p><i class="fas fa-fingerprint mr-1" aria-hidden="true"></i><strong>{{ _('Shared DOIs') }}:</strong> {{ group.shared_dois|join(', ') }}</p>{% endif %}
+        <dl>
+          <div><dt>{{ _('Works') }}</dt><dd>{{ group.works_count }}</dd></div>
+          <div><dt>{{ _('Fundings') }}</dt><dd>{{ group.fundings_count }}</dd></div>
+          <div><dt>{{ _('ROR ID') }}</dt><dd>{{ group.ror_id }}</dd></div>
+        </dl>
+      </div>
+    </div>
+    <div class="duplicate-review-decision">
+      <div class="duplicate-case-state">
+        <div class="duplicate-case-state-heading">
+          <h3>{{ _('Case follow-up') }}</h3>
+          <span class="badge badge-{{ 'success' if group.review.status in ['notified', 'resolved'] else ('secondary' if group.review.status == 'dismissed' else 'light') }} border">{{ review_label(group.review.status) }}</span>
+        </div>
+        {% if group.review.status == 'pending' %}
+        <p>{{ _('Review the evidence, then dismiss a false match or prepare a neutral notice for the researcher.') }}</p>
+        {% elif group.review.status == 'notified' %}
+        <p>{{ _('The institution recorded that the researcher was informed. Any record unification must be completed by the researcher and ORCID.') }}</p>
+        {% elif group.review.status == 'dismissed' %}
+        <p><strong>{{ _('Dismissal reason') }}:</strong> {{ dismissal_reason_labels.get(group.review.dismissal_reason, _('Not recorded')) }}</p>
+        {% else %}
+        <p>{{ _('The external follow-up was recorded as complete. The system did not merge or modify either ORCID record.') }}</p>
+        {% endif %}
+        {% if group.review.reviewed_at %}<small><i class="far fa-clock mr-1" aria-hidden="true"></i>{{ _('Last updated') }}: {{ group.review.reviewed_at|datetimeformat }}</small>{% endif %}
+        {% if group.review.notes %}<div class="duplicate-case-note"><strong>{{ _('Internal note') }}:</strong> {{ group.review.notes }}</div>{% endif %}
+      </div>
+      {% if session.get('is_admin') or session.get('is_manager') %}
+      <div class="duplicate-case-actions">
+        {% if group.review.status in ['pending', 'notified'] %}
+        <button type="button" class="btn btn-outline-secondary duplicate-dismiss-trigger" data-toggle="modal" data-target="#duplicateDismissModal" data-review-url="{{ url_for('duplicates.review', group_key=group.group_key, scope=scope) }}" data-candidate-name="{{ group.display_name }}" data-note-source="duplicateReviewNote{{ loop.index }}">
+          <i class="fas fa-times-circle mr-1" aria-hidden="true"></i>{{ _('Dismiss match') }}
+        </button>
+        {% endif %}
+        {% if group.review.status in ['pending', 'notified', 'resolved'] %}
+        <button type="button" class="btn {{ 'btn-primary' if group.review.status == 'pending' else 'btn-outline-primary' }} duplicate-notice-trigger" data-toggle="modal" data-target="#duplicateNoticeModal" data-review-url="{{ url_for('duplicates.review', group_key=group.group_key, scope=scope) }}" data-candidate-name="{{ group.display_name }}" data-notice-source="duplicateNoticeText{{ loop.index }}" data-note-source="duplicateReviewNote{{ loop.index }}">
+          <i class="fas fa-paper-plane mr-1" aria-hidden="true"></i>{{ _('Prepare researcher notice') if group.review.status == 'pending' else _('View notice') }}
+        </button>
+        {% endif %}
+        {% if group.review.status == 'notified' %}
+        <form method="post" action="{{ url_for('duplicates.review', group_key=group.group_key, scope=scope) }}">
+          {{ review_hidden_fields() }}
+          <input type="hidden" name="status" value="resolved">
+          <input type="hidden" name="notes" value="{{ group.review.notes }}">
+          <button type="submit" class="btn btn-success"><i class="fas fa-check mr-1" aria-hidden="true"></i>{{ _('Mark resolved') }}</button>
+        </form>
+        {% elif group.review.status in ['dismissed', 'resolved'] %}
+        <form method="post" action="{{ url_for('duplicates.review', group_key=group.group_key, scope=scope) }}">
+          {{ review_hidden_fields() }}
+          <input type="hidden" name="status" value="pending">
+          <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Reopen case') }}</button>
+        </form>
+        {% endif %}
+      </div>
+      {% else %}
+      <span class="badge badge-light border">{{ review_label(group.review.status) }}</span>
+      {% endif %}
+    </div>
+    <script type="application/json" id="duplicateNoticeText{{ loop.index }}">{{ group.notice_message|tojson }}</script>
+    <script type="application/json" id="duplicateReviewNote{{ loop.index }}">{{ group.review.notes|tojson }}</script>
+  </details>
+  {% endfor %}
+  {{ review_pagination(candidate_pagination) }}
+</section>
+{% elif section == 'researchers' %}
+<section class="card app-review-panel" aria-labelledby="researcherListTitle">
+  <div class="card-header app-list-heading">
+    <div><h2 id="researcherListTitle">{{ _('Researchers involved') }}</h2><p>{{ _('Compare cached activity before verifying a possible duplicate.') }}</p></div>
+    <span>{{ _('Showing %(start)s–%(end)s of %(total)s', start=researcher_pagination.start, end=researcher_pagination.end, total=researcher_pagination.total) }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover app-review-table mb-0">
+      <thead><tr><th>{{ _('Researcher') }}</th><th>{{ _('Institution') }}</th><th class="text-right">{{ _('Works') }}</th><th class="text-right">{{ _('Fundings') }}</th><th class="text-right">{{ _('Groups') }}</th></tr></thead>
+      <tbody>
+        {% for profile in researcher_rows %}
+        <tr>
+          <td><strong>{{ profile.display_name }}</strong><div><a href="{{ url_for('main.orcid_profile', orcid_id=profile.orcid) }}" class="small"><i class="fas fa-id-card mr-1" aria-hidden="true"></i>{{ profile.orcid }}</a></div></td>
+          <td>{{ profile.institution_name }}<div class="small text-muted">{{ profile.ror_id }}</div></td>
+          <td class="text-right"><strong>{{ profile.works_count }}</strong></td>
+          <td class="text-right"><strong>{{ profile.fundings_count }}</strong></td>
+          <td class="text-right">{{ profile.candidate_groups }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ review_pagination(researcher_pagination) }}
+</section>
+{% else %}
+<section class="card app-review-panel" aria-labelledby="institutionListTitle">
+  <div class="card-header app-list-heading">
+    <div><h2 id="institutionListTitle">{{ _('Institutions in this review') }}</h2><p>{{ _('See where candidate groups are concentrated.') }}</p></div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover app-review-table mb-0">
+      <thead><tr><th>{{ _('Institution') }}</th><th class="text-right">{{ _('Groups') }}</th><th class="text-right">{{ _('Profiles') }}</th><th class="text-right">{{ _('Highest Confidence') }}</th></tr></thead>
+      <tbody>
+        {% for institution in report.institutions %}
+        <tr><td><strong>{{ institution.institution_name }}</strong><div class="small text-muted">{{ institution.ror_id }}</div></td><td class="text-right">{{ institution.candidate_groups }}</td><td class="text-right">{{ institution.duplicate_profiles }}</td><td class="text-right"><strong>{{ institution.highest_confidence }}%</strong></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
 {% endif %}
 
-<div class="row">
-  <div class="col-xl-4">
-    <div class="card shadow-sm">
-      <div class="card-header">
-        <h3 class="card-title text-bold">{{ _('Institutions Summary') }}</h3>
+<div class="modal fade" id="duplicateMethodology" tabindex="-1" role="dialog" aria-labelledby="duplicateMethodologyTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header"><h2 class="modal-title h5" id="duplicateMethodologyTitle">{{ _('Purpose and methodology') }}</h2><button type="button" class="close" data-dismiss="modal" aria-label="{{ _('Close') }}"><span aria-hidden="true">&times;</span></button></div>
+      <div class="modal-body duplicate-methodology">
+        <div class="duplicate-methodology-purpose">
+          <span aria-hidden="true"><i class="fas fa-bullseye"></i></span>
+          <div><h3>{{ _('What this panel is for') }}</h3><p>{{ _('It gathers algorithmic evidence so institutional staff can identify possible duplicate ORCID records, review false positives, and prepare a neutral notice for the researcher.') }}</p></div>
+        </div>
+        <div class="duplicate-methodology-grid">
+          <section>
+            <h3><i class="fas fa-search mr-2" aria-hidden="true"></i>{{ _('How candidates are generated') }}</h3>
+            <p>{{ _('The population comes from ORCID iDs in the local works, funding, and institutional researcher caches. Profiles are grouped when their cached names match after lowercasing and removing accents, punctuation, and extra spaces.') }}</p>
+            <p>{{ _('Confidence increases with richer names, cached activity on every profile, Affiliation Manager evidence, and shared DOI evidence. A high score means stronger evidence to review, not a confirmed duplicate.') }}</p>
+          </section>
+          <section>
+            <h3><i class="fas fa-ban mr-2" aria-hidden="true"></i>{{ _('What the panel does not do') }}</h3>
+            <p>{{ _('It does not confirm that two records belong to the same person, choose a primary ORCID iD, merge or deactivate records, or send changes to ORCID.') }}</p>
+            <p>{{ _('Only the researcher can verify ownership and work with ORCID to resolve duplicate records. The institution records its review and communication only.') }}</p>
+          </section>
+        </div>
+        <section class="duplicate-methodology-workflow">
+          <h3>{{ _('Recommended workflow') }}</h3>
+          <ol>
+            <li>{{ _('Compare the names, ORCID links, cached activity, affiliations, and shared works.') }}</li>
+            <li>{{ _('Dismiss the candidate when the evidence points to different people or is not sufficient. The reason remains in the history after the analysis cache is refreshed.') }}</li>
+            <li>{{ _('When the match remains plausible, prepare the notice, review its wording, send it through the institution’s usual communication channel, and only then mark the researcher as informed.') }}</li>
+            <li>{{ _('Mark the case as resolved only after the researcher reports that the external process is complete. This status does not imply that Data ORCID-Chile modified an ORCID record.') }}</li>
+          </ol>
+        </section>
       </div>
-      <div class="card-body p-0 table-responsive">
-        <table id="institutionsSummaryTable" class="table table-sm table-hover mb-0 w-100">
-          <thead>
-            <tr>
-              <th>{{ _('Institution') }}</th>
-              <th class="text-right">{{ _('Groups') }}</th>
-              <th class="text-right">{{ _('Profiles') }}</th>
-              <th class="text-right">{{ _('Confidence') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for institution in report.institutions %}
-            <tr>
-              <td>
-                <div class="font-weight-bold">{{ institution.institution_name }}</div>
-                <div class="small text-muted">{{ institution.ror_id }}</div>
-              </td>
-              <td class="text-right" data-order="{{ institution.candidate_groups }}">{{ institution.candidate_groups }}</td>
-              <td class="text-right" data-order="{{ institution.duplicate_profiles }}">{{ institution.duplicate_profiles }}</td>
-              <td class="text-right" data-order="{{ institution.highest_confidence }}">{{ institution.highest_confidence }}%</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  <div class="col-xl-8 mt-4 mt-xl-0">
-    <div class="card shadow-sm">
-      <div class="card-header">
-        <h3 class="card-title text-bold">{{ _('Methodological Note') }}</h3>
-      </div>
-      <div class="card-body">
-        <p class="mb-2">
-          {{ _('This review uses ORCID iDs found in the local works and funding caches for the selected institutional scope.') }}
-        </p>
-        <p class="mb-2">
-          {{ _('Candidate groups are created when cached profile names match after lowercasing, accent removal, punctuation removal, and whitespace normalization.') }}
-        </p>
-        <p class="mb-0">
-          {{ _('Scores prioritize exact normalized name matches, richer names, cached activity on every profile, and shared DOI evidence. Results are candidates for manual verification, not automatic merges.') }}
-        </p>
-      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('Close') }}</button></div>
     </div>
   </div>
 </div>
 
-<div class="card shadow-sm mt-4">
-  <div class="card-header">
-    <h3 class="card-title text-bold">{{ _('ORCID Activity Summary') }}</h3>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table id="orcidActivityTable" class="table table-sm table-hover mb-0 w-100">
-        <thead>
-          <tr>
-            <th style="min-width: 240px;">{{ _('ORCID iD') }}</th>
-            <th style="min-width: 180px;">{{ _('Institution') }}</th>
-            <th class="text-right">{{ _('Works') }}</th>
-            <th class="text-right">{{ _('Fundings') }}</th>
-            <th class="text-right">{{ _('Total Activity') }}</th>
-            <th class="text-right">{{ _('Candidate Groups') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for profile in report.profile_activity %}
-          <tr>
-            <td>
-              <div class="font-weight-bold">{{ profile.display_name }}</div>
-              <a href="{{ url_for('main.orcid_profile', orcid_id=profile.orcid) }}" class="small mr-3">
-                <i class="fas fa-id-card mr-1"></i>{{ profile.orcid }}
-              </a>
-              <a href="{{ profile.orcid_url }}" target="_blank" rel="noopener" class="small text-muted">
-                <i class="fas fa-external-link-alt mr-1"></i>ORCID
-              </a>
-            </td>
-            <td>
-              <div>{{ profile.institution_name }}</div>
-              <div class="small text-muted">{{ profile.ror_id }}</div>
-            </td>
-            <td class="text-right" data-order="{{ profile.works_count }}">{{ profile.works_count }}</td>
-            <td class="text-right" data-order="{{ profile.fundings_count }}">{{ profile.fundings_count }}</td>
-            <td class="text-right font-weight-bold" data-order="{{ profile.total_activity }}">{{ profile.total_activity }}</td>
-            <td class="text-right" data-order="{{ profile.candidate_groups }}">{{ profile.candidate_groups }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+{% if session.get('is_admin') or session.get('is_manager') %}
+<div class="modal fade" id="duplicateDismissModal" tabindex="-1" role="dialog" aria-labelledby="duplicateDismissTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form method="post" class="modal-content" id="duplicateDismissForm">
+      <div class="modal-header">
+        <div><h2 class="modal-title h5" id="duplicateDismissTitle">{{ _('Dismiss candidate') }}</h2><p class="modal-subtitle mb-0" id="duplicateDismissCandidate"></p></div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="{{ _('Close') }}"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        {{ review_hidden_fields() }}
+        <input type="hidden" name="status" value="dismissed">
+        <p class="text-muted">{{ _('Dismissal records a false or unsupported match; it does not change either ORCID profile.') }}</p>
+        <div class="form-group">
+          <label for="duplicateDismissReason">{{ _('Reason') }}</label>
+          <select id="duplicateDismissReason" name="dismissal_reason" class="form-control" required>
+            <option value="">{{ _('Select a reason') }}</option>
+            {% for value, label in dismissal_reason_labels.items() %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group mb-0">
+          <label for="duplicateDismissNotes">{{ _('Internal note') }} <span class="text-muted">({{ _('optional') }})</span></label>
+          <textarea id="duplicateDismissNotes" name="notes" class="form-control" rows="3" placeholder="{{ _('Add context that will help future reviewers') }}"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-secondary"><i class="fas fa-times-circle mr-1" aria-hidden="true"></i>{{ _('Dismiss match') }}</button>
+      </div>
+    </form>
   </div>
 </div>
 
-<div class="card shadow-sm mt-4">
-  <div class="card-header">
-    <h3 class="card-title text-bold">{{ _('Candidate Details') }}</h3>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table id="candidateDetailsTable" class="table table-hover mb-0 w-100">
-        <thead>
-          <tr>
-            <th style="min-width: 220px;">{{ _('Candidate') }}</th>
-            <th style="min-width: 180px;">{{ _('Institution') }}</th>
-            <th style="min-width: 260px;">{{ _('ORCID Profiles') }}</th>
-            <th style="min-width: 180px;">{{ _('Evidence') }}</th>
-            <th class="text-right">{{ _('Activity') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for group in report.groups %}
-          <tr>
-            <td>
-              <div class="font-weight-bold">{{ group.display_name }}</div>
-              <div class="small text-muted">{{ group.group_id }} · {{ group.normalized_name }}</div>
-              {% set badge_class = 'badge-success' if group.confidence_level == 'high' else ('badge-warning' if group.confidence_level == 'medium' else 'badge-secondary') %}
-              <span class="badge {{ badge_class }}">{{ confidence_labels[group.confidence_level] }} · {{ group.confidence }}%</span>
-            </td>
-            <td>
-              <div>{{ group.institution_name }}</div>
-              <div class="small text-muted">{{ group.ror_id }}</div>
-            </td>
-            <td>
-              <ul class="list-unstyled mb-0">
-                {% for profile in group.profiles %}
-                <li class="mb-2">
-                  <div class="font-weight-bold">{{ profile.display_name }}</div>
-                  <a href="{{ url_for('main.orcid_profile', orcid_id=profile.orcid) }}" class="small mr-3">
-                    <i class="fas fa-id-card mr-1"></i>{{ profile.orcid }}
-                  </a>
-                  <a href="{{ profile.orcid_url }}" target="_blank" rel="noopener" class="small text-muted">
-                    <i class="fas fa-external-link-alt mr-1"></i>ORCID
-                  </a>
-                  {% if profile.managed_by_am %}
-                  <span class="badge badge-info ml-2">{{ _('AM') }}</span>
-                  {% endif %}
-                </li>
-                {% endfor %}
-              </ul>
-            </td>
-            <td>
-              {% for evidence_key in group.evidence_keys %}
-              <span class="badge badge-light border d-inline-block mb-1">{{ evidence_labels[evidence_key] }}</span>
-              {% endfor %}
-              {% if group.shared_dois %}
-              <div class="small text-muted mt-2">
-                <i class="fas fa-fingerprint mr-1"></i>{{ group.shared_dois|join(', ') }}
-              </div>
-              {% endif %}
-            </td>
-            <td class="text-right" data-order="{{ group.works_count + group.fundings_count }}">
-              <div>{{ _('Works') }}: <strong>{{ group.works_count }}</strong></div>
-              <div>{{ _('Fundings') }}: <strong>{{ group.fundings_count }}</strong></div>
-              <div class="small text-muted">{{ _('Profiles') }}: {{ group.orcid_count }}</div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+<div class="modal fade" id="duplicateNoticeModal" tabindex="-1" role="dialog" aria-labelledby="duplicateNoticeTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <form method="post" class="modal-content" id="duplicateNoticeForm">
+      <div class="modal-header">
+        <div><h2 class="modal-title h5" id="duplicateNoticeTitle">{{ _('Researcher notice') }}</h2><p class="modal-subtitle mb-0" id="duplicateNoticeCandidate"></p></div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="{{ _('Close') }}"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        {{ review_hidden_fields() }}
+        <input type="hidden" name="status" value="notified">
+        <div class="alert alert-info duplicate-notice-guidance"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('Review and copy this neutral draft. Send it through the institution’s usual channel. Mark the case as informed only after the message has actually been sent.') }}</div>
+        <div class="form-group">
+          <label for="duplicateNoticeMessage">{{ _('Message') }}</label>
+          <textarea id="duplicateNoticeMessage" name="notice_message" class="form-control duplicate-notice-message" rows="13"></textarea>
+        </div>
+        <div class="form-group mb-0">
+          <label for="duplicateNoticeNotes">{{ _('Communication note') }} <span class="text-muted">({{ _('optional') }})</span></label>
+          <textarea id="duplicateNoticeNotes" name="notes" class="form-control" rows="2" placeholder="{{ _('For example: sent by email on 17 July') }}"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer duplicate-notice-footer">
+        <span class="duplicate-copy-status mr-auto" id="duplicateCopyStatus" role="status" aria-live="polite"></span>
+        <button type="button" class="btn btn-outline-primary" id="duplicateCopyNotice"><i class="far fa-copy mr-1" aria-hidden="true"></i>{{ _('Copy message') }}</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check mr-1" aria-hidden="true"></i>{{ _('Mark as informed') }}</button>
+      </div>
+    </form>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }}
-  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
-  <script>
-    $(function () {
-      const languageUrl = '{{ "https://cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json" if session.get("locale") == "es" else "" }}';
-      const language = languageUrl ? { url: languageUrl } : {};
+{{ super() }}
+<script>
+  $(function () {
+    function readJsonScript(id) {
+      const element = document.getElementById(id);
+      if (!element) return '';
+      try { return JSON.parse(element.textContent); } catch (error) { return ''; }
+    }
 
-      $('#institutionsSummaryTable').DataTable({
-        responsive: true,
-        paging: false,
-        searching: false,
-        info: false,
-        order: [[1, 'desc']],
-        language: language
-      });
-
-      $('#orcidActivityTable').DataTable({
-        responsive: true,
-        pageLength: 25,
-        order: [[4, 'desc']],
-        language: language
-      });
-
-      $('#candidateDetailsTable').DataTable({
-        responsive: true,
-        pageLength: 25,
-        order: [[4, 'desc']],
-        language: language
-      });
+    $('#duplicateDismissModal').on('show.bs.modal', function (event) {
+      const button = $(event.relatedTarget);
+      $('#duplicateDismissForm').attr('action', button.data('review-url'));
+      $('#duplicateDismissCandidate').text(button.data('candidate-name'));
+      $('#duplicateDismissReason').val('');
+      $('#duplicateDismissNotes').val(readJsonScript(button.data('note-source')));
     });
-  </script>
+
+    $('#duplicateNoticeModal').on('show.bs.modal', function (event) {
+      const button = $(event.relatedTarget);
+      $('#duplicateNoticeForm').attr('action', button.data('review-url'));
+      $('#duplicateNoticeCandidate').text(button.data('candidate-name'));
+      $('#duplicateNoticeMessage').val(readJsonScript(button.data('notice-source')));
+      $('#duplicateNoticeNotes').val(readJsonScript(button.data('note-source')));
+      $('#duplicateCopyStatus').text('');
+    });
+
+    $('#duplicateCopyNotice').on('click', async function () {
+      const textarea = document.getElementById('duplicateNoticeMessage');
+      const status = document.getElementById('duplicateCopyStatus');
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(textarea.value);
+        } else {
+          textarea.select();
+          document.execCommand('copy');
+          textarea.setSelectionRange(0, 0);
+        }
+        status.textContent = {{ _('Message copied')|tojson }};
+      } catch (error) {
+        status.textContent = {{ _('Could not copy automatically. Select the message and copy it manually.')|tojson }};
+      }
+    });
+
+    const anchoredCandidate = window.location.hash
+      ? document.querySelector(window.location.hash)
+      : null;
+    if (anchoredCandidate && anchoredCandidate.matches('.duplicate-candidate')) {
+      anchoredCandidate.open = true;
+    }
+
+    {% if show_methodology %}$('#duplicateMethodology').modal('show');{% endif %}
+  });
+</script>
 {% endblock %}

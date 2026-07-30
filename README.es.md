@@ -52,7 +52,7 @@ README.md
 
 - 🔐 **Autenticación** (login, logout, recuperación y cambio de contraseña).  
 - 👥 **Roles:**
-  - **Administrador:** gestiona usuarios, contraseñas y ROR.
+  - **Administrador:** gestiona usuarios, enlaces de contraseña y ROR.
   - **Gestor:** acceso avanzado sin modificar usuarios.
 - 🏛️ **Contexto institucional (ROR):**
   - Consultas ORCID *expanded-search* por ROR, GRID y Ringgold verificados.
@@ -77,28 +77,40 @@ El sistema lee `config/config.toml` y lo carga en `current_app.config`.
 ### 🔹 Base de datos
 ```toml
 [database]
-uri = "mysql+pymysql://USER:PASS@host/dbname"
+uri = "postgresql+psycopg://USER:PASS@host:5432/dbname"
 ```
 
 ### 🔹 Flask y seguridad
 ```toml
 [flask]
-secret_key     = "CAMBIA_ESTA_CLAVE"
-password_salt  = "CAMBIA_EL_SALT"
+secret_key     = "CHANGEME_IN_RUNTIME"
+password_salt  = "CHANGE_ME_SALT"
 session_cookie_secure   = true
 session_cookie_httponly = true
 session_cookie_samesite = "Lax"
+allow_insecure_dev_config = false
 ```
+> En producción, prefiere `SECRET_KEY`/`ORCID_SECRET_KEY` y
+> `SECURITY_PASSWORD_SALT`/`ORCID_PASSWORD_SALT` como variables de entorno.
 > Contraseñas → **bcrypt**  
 > Tokens → **itsdangerous** (firmados y con expiry)
+
+### 🔹 Idiomas
+```toml
+[languages]
+supported = ["en", "es"]
+default = "en"
+```
+> El código y los `msgid` de Babel usan inglés como idioma base.
 
 ### 🔹 ORCID
 ```toml
 [orcid]
-base_url_pub   = "https://pub.orcid.org/v3.0/"
+base_url_public = "https://pub.orcid.org/v3.0/"
+base_url_member = "https://api.orcid.org/v3.0/"
 token_url      = "https://orcid.org/oauth/token"
 client_id      = "APP-XXXX"
-client_secret  = "SECRET"
+client_secret  = "REPLACE_OR_USE_ENV"
 ```
 
 ### 🔹 Email (SMTP)
@@ -132,14 +144,19 @@ pip install -r requirements.txt
 cp config/config.toml.example config/config.toml
 # → Completa credenciales de DB, ORCID y SMTP
 
-# 3️⃣ Ejecución
+# 3️⃣ Base de datos
+export FLASK_APP=run.py
+flask db upgrade
+flask seed-db
+
+# 4️⃣ Ejecución
 python run.py
 # o
 export FLASK_APP=run.py && flask run
 ```
 
-> En el primer arranque se crean las tablas y el usuario `admin` por defecto.  
-> Modifica sus credenciales o elimínalo tras configurar la app.
+> El esquema se gestiona con migraciones. `flask seed-db` crea el usuario
+> `admin` inicial si no existe.
 
 ---
 
@@ -147,7 +164,7 @@ export FLASK_APP=run.py && flask run
 
 ```bash
 # Ambos tipos (works + fundings)
-flask rebuild-caches --target both --workers 4
+flask rebuild-caches --target both
 
 # Solo works
 flask rebuild-caches --target works
@@ -157,9 +174,29 @@ flask rebuild-caches --target fundings
 
 # Dry-run (listar ROR sin ejecutar)
 flask rebuild-caches --dry-run
+
+# Reconstruir la capa intermedia de analítica OpenAlex
+flask rebuild-openalex-analytics
+
+# Reconstruirla para una sola institución
+flask rebuild-openalex-analytics --ror 02ap3w078
 ```
 
 📊 Muestra resumen por ROR (OK/Errores y conteos de filas).
+
+La capa analítica se actualiza automáticamente después de sincronizar Works u
+OpenAlex. Tras instalar esta versión sobre una base existente, ejecuta
+`flask db upgrade` y luego `flask rebuild-openalex-analytics` para disponer de
+los filtros optimizados inmediatamente.
+
+Los DOI originales se conservan completos en una columna `TEXT`. Las búsquedas
+y uniones utilizan una clave DOI validada y normalizada de hasta 255 caracteres;
+los valores inválidos o excesivamente largos no se truncan ni se indexan como
+DOI, evitando errores y posibles colisiones.
+
+Las sincronizaciones largas iniciadas desde la web se ejecutan en segundo plano
+dentro del proceso Flask para evitar timeouts. En producción con múltiples
+workers, prefiere CLI/cron o una cola persistente.
 
 ---
 
@@ -188,7 +225,7 @@ flask rebuild-caches --dry-run
 - Tokens: **itsdangerous** (con expiración)
 - Cookies seguras (`Secure`, `HttpOnly`, `SameSite`)
 - SMTP opcional para reset de contraseña
-- *(Pendiente)* CSRF → si se exponen formularios públicos
+- CSRF habilitado en formularios; logout usa `POST`
 
 ---
 
@@ -205,15 +242,17 @@ flask rebuild-caches --dry-run
 | `InstitutionIdentifier` | Identificadores ROR, GRID y Ringgold verificados |
 | `InstitutionResearcher` | Asociaciones encontradas entre instituciones y ORCID |
 | `OrcidCache` | Almacenamiento JSON por año |
+| `OpenAlexInstitutionWorkFact` | Capa intermedia indexada para filtros y métricas OpenAlex |
+| `AnalyticsDataVersion` | Versión de datos usada para invalidar cachés analíticas |
 
 ---
 
 ## 🧩 Buenas prácticas
 
-- Mantén las claves secretas fuera del repo (`.env` + dotenv recomendado).  
+- Mantén las claves secretas fuera del repo (`.env` + dotenv recomendado).
 - Producción: `gunicorn -w 4 -b 0.0.0.0:5000 "run:app"` detrás de Nginx.  
-- Ajusta `workers` según límites de ORCID.  
-- Personaliza `populate_users()` antes de publicar.  
+- Ajusta el paralelismo con cuidado según límites de ORCID.
+- Usa el registro institucional (`InstitutionRegistry`) para universidades; `populate_users()` solo crea el admin inicial.
 - Revisa logs (`gunicorn --access-logfile - --error-logfile -`).
 
 ---

@@ -22,7 +22,7 @@ git clone [https://github.com/your-user/dataorcid-chile.git](https://github.com/
 cd dataorcid-chile
 
 # Create virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -32,8 +32,7 @@ pip install -r requirements.txt
 ### 3. Configuration (config.toml)
 The system uses a TOML file for settings. Create the file at config/config.toml.
 
-mkdir config
-cp config.toml.example config/config.toml
+cp config/config.toml.example config/config.toml
 
 
 ### 4. Initialize Database
@@ -41,7 +40,7 @@ cp config.toml.example config/config.toml
 # Create tables
 flask db upgrade
 
-# Seed initial users and institutions
+# Seed the initial admin account
 flask seed-db
 
 ---
@@ -67,8 +66,31 @@ flask rebuild-caches
 # Sync a specific institution (using ROR ID)
 flask rebuild-caches --ror 02ap3w078
 
+# Preview selected institutions without calling ORCID
+flask rebuild-caches --dry-run
+
 # Sync researcher profiles only (Names/Bio)
 flask sync-researcher-names
+
+# Rebuild the indexed OpenAlex analytics fact layer
+flask rebuild-openalex-analytics
+
+# Rebuild it for one institution
+flask rebuild-openalex-analytics --ror 02ap3w078
+
+The analytics layer is refreshed automatically after Works or OpenAlex
+synchronization. When upgrading an existing database, run `flask db upgrade`
+and then `flask rebuild-openalex-analytics` so optimized filters are available
+immediately.
+
+Raw DOI values remain complete in a `TEXT` column. Searches and joins use a
+validated, normalized DOI key limited to 255 characters; invalid or oversized
+values are neither truncated nor indexed as DOI keys, preventing failures and
+identifier collisions.
+
+Web-triggered long-running syncs are started in a process-local background
+runner to avoid request timeouts. For production multi-worker deployments,
+prefer CLI/cron or a persistent job queue.
 
 
 ---

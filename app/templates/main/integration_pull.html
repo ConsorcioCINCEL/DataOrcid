@@ -2,7 +2,10 @@
 {% block title %}{{ _('Read (Pull) · ORCID Public API · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
-  <h1 class="m-0 text-dark">{{ _('ORCID Public API Guide') }}</h1>
+<div class="app-section-heading">
+  <h1>{{ _('Read from the ORCID API') }}</h1>
+  <p>{{ _('Query public ORCID metadata and understand the available read endpoints.') }}</p>
+</div>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -20,7 +23,7 @@
             <h3 class="card-title font-weight-bold"><i class="fas fa-info-circle mr-2 text-primary"></i> {{ _('Introduction for Developers') }}</h3>
           </div>
           <div class="card-body">
-            <p class="text-justify">
+            <p>
               {{ _('The ORCID Public API allows any system to <strong>retrieve public researcher data</strong>. It works over HTTP using standard REST methods. You only need the <strong>ORCID iD</strong> to start pulling information.') }}
             </p>
             <div class="row bg-light p-3 rounded border mx-0">
@@ -60,9 +63,9 @@
                 <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Search by Institution (ANID)') }}</h6>
                 <p class="x-small text-muted">{{ _('Search for researchers associated with ANID Chile.') }}</p>
                 <div class="bg-dark p-3 rounded mb-3 position-relative shadow-inner">
-                    <pre class="text-warning mb-0 small" id="code-anid"><code>curl -H "Accept: application/json" \
+                    <pre class="app-code-example text-warning mb-0 small" id="code-anid" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code>curl -H "Accept: application/json" \
 "https://pub.orcid.org/v3.0/search/?q=affiliation-org-name:ANID"</code></pre>
-                    <button class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-anid')"><i class="fas fa-copy"></i></button>
+                    <button type="button" class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-anid')" aria-label="{{ _('Copy code') }}" title="{{ _('Copy code') }}"><i class="fas fa-copy" aria-hidden="true"></i></button>
                 </div>
             </div>
             {# SEARCH BY ROR ID #}
@@ -70,9 +73,9 @@
                 <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Search by ROR Identifier') }}</h6>
                 <p class="x-small text-muted">{{ _('Searching for the ROR string within the organization fields.') }}</p>
                 <div class="bg-dark p-3 rounded mb-3 position-relative shadow-inner">
-                    <pre class="text-warning mb-0 small" id="code-ror"><code>curl -H "Accept: application/json" \
+                    <pre class="app-code-example text-warning mb-0 small" id="code-ror" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code>curl -H "Accept: application/json" \
 "https://pub.orcid.org/v3.0/search/?q=%22ror.org/02ap3w078%22"</code></pre>
-                    <button class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-ror')"><i class="fas fa-copy"></i></button>
+                    <button type="button" class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-ror')" aria-label="{{ _('Copy code') }}" title="{{ _('Copy code') }}"><i class="fas fa-copy" aria-hidden="true"></i></button>
                 </div>
             </div>
         </div>
@@ -80,9 +83,9 @@
              <div class="col-md-12">
                 <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Search by Name & Country') }}</h6>
                 <div class="bg-dark p-3 rounded mb-3 position-relative shadow-inner">
-                    <pre class="text-warning mb-0 small" id="code-name"><code>curl -H "Accept: application/json" \
+                    <pre class="app-code-example text-warning mb-0 small" id="code-name" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code>curl -H "Accept: application/json" \
 "https://pub.orcid.org/v3.0/search/?q=given-names:Gaston%20Olivares"</code></pre>
-                    <button class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-name')"><i class="fas fa-copy"></i></button>
+                    <button type="button" class="btn btn-xs btn-outline-light position-absolute" style="top:10px; right:10px;" onclick="copyCode('code-name')" aria-label="{{ _('Copy code') }}" title="{{ _('Copy code') }}"><i class="fas fa-copy" aria-hidden="true"></i></button>
                 </div>
             </div>
         </div>
@@ -146,7 +149,7 @@
                 <td class="align-middle"><code>/{{ orcid_demo }}/<strong>{{ ep }}</strong></code></td>
                 <td class="align-middle">{{ desc }}</td>
                 <td class="text-right align-middle">
-                    <a href="https://pub.orcid.org/v3.0/{{ orcid_demo }}/{{ ep }}" target="_blank" class="btn btn-xs btn-outline-primary px-3 shadow-sm">
+                    <a href="https://pub.orcid.org/v3.0/{{ orcid_demo }}/{{ ep }}" target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary px-3 shadow-sm">
                         <i class="fas fa-external-link-alt mr-1"></i> JSON
                     </a>
                 </td>
@@ -171,17 +174,17 @@
                     <div class="col-md-6 mb-3">
                         <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Get Summary (Works & Education)') }}</h6>
                         <div class="bg-dark p-2 rounded position-relative">
-                            <pre class="text-light mb-0 x-small" id="code-orcid-act"><code>curl -H "Accept: application/json" \
+                            <pre class="app-code-example text-light mb-0 x-small" id="code-orcid-act" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code>curl -H "Accept: application/json" \
 "https://pub.orcid.org/v3.0/0000-0003-3655-7831/activities"</code></pre>
-                            <button class="btn btn-xs btn-outline-light position-absolute" style="top:5px; right:5px;" onclick="copyCode('code-orcid-act')"><i class="fas fa-copy"></i></button>
+                            <button type="button" class="btn btn-xs btn-outline-light position-absolute" style="top:5px; right:5px;" onclick="copyCode('code-orcid-act')" aria-label="{{ _('Copy code') }}" title="{{ _('Copy code') }}"><i class="fas fa-copy" aria-hidden="true"></i></button>
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <h6 class="font-weight-bold small text-muted text-uppercase">{{ _('Get Bio & Identity') }}</h6>
                         <div class="bg-dark p-2 rounded position-relative">
-                            <pre class="text-light mb-0 x-small" id="code-orcid-person"><code>curl -H "Accept: application/json" \
+                            <pre class="app-code-example text-light mb-0 x-small" id="code-orcid-person" tabindex="0" aria-label="{{ _('Scrollable code example') }}"><code>curl -H "Accept: application/json" \
 "https://pub.orcid.org/v3.0/0000-0003-3655-7831/person"</code></pre>
-                            <button class="btn btn-xs btn-outline-light position-absolute" style="top:5px; right:5px;" onclick="copyCode('code-orcid-person')"><i class="fas fa-copy"></i></button>
+                            <button type="button" class="btn btn-xs btn-outline-light position-absolute" style="top:5px; right:5px;" onclick="copyCode('code-orcid-person')" aria-label="{{ _('Copy code') }}" title="{{ _('Copy code') }}"><i class="fas fa-copy" aria-hidden="true"></i></button>
                         </div>
                     </div>
                 </div>
@@ -214,21 +217,21 @@
         <h6 class="text-muted font-weight-bold mb-4 text-uppercase small">{{ _('Recommended Testing Tools') }}</h6>
         <div class="row justify-content-center">
             <div class="col-md-2 col-4 mx-2">
-                <a href="https://www.postman.com/" target="_blank" class="text-dark text-decoration-none">
+                <a href="https://www.postman.com/" target="_blank" rel="noopener" class="text-dark text-decoration-none">
                     <i class="fas fa-space-shuttle fa-2x d-block mb-2 text-orange"></i>
                     <span class="small font-weight-bold d-block">Postman</span>
                     <span class="x-small text-muted">{{ _('(API Testing)') }}</span>
                 </a>
             </div>
             <div class="col-md-2 col-4 mx-2">
-                <a href="https://insomnia.rest/" target="_blank" class="text-dark text-decoration-none">
+                <a href="https://insomnia.rest/" target="_blank" rel="noopener" class="text-dark text-decoration-none">
                     <i class="fas fa-moon fa-2x d-block mb-2 text-purple"></i>
                     <span class="small font-weight-bold d-block">Insomnia</span>
                     <span class="x-small text-muted">{{ _('(HTTP Client)') }}</span>
                 </a>
             </div>
             <div class="col-md-2 col-4 mx-2">
-                <a href="https://jsonview.com/" target="_blank" class="text-dark text-decoration-none">
+                <a href="https://jsonview.com/" target="_blank" rel="noopener" class="text-dark text-decoration-none">
                     <i class="fas fa-eye fa-2x d-block mb-2 text-info"></i>
                     <span class="small font-weight-bold d-block">JSON Viewer</span>
                     <span class="x-small text-muted">{{ _('(Browser Extension)') }}</span>
@@ -245,21 +248,32 @@
 <script>
   function copyCode(id) {
     const el = document.getElementById(id);
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    document.execCommand('copy');
-    sel.removeAllRanges();
-    
-    $(document).Toasts('create', {
-        class: 'bg-success',
-        title: '{{ _("Copied!") }}',
-        autohide: true,
-        delay: 2000,
-        body: '{{ _("Command copied to clipboard.") }}'
+    const showCopyToast = (success) => $(document).Toasts('create', {
+      class: success ? 'bg-success' : 'bg-danger',
+      title: success ? {{ _('Copied!')|tojson }} : {{ _('Copy failed')|tojson }},
+      autohide: true,
+      delay: 2000,
+      body: success ? {{ _('Command copied to clipboard.')|tojson }} : {{ _('Select the command and copy it manually.')|tojson }}
     });
+    const fallbackCopy = () => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      const copied = document.execCommand('copy');
+      selection.removeAllRanges();
+      if (!copied) throw new Error('Copy command was rejected');
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(el.innerText).then(() => showCopyToast(true)).catch(() => {
+        try { fallbackCopy(); showCopyToast(true); } catch (error) { showCopyToast(false); }
+      });
+      return;
+    }
+
+    try { fallbackCopy(); showCopyToast(true); } catch (error) { showCopyToast(false); }
   }
 </script>
 {% endblock %}

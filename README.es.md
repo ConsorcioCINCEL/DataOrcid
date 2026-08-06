@@ -180,6 +180,11 @@ flask rebuild-openalex-analytics
 
 # Reconstruirla para una sola institución
 flask rebuild-openalex-analytics --ror 02ap3w078
+
+# Poblar metadatos extendidos desde la caché OpenAlex existente
+flask rebuild-openalex-metadata --batch-size 2000
+# Reanudar después del último ID de caché bruto informado en el log
+flask rebuild-openalex-metadata --batch-size 2000 --start-after-id 150000
 ```
 
 📊 Muestra resumen por ROR (OK/Errores y conteos de filas).
@@ -188,6 +193,13 @@ La capa analítica se actualiza automáticamente después de sincronizar Works u
 OpenAlex. Tras instalar esta versión sobre una base existente, ejecuta
 `flask db upgrade` y luego `flask rebuild-openalex-analytics` para disponer de
 los filtros optimizados inmediatamente.
+
+Las exportaciones CSV institucionales de OpenAlex transmiten las filas a medida
+que se leen y los XLSX usan un libro de escritura incremental, sin el límite
+anterior de 100.000 filas de la aplicación. Los campos bibliográficos, de
+autoría, afiliación, citas, temas, acceso abierto, ODS, financiamiento y APC se
+leen desde la tabla de metadatos consultable, evitando deserializar todo el JSON
+bruto durante cada descarga.
 
 Los DOI originales se conservan completos en una columna `TEXT`. Las búsquedas
 y uniones utilizan una clave DOI validada y normalizada de hasta 255 caracteres;

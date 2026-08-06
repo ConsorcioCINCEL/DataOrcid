@@ -2,13 +2,16 @@
 
 import unittest
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from unittest.mock import patch
 
 from flask import Flask
+from openpyxl import load_workbook
 
 from app import babel, db
 from app.blueprints.works import (
     _institution_cache_summaries,
+    _openalex_institution_export_query,
     _openalex_work_rows,
     _page_params,
     _recent_sync_runs,
@@ -314,6 +317,13 @@ class CacheStatusSummaryTest(unittest.TestCase):
         with self.app.test_request_context("/openalex/works"):
             self.assertEqual((1, 10), _page_params(default_per_page=10))
 
+    def test_institution_openalex_export_query_has_no_application_row_limit(self):
+        with self.app.app_context():
+            query = _openalex_institution_export_query("01test123")
+
+        self.assertIsNone(query._limit_clause)
+        self.assertIsNone(query._offset_clause)
+
     def test_staff_can_download_all_institution_summary(self):
         with self.client.session_transaction() as session:
             session.update(
@@ -381,6 +391,49 @@ class CacheStatusSummaryTest(unittest.TestCase):
         self.assertEqual(200, response.status_code)
         self.assertIn("openalex_articles_all_institutions.csv", response.headers["Content-Disposition"])
         self.assertIn(b"W123", response.data)
+
+    def test_institution_openalex_xlsx_exports_extended_metadata_incrementally(self):
+        with self.app.app_context():
+            metadata = OpenAlexWorkMetadata.query.filter_by(openalex_id="W123").one()
+            metadata.pmid = "pmid:123"
+            metadata.volume = "12"
+            metadata.primary_license = "cc-by"
+            metadata.citation_normalized_percentile = 0.95
+            metadata.author_names = "Ada Researcher; Grace Researcher"
+            metadata.institution_names = "Test University"
+            metadata.sustainable_development_goals = "4 | Quality education | 0.9000"
+            db.session.commit()
+
+        with self.client.session_transaction() as session:
+            session.update(
+                logged_in=True,
+                user_id=self.manager_id,
+                is_admin=False,
+                is_manager=True,
+                ror_id="01test123",
+            )
+
+        response = self.client.get("/openalex/works/export?format=excel")
+
+        self.assertEqual(200, response.status_code)
+        self.assertIn(
+            "openalex_works_01test123_all.xlsx",
+            response.headers["Content-Disposition"],
+        )
+        workbook = load_workbook(BytesIO(response.data), read_only=True)
+        worksheet = workbook["OpenAlex works"]
+        rows = worksheet.iter_rows(values_only=True)
+        headers = list(next(rows))
+        first_row = dict(zip(headers, next(rows)))
+        workbook.close()
+
+        self.assertEqual("0000-0001", first_row["orcid"])
+        self.assertEqual("W123", first_row["openalex_id"])
+        self.assertEqual("pmid:123", first_row["pmid"])
+        self.assertEqual("cc-by", first_row["primary_license"])
+        self.assertEqual("Ada Researcher; Grace Researcher", first_row["author_names"])
+        self.assertEqual("Test University", first_row["institution_names"])
+        self.assertEqual(0.95, first_row["citation_normalized_percentile"])
 
     def test_staff_can_queue_refresh_for_any_listed_institution(self):
         with self.client.session_transaction() as session:

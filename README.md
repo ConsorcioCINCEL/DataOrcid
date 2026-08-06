@@ -78,10 +78,21 @@ flask rebuild-openalex-analytics
 # Rebuild it for one institution
 flask rebuild-openalex-analytics --ror 02ap3w078
 
+# Populate extended export metadata from the existing raw OpenAlex cache
+flask rebuild-openalex-metadata --batch-size 2000
+# Resume after the last raw-cache ID reported in the log
+flask rebuild-openalex-metadata --batch-size 2000 --start-after-id 150000
+
 The analytics layer is refreshed automatically after Works or OpenAlex
 synchronization. When upgrading an existing database, run `flask db upgrade`
 and then `flask rebuild-openalex-analytics` so optimized filters are available
 immediately.
+
+Institutional OpenAlex CSV exports stream rows as they are read, and XLSX
+exports use a write-only workbook without the former 100,000-row application
+limit. Extended bibliographic, authorship, affiliation, citation, topic, open
+access, SDG, funding, and APC fields are read from the queryable metadata table
+so downloads do not have to deserialize the full raw JSON cache.
 
 Raw DOI values remain complete in a `TEXT` column. Searches and joins use a
 validated, normalized DOI key limited to 255 characters; invalid or oversized

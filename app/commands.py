@@ -307,6 +307,35 @@ def register_commands(app):
             )
         )
 
+    @app.cli.command("rebuild-openalex-metadata")
+    @click.option("--limit", default=None, type=int, help="Maximum raw OpenAlex records to process.")
+    @click.option("--batch-size", default=500, type=int, help="Raw records to process before each commit.")
+    @click.option("--start-after-id", default=0, type=int, help="Resume after a raw-cache primary key.")
+    @with_appcontext
+    def rebuild_openalex_metadata_command(limit, batch_size, start_after_id):
+        """Rebuild exportable OpenAlex metadata from the local raw cache."""
+        from .services.openalex_service import rebuild_openalex_metadata
+
+        click.echo("Rebuilding queryable OpenAlex metadata from raw cache...")
+
+        def _progress(processed, created, updated, last_id):
+            click.echo(
+                f"Processed {processed} raw records | created {created} | "
+                f"updated {updated} | last raw id {last_id}"
+            )
+
+        summary = rebuild_openalex_metadata(
+            limit=limit,
+            batch_size=batch_size,
+            start_after_id=start_after_id,
+            progress=_progress,
+        )
+        click.echo(
+            "Processed: {processed} | Created: {created} | Updated: {updated}".format(
+                **summary
+            )
+        )
+
     @app.cli.command("rebuild-openalex-analytics")
     @click.option("--ror", default=None, help="Target one ROR ID; omit it to rebuild every institution.")
     @with_appcontext

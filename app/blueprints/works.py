@@ -23,6 +23,7 @@ from flask import (
 )
 from flask_babel import _, get_locale
 from sqlalchemy import String, and_, case, cast, func, literal, or_, select
+from sqlalchemy.orm import load_only
 
 from .. import db, plain_text
 from ..decorators import (
@@ -1043,6 +1044,52 @@ OPENALEX_EXPORT_BASE_COLUMNS = [
     'primary_topic_name',
     'primary_topic_field',
     'primary_topic_domain',
+    'pmid',
+    'pmcid',
+    'volume',
+    'issue',
+    'first_page',
+    'last_page',
+    'source_id',
+    'source_issns',
+    'source_host_organization_name',
+    'primary_landing_page_url',
+    'primary_pdf_url',
+    'primary_license',
+    'primary_version',
+    'referenced_works_count',
+    'citation_normalized_percentile',
+    'is_in_top_1_percent',
+    'is_in_top_10_percent',
+    'cited_by_percentile_min',
+    'cited_by_percentile_max',
+    'author_count',
+    'institution_count',
+    'country_count',
+    'location_count',
+    'has_abstract',
+    'has_fulltext',
+    'indexed_in',
+    'topics',
+    'keywords',
+    'sustainable_development_goals',
+    'funders',
+    'awards',
+    'apc_list_value',
+    'apc_list_currency',
+    'apc_list_value_usd',
+    'apc_paid_value',
+    'apc_paid_currency',
+    'apc_paid_value_usd',
+    'author_ids',
+    'author_names',
+    'author_orcids',
+    'corresponding_author_names',
+    'institution_names',
+    'institution_rors',
+    'countries',
+    'raw_affiliation_strings',
+    'raw_created_date',
     'metadata_fetched_at',
     'metadata_updated_at',
     'has_raw_json',
@@ -1052,21 +1099,52 @@ OPENALEX_EXPORT_CSV_COLUMNS = OPENALEX_EXPORT_BASE_COLUMNS + ['raw_json_length',
 OPENALEX_EXPORT_XLSX_COLUMNS = OPENALEX_EXPORT_BASE_COLUMNS
 
 
-def _openalex_export_row(raw, metadata, include_raw_json: bool = True) -> dict:
+def _openalex_export_load_options(raw_model, metadata_model):
+    """Load only columns required by the fast spreadsheet export."""
+    return (
+        load_only(
+            raw_model.doi_normalized,
+            raw_model.source_doi,
+            raw_model.openalex_id,
+            raw_model.status,
+            raw_model.http_status,
+            raw_model.error,
+            raw_model.fetched_at,
+            raw_model.created_at,
+            raw_model.oa_updated_date,
+        ),
+        load_only(*(
+            [
+                getattr(metadata_model, column)
+                for column in OPENALEX_EXPORT_XLSX_COLUMNS
+                if hasattr(metadata_model, column)
+            ]
+            + [metadata_model.fetched_at, metadata_model.updated_at]
+        )),
+    )
+
+
+def _openalex_export_row(
+    raw,
+    metadata,
+    include_raw_json: bool = True,
+    cache_key: str | None = None,
+) -> dict:
     """Return one exportable OpenAlex raw-cache row with derived metadata."""
-    openalex_id = (metadata.openalex_id if metadata else None) or raw.openalex_id
-    raw_json = json.dumps(raw.raw_json, ensure_ascii=False) if include_raw_json and raw.raw_json else None
+    openalex_id = (metadata.openalex_id if metadata else None) or (raw.openalex_id if raw else None)
+    raw_payload = raw.raw_json if include_raw_json and raw else None
+    raw_json = json.dumps(raw_payload, ensure_ascii=False) if raw_payload else None
     row = {
-        'doi_normalized': raw.doi_normalized,
-        'source_doi': raw.source_doi,
+        'doi_normalized': raw.doi_normalized if raw else cache_key,
+        'source_doi': raw.source_doi if raw else None,
         'openalex_id': openalex_id,
         'openalex_url': f"https://openalex.org/{openalex_id}" if openalex_id else None,
-        'raw_status': raw.status,
-        'http_status': raw.http_status,
-        'raw_error': raw.error,
-        'raw_fetched_at': _format_datetime(raw.fetched_at),
-        'raw_created_at': _format_datetime(raw.created_at),
-        'raw_oa_updated_date': _format_datetime(raw.oa_updated_date),
+        'raw_status': raw.status if raw else 'pending',
+        'http_status': raw.http_status if raw else None,
+        'raw_error': raw.error if raw else None,
+        'raw_fetched_at': _format_datetime(raw.fetched_at) if raw else None,
+        'raw_created_at': _format_datetime(raw.created_at) if raw else None,
+        'raw_oa_updated_date': _format_datetime(raw.oa_updated_date) if raw else None,
         'title': plain_text(metadata.title) if metadata else None,
         'publication_year': metadata.publication_year if metadata else None,
         'publication_date': metadata.publication_date if metadata else None,
@@ -1086,9 +1164,55 @@ def _openalex_export_row(raw, metadata, include_raw_json: bool = True) -> dict:
         'primary_topic_name': metadata.primary_topic_name if metadata else None,
         'primary_topic_field': metadata.primary_topic_field if metadata else None,
         'primary_topic_domain': metadata.primary_topic_domain if metadata else None,
+        'pmid': metadata.pmid if metadata else None,
+        'pmcid': metadata.pmcid if metadata else None,
+        'volume': metadata.volume if metadata else None,
+        'issue': metadata.issue if metadata else None,
+        'first_page': metadata.first_page if metadata else None,
+        'last_page': metadata.last_page if metadata else None,
+        'source_id': metadata.source_id if metadata else None,
+        'source_issns': metadata.source_issns if metadata else None,
+        'source_host_organization_name': metadata.source_host_organization_name if metadata else None,
+        'primary_landing_page_url': metadata.primary_landing_page_url if metadata else None,
+        'primary_pdf_url': metadata.primary_pdf_url if metadata else None,
+        'primary_license': metadata.primary_license if metadata else None,
+        'primary_version': metadata.primary_version if metadata else None,
+        'referenced_works_count': metadata.referenced_works_count if metadata else None,
+        'citation_normalized_percentile': metadata.citation_normalized_percentile if metadata else None,
+        'is_in_top_1_percent': metadata.is_in_top_1_percent if metadata else None,
+        'is_in_top_10_percent': metadata.is_in_top_10_percent if metadata else None,
+        'cited_by_percentile_min': metadata.cited_by_percentile_min if metadata else None,
+        'cited_by_percentile_max': metadata.cited_by_percentile_max if metadata else None,
+        'author_count': metadata.author_count if metadata else None,
+        'institution_count': metadata.institution_count if metadata else None,
+        'country_count': metadata.country_count if metadata else None,
+        'location_count': metadata.location_count if metadata else None,
+        'has_abstract': metadata.has_abstract if metadata else None,
+        'has_fulltext': metadata.has_fulltext if metadata else None,
+        'indexed_in': metadata.indexed_in if metadata else None,
+        'topics': metadata.topics if metadata else None,
+        'keywords': metadata.keywords if metadata else None,
+        'sustainable_development_goals': metadata.sustainable_development_goals if metadata else None,
+        'funders': metadata.funders if metadata else None,
+        'awards': metadata.awards if metadata else None,
+        'apc_list_value': metadata.apc_list_value if metadata else None,
+        'apc_list_currency': metadata.apc_list_currency if metadata else None,
+        'apc_list_value_usd': metadata.apc_list_value_usd if metadata else None,
+        'apc_paid_value': metadata.apc_paid_value if metadata else None,
+        'apc_paid_currency': metadata.apc_paid_currency if metadata else None,
+        'apc_paid_value_usd': metadata.apc_paid_value_usd if metadata else None,
+        'author_ids': metadata.author_ids if metadata else None,
+        'author_names': metadata.author_names if metadata else None,
+        'author_orcids': metadata.author_orcids if metadata else None,
+        'corresponding_author_names': metadata.corresponding_author_names if metadata else None,
+        'institution_names': metadata.institution_names if metadata else None,
+        'institution_rors': metadata.institution_rors if metadata else None,
+        'countries': metadata.countries if metadata else None,
+        'raw_affiliation_strings': metadata.raw_affiliation_strings if metadata else None,
+        'raw_created_date': metadata.raw_created_date if metadata else None,
         'metadata_fetched_at': _format_datetime(metadata.fetched_at) if metadata else None,
         'metadata_updated_at': _format_datetime(metadata.updated_at) if metadata else None,
-        'has_raw_json': bool(raw_json) if include_raw_json else None,
+        'has_raw_json': bool(raw_json) if include_raw_json else bool(raw and raw.status == 'found'),
     }
     if include_raw_json:
         row['raw_json_length'] = len(raw_json) if raw_json else 0
@@ -1620,6 +1744,200 @@ def _openalex_work_rows(
     })
 
     return rows, summary, pagination
+
+
+OPENALEX_INSTITUTION_EXPORT_COLUMNS = [
+    'institution_ror_id',
+    'local_work_id',
+    'orcid',
+    'local_title',
+    'local_type',
+    'local_publication_year',
+    'local_journal',
+    'local_doi',
+    'openalex_cache_key',
+    'matched',
+] + OPENALEX_EXPORT_XLSX_COLUMNS
+
+
+def _openalex_institution_export_query(
+    ror_id: str,
+    coverage: str = "all",
+    search: str = "",
+    sort: str = "citations",
+    direction: str = "desc",
+):
+    """Build an unbounded, low-memory OpenAlex export query for one institution."""
+    from ..models import OpenAlexWorkMetadata, OpenAlexWorkRawCache, WorkCache
+
+    cache_key = _openalex_cache_key_expr(WorkCache)
+    query = (
+        db.session.query(WorkCache, OpenAlexWorkRawCache, OpenAlexWorkMetadata)
+        .outerjoin(OpenAlexWorkRawCache, OpenAlexWorkRawCache.doi_normalized == cache_key)
+        .outerjoin(OpenAlexWorkMetadata, OpenAlexWorkMetadata.doi_normalized == cache_key)
+        .filter(
+            WorkCache.ror_id == ror_id,
+            WorkCache.type == "journal-article",
+        )
+    )
+
+    if coverage == "enriched":
+        query = query.filter(OpenAlexWorkMetadata.id.isnot(None))
+    elif coverage == "missing":
+        query = query.filter(
+            WorkCache.doi_normalized.isnot(None),
+            OpenAlexWorkRawCache.id.is_(None),
+        )
+    elif coverage == "not_found":
+        query = query.filter(OpenAlexWorkRawCache.status.in_(("not_found", "error")))
+    elif coverage == "no_doi":
+        query = query.filter(WorkCache.doi_normalized.is_(None))
+
+    search = (search or "").strip()
+    if search:
+        pattern = f"%{search}%"
+        query = query.filter(or_(
+            WorkCache.title.ilike(pattern),
+            WorkCache.doi.ilike(pattern),
+            WorkCache.orcid.ilike(pattern),
+            WorkCache.journal_title.ilike(pattern),
+            OpenAlexWorkMetadata.source_name.ilike(pattern),
+            OpenAlexWorkMetadata.primary_topic_field.ilike(pattern),
+            OpenAlexWorkMetadata.primary_topic_domain.ilike(pattern),
+            OpenAlexWorkMetadata.openalex_id.ilike(pattern),
+        ))
+
+    status_sort = case(
+        (OpenAlexWorkMetadata.id.isnot(None), 0),
+        (OpenAlexWorkRawCache.status == "error", 3),
+        (OpenAlexWorkRawCache.status == "not_found", 2),
+        else_=1,
+    )
+    sort_columns = {
+        "title": WorkCache.title,
+        "year": WorkCache.pub_year,
+        "citations": OpenAlexWorkMetadata.cited_by_count,
+        "open_access": OpenAlexWorkMetadata.is_oa,
+        "source": OpenAlexWorkMetadata.source_name,
+        "status": status_sort,
+    }
+    sort_column = sort_columns.get(sort, OpenAlexWorkMetadata.cited_by_count)
+    direction = direction if direction in {"asc", "desc"} else "desc"
+    null_rank = case((sort_column.is_(None), 1), else_=0)
+    primary_order = sort_column.asc() if direction == "asc" else sort_column.desc()
+
+    return query.options(
+        load_only(
+            WorkCache.id,
+            WorkCache.ror_id,
+            WorkCache.orcid,
+            WorkCache.title,
+            WorkCache.type,
+            WorkCache.pub_year,
+            WorkCache.journal_title,
+            WorkCache.doi,
+            WorkCache.doi_normalized,
+        ),
+        *_openalex_export_load_options(OpenAlexWorkRawCache, OpenAlexWorkMetadata),
+    ).order_by(
+        null_rank.asc(),
+        primary_order,
+        WorkCache.title.asc(),
+        WorkCache.id.asc(),
+    )
+
+
+def _openalex_institution_export_row(work, raw, metadata) -> dict:
+    """Combine local institutional context with flattened OpenAlex metadata."""
+    cache_key = work.doi_normalized or f"work:{work.id}"
+    row = {
+        'institution_ror_id': work.ror_id,
+        'local_work_id': work.id,
+        'orcid': work.orcid,
+        'local_title': plain_text(work.title),
+        'local_type': work.type,
+        'local_publication_year': work.pub_year,
+        'local_journal': plain_text(work.journal_title),
+        'local_doi': work.doi,
+        'openalex_cache_key': cache_key,
+        'matched': bool(metadata and metadata.openalex_id),
+    }
+    row.update(
+        _openalex_export_row(
+            raw,
+            metadata,
+            include_raw_json=False,
+            cache_key=cache_key,
+        )
+    )
+    return row
+
+
+def _send_openalex_institution_export(
+    records_query,
+    ror_id: str,
+    coverage: str = "all",
+):
+    """Stream CSV or build write-only XLSX rows for an institutional export."""
+    export_format = (request.args.get('format') or '').lower()
+    base_name = f"openalex_works_{ror_id}_{coverage}"
+
+    if export_format == 'excel':
+        from openpyxl import Workbook
+
+        workbook = Workbook(write_only=True)
+        sheet_number = 1
+        worksheet = workbook.create_sheet('OpenAlex works')
+        worksheet.append(OPENALEX_INSTITUTION_EXPORT_COLUMNS)
+        worksheet_rows = 1
+        for work, raw, metadata in records_query.yield_per(1000):
+            if worksheet_rows >= 1_048_576:
+                sheet_number += 1
+                worksheet = workbook.create_sheet(f'OpenAlex works {sheet_number}')
+                worksheet.append(OPENALEX_INSTITUTION_EXPORT_COLUMNS)
+                worksheet_rows = 1
+            row = _openalex_institution_export_row(work, raw, metadata)
+            worksheet.append([
+                _excel_cell(row.get(column))
+                for column in OPENALEX_INSTITUTION_EXPORT_COLUMNS
+            ])
+            worksheet_rows += 1
+
+        output = BytesIO()
+        workbook.save(output)
+        output.seek(0)
+        return _attach_download_token(send_file(
+            output,
+            as_attachment=True,
+            download_name=f"{base_name}.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ))
+
+    def generate_csv():
+        buffer = StringIO()
+        writer = csv.DictWriter(
+            buffer,
+            fieldnames=OPENALEX_INSTITUTION_EXPORT_COLUMNS,
+            extrasaction='ignore',
+        )
+        buffer.write('\ufeff')
+        writer.writeheader()
+        yield buffer.getvalue()
+        buffer.seek(0)
+        buffer.truncate(0)
+
+        for work, raw, metadata in records_query.yield_per(1000):
+            writer.writerow(_openalex_institution_export_row(work, raw, metadata))
+            yield buffer.getvalue()
+            buffer.seek(0)
+            buffer.truncate(0)
+
+    response = Response(
+        stream_with_context(generate_csv()),
+        mimetype='text/csv; charset=utf-8',
+    )
+    response.headers['Content-Disposition'] = f'attachment; filename="{base_name}.csv"'
+    return _attach_download_token(response)
 
 
 def _int_filter(value) -> int | None:
@@ -4951,37 +5269,14 @@ def openalex_works_export():
     search = request.args.get("q", "").strip()
     sort = request.args.get("sort", "citations")
     direction = request.args.get("dir", "desc").lower()
-    rows, _summary, _pagination = _openalex_work_rows(
+    records_query = _openalex_institution_export_query(
         ror_id,
         coverage=coverage,
-        page=1,
-        per_page=100000,
         search=search,
         sort=sort,
         direction=direction,
     )
-    data_frame = pd.DataFrame([{
-        "title": plain_text(row["title"]),
-        "orcid": row["orcid"],
-        "type": row["type"],
-        "publication_year": row["pub_year"],
-        "journal": row["journal_title"],
-        "doi": row["doi"],
-        "openalex_cache_key": row["openalex_cache_key"],
-        "matched": row["matched"],
-        "raw_status": row["raw_status"],
-        "raw_error": row["raw_error"],
-        "openalex_id": row["openalex_id"],
-        "openalex_url": row["openalex_url"],
-        "citations": row["cited_by_count"],
-        "is_open_access": row["is_oa"],
-        "oa_status": row["oa_status"],
-        "source": row["source_name"],
-        "issn_l": row["source_issn_l"],
-        "topic_field": row["primary_topic_field"],
-        "topic_domain": row["primary_topic_domain"],
-    } for row in rows])
-    return _send_dataframe_export(data_frame, f"openalex_works_{ror_id}_{coverage}", "OpenAlex works")
+    return _send_openalex_institution_export(records_query, ror_id, coverage)
 
 
 @bp_works.route('/openalex/analytics')
@@ -5455,6 +5750,13 @@ def download_staff_institution_cache(ror_id: str, dataset_key: str):
             )
             .order_by(OpenAlexWorkRawCache.doi_normalized.asc())
         )
+        if (request.args.get('format') or '').lower() == 'excel':
+            records_query = records_query.options(
+                *_openalex_export_load_options(
+                    OpenAlexWorkRawCache,
+                    OpenAlexWorkMetadata,
+                )
+            )
         if records_query.first() is None:
             flash_err(_('No OpenAlex cache data available.'))
             return redirect(url_for('works.cache_works_status'))
@@ -5538,7 +5840,6 @@ def download_all_fundings_admin():
 def download_openalex_admin():
     """Export cached OpenAlex work metadata for all institutions to staff users."""
     from ..models import OpenAlexWorkMetadata, OpenAlexWorkRawCache
-    from sqlalchemy.orm import load_only
 
     records_query = (
         db.session.query(OpenAlexWorkRawCache, OpenAlexWorkMetadata)
@@ -5547,41 +5848,10 @@ def download_openalex_admin():
     )
     if (request.args.get('format') or '').lower() == 'excel':
         records_query = records_query.options(
-            load_only(
-                OpenAlexWorkRawCache.doi_normalized,
-                OpenAlexWorkRawCache.source_doi,
-                OpenAlexWorkRawCache.openalex_id,
-                OpenAlexWorkRawCache.status,
-                OpenAlexWorkRawCache.http_status,
-                OpenAlexWorkRawCache.error,
-                OpenAlexWorkRawCache.fetched_at,
-                OpenAlexWorkRawCache.created_at,
-                OpenAlexWorkRawCache.oa_updated_date,
-            ),
-            load_only(
-                OpenAlexWorkMetadata.openalex_id,
-                OpenAlexWorkMetadata.title,
-                OpenAlexWorkMetadata.publication_year,
-                OpenAlexWorkMetadata.publication_date,
-                OpenAlexWorkMetadata.type,
-                OpenAlexWorkMetadata.language,
-                OpenAlexWorkMetadata.cited_by_count,
-                OpenAlexWorkMetadata.fwci,
-                OpenAlexWorkMetadata.is_retracted,
-                OpenAlexWorkMetadata.is_oa,
-                OpenAlexWorkMetadata.oa_status,
-                OpenAlexWorkMetadata.oa_url,
-                OpenAlexWorkMetadata.best_pdf_url,
-                OpenAlexWorkMetadata.source_name,
-                OpenAlexWorkMetadata.source_issn_l,
-                OpenAlexWorkMetadata.source_type,
-                OpenAlexWorkMetadata.source_is_in_doaj,
-                OpenAlexWorkMetadata.primary_topic_name,
-                OpenAlexWorkMetadata.primary_topic_field,
-                OpenAlexWorkMetadata.primary_topic_domain,
-                OpenAlexWorkMetadata.fetched_at,
-                OpenAlexWorkMetadata.updated_at,
-            ),
+            *_openalex_export_load_options(
+                OpenAlexWorkRawCache,
+                OpenAlexWorkMetadata,
+            )
         )
     if not db.session.query(OpenAlexWorkRawCache.id).first():
         flash_err(_('The OpenAlex cache is empty.'))

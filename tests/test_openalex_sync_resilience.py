@@ -8,12 +8,20 @@ from flask import Flask
 
 from app import db
 from app.commands import register_commands
-from app.models import OpenAlexWorkRawCache, SyncJob, WorkCache, utc_now
+from app.models import (
+    OpenAlexWorkMetadata,
+    OpenAlexWorkRawCache,
+    SyncJob,
+    WorkCache,
+    utc_now,
+)
 from app.services.background_jobs import submit_background_job
 from app.services.openalex_service import (
     _final_sync_status,
     collect_title_match_candidates,
     collect_work_dois,
+    extract_work_metadata,
+    rebuild_openalex_metadata,
     should_refresh_raw,
     sync_work_by_doi,
 )
@@ -71,6 +79,161 @@ class OpenAlexSyncResilienceTest(unittest.TestCase):
         self.assertEqual("skipped", second["status"])
         self.assertEqual(1, client.calls)
         self.assertGreater(next_retry_at, utc_now())
+
+    def test_extended_work_metadata_is_flattened_for_fast_exports(self):
+        payload = {
+            "id": "https://openalex.org/W123",
+            "title": "Exportable work",
+            "ids": {
+                "pmid": "https://pubmed.ncbi.nlm.nih.gov/123",
+                "pmcid": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC123",
+            },
+            "biblio": {
+                "volume": "12",
+                "issue": "3",
+                "first_page": "10",
+                "last_page": "20",
+            },
+            "primary_location": {
+                "landing_page_url": "https://example.org/work",
+                "pdf_url": "https://example.org/work.pdf",
+                "license": "cc-by",
+                "version": "publishedVersion",
+                "source": {
+                    "id": "https://openalex.org/S123",
+                    "display_name": "Journal",
+                    "issn": ["1234-5678", "8765-4321"],
+                    "host_organization_name": "Publisher",
+                },
+            },
+            "authorships": [{
+                "author": {
+                    "id": "https://openalex.org/A123",
+                    "display_name": "Ada Researcher",
+                    "orcid": "https://orcid.org/0000-0001-0000-0001",
+                },
+                "is_corresponding": True,
+                "countries": ["CL"],
+                "raw_affiliation_strings": ["Test University, Chile"],
+                "institutions": [{
+                    "display_name": "Test University",
+                    "ror": "https://ror.org/01test123",
+                    "country_code": "CL",
+                }],
+            }],
+            "topics": [{
+                "id": "https://openalex.org/T123",
+                "display_name": "Research topic",
+                "score": 0.9,
+            }],
+            "keywords": [{
+                "id": "https://openalex.org/keywords/research",
+                "display_name": "Research",
+                "score": 0.8,
+            }],
+            "sustainable_development_goals": [{
+                "id": "https://metadata.un.org/sdg/4",
+                "display_name": "Quality education",
+                "score": 0.7,
+            }],
+            "funders": [{
+                "id": "https://openalex.org/F123",
+                "display_name": "Research Agency",
+                "ror": "https://ror.org/02funder1",
+            }],
+            "awards": [{
+                "id": "https://openalex.org/G123",
+                "funder_award_id": "GRANT-123",
+                "display_name": "Research grant",
+                "funder_display_name": "Research Agency",
+            }],
+            "citation_normalized_percentile": {
+                "value": 0.95,
+                "is_in_top_1_percent": False,
+                "is_in_top_10_percent": True,
+            },
+            "cited_by_percentile_year": {"min": 95, "max": 99},
+            "apc_list": {"value": 1200, "currency": "USD", "value_usd": 1200},
+            "apc_paid": {"value": 1000, "currency": "USD", "value_usd": 1000},
+            "indexed_in": ["crossref", "doaj"],
+            "abstract_inverted_index": {"Test": [0]},
+            "has_fulltext": True,
+            "referenced_works_count": 25,
+            "institutions_distinct_count": 1,
+            "countries_distinct_count": 1,
+            "locations_count": 2,
+            "created_date": "2026-01-01T00:00:00",
+        }
+
+        values = extract_work_metadata(payload, "10.1234/export")
+
+        self.assertEqual("A123", values["author_ids"])
+        self.assertEqual("Ada Researcher", values["corresponding_author_names"])
+        self.assertEqual("Test University", values["institution_names"])
+        self.assertEqual("1234-5678; 8765-4321", values["source_issns"])
+        self.assertEqual("crossref; doaj", values["indexed_in"])
+        self.assertIn("T123 | Research topic | 0.9000", values["topics"])
+        self.assertIn("GRANT-123", values["awards"])
+        self.assertTrue(values["is_in_top_10_percent"])
+        self.assertEqual(1200, values["apc_list_value_usd"])
+        self.assertEqual("2026-01-01T00:00:00", values["raw_created_date"])
+        self.assertEqual(
+            "work:123",
+            extract_work_metadata(payload, "work:123")["doi_normalized"],
+        )
+
+    def test_metadata_backfill_uses_raw_cache_without_api_calls(self):
+        with self.app.app_context():
+            db.session.add(OpenAlexWorkRawCache(
+                doi_normalized="10.1234/backfill",
+                status="found",
+                raw_json={
+                    "id": "https://openalex.org/WBACKFILL",
+                    "title": "Backfilled work",
+                    "ids": {"pmid": "pmid:123"},
+                    "keywords": [{
+                        "id": "https://openalex.org/keywords/test",
+                        "display_name": "Test",
+                        "score": 0.75,
+                    }],
+                },
+            ))
+            db.session.commit()
+
+            summary = rebuild_openalex_metadata(batch_size=1)
+            metadata = OpenAlexWorkMetadata.query.filter_by(
+                doi_normalized="10.1234/backfill"
+            ).one()
+
+        self.assertEqual(1, summary["processed"])
+        self.assertEqual("WBACKFILL", metadata.openalex_id)
+        self.assertEqual("pmid:123", metadata.pmid)
+        self.assertIn("Test", metadata.keywords)
+
+    def test_metadata_backfill_preserves_title_match_cache_keys(self):
+        with self.app.app_context():
+            db.session.add_all([
+                OpenAlexWorkRawCache(
+                    doi_normalized="work:42",
+                    status="found",
+                    raw_json={
+                        "id": "https://openalex.org/WTITLE",
+                        "title": "Title matched work",
+                    },
+                ),
+                OpenAlexWorkMetadata(
+                    doi_normalized="work:42",
+                    openalex_id="WTITLE",
+                ),
+            ])
+            db.session.commit()
+
+            rebuild_openalex_metadata(batch_size=1)
+            metadata = OpenAlexWorkMetadata.query.filter_by(
+                openalex_id="WTITLE"
+            ).one()
+
+            self.assertEqual("work:42", metadata.doi_normalized)
 
     def test_expired_backoff_and_force_refresh_are_retryable(self):
         with self.app.app_context():

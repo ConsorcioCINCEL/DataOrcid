@@ -118,6 +118,77 @@ def _normalize_orcid(value: str | None) -> str | None:
     return suffix or None
 
 
+def _join_unique(values) -> str | None:
+    """Join non-empty values once while preserving their source order."""
+    if isinstance(values, (str, int, float)):
+        values = [values]
+    seen = set()
+    ordered = []
+    for value in values:
+        text = str(value or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        ordered.append(text)
+    return "; ".join(ordered) or None
+
+
+def _scored_entity_summary(items) -> str | None:
+    """Flatten scored OpenAlex entities into a spreadsheet-friendly value."""
+    values = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        parts = [
+            _short_openalex_id(item.get("id")),
+            item.get("display_name"),
+        ]
+        if item.get("score") is not None:
+            try:
+                parts.append(f"{float(item['score']):.4f}")
+            except (TypeError, ValueError):
+                parts.append(str(item["score"]))
+        value = " | ".join(str(part) for part in parts if part not in (None, ""))
+        if value:
+            values.append(value)
+    return " || ".join(values) or None
+
+
+def _funder_summary(items) -> str | None:
+    """Flatten funder identifiers, names, and ROR IDs for exports."""
+    values = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        parts = [
+            _short_openalex_id(item.get("id")),
+            item.get("display_name"),
+            _normalize_ror(item.get("ror")),
+        ]
+        value = " | ".join(str(part) for part in parts if part not in (None, ""))
+        if value:
+            values.append(value)
+    return " || ".join(values) or None
+
+
+def _award_summary(items) -> str | None:
+    """Flatten award and grant metadata without discarding funder context."""
+    values = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        parts = [
+            _short_openalex_id(item.get("id")),
+            item.get("funder_award_id"),
+            item.get("display_name"),
+            item.get("funder_display_name"),
+        ]
+        value = " | ".join(str(part) for part in parts if part not in (None, ""))
+        if value:
+            values.append(value)
+    return " || ".join(values) or None
+
+
 class OpenAlexClient:
     """Small OpenAlex client focused on work lookups by DOI."""
 
@@ -294,6 +365,7 @@ def _response_error(response: requests.Response) -> str:
 
 def extract_work_metadata(payload: dict, doi: str) -> dict:
     """Map a raw OpenAlex work payload to the local queryable metadata shape."""
+    cache_key = normalize_doi(doi) or str(doi or "").strip()
     primary_location = payload.get("primary_location") or {}
     best_oa_location = payload.get("best_oa_location") or {}
     open_access = payload.get("open_access") or {}
@@ -301,9 +373,48 @@ def extract_work_metadata(payload: dict, doi: str) -> dict:
     primary_topic = payload.get("primary_topic") or {}
     field = primary_topic.get("field") or {}
     domain = primary_topic.get("domain") or {}
+    ids = payload.get("ids") or {}
+    biblio = payload.get("biblio") or {}
+    citation_percentile = payload.get("citation_normalized_percentile") or {}
+    cited_by_percentile = payload.get("cited_by_percentile_year") or {}
+    apc_list = payload.get("apc_list") or {}
+    apc_paid = payload.get("apc_paid") or {}
+    authorships = payload.get("authorships") or []
+    author_ids = []
+    author_names = []
+    author_orcids = []
+    corresponding_author_names = []
+    institution_names = []
+    institution_rors = []
+    countries = []
+    raw_affiliation_strings = []
+
+    for authorship in authorships:
+        author = authorship.get("author") or {}
+        author_name = author.get("display_name") or authorship.get("raw_author_name")
+        author_ids.append(_short_openalex_id(author.get("id")))
+        author_names.append(author_name)
+        author_orcids.append(_normalize_orcid(author.get("orcid") or authorship.get("raw_orcid")))
+        if authorship.get("is_corresponding"):
+            corresponding_author_names.append(author_name)
+        countries.extend(authorship.get("countries") or [])
+        raw_affiliation_strings.extend(authorship.get("raw_affiliation_strings") or [])
+        for institution in authorship.get("institutions") or []:
+            institution_names.append(institution.get("display_name"))
+            institution_rors.append(_normalize_ror(institution.get("ror")))
+            countries.append(institution.get("country_code"))
+
+    has_content = payload.get("has_content") or {}
+    content_urls = payload.get("content_urls") or {}
+    has_fulltext = bool(
+        payload.get("has_fulltext")
+        or has_content.get("pdf")
+        or has_content.get("grobid_xml")
+        or content_urls
+    )
 
     return {
-        "doi_normalized": normalize_doi(doi),
+        "doi_normalized": cache_key,
         "openalex_id": _short_openalex_id(payload.get("id")),
         "title": payload.get("title") or payload.get("display_name"),
         "publication_year": payload.get("publication_year"),
@@ -324,6 +435,54 @@ def extract_work_metadata(payload: dict, doi: str) -> dict:
         "primary_topic_name": primary_topic.get("display_name"),
         "primary_topic_field": field.get("display_name"),
         "primary_topic_domain": domain.get("display_name"),
+        "pmid": ids.get("pmid"),
+        "pmcid": ids.get("pmcid"),
+        "volume": biblio.get("volume"),
+        "issue": biblio.get("issue"),
+        "first_page": biblio.get("first_page"),
+        "last_page": biblio.get("last_page"),
+        "source_id": _short_openalex_id(source.get("id")),
+        "source_issns": _join_unique(source.get("issn") or []),
+        "source_host_organization_name": source.get("host_organization_name"),
+        "primary_landing_page_url": primary_location.get("landing_page_url"),
+        "primary_pdf_url": primary_location.get("pdf_url"),
+        "primary_license": primary_location.get("license"),
+        "primary_version": primary_location.get("version"),
+        "referenced_works_count": payload.get("referenced_works_count"),
+        "citation_normalized_percentile": citation_percentile.get("value"),
+        "is_in_top_1_percent": citation_percentile.get("is_in_top_1_percent"),
+        "is_in_top_10_percent": citation_percentile.get("is_in_top_10_percent"),
+        "cited_by_percentile_min": cited_by_percentile.get("min"),
+        "cited_by_percentile_max": cited_by_percentile.get("max"),
+        "author_count": len(authorships),
+        "institution_count": payload.get("institutions_distinct_count"),
+        "country_count": payload.get("countries_distinct_count"),
+        "location_count": payload.get("locations_count"),
+        "has_abstract": bool(payload.get("abstract_inverted_index")),
+        "has_fulltext": has_fulltext,
+        "indexed_in": _join_unique(payload.get("indexed_in") or []),
+        "topics": _scored_entity_summary(payload.get("topics")),
+        "keywords": _scored_entity_summary(payload.get("keywords")),
+        "sustainable_development_goals": _scored_entity_summary(
+            payload.get("sustainable_development_goals")
+        ),
+        "funders": _funder_summary(payload.get("funders")),
+        "awards": _award_summary(payload.get("awards")),
+        "apc_list_value": apc_list.get("value"),
+        "apc_list_currency": apc_list.get("currency"),
+        "apc_list_value_usd": apc_list.get("value_usd"),
+        "apc_paid_value": apc_paid.get("value"),
+        "apc_paid_currency": apc_paid.get("currency"),
+        "apc_paid_value_usd": apc_paid.get("value_usd"),
+        "author_ids": _join_unique(author_ids),
+        "author_names": _join_unique(author_names),
+        "author_orcids": _join_unique(author_orcids),
+        "corresponding_author_names": _join_unique(corresponding_author_names),
+        "institution_names": _join_unique(institution_names),
+        "institution_rors": _join_unique(institution_rors),
+        "countries": _join_unique(countries),
+        "raw_affiliation_strings": _join_unique(raw_affiliation_strings),
+        "raw_created_date": payload.get("created_date"),
         "raw_updated_date": _parse_openalex_datetime(payload.get("updated_date")),
         "fetched_at": utc_now(),
     }
@@ -771,6 +930,73 @@ def _upsert_metadata(values: dict) -> OpenAlexWorkMetadata:
     for key, value in values.items():
         setattr(metadata, key, value)
     return metadata
+
+
+def rebuild_openalex_metadata(
+    limit: int | None = None,
+    batch_size: int = 500,
+    start_after_id: int = 0,
+    progress=None,
+) -> dict:
+    """Rebuild queryable work metadata from the local raw OpenAlex cache."""
+    processed = 0
+    created = 0
+    updated = 0
+    last_id = max(int(start_after_id or 0), 0)
+    batch_size = max(int(batch_size or 500), 1)
+
+    while True:
+        remaining = None if limit is None else limit - processed
+        if remaining is not None and remaining <= 0:
+            break
+
+        current_batch_size = min(batch_size, remaining) if remaining is not None else batch_size
+        raw_rows = (
+            OpenAlexWorkRawCache.query
+            .filter(OpenAlexWorkRawCache.id > last_id)
+            .filter(OpenAlexWorkRawCache.status == "found")
+            .filter(OpenAlexWorkRawCache.raw_json.isnot(None))
+            .order_by(OpenAlexWorkRawCache.id.asc())
+            .limit(current_batch_size)
+            .all()
+        )
+        if not raw_rows:
+            break
+
+        cache_keys = [row.doi_normalized for row in raw_rows]
+        existing = {
+            row.doi_normalized: row
+            for row in OpenAlexWorkMetadata.query.filter(
+                OpenAlexWorkMetadata.doi_normalized.in_(cache_keys)
+            ).all()
+        }
+
+        for raw_row in raw_rows:
+            values = extract_work_metadata(raw_row.raw_json or {}, raw_row.doi_normalized)
+            values["doi_normalized"] = raw_row.doi_normalized
+            metadata = existing.get(raw_row.doi_normalized)
+            if metadata is None:
+                metadata = OpenAlexWorkMetadata(doi_normalized=raw_row.doi_normalized)
+                db.session.add(metadata)
+                existing[raw_row.doi_normalized] = metadata
+                created += 1
+            else:
+                updated += 1
+            for key, value in values.items():
+                setattr(metadata, key, value)
+
+        processed += len(raw_rows)
+        last_id = raw_rows[-1].id
+        db.session.commit()
+        if progress:
+            progress(processed, created, updated, last_id)
+
+    return {
+        "processed": processed,
+        "created": created,
+        "updated": updated,
+        "last_id": last_id,
+    }
 
 
 def _delete_work_dimensions(doi_normalized: str) -> None:

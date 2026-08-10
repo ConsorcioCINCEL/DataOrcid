@@ -249,6 +249,9 @@ def save_duplicate_review(
     notes: str | None = None,
     dismissal_reason: str | None = None,
     notice_message: str | None = None,
+    notice_subject: str | None = None,
+    recipient_email: str | None = None,
+    recipient_source: str | None = None,
     selected_orcid: str | None = None,
 ) -> DuplicateProfileReview:
     """Create or update an operational case without declaring an ORCID merge."""
@@ -290,14 +293,57 @@ def save_duplicate_review(
         "evidence_keys": group.get("evidence_keys", []),
         "dismissal_reason": reason if status == "dismissed" else None,
     }
-    stored_notice = (notice_message or "").strip()
-    if stored_notice:
-        candidate_snapshot["notice_message"] = stored_notice
-    elif previous_snapshot.get("notice_message"):
-        candidate_snapshot["notice_message"] = previous_snapshot["notice_message"]
+    _preserve_optional_snapshot_value(
+        candidate_snapshot,
+        previous_snapshot,
+        "notice_message",
+        notice_message,
+    )
+    _preserve_optional_snapshot_value(
+        candidate_snapshot,
+        previous_snapshot,
+        "notice_subject",
+        notice_subject,
+    )
+    _preserve_optional_snapshot_value(
+        candidate_snapshot,
+        previous_snapshot,
+        "recipient_email",
+        recipient_email,
+    )
+    clean_recipient_source = (
+        (recipient_source or "").strip()
+        if recipient_source is not None
+        else None
+    )
+    if clean_recipient_source not in {None, "", "orcid_public", "manual"}:
+        clean_recipient_source = "manual"
+    _preserve_optional_snapshot_value(
+        candidate_snapshot,
+        previous_snapshot,
+        "recipient_source",
+        clean_recipient_source,
+    )
     review.candidate_snapshot = candidate_snapshot
     db.session.commit()
     return review
+
+
+def _preserve_optional_snapshot_value(
+    snapshot: dict,
+    previous_snapshot: dict,
+    key: str,
+    value: str | None,
+) -> None:
+    """Store a submitted value or retain it when a later action omits the field."""
+    if value is None:
+        if previous_snapshot.get(key):
+            snapshot[key] = previous_snapshot[key]
+        return
+
+    clean_value = str(value).strip()
+    if clean_value:
+        snapshot[key] = clean_value
 
 
 def filter_duplicate_report_by_status(report: dict, case_status: str) -> dict:
@@ -368,6 +414,9 @@ def _attach_reviews(report: dict) -> dict:
             "notes": review.notes if review else "",
             "dismissal_reason": snapshot.get("dismissal_reason") or "",
             "notice_message": snapshot.get("notice_message") or "",
+            "notice_subject": snapshot.get("notice_subject") or "",
+            "recipient_email": snapshot.get("recipient_email") or "",
+            "recipient_source": snapshot.get("recipient_source") or "",
             "reviewed_at": _datetime_value(review.reviewed_at) if review else "",
             "reviewed_by_user_id": review.reviewed_by_user_id if review else None,
         }

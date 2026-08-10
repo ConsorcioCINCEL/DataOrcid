@@ -1143,12 +1143,20 @@ msgstr "La evidencia de afiliación es ambigua"
 msgid "Other reason"
 msgstr "Otro motivo"
 
+#: app/blueprints/duplicates.py:187
+msgid "Enter a valid recipient email address."
+msgstr "Ingresa una dirección de correo electrónico válida para el destinatario."
+
+#: app/blueprints/duplicates.py:595
+msgid "Possible duplicate ORCID records — review requested"
+msgstr "Posible duplicidad de registros ORCID — revisión solicitada"
+
 #: app/blueprints/duplicates.py:472
 #, python-format
 msgid "Shared DOI(s): %(dois)s"
 msgstr "DOI compartido(s): %(dois)s"
 
-#: app/blueprints/duplicates.py:475
+#: app/blueprints/duplicates.py:612
 #, python-format
 msgid ""
 "Hello %(name)s,\n"
@@ -1161,10 +1169,23 @@ msgid ""
 "%(evidence)s\n"
 "\n"
 "This is an algorithmic candidate, not a confirmation that the records "
-"belong to the same person. Please review both ORCID records. If they are "
-"yours, contact ORCID Support to request guidance on unifying them. If "
-"they belong to different people, please let us know so we can dismiss the"
-" match.\n"
+"belong to the same person. Please review both ORCID records.\n"
+"\n"
+"If, after reviewing them, you confirm that both records are yours, "
+"consult ORCID's official guide to remove the duplicate record you will "
+"not keep:\n"
+"%(guide_url)s\n"
+"\n"
+"Important: this action is irreversible, and the information and "
+"permissions in the duplicate record are not transferred to the primary "
+"record.\n"
+"\n"
+"If you need help or cannot access one of the records, contact ORCID "
+"Support:\n"
+"%(support_url)s\n"
+"\n"
+"If the records belong to different people, please let us know so we can "
+"dismiss the match.\n"
 "\n"
 "The institution cannot merge ORCID records or choose a primary ORCID iD "
 "on your behalf."
@@ -1179,10 +1200,22 @@ msgstr ""
 "%(evidence)s\n"
 "\n"
 "Este es un candidato algorítmico, no una confirmación de que los "
-"registros pertenezcan a la misma persona. Revisa ambos registros ORCID. "
-"Si son tuyos, contacta al soporte de ORCID para solicitar orientación "
-"sobre cómo unificarlos. Si pertenecen a personas diferentes, avísanos "
-"para que podamos descartar la coincidencia.\n"
+"registros pertenezcan a la misma persona. Revisa ambos registros ORCID.\n"
+"\n"
+"Si, después de revisarlos, confirmas que ambos registros son tuyos, "
+"consulta la guía oficial de ORCID para eliminar el registro duplicado que "
+"no conservarás:\n"
+"%(guide_url)s\n"
+"\n"
+"Importante: esta acción es irreversible y la información y los permisos "
+"del registro duplicado no se transfieren al registro principal.\n"
+"\n"
+"Si necesitas ayuda o no puedes acceder a alguno de los registros, contacta "
+"al soporte de ORCID:\n"
+"%(support_url)s\n"
+"\n"
+"Si los registros pertenecen a personas diferentes, avísanos para que "
+"podamos descartar la coincidencia.\n"
 "\n"
 "La institución no puede fusionar registros ORCID ni elegir un ORCID iD "
 "principal en tu nombre."
@@ -3693,6 +3726,27 @@ msgstr ""
 "de la institución. Marca el caso como informado solo después de haber "
 "enviado realmente el mensaje."
 
+#: app/templates/duplicates/index.html:404
+msgid "Recipient email"
+msgstr "Correo del destinatario"
+
+#: app/templates/duplicates/index.html:413
+msgid "Select a public ORCID email or enter a verified institutional address"
+msgstr "Selecciona un correo público de ORCID o ingresa una dirección institucional verificada"
+
+#: app/templates/duplicates/index.html:417
+msgid ""
+"Public ORCID emails are suggestions from the latest cached profile "
+"synchronization. Confirm the recipient before sending."
+msgstr ""
+"Los correos públicos de ORCID son sugerencias obtenidas de la última "
+"sincronización de perfiles en caché. Confirma el destinatario antes de enviar."
+
+#: app/templates/duplicates/index.html:420
+#: app/templates/duplicates/index.html:536
+msgid "Subject"
+msgstr "Asunto"
+
 #: app/templates/duplicates/index.html:387
 msgid "Message"
 msgstr "Mensaje"
@@ -3709,9 +3763,45 @@ msgstr "Por ejemplo: enviado por correo electrónico el 17 de julio"
 msgid "Copy message"
 msgstr "Copiar mensaje"
 
+#: app/templates/duplicates/index.html:434
+msgid "Copy email"
+msgstr "Copiar correo"
+
+#: app/templates/duplicates/index.html:435
+msgid "Open email app"
+msgstr "Abrir aplicación de correo"
+
 #: app/templates/duplicates/index.html:398
 msgid "Mark as informed"
 msgstr "Marcar como informado"
+
+#: app/templates/duplicates/index.html:480
+msgid ""
+"No public ORCID email is available. Enter a verified institutional "
+"address if you have one."
+msgstr ""
+"No hay un correo público de ORCID disponible. Ingresa una dirección "
+"institucional verificada si cuentas con una."
+
+#: app/templates/duplicates/index.html:485
+msgid "Public ORCID email suggestions"
+msgstr "Sugerencias de correos públicos de ORCID"
+
+#: app/templates/duplicates/index.html:535
+msgid "To"
+msgstr "Para"
+
+#: app/templates/duplicates/index.html:570
+msgid "Email draft copied"
+msgstr "Borrador de correo copiado"
+
+#: app/templates/duplicates/index.html:572
+msgid "Could not copy automatically. Select and copy the email manually."
+msgstr "No se pudo copiar automáticamente. Selecciona y copia el correo manualmente."
+
+#: app/templates/duplicates/index.html:581
+msgid "Enter or select a valid recipient email address first."
+msgstr "Ingresa o selecciona primero una dirección de correo válida para el destinatario."
 
 #: app/templates/duplicates/index.html:444
 msgid "Message copied"

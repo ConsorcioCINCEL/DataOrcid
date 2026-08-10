@@ -1126,12 +1126,20 @@ msgstr "Affiliation evidence is ambiguous"
 msgid "Other reason"
 msgstr ""
 
+#: app/blueprints/duplicates.py:187
+msgid "Enter a valid recipient email address."
+msgstr "Enter a valid recipient email address."
+
+#: app/blueprints/duplicates.py:595
+msgid "Possible duplicate ORCID records — review requested"
+msgstr "Possible duplicate ORCID records — review requested"
+
 #: app/blueprints/duplicates.py:472
 #, python-format
 msgid "Shared DOI(s): %(dois)s"
 msgstr "Shared DOI(s): %(dois)s"
 
-#: app/blueprints/duplicates.py:475
+#: app/blueprints/duplicates.py:612
 #, python-format
 msgid ""
 "Hello %(name)s,\n"
@@ -1143,13 +1151,27 @@ msgid ""
 "Evidence available for review:\n"
 "%(evidence)s\n"
 "\n"
-"This is an algorithmic candidate, not a confirmation that the records belong "
-"to the same person. Please review both ORCID records. If they are yours, "
-"contact ORCID Support to request guidance on unifying them. If they belong "
-"to different people, please let us know so we can dismiss the match.\n"
+"This is an algorithmic candidate, not a confirmation that the records "
+"belong to the same person. Please review both ORCID records.\n"
 "\n"
-"The institution cannot merge ORCID records or choose a primary ORCID iD on "
-"your behalf."
+"If, after reviewing them, you confirm that both records are yours, "
+"consult ORCID's official guide to remove the duplicate record you will "
+"not keep:\n"
+"%(guide_url)s\n"
+"\n"
+"Important: this action is irreversible, and the information and "
+"permissions in the duplicate record are not transferred to the primary "
+"record.\n"
+"\n"
+"If you need help or cannot access one of the records, contact ORCID "
+"Support:\n"
+"%(support_url)s\n"
+"\n"
+"If the records belong to different people, please let us know so we can "
+"dismiss the match.\n"
+"\n"
+"The institution cannot merge ORCID records or choose a primary ORCID iD "
+"on your behalf."
 msgstr ""
 
 #: app/blueprints/duplicates.py:482
@@ -3553,6 +3575,27 @@ msgid ""
 "sent."
 msgstr ""
 
+#: app/templates/duplicates/index.html:404
+msgid "Recipient email"
+msgstr "Recipient email"
+
+#: app/templates/duplicates/index.html:413
+msgid "Select a public ORCID email or enter a verified institutional address"
+msgstr "Select a public ORCID email or enter a verified institutional address"
+
+#: app/templates/duplicates/index.html:417
+msgid ""
+"Public ORCID emails are suggestions from the latest cached profile "
+"synchronization. Confirm the recipient before sending."
+msgstr ""
+"Public ORCID emails are suggestions from the latest cached profile "
+"synchronization. Confirm the recipient before sending."
+
+#: app/templates/duplicates/index.html:420
+#: app/templates/duplicates/index.html:536
+msgid "Subject"
+msgstr "Subject"
+
 #: app/templates/duplicates/index.html:387
 msgid "Message"
 msgstr ""
@@ -3569,9 +3612,45 @@ msgstr ""
 msgid "Copy message"
 msgstr ""
 
+#: app/templates/duplicates/index.html:434
+msgid "Copy email"
+msgstr "Copy email"
+
+#: app/templates/duplicates/index.html:435
+msgid "Open email app"
+msgstr "Open email app"
+
 #: app/templates/duplicates/index.html:398
 msgid "Mark as informed"
 msgstr ""
+
+#: app/templates/duplicates/index.html:480
+msgid ""
+"No public ORCID email is available. Enter a verified institutional "
+"address if you have one."
+msgstr ""
+"No public ORCID email is available. Enter a verified institutional "
+"address if you have one."
+
+#: app/templates/duplicates/index.html:485
+msgid "Public ORCID email suggestions"
+msgstr "Public ORCID email suggestions"
+
+#: app/templates/duplicates/index.html:535
+msgid "To"
+msgstr "To"
+
+#: app/templates/duplicates/index.html:570
+msgid "Email draft copied"
+msgstr "Email draft copied"
+
+#: app/templates/duplicates/index.html:572
+msgid "Could not copy automatically. Select and copy the email manually."
+msgstr "Could not copy automatically. Select and copy the email manually."
+
+#: app/templates/duplicates/index.html:581
+msgid "Enter or select a valid recipient email address first."
+msgstr "Enter or select a valid recipient email address first."
 
 #: app/templates/duplicates/index.html:444
 msgid "Message copied"

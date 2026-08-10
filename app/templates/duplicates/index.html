@@ -225,7 +225,6 @@
         {% if group.review.reviewed_at %}<small><i class="far fa-clock mr-1" aria-hidden="true"></i>{{ _('Last updated') }}: {{ group.review.reviewed_at|datetimeformat }}</small>{% endif %}
         {% if group.review.notes %}<div class="duplicate-case-note"><strong>{{ _('Internal note') }}:</strong> {{ group.review.notes }}</div>{% endif %}
       </div>
-      {% if session.get('is_admin') or session.get('is_manager') %}
       <div class="duplicate-case-actions">
         {% if group.review.status in ['pending', 'notified'] %}
         <button type="button" class="btn btn-outline-secondary duplicate-dismiss-trigger" data-toggle="modal" data-target="#duplicateDismissModal" data-review-url="{{ url_for('duplicates.review', group_key=group.group_key, scope=scope) }}" data-candidate-name="{{ group.display_name }}" data-note-source="duplicateReviewNote{{ loop.index }}">
@@ -233,7 +232,19 @@
         </button>
         {% endif %}
         {% if group.review.status in ['pending', 'notified', 'resolved'] %}
-        <button type="button" class="btn {{ 'btn-primary' if group.review.status == 'pending' else 'btn-outline-primary' }} duplicate-notice-trigger" data-toggle="modal" data-target="#duplicateNoticeModal" data-review-url="{{ url_for('duplicates.review', group_key=group.group_key, scope=scope) }}" data-candidate-name="{{ group.display_name }}" data-notice-source="duplicateNoticeText{{ loop.index }}" data-note-source="duplicateReviewNote{{ loop.index }}">
+        <button
+          type="button"
+          class="btn {{ 'btn-primary' if group.review.status == 'pending' else 'btn-outline-primary' }} duplicate-notice-trigger"
+          data-toggle="modal"
+          data-target="#duplicateNoticeModal"
+          data-review-url="{{ url_for('duplicates.review', group_key=group.group_key, scope=scope) }}"
+          data-candidate-name="{{ group.display_name }}"
+          data-notice-source="duplicateNoticeText{{ loop.index }}"
+          data-subject-source="duplicateNoticeSubject{{ loop.index }}"
+          data-contact-source="duplicateNoticeContacts{{ loop.index }}"
+          data-recipient-source="duplicateNoticeRecipient{{ loop.index }}"
+          data-note-source="duplicateReviewNote{{ loop.index }}"
+        >
           <i class="fas fa-paper-plane mr-1" aria-hidden="true"></i>{{ _('Prepare researcher notice') if group.review.status == 'pending' else _('View notice') }}
         </button>
         {% endif %}
@@ -252,11 +263,11 @@
         </form>
         {% endif %}
       </div>
-      {% else %}
-      <span class="badge badge-light border">{{ review_label(group.review.status) }}</span>
-      {% endif %}
     </div>
     <script type="application/json" id="duplicateNoticeText{{ loop.index }}">{{ group.notice_message|tojson }}</script>
+    <script type="application/json" id="duplicateNoticeSubject{{ loop.index }}">{{ group.notice_subject|tojson }}</script>
+    <script type="application/json" id="duplicateNoticeContacts{{ loop.index }}">{{ group.contact_options|tojson }}</script>
+    <script type="application/json" id="duplicateNoticeRecipient{{ loop.index }}">{{ group.notice_recipient|tojson }}</script>
     <script type="application/json" id="duplicateReviewNote{{ loop.index }}">{{ group.review.notes|tojson }}</script>
   </details>
   {% endfor %}
@@ -340,7 +351,6 @@
   </div>
 </div>
 
-{% if session.get('is_admin') or session.get('is_manager') %}
 <div class="modal fade" id="duplicateDismissModal" tabindex="-1" role="dialog" aria-labelledby="duplicateDismissTitle" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <form method="post" class="modal-content" id="duplicateDismissForm">
@@ -384,8 +394,28 @@
         <input type="hidden" name="status" value="notified">
         <div class="alert alert-info duplicate-notice-guidance"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('Review and copy this neutral draft. Send it through the institution’s usual channel. Mark the case as informed only after the message has actually been sent.') }}</div>
         <div class="form-group">
+          <label for="duplicateNoticeRecipient">{{ _('Recipient email') }} <span class="text-muted">({{ _('optional') }})</span></label>
+          <input
+            type="email"
+            id="duplicateNoticeRecipient"
+            name="recipient_email"
+            class="form-control"
+            maxlength="255"
+            autocomplete="off"
+            aria-describedby="duplicateNoticeRecipientHelp"
+            placeholder="{{ _('Select a public ORCID email or enter a verified institutional address') }}"
+          >
+          <input type="hidden" id="duplicateNoticeRecipientSource" name="recipient_source" value="">
+          <div id="duplicateNoticeContactOptions" class="duplicate-contact-options" aria-live="polite"></div>
+          <small id="duplicateNoticeRecipientHelp" class="form-text text-muted">{{ _('Public ORCID emails are suggestions from the latest cached profile synchronization. Confirm the recipient before sending.') }}</small>
+        </div>
+        <div class="form-group">
+          <label for="duplicateNoticeSubject">{{ _('Subject') }}</label>
+          <input type="text" id="duplicateNoticeSubject" name="notice_subject" class="form-control" maxlength="255" required>
+        </div>
+        <div class="form-group">
           <label for="duplicateNoticeMessage">{{ _('Message') }}</label>
-          <textarea id="duplicateNoticeMessage" name="notice_message" class="form-control duplicate-notice-message" rows="13"></textarea>
+          <textarea id="duplicateNoticeMessage" name="notice_message" class="form-control duplicate-notice-message" rows="16" required></textarea>
         </div>
         <div class="form-group mb-0">
           <label for="duplicateNoticeNotes">{{ _('Communication note') }} <span class="text-muted">({{ _('optional') }})</span></label>
@@ -394,23 +424,111 @@
       </div>
       <div class="modal-footer duplicate-notice-footer">
         <span class="duplicate-copy-status mr-auto" id="duplicateCopyStatus" role="status" aria-live="polite"></span>
-        <button type="button" class="btn btn-outline-primary" id="duplicateCopyNotice"><i class="far fa-copy mr-1" aria-hidden="true"></i>{{ _('Copy message') }}</button>
+        <button type="button" class="btn btn-outline-primary" id="duplicateCopyNotice"><i class="far fa-copy mr-1" aria-hidden="true"></i>{{ _('Copy email') }}</button>
+        <button type="button" class="btn btn-outline-primary" id="duplicateOpenEmail"><i class="far fa-envelope mr-1" aria-hidden="true"></i>{{ _('Open email app') }}</button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check mr-1" aria-hidden="true"></i>{{ _('Mark as informed') }}</button>
       </div>
     </form>
   </div>
 </div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script>
   $(function () {
+    let activeNoticeContacts = [];
+
     function readJsonScript(id) {
       const element = document.getElementById(id);
       if (!element) return '';
       try { return JSON.parse(element.textContent); } catch (error) { return ''; }
+    }
+
+    function updateRecipientSource() {
+      const recipient = $('#duplicateNoticeRecipient').val().trim().toLowerCase();
+      const isPublicOrcidEmail = activeNoticeContacts.some(
+        contact => contact.email.toLowerCase() === recipient
+      );
+      $('#duplicateNoticeRecipientSource').val(
+        recipient ? (isPublicOrcidEmail ? 'orcid_public' : 'manual') : ''
+      );
+      $('.duplicate-contact-option').each(function () {
+        $(this).toggleClass(
+          'is-selected',
+          $(this).data('email').toLowerCase() === recipient
+        );
+      });
+    }
+
+    function renderContactOptions(contacts, storedRecipient) {
+      const container = document.getElementById('duplicateNoticeContactOptions');
+      container.replaceChildren();
+      activeNoticeContacts = Array.isArray(contacts) ? contacts : [];
+
+      if (!activeNoticeContacts.length) {
+        const emptyState = document.createElement('span');
+        emptyState.className = 'duplicate-contact-empty';
+        emptyState.textContent = {{ _('No public ORCID email is available. Enter a verified institutional address if you have one.')|tojson }};
+        container.appendChild(emptyState);
+      } else {
+        const label = document.createElement('span');
+        label.className = 'duplicate-contact-label';
+        label.textContent = {{ _('Public ORCID email suggestions')|tojson }};
+        container.appendChild(label);
+
+        activeNoticeContacts.forEach(contact => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'btn btn-sm btn-outline-secondary duplicate-contact-option';
+          button.dataset.email = contact.email;
+
+          const address = document.createElement('strong');
+          address.textContent = contact.email;
+          const context = document.createElement('small');
+          context.textContent = `${contact.display_name} · ${contact.orcid}`;
+          button.append(address, context);
+          button.addEventListener('click', function () {
+            $('#duplicateNoticeRecipient').val(contact.email);
+            updateRecipientSource();
+          });
+          container.appendChild(button);
+        });
+      }
+
+      const initialRecipient = storedRecipient || (
+        activeNoticeContacts.length === 1 ? activeNoticeContacts[0].email : ''
+      );
+      $('#duplicateNoticeRecipient').val(initialRecipient);
+      updateRecipientSource();
+    }
+
+    async function copyText(value) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+        return;
+      }
+      const temporary = document.createElement('textarea');
+      temporary.value = value;
+      temporary.setAttribute('readonly', '');
+      temporary.style.position = 'fixed';
+      temporary.style.opacity = '0';
+      document.body.appendChild(temporary);
+      temporary.select();
+      document.execCommand('copy');
+      temporary.remove();
+    }
+
+    function completeEmailDraft() {
+      const recipient = $('#duplicateNoticeRecipient').val().trim();
+      const subject = $('#duplicateNoticeSubject').val().trim();
+      const message = $('#duplicateNoticeMessage').val();
+      const headers = [];
+      const toLabel = {{ _('To')|tojson }};
+      const subjectLabel = {{ _('Subject')|tojson }};
+      if (recipient) headers.push(`${toLabel}: ${recipient}`);
+      if (subject) headers.push(`${subjectLabel}: ${subject}`);
+      return `${headers.join('\n')}\n\n${message}`.trim();
     }
 
     $('#duplicateDismissModal').on('show.bs.modal', function (event) {
@@ -426,25 +544,41 @@
       $('#duplicateNoticeForm').attr('action', button.data('review-url'));
       $('#duplicateNoticeCandidate').text(button.data('candidate-name'));
       $('#duplicateNoticeMessage').val(readJsonScript(button.data('notice-source')));
+      $('#duplicateNoticeSubject').val(readJsonScript(button.data('subject-source')));
       $('#duplicateNoticeNotes').val(readJsonScript(button.data('note-source')));
+      renderContactOptions(
+        readJsonScript(button.data('contact-source')),
+        readJsonScript(button.data('recipient-source'))
+      );
       $('#duplicateCopyStatus').text('');
     });
 
+    $('#duplicateNoticeRecipient').on('input', updateRecipientSource);
+
     $('#duplicateCopyNotice').on('click', async function () {
-      const textarea = document.getElementById('duplicateNoticeMessage');
       const status = document.getElementById('duplicateCopyStatus');
       try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(textarea.value);
-        } else {
-          textarea.select();
-          document.execCommand('copy');
-          textarea.setSelectionRange(0, 0);
-        }
-        status.textContent = {{ _('Message copied')|tojson }};
+        await copyText(completeEmailDraft());
+        status.textContent = {{ _('Email draft copied')|tojson }};
       } catch (error) {
-        status.textContent = {{ _('Could not copy automatically. Select the message and copy it manually.')|tojson }};
+        status.textContent = {{ _('Could not copy automatically. Select and copy the email manually.')|tojson }};
       }
+    });
+
+    $('#duplicateOpenEmail').on('click', function () {
+      const recipientInput = document.getElementById('duplicateNoticeRecipient');
+      const recipient = recipientInput.value.trim();
+      const status = document.getElementById('duplicateCopyStatus');
+      if (!recipient || !recipientInput.checkValidity()) {
+        status.textContent = {{ _('Enter or select a valid recipient email address first.')|tojson }};
+        recipientInput.focus();
+        recipientInput.reportValidity();
+        return;
+      }
+
+      const subject = $('#duplicateNoticeSubject').val().trim();
+      const message = $('#duplicateNoticeMessage').val();
+      window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
     });
 
     const anchoredCandidate = window.location.hash

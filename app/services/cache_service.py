@@ -563,9 +563,12 @@ def _update_researcher_from_expanded(
     researcher.given_names = record.get("given-names") or researcher.given_names
     researcher.family_name = record.get("family-names") or researcher.family_name
     researcher.credit_name = record.get("credit-name") or researcher.credit_name
-    emails = record.get("email") or []
-    if emails:
-        researcher.email = emails[0]
+    if "email" in record:
+        emails = record.get("email") or []
+        researcher.email = next(
+            (str(email).strip() for email in emails if str(email).strip()),
+            None,
+        )
 
 
 def _update_researcher_from_profile(
@@ -591,10 +594,16 @@ def _update_researcher_from_profile(
         (name.get("credit-name") or {}).get("value") or researcher.credit_name
     )
 
-    emails = (person.get("emails") or {}).get("email") or []
-    public_email = next((item.get("email") for item in emails if item.get("email")), None)
-    if public_email:
-        researcher.email = public_email
+    if "emails" in person:
+        emails = (person.get("emails") or {}).get("email") or []
+        researcher.email = next(
+            (
+                item.get("email").strip()
+                for item in emails
+                if item.get("email") and item.get("email").strip()
+            ),
+            None,
+        )
     researcher.updated_at = _utc_now()
 
 

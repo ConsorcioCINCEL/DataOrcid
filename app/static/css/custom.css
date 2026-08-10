@@ -7741,10 +7741,53 @@ code,
   font-size: .84rem;
 }
 
+.duplicate-contact-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .6rem;
+}
+
+.duplicate-contact-label,
+.duplicate-contact-empty {
+  color: var(--app-muted, #667085);
+  display: block;
+  font-size: .78rem;
+  width: 100%;
+}
+
+.duplicate-contact-option {
+  align-items: flex-start;
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.25;
+  max-width: 100%;
+  text-align: left;
+}
+
+.duplicate-contact-option strong {
+  overflow-wrap: anywhere;
+}
+
+.duplicate-contact-option small {
+  margin-top: .15rem;
+  opacity: .78;
+}
+
+.duplicate-contact-option.is-selected {
+  background: #e8f5ee;
+  border-color: #18794e;
+  color: #0f5f3b;
+}
+
 .duplicate-notice-message {
   line-height: 1.5;
-  min-height: 18rem;
+  min-height: 22rem;
   resize: vertical;
+}
+
+.duplicate-notice-footer {
+  flex-wrap: wrap;
 }
 
 .duplicate-copy-status {

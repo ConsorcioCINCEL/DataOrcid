@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Bulk DOI activation · OAI-PMH · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<span class="app-page-eyebrow">{{ _('OAI-PMH interoperability') }}</span>
+<h1>{{ _('Bulk DOI activation') }}</h1>
+<p>{{ _('Activate institutional articles from a spreadsheet and keep an auditable history of every import.') }}</p>
+{% endblock %}
+
+{% block content %}
+{% include 'oai_pmh/_scope.html' %}
+{% include 'oai_pmh/_tabs.html' %}
+
+{% if can_manage_content %}
+<section class="card shadow-sm oai-doi-import-card" aria-labelledby="oaiDoiUploadTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiDoiUploadTitle" class="card-title text-bold mb-1">{{ _('Upload DOI spreadsheet') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Only DOI belonging to public articles in this institutional profile will be activated.') }}</p>
+    </div>
+    <a class="btn btn-outline-success" href="{{ url_for('oai_pmh.download_doi_import_template') }}"><i class="fas fa-download mr-1" aria-hidden="true"></i>{{ _('Download template') }}</a>
+  </div>
+  <div class="card-body oai-doi-import">
+    <div class="oai-doi-import-copy">
+      <span class="oai-doi-import-icon"><i class="fas fa-file-excel" aria-hidden="true"></i></span>
+      <div>
+        <h3>{{ _('Validate and activate by DOI') }}</h3>
+        <p>{{ _('Use the provided XLSX template with one DOI per row. Invalid, duplicate, or non-institutional DOI will be reported without modifying unrelated articles.') }}</p>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('oai_pmh.import_doi_publication') }}" enctype="multipart/form-data" class="oai-doi-upload-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="custom-file">
+        <input class="custom-file-input" id="oaiDoiFile" type="file" name="doi_file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+        <label class="custom-file-label" for="oaiDoiFile" data-default-label="{{ _('Choose XLSX file') }}" data-browse-label="{{ _('Browse') }}">{{ _('Choose XLSX file') }}</label>
+      </div>
+      <button class="btn btn-success" type="submit"><i class="fas fa-file-import mr-1" aria-hidden="true"></i>{{ _('Validate and activate') }}</button>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<section class="card shadow-sm oai-import-history-card" aria-labelledby="oaiImportHistoryTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiImportHistoryTitle" class="card-title text-bold mb-1">{{ _('Upload history') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Open any file to audit the articles it activated and the state that existed before the import.') }}</p>
+    </div>
+    <span class="badge badge-info">{{ ngettext('%(count)s import', '%(count)s imports', history.total, count=history.total) }}</span>
+  </div>
+
+  {% if history.items %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 oai-import-history-table">
+      <thead><tr>
+        <th>{{ _('File') }}</th>
+        <th>{{ _('Imported') }}</th>
+        <th>{{ _('Validation result') }}</th>
+        <th>{{ _('Ignored rows') }}</th>
+        <th>{{ _('State') }}</th>
+        <th class="text-right">{{ _('Actions') }}</th>
+      </tr></thead>
+      <tbody>
+      {% for batch in history.items %}
+      <tr>
+        <td><strong class="text-break">{{ batch.filename }}</strong><small>#{{ batch.id }}</small></td>
+        <td><time datetime="{{ batch.created_at.isoformat() }}">{{ batch.created_at.strftime('%Y-%m-%d %H:%M') }}</time><small>{{ actor_names.get(batch.imported_by_user_id, _('Unknown user')) }}</small></td>
+        <td><strong>{{ _('%(matched)s of %(total)s DOI', matched=batch.matched_count, total=batch.submitted_count) }}</strong><small>{{ ngettext('%(count)s article activated', '%(count)s articles activated', batch.article_count, count=batch.article_count) }}</small></td>
+        <td><span>{{ _('%(invalid)s invalid', invalid=batch.invalid_count) }}</span><span>{{ _('%(duplicates)s duplicates', duplicates=batch.duplicate_count) }}</span><span>{{ _('%(unmatched)s not found', unmatched=batch.unmatched_count) }}</span></td>
+        <td>
+          {% if batch.undone_at %}
+          <span class="badge badge-secondary"><i class="fas fa-undo-alt mr-1" aria-hidden="true"></i>{{ _('Undone') }}</span>
+          <small>{{ batch.undone_at.strftime('%Y-%m-%d %H:%M') }} · {{ actor_names.get(batch.undone_by_user_id, _('Unknown user')) }}</small>
+          {% elif batch.id == latest_active_id %}
+          <span class="badge badge-success"><i class="fas fa-check mr-1" aria-hidden="true"></i>{{ _('Active and reversible') }}</span>
+          {% else %}
+          <span class="badge badge-info"><i class="fas fa-layer-group mr-1" aria-hidden="true"></i>{{ _('Applied') }}</span>
+          <small>{{ _('Undo newer imports first') }}</small>
+          {% endif %}
+        </td>
+        <td class="text-right">
+          <div class="oai-import-row-actions">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('oai_pmh.doi_import_detail', batch_id=batch.id) }}"><i class="fas fa-search mr-1" aria-hidden="true"></i>{{ _('Audit') }}</a>
+            {% if can_manage_content and batch.id == latest_active_id %}
+            <form method="post" action="{{ url_for('oai_pmh.undo_last_doi_import', batch_id=batch.id) }}" onsubmit="return confirm({{ _('Undo the changes made by this DOI file? Later manual changes will be preserved.')|tojson }});">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-warning" type="submit"><i class="fas fa-undo-alt mr-1" aria-hidden="true"></i>{{ _('Undo') }}</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body oai-empty-state"><i class="fas fa-file-import" aria-hidden="true"></i><strong>{{ _('No DOI files have been uploaded yet.') }}</strong><span>{{ _('The first import will appear here with its validation totals and article-level audit.') }}</span></div>
+  {% endif %}
+
+  {% if history.pages > 1 %}
+  <div class="card-footer oai-pagination-footer">
+    <span>{{ _('Showing %(start)s–%(end)s of %(total)s', start=(history.page - 1) * history.per_page + 1, end=[history.page * history.per_page, history.total]|min, total=history.total) }}</span>
+    <nav aria-label="{{ _('Import history pagination') }}"><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not history.has_prev %}disabled{% endif %}"><a class="page-link" href="{{ url_for('oai_pmh.doi_import_workspace', page=history.prev_num or 1) }}" aria-label="{{ _('Previous') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a></li>
+      <li class="page-item disabled"><span class="page-link">{{ _('Page %(page)s of %(pages)s', page=history.page, pages=history.pages) }}</span></li>
+      <li class="page-item {% if not history.has_next %}disabled{% endif %}"><a class="page-link" href="{{ url_for('oai_pmh.doi_import_workspace', page=history.next_num or history.pages) }}" aria-label="{{ _('Next') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a></li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const doiFile = document.getElementById('oaiDoiFile');
+  if (!doiFile) return;
+  doiFile.addEventListener('change', function () {
+    const label = document.querySelector('label[for="oaiDoiFile"]');
+    if (!label) return;
+    label.textContent = doiFile.files.length ? doiFile.files[0].name : label.dataset.defaultLabel;
+  });
+});
+</script>
+{% endblock %}

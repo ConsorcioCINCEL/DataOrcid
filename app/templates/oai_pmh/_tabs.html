@@ -1,0 +1,18 @@
+<nav class="oai-workspace-tabs" aria-label="{{ _('OAI-PMH repository sections') }}">
+  <a class="{% if active_tab == 'configuration' %}is-active{% endif %}" href="{{ url_for('oai_pmh.index') }}" {% if active_tab == 'configuration' %}aria-current="page"{% endif %}>
+    <i class="fas fa-cog" aria-hidden="true"></i>
+    <span>{{ _('Initial configuration') }}</span>
+  </a>
+  <a class="{% if active_tab == 'articles' %}is-active{% endif %}" href="{{ url_for('oai_pmh.articles') }}" {% if active_tab == 'articles' %}aria-current="page"{% endif %}>
+    <i class="fas fa-list-alt" aria-hidden="true"></i>
+    <span>{{ _('Article selection') }}</span>
+  </a>
+  <a class="{% if active_tab == 'metadata' %}is-active{% endif %}" href="{{ url_for('oai_pmh.metadata_mapping') }}" {% if active_tab == 'metadata' %}aria-current="page"{% endif %}>
+    <i class="fas fa-sliders-h" aria-hidden="true"></i>
+    <span>{{ _('Metadata configuration') }}</span>
+  </a>
+  <a class="{% if active_tab == 'doi_import' %}is-active{% endif %}" href="{{ url_for('oai_pmh.doi_import_workspace') }}" {% if active_tab == 'doi_import' %}aria-current="page"{% endif %}>
+    <i class="fas fa-file-import" aria-hidden="true"></i>
+    <span>{{ _('Bulk DOI activation') }}</span>
+  </a>
+</nav>

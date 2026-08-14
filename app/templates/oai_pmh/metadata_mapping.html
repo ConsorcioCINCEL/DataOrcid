@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% from 'oai_pmh/_format_cards.html' import format_grid %}
+
+{% block title %}{{ _('Metadata mapping · OAI-PMH · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<span class="app-page-eyebrow">{{ _('OAI-PMH interoperability') }}</span>
+<h1>{{ _('Metadata formats') }}</h1>
+<p>{{ _('Test the standard formats and adapt the custom DataORCID profile for the destination repository.') }}</p>
+{% endblock %}
+
+{% block content %}
+{% include 'oai_pmh/_scope.html' %}
+{% include 'oai_pmh/_tabs.html' %}
+
+<section class="card shadow-sm oai-mapping-card" aria-labelledby="oaiFormatsTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiFormatsTitle" class="card-title text-bold mb-1">{{ _('Available metadata formats') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Select a card to open the currently exposed records in that metadata format.') }}</p>
+    </div>
+  </div>
+  <div class="card-body border-bottom">
+    {{ format_grid(format_urls) }}
+    {% if not oai_config or not oai_config.provider_enabled %}
+    <div class="alert alert-warning mb-0 mt-3"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('Enable the public provider before opening live format samples.') }}</div>
+    {% endif %}
+    <aside class="oai-standards-note" aria-labelledby="oaiStandardsTitle">
+      <span class="oai-standards-note-icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+      <div>
+        <strong id="oaiStandardsTitle">{{ _('What is OpenAIRE and why is it available here?') }}</strong>
+        <p>{{ _('OpenAIRE defines an interoperability profile for scholarly repositories based on Dublin Core, DataCite, and COAR vocabularies. LA Referencia adopts these guidelines for regional harvesting; therefore DataORCID-Chile provides oai_openaire as a standards-based starting point for interoperability with the Chilean open-science ecosystem. It is not a separate ANID-owned XML schema.') }}</p>
+        <div class="oai-standards-links">
+          <a href="https://www.openaire.eu/schema/repo-lit/4.0/openaire.xsd" target="_blank" rel="noopener"><i class="fas fa-file-code mr-1" aria-hidden="true"></i>{{ _('Official OpenAIRE 4 XSD') }}</a>
+          <a href="https://openaire-guidelines-for-literature-repository-managers.readthedocs.io/en/latest/use_of_oai_pmh.html" target="_blank" rel="noopener"><i class="fas fa-external-link-alt mr-1" aria-hidden="true"></i>{{ _('OpenAIRE OAI-PMH guidelines') }}</a>
+          <a href="https://lareferencia.info/es/servicios/directrices" target="_blank" rel="noopener"><i class="fas fa-external-link-alt mr-1" aria-hidden="true"></i>{{ _('LA Referencia guidelines') }}</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="card shadow-sm oai-mapping-card" aria-labelledby="oaiMappingTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiMappingTitle" class="card-title text-bold mb-1">{{ _('Custom dataorcid mapping') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Only active fields are emitted. Add available DataORCID and OpenAlex metadata as needed, rename its destination, or remove it from the profile.') }}</p>
+    </div>
+    <span class="badge badge-info" id="oaiActiveMetadataCount">{{ _('%(count)s active', count=active_metadata_count) }}</span>
+  </div>
+
+  {% if can_manage %}
+  <form method="post" action="{{ url_for('oai_pmh.save_metadata_mapping') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card-body border-bottom">
+      <div class="oai-add-metadata">
+        <label for="oaiAvailableMetadata">{{ _('Add metadata field') }}</label>
+        <select id="oaiAvailableMetadata" class="form-control">
+          <option value="">{{ _('Choose an available field') }}</option>
+          {% for group, group_label in metadata_group_labels.items() %}
+          <optgroup label="{{ group_label }}">
+            {% for field in metadata_catalog if field.group == group %}
+            <option value="{{ field.key }}" {% if field.active %}disabled{% endif %}>{{ field.label }} · {{ field.key }}</option>
+            {% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+        <button id="oaiAddMetadata" class="btn btn-outline-primary" type="button" disabled><i class="fas fa-plus mr-1" aria-hidden="true"></i>{{ _('Add field') }}</button>
+        <small class="form-text text-muted">{{ _('The catalog contains metadata already stored by DataORCID or supplied by OpenAlex.') }}</small>
+      </div>
+      <div class="alert alert-light border mb-0 mt-3"><i class="fas fa-info-circle text-info mr-2" aria-hidden="true"></i>{{ _('This editor changes only the custom dataorcid format. The standard oai_dc and oai_openaire schemas always keep their official structure.') }}</div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 oai-mapping-table">
+        <thead><tr>
+          <th><button class="oai-sort-link" type="button" data-metadata-sort="label" aria-label="{{ _('Sort by source metadata') }}"><span>{{ _('Source metadata') }}</span><i class="fas fa-sort" aria-hidden="true"></i></button></th>
+          <th><button class="oai-sort-link" type="button" data-metadata-sort="group" aria-label="{{ _('Sort by metadata group') }}"><span>{{ _('Metadata group') }}</span><i class="fas fa-sort" aria-hidden="true"></i></button></th>
+          <th><button class="oai-sort-link" type="button" data-metadata-sort="target" aria-label="{{ _('Sort by destination name') }}"><span>{{ _('Destination name in dataorcid') }}</span><i class="fas fa-sort" aria-hidden="true"></i></button></th>
+          <th class="text-right"><span class="sr-only">{{ _('Actions') }}</span></th>
+        </tr></thead>
+        <tbody id="oaiMetadataRows">
+          {% for field in metadata_catalog %}
+          <tr data-metadata-row="{{ field.key }}" data-metadata-label="{{ field.label }}" data-metadata-group="{{ metadata_group_labels[field.group] }}" {% if not field.active %}hidden{% endif %}>
+            <td>
+              <input type="hidden" name="mapping_fields" value="{{ field.key }}" {% if not field.active %}disabled{% endif %}>
+              <strong>{{ field.label }}</strong>
+              {% if field.required %}<span class="badge badge-light border ml-1">{{ _('Required') }}</span>{% endif %}
+              <small class="d-block text-muted"><code>{{ field.key }}</code></small>
+            </td>
+            <td><span class="badge badge-light border">{{ metadata_group_labels[field.group] }}</span></td>
+            <td><input class="form-control form-control-sm" name="mapping_{{ field.key }}" maxlength="96" value="{{ field.target }}" placeholder="{{ field.default_target }}" aria-label="{{ _('Destination name for %(field)s', field=field.label) }}" {% if not field.active %}disabled{% endif %}></td>
+            <td class="text-right"><button class="btn btn-sm btn-outline-danger" type="button" data-remove-metadata="{{ field.key }}" {% if field.required %}disabled title="{{ _('This field is required') }}"{% endif %}><i class="fas fa-eye-slash mr-1" aria-hidden="true"></i>{{ _('Hide') }}</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <p class="text-muted small mb-3"><i class="fas fa-shield-alt mr-1" aria-hidden="true"></i>{{ _('Title and identifier are required. Hidden fields are not emitted by the dataorcid profile.') }}</p>
+      <div class="oai-form-actions">
+        {% if oai_config and oai_config.metadata_mapping is not none %}<button class="btn btn-outline-secondary" type="submit" name="mapping_action" value="reset"><i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Restore defaults') }}</button>{% endif %}
+        <button class="btn btn-primary" type="submit" name="mapping_action" value="save" {% if not oai_config %}disabled{% endif %}><i class="fas fa-save mr-1" aria-hidden="true"></i>{{ _('Save mapping') }}</button>
+      </div>
+    </div>
+  </form>
+  {% else %}
+  <div class="card-body"><dl class="oai-mapping-summary">{% for field in metadata_catalog if field.active %}<div><dt>{{ field.label }}</dt><dd><code>{{ field.target }}</code></dd></div>{% endfor %}</dl></div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const selector = document.getElementById('oaiAvailableMetadata');
+  const addButton = document.getElementById('oaiAddMetadata');
+  const countBadge = document.getElementById('oaiActiveMetadataCount');
+  if (!selector || !addButton) return;
+
+  function updateCount() {
+    const count = document.querySelectorAll('[data-metadata-row]:not([hidden])').length;
+    countBadge.textContent = {{ _('%(count)s active', count='__COUNT__')|tojson }}.replace('__COUNT__', count);
+  }
+
+  selector.addEventListener('change', function () {
+    addButton.disabled = !selector.value;
+  });
+
+  addButton.addEventListener('click', function () {
+    const key = selector.value;
+    const row = document.querySelector('[data-metadata-row="' + key + '"]');
+    const option = selector.querySelector('option[value="' + key + '"]');
+    if (!row || !option) return;
+    row.hidden = false;
+    row.querySelectorAll('input').forEach(function (input) { input.disabled = false; });
+    option.disabled = true;
+    selector.value = '';
+    addButton.disabled = true;
+    updateCount();
+  });
+
+  document.querySelectorAll('[data-remove-metadata]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const key = button.dataset.removeMetadata;
+      const row = document.querySelector('[data-metadata-row="' + key + '"]');
+      const option = selector.querySelector('option[value="' + key + '"]');
+      if (!row || button.disabled) return;
+      row.hidden = true;
+      row.querySelectorAll('input').forEach(function (input) { input.disabled = true; });
+      if (option) option.disabled = false;
+      updateCount();
+    });
+  });
+
+  const metadataRows = document.getElementById('oaiMetadataRows');
+  document.querySelectorAll('[data-metadata-sort]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const key = button.dataset.metadataSort;
+      const ascending = button.dataset.direction !== 'asc';
+      const rows = Array.from(metadataRows.querySelectorAll('[data-metadata-row]'));
+      rows.sort(function (left, right) {
+        const leftValue = key === 'target'
+          ? left.querySelector('input[name^="mapping_"]').value
+          : left.dataset['metadata' + key.charAt(0).toUpperCase() + key.slice(1)];
+        const rightValue = key === 'target'
+          ? right.querySelector('input[name^="mapping_"]').value
+          : right.dataset['metadata' + key.charAt(0).toUpperCase() + key.slice(1)];
+        const result = leftValue.localeCompare(rightValue, document.documentElement.lang, { sensitivity: 'base' });
+        return ascending ? result : -result;
+      });
+      rows.forEach(function (row) { metadataRows.appendChild(row); });
+      document.querySelectorAll('[data-metadata-sort]').forEach(function (sortButton) {
+        sortButton.dataset.direction = '';
+        sortButton.querySelector('i').className = 'fas fa-sort';
+      });
+      button.dataset.direction = ascending ? 'asc' : 'desc';
+      button.querySelector('i').className = ascending ? 'fas fa-sort-up' : 'fas fa-sort-down';
+    });
+  });
+});
+</script>
+{% endblock %}

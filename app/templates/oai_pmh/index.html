@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% from 'oai_pmh/_format_cards.html' import format_grid %}
+
+{% block title %}{{ _('OAI-PMH provider · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<span class="app-page-eyebrow">{{ _('Institutional interoperability') }}</span>
+<h1>{{ _('OAI-PMH provider') }}</h1>
+<p>{{ _('Publish selected DataORCID-Chile articles so DSpace and other external repositories can harvest them.') }}</p>
+{% endblock %}
+
+{% block header_actions %}
+<span class="badge badge-{{ 'success' if oai_config and oai_config.provider_enabled else 'secondary' }} oai-provider-status">
+  <i class="fas fa-broadcast-tower mr-1" aria-hidden="true"></i>
+  {{ _('Public provider enabled') if oai_config and oai_config.provider_enabled else _('Public provider disabled') }}
+</span>
+{% endblock %}
+
+{% block content %}
+{% include 'oai_pmh/_scope.html' %}
+{% include 'oai_pmh/_tabs.html' %}
+
+<div class="row oai-kpi-row">
+  <div class="col-6 col-xl-3"><div class="oai-kpi-card"><span>{{ _('Available articles') }}</span><strong>{{ stats.total }}</strong><small>{{ _('Public, deduplicated DataORCID works') }}</small></div></div>
+  <div class="col-6 col-xl-3"><div class="oai-kpi-card is-validated"><span>{{ _('Validated by OpenAlex') }}</span><strong>{{ stats.validated }}</strong><small>{{ _('Affiliation matches the active ROR') }}</small></div></div>
+  <div class="col-6 col-xl-3"><div class="oai-kpi-card is-published"><span>{{ _('Exposed through OAI') }}</span><strong>{{ stats.included }}</strong><small>{{ _('Automatic policy plus manual decisions') }}</small></div></div>
+  <div class="col-6 col-xl-3"><div class="oai-kpi-card is-draft"><span>{{ _('Not exposed') }}</span><strong>{{ stats.excluded }}</strong><small>{{ _('%(count)s manual decisions', count=stats.explicit) }}</small></div></div>
+</div>
+
+<div class="row">
+  <div class="col-xl-7">
+    <section class="card shadow-sm oai-settings-card" aria-labelledby="oaiSettingsTitle">
+      <div class="card-header">
+        <div>
+          <h2 id="oaiSettingsTitle" class="card-title text-bold mb-1">{{ _('Publication settings') }}</h2>
+          <p class="activity-card-subtitle mb-0">{{ _('DataORCID-Chile is the source repository; no external source URL is required.') }}</p>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if can_manage_provider %}
+        <form method="post" action="{{ url_for('oai_pmh.save_settings') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-row">
+            <div class="form-group col-md-7">
+              <label for="oaiRepositoryName">{{ _('Published repository name') }}</label>
+              <input id="oaiRepositoryName" class="form-control" name="repository_name" maxlength="255" required value="{{ settings.repository_name }}">
+            </div>
+            <div class="form-group col-md-5">
+              <label for="oaiAdminEmail">{{ _('Repository administrator email') }}</label>
+              <input id="oaiAdminEmail" class="form-control" type="email" name="admin_email" maxlength="255" value="{{ settings.admin_email or session.get('email', '') }}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="oaiPublicationPolicy">{{ _('Default article policy') }}</label>
+            <select id="oaiPublicationPolicy" class="form-control" name="publication_policy">
+              <option value="validated" {% if settings.publication_policy not in ['all', 'selected'] %}selected{% endif %}>{{ _('Expose only articles validated for this institution by OpenAlex') }}</option>
+              <option value="all" {% if settings.publication_policy == 'all' %}selected{% endif %}>{{ _('Expose all institutional articles by default') }}</option>
+              <option value="selected" {% if settings.publication_policy == 'selected' %}selected{% endif %}>{{ _('Expose only articles explicitly included') }}</option>
+            </select>
+            <small class="form-text text-muted">{{ _('OpenAlex validation requires an authorship affiliated with the active ROR. Manual include or exclude decisions always override the automatic result.') }}</small>
+          </div>
+          <div class="custom-control custom-switch custom-switch-on-success">
+            <input class="custom-control-input" type="checkbox" id="oaiProviderEnabled" name="provider_enabled" {% if settings.provider_enabled %}checked{% endif %}>
+            <label class="custom-control-label" for="oaiProviderEnabled">{{ _('Enable the public OAI-PMH endpoint') }}</label>
+          </div>
+          <div class="text-right mt-3">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1" aria-hidden="true"></i>{{ _('Save configuration') }}</button>
+          </div>
+        </form>
+        {% else %}
+        <dl class="oai-definition-list">
+          <div><dt>{{ _('Default policy') }}</dt><dd>{% if settings.publication_policy == 'all' %}{{ _('All articles') }}{% elif settings.publication_policy == 'selected' %}{{ _('Only selected articles') }}{% else %}{{ _('OpenAlex-validated articles') }}{% endif %}</dd></div>
+          <div><dt>{{ _('Provider') }}</dt><dd>{{ _('Enabled') if settings.provider_enabled else _('Disabled') }}</dd></div>
+        </dl>
+        <div class="alert alert-info mb-0"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('Only institutional managers and administrators can change publication settings.') }}</div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-5">
+    <section class="card shadow-sm oai-provider-card" aria-labelledby="oaiProviderTitle">
+      <div class="card-header">
+        <h2 id="oaiProviderTitle" class="card-title text-bold mb-0">{{ _('Generated public endpoint') }}</h2>
+        <span class="badge badge-{{ 'success' if oai_config and oai_config.provider_enabled else 'secondary' }}">{{ _('Enabled') if oai_config and oai_config.provider_enabled else _('Disabled') }}</span>
+      </div>
+      <div class="card-body">
+        <p>{{ _('Give this automatically generated, unguessable URL to DSpace. It exposes only the effective article selection for this institution.') }}</p>
+        <label for="oaiProviderUrl">{{ _('OAI-PMH base URL') }}</label>
+        <div class="input-group mb-3">
+          <input id="oaiProviderUrl" class="form-control" value="{{ provider_url or _('Generated after saving the configuration') }}" readonly>
+          {% if provider_url %}<div class="input-group-append"><button class="btn btn-outline-secondary" type="button" data-copy-target="oaiProviderUrl" title="{{ _('Copy') }}"><i class="far fa-copy" aria-hidden="true"></i></button></div>{% endif %}
+        </div>
+        {% if oai_config and oai_config.provider_enabled %}
+        <div class="oai-example-links">
+          <a href="{{ identify_url }}" target="_blank" rel="noopener"><i class="fas fa-id-card mr-1" aria-hidden="true"></i>Identify</a>
+          <a href="{{ records_url }}" target="_blank" rel="noopener"><i class="fas fa-list mr-1" aria-hidden="true"></i>oai_dc</a>
+          <a href="{{ openaire_url }}" target="_blank" rel="noopener"><i class="fas fa-globe-americas mr-1" aria-hidden="true"></i>oai_openaire</a>
+          <a href="{{ mapped_url }}" target="_blank" rel="noopener"><i class="fas fa-random mr-1" aria-hidden="true"></i>dataorcid</a>
+        </div>
+        {% else %}
+        <div class="alert alert-warning mb-0"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('Save and enable the provider before testing this URL.') }}</div>
+        {% endif %}
+        {% if can_manage_provider and oai_config %}
+        <form method="post" action="{{ url_for('oai_pmh.rotate_access_key') }}" class="mt-3 text-right" onsubmit="return confirm({{ _('Rotate the public key? DSpace must be updated with the new URL.')|tojson }});">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-danger" type="submit"><i class="fas fa-key mr-1" aria-hidden="true"></i>{{ _('Rotate public key') }}</button>
+        </form>
+        {% endif %}
+        <div class="alert alert-light border mt-3 mb-0">
+          <strong>{{ _('Institutional set') }}:</strong> <code>{% if oai_config %}institution:{{ oai_config.public_key }}{% else %}{{ _('Generated after saving') }}{% endif %}</code><br>
+          <strong>{{ _('OpenAIRE set') }}:</strong> <code>openaire</code><br>
+          <strong>{{ _('Metadata prefixes') }}:</strong> <code>oai_dc</code>, <code>oai_openaire</code>, <code>dataorcid</code>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="card shadow-sm oai-mapping-card" aria-labelledby="oaiFormatsTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiFormatsTitle" class="card-title text-bold mb-1">{{ _('Metadata formats') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Open a live sample in any format or manage the custom DataORCID crosswalk on its own page.') }}</p>
+    </div>
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('oai_pmh.metadata_mapping') }}"><i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>{{ _('Configure metadata') }}</a>
+  </div>
+  <div class="card-body">
+    {{ format_grid({
+      'oai_dc': records_url if oai_config and oai_config.provider_enabled else none,
+      'oai_openaire': openaire_url if oai_config and oai_config.provider_enabled else none,
+      'dataorcid': mapped_url if oai_config and oai_config.provider_enabled else none
+    }) }}
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-copy-target]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const input = document.getElementById(button.dataset.copyTarget);
+      if (!input) return;
+      input.select();
+      navigator.clipboard.writeText(input.value).catch(function () { document.execCommand('copy'); });
+    });
+  });
+});
+</script>
+{% endblock %}

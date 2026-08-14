@@ -104,6 +104,71 @@ runner to avoid request timeouts. For production multi-worker deployments,
 prefer CLI/cron or a persistent job queue.
 
 
+## Institutional OAI-PMH
+
+The **OAI-PMH** module makes DataORCID-Chile an institutional metadata
+provider. DSpace, DSpace-CRIS, or another external harvester queries the
+generated endpoint and receives only the articles authorized for that ROR.
+
+- Initial configuration: `/oai-pmh/`
+- Article selection and audit: `/oai-pmh/articles/`
+- Metadata formats and mapping: `/oai-pmh/metadata/`
+- Bulk DOI activation and upload history: `/oai-pmh/doi-import/`
+- Administrator and manager inventory: `/admin/oai-pmh`
+- Public provider per institution: `/oai/<public_key>`
+- Published formats: unqualified Dublin Core (`oai_dc`), OpenAIRE 4
+  (`oai_openaire`), and an institution-mapped profile (`dataorcid`)
+- Verbs: `Identify`, `ListMetadataFormats`, `ListSets`, `GetRecord`,
+  `ListIdentifiers`, and `ListRecords`
+- Data source: canonical, deduplicated DataORCID-Chile works
+- Default policy: expose only articles whose active-ROR affiliation OpenAlex validates
+- Optional policies: all public articles or explicitly selected articles only
+- Individual quick actions and bulk include/exclude overrides
+- Sorting by title, creator, year, type, affiliations, validation, and exposure
+- Per-work OpenAlex affiliations with the active ROR explicitly highlighted
+- Bulk DOI activation through a guided XLSX template, restricted to the institutional profile
+- An auditable history for every Excel file, including totals and article-level details; the latest active batch remains reversible while preserving later manual edits
+- Complete filtered CSV/XLSX audit exports with all affiliations and each publication decision source; XLSX uses write-only generation and skips XML metadata work that is not present in the spreadsheet
+- Per-institution destination-name mapping for the `dataorcid` profile
+- Configurable DataORCID/OpenAlex field catalog with optional add/hide controls
+- Incremental DSpace harvesting with `resumptionToken` support
+- Public lists contain only effectively exposed articles
+- A custom XSL browser presentation while preserving the protocol XML
+
+Configuration and selection remain bound to the account's ROR. Automatic
+validation requires OpenAlex to link one article authorship to the active ROR;
+manual include or exclude decisions take precedence. Administrators
+may use the institution switcher; managers can modify only their assigned
+institution. The public URL is generated automatically with a rotatable random
+192-bit key, and no external OAI source is configured. The administration
+inventory summarizes provider status, associated and exposed works, OpenAlex
+validation, and manual decisions for each institution in scope.
+
+Metadata formats and the custom crosswalk are managed separately at
+`/oai-pmh/metadata/`. The `dataorcid` profile exposes only its active fields;
+optional DataORCID and OpenAlex fields can be added, renamed, or hidden without
+changing the fixed `oai_dc` and `oai_openaire` schemas.
+
+The `oai-user` role inherits standard-user access and can manage metadata
+mapping, article selection, and DOI uploads within its assigned institution. Provider
+activation, global policy changes, and public-key rotation remain restricted
+to managers and administrators; both roles retain full OAI management access.
+
+The `oai_openaire` format is available by default as a starting point for
+interoperability with ANID, Espacio Ciencia, and LA Referencia. It implements
+the OpenAIRE 4 profile, COAR vocabularies, and the `openaire` OAI set. Standard `oai_dc` and
+`oai_openaire` element names remain fixed; aliases such as `dc.titulo` belong
+to the safe, explicitly advertised `dataorcid` profile.
+
+Provider examples:
+
+```text
+/oai/<public_key>?verb=Identify
+/oai/<public_key>?verb=ListRecords&metadataPrefix=oai_dc
+/oai/<public_key>?verb=ListRecords&metadataPrefix=oai_openaire
+/oai/<public_key>?verb=ListRecords&metadataPrefix=dataorcid
+```
+
 ---
 
 ## 📝 License

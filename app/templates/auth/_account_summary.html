@@ -12,6 +12,8 @@
       <span class="badge badge-primary">{{ _('Administrator') }}</span>
       {% elif user.is_manager %}
       <span class="badge badge-info">{{ _('Manager') }}</span>
+      {% elif user.is_oai_user %}
+      <span class="badge badge-success">{{ _('OAI user') }}</span>
       {% else %}
       <span class="badge badge-secondary">{{ _('User') }}</span>
       {% endif %}

@@ -123,6 +123,13 @@
                   </div>
                   <small>{{ _('Manages accounts and data within the assigned institution.') }}</small>
                 </div>
+                <div class="user-role-option is-oai-role">
+                  <div class="custom-control custom-switch custom-switch-on-orange">
+                    <input type="checkbox" class="custom-control-input" id="is_oai_user_edit" name="is_oai_user">
+                    <label class="custom-control-label" for="is_oai_user_edit">{{ _('OAI user') }}</label>
+                  </div>
+                  <small>{{ _('Inherits standard user access and can curate institutional OAI metadata and articles.') }}</small>
+                </div>
               </div>
             </div>
           </div>
@@ -270,6 +277,13 @@
                     <label class="custom-control-label" for="is_manager_new">{{ _('Manager') }}</label>
                   </div>
                   <small>{{ _('Manages accounts and data within the assigned institution.') }}</small>
+                </div>
+                <div class="user-role-option is-oai-role">
+                  <div class="custom-control custom-switch custom-switch-on-orange">
+                    <input type="checkbox" class="custom-control-input" id="is_oai_user_new" name="is_oai_user">
+                    <label class="custom-control-label" for="is_oai_user_new">{{ _('OAI user') }}</label>
+                  </div>
+                  <small>{{ _('Inherits standard user access and can curate institutional OAI metadata and articles.') }}</small>
                 </div>
               </div>
             </div>

@@ -19,6 +19,7 @@
               data-am-client-id="{{ user.am_client_id or '' }}"
               data-is-admin="{{ 1 if user.is_admin else 0 }}"
               data-is-manager="{{ 1 if user.is_manager else 0 }}"
+              data-is-oai-user="{{ 1 if user.is_oai_user else 0 }}"
               data-locale="{{ user.locale or 'en' }}">
         <i class="fas fa-edit" aria-hidden="true"></i>
         <span>{{ _('Edit') }}</span>
@@ -89,7 +90,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="app-kpi-strip user-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('User account metrics') }}">
+<section class="app-kpi-strip user-kpi-strip" style="--app-kpi-columns: 5" aria-label="{{ _('User account metrics') }}">
   <article class="app-kpi">
     <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-users"></i></span>
     <div>
@@ -112,6 +113,14 @@
       <span class="app-kpi-label">{{ _('Institutional managers') }}</span>
       <strong>{{ summary.managers }}</strong>
       <small>{{ _('Institution-scoped access') }}</small>
+    </div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-blue" aria-hidden="true"><i class="fas fa-broadcast-tower"></i></span>
+    <div>
+      <span class="app-kpi-label">{{ _('OAI users') }}</span>
+      <strong>{{ summary.oai_users }}</strong>
+      <small>{{ _('Institutional OAI curation') }}</small>
     </div>
   </article>
   <article class="app-kpi">
@@ -158,6 +167,7 @@
             <option value="all" {% if selected_role == 'all' %}selected{% endif %}>{{ _('All roles') }}</option>
             <option value="admin" {% if selected_role == 'admin' %}selected{% endif %}>{{ _('Administrators') }}</option>
             <option value="manager" {% if selected_role == 'manager' %}selected{% endif %}>{{ _('Managers') }}</option>
+            <option value="oai_user" {% if selected_role == 'oai_user' %}selected{% endif %}>{{ _('OAI users') }}</option>
             <option value="user" {% if selected_role == 'user' %}selected{% endif %}>{{ _('Standard users') }}</option>
           </select>
         </div>
@@ -263,7 +273,8 @@
               <div class="user-role-badges">
                 {% if user.is_admin %}<span class="badge badge-primary">{{ _('Admin') }}</span>{% endif %}
                 {% if user.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
-                {% if not user.is_admin and not user.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
+                {% if user.is_oai_user %}<span class="badge badge-success">{{ _('OAI user') }}</span>{% endif %}
+                {% if not user.is_admin and not user.is_manager and not user.is_oai_user %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
               </div>
               <span class="user-account-meta"><i class="fas fa-language" aria-hidden="true"></i>{{ (user.locale or 'en')|upper }}</span>
             </td>
@@ -294,7 +305,8 @@
           <div class="user-role-badges">
             {% if user.is_admin %}<span class="badge badge-primary">{{ _('Admin') }}</span>{% endif %}
             {% if user.is_manager %}<span class="badge badge-info">{{ _('Manager') }}</span>{% endif %}
-            {% if not user.is_admin and not user.is_manager %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
+            {% if user.is_oai_user %}<span class="badge badge-success">{{ _('OAI user') }}</span>{% endif %}
+            {% if not user.is_admin and not user.is_manager and not user.is_oai_user %}<span class="badge badge-secondary">{{ _('User') }}</span>{% endif %}
           </div>
         </header>
         <dl>
@@ -432,6 +444,7 @@ $(function () {
     $form.find("[name='locale']").val($button.data('locale') || 'en');
     $form.find("[name='is_admin']").prop('checked', Number($button.data('isAdmin')) === 1);
     $form.find("[name='is_manager']").prop('checked', Number($button.data('isManager')) === 1);
+    $form.find("[name='is_oai_user']").prop('checked', Number($button.data('isOaiUser')) === 1);
 
     const $institutionSelect = $form.find('.user-institution-select');
     if (rorId && !$institutionSelect.find(`option[value="${CSS.escape(rorId)}"]`).length) {

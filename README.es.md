@@ -212,6 +212,71 @@ workers, prefiere CLI/cron o una cola persistente.
 
 ---
 
+## 📡 OAI-PMH institucional
+
+El módulo **OAI-PMH** convierte a DataORCID-Chile en un proveedor institucional.
+DSpace, DSpace-CRIS u otro cosechador externo consulta el endpoint generado y
+recibe únicamente los artículos autorizados para el ROR solicitado.
+
+- Configuración inicial: `/oai-pmh/`
+- Selección y auditoría de artículos: `/oai-pmh/articles/`
+- Formatos y mapeo: `/oai-pmh/metadata/`
+- Activación masiva e historial de cargas DOI: `/oai-pmh/doi-import/`
+- Inventario para administradores y gestores: `/admin/oai-pmh`
+- Proveedor público por institución: `/oai/<clave_publica>`
+- Formatos publicados: Dublin Core no cualificado (`oai_dc`), OpenAIRE 4
+  (`oai_openaire`) y perfil institucional mapeable (`dataorcid`)
+- Verbos: `Identify`, `ListMetadataFormats`, `ListSets`, `GetRecord`,
+  `ListIdentifiers` y `ListRecords`
+- Catálogo fuente: trabajos canónicos y deduplicados de DataORCID-Chile
+- Política predeterminada: solo artículos cuya afiliación al ROR está validada por OpenAlex
+- Políticas opcionales: todos los artículos públicos o solo los seleccionados
+- Inclusión y exclusión manual por artículo, individual o masiva
+- Ordenamiento por título, autoría, año, tipo, afiliaciones, validación y exposición
+- Afiliaciones OpenAlex por artículo, destacando la que coincide con el ROR activo
+- Activación masiva por DOI mediante una plantilla XLSX, limitada a artículos del perfil institucional
+- Historial auditable de cada archivo Excel, con totales y detalle por artículo; la última carga activa puede revertirse sin sobrescribir cambios manuales posteriores
+- Exportación de auditoría CSV/XLSX con todos los resultados filtrados, todas sus afiliaciones y el origen de cada decisión; el XLSX usa escritura incremental y evita generar metadatos XML que no aparecen en la planilla
+- Mapeo de nombres de destino por universidad para el perfil `dataorcid`
+- Catálogo configurable de metadatos DataORCID/OpenAlex: los campos opcionales
+  pueden agregarse u ocultarse sin alterar `oai_dc` ni `oai_openaire`
+- Cosecha incremental de DSpace mediante `resumptionToken`
+- Los listados públicos contienen únicamente artículos efectivamente expuestos
+- Presentación web XSL personalizada; el XML de protocolo permanece intacto
+
+La configuración y la selección respetan el ROR de la cuenta. La validación
+automática requiere que OpenAlex vincule una autoría del artículo con el ROR
+activo; las decisiones manuales de inclusión o exclusión prevalecen. Los
+administradores pueden usar el selector institucional; los gestores solo
+modifican la universidad asignada a su usuario. La URL pública se genera
+automáticamente con una clave aleatoria de 192 bits que puede rotarse. No se
+configura un origen OAI externo. El inventario administrativo resume por
+universidad el estado del proveedor, los artículos asociados y expuestos, la
+validación OpenAlex y las decisiones manuales.
+
+El rol `oai-user` hereda el acceso de un usuario estándar y puede gestionar el
+mapeo de metadatos, la selección de artículos y las cargas DOI dentro de su institución. No
+puede habilitar el proveedor, cambiar su política general ni rotar la URL;
+estas operaciones permanecen reservadas a gestores y administradores, quienes
+también conservan todos los permisos de gestión OAI.
+
+El formato `oai_openaire` está disponible por defecto como punto de partida
+para la interoperabilidad con ANID, Espacio Ciencia y LA Referencia. Usa el
+perfil OpenAIRE 4, vocabularios COAR y el set OAI `openaire`. Los nombres de `oai_dc` y
+`oai_openaire` no son editables porque pertenecen a esquemas estándar; las
+adaptaciones como `dc.titulo` se configuran de forma segura en `dataorcid`.
+
+Ejemplos de proveedor:
+
+```text
+/oai/<clave_publica>?verb=Identify
+/oai/<clave_publica>?verb=ListRecords&metadataPrefix=oai_dc
+/oai/<clave_publica>?verb=ListRecords&metadataPrefix=oai_openaire
+/oai/<clave_publica>?verb=ListRecords&metadataPrefix=dataorcid
+```
+
+---
+
 ## 📤 Exportaciones
 
 - **Excel individual:** `/download/excel/<orcid_id>`  

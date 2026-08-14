@@ -4,6 +4,7 @@ import os
 import toml
 import datetime as dt
 import html
+import mimetypes
 import re
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -19,6 +20,9 @@ babel = Babel()
 csrf = CSRFProtect()
 CHILE_TIMEZONE = ZoneInfo("America/Santiago")
 APP_VERSION = "2.0"
+
+mimetypes.add_type("application/xml", ".xsd")
+mimetypes.add_type("application/xslt+xml", ".xsl")
 
 
 def get_locale() -> str:
@@ -210,6 +214,12 @@ def create_app() -> Flask:
         OPENALEX_ANALYTICS_CACHE_TTL=int(openalex_cfg.get("analytics_cache_ttl", 86400)),
     )
 
+    oai_cfg = config_data.get("oai", {})
+    app.config.update(
+        OAI_PROVIDER_PAGE_SIZE=int(oai_cfg.get("provider_page_size", 100)),
+        OAI_RESUMPTION_TOKEN_MAX_AGE=int(oai_cfg.get("resumption_token_max_age", 3600)),
+    )
+
     datasets_cfg = config_data.get("paths", {}).get("datasets_dir", "app/datasets")
     datasets_dir = Path(datasets_cfg)
     if not datasets_dir.is_absolute(): 
@@ -257,7 +267,7 @@ def create_app() -> Flask:
             "locale_url": locale_url,
         }
 
-    EXCLUDED_LOG_PATHS = ("/static/", "/favicon.ico", "/robots.txt", "/health")
+    EXCLUDED_LOG_PATHS = ("/static/", "/favicon.ico", "/robots.txt", "/health", "/oai/")
 
     @app.before_request
     def track_request_start():
@@ -289,6 +299,8 @@ def create_app() -> Flask:
                 if session.get("is_admin")
                 else "manager"
                 if session.get("is_manager")
+                else "oai_user"
+                if session.get("is_oai_user")
                 else "user"
                 if session.get("logged_in")
                 else "anonymous"
@@ -354,6 +366,7 @@ def create_app() -> Flask:
         from .blueprints.api_misc import bp_api
         from .blueprints.duplicates import bp_duplicates
         from .blueprints.help import bp_help
+        from .blueprints.oai_pmh import bp_oai_pmh
 
         app.register_blueprint(bp_main)
         app.register_blueprint(bp_cache)
@@ -365,6 +378,7 @@ def create_app() -> Flask:
         app.register_blueprint(bp_api)
         app.register_blueprint(bp_duplicates)
         app.register_blueprint(bp_help)
+        app.register_blueprint(bp_oai_pmh)
 
         try:
             from .commands import register_commands

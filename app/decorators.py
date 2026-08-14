@@ -36,7 +36,7 @@ def _authenticated_account():
     return account
 
 
-def _effective_account_roles(account) -> tuple[bool, bool]:
+def _effective_account_roles(account) -> tuple[bool, bool, bool]:
     """
     Resolve privileges shared by the authenticated session and current account.
 
@@ -45,9 +45,11 @@ def _effective_account_roles(account) -> tuple[bool, bool]:
     """
     is_admin = bool(account.is_admin and session.get("is_admin"))
     is_manager = bool(account.is_manager and session.get("is_manager"))
+    is_oai_user = bool(account.is_oai_user and session.get("is_oai_user"))
     session["is_admin"] = is_admin
     session["is_manager"] = is_manager
-    return is_admin, is_manager
+    session["is_oai_user"] = is_oai_user
+    return is_admin, is_manager, is_oai_user
 
 
 def login_required(f):
@@ -86,10 +88,28 @@ def staff_required(f):
             _flash_err(_("Your session has expired or you are not logged in."))
             return redirect(url_for("auth.login"))
 
-        is_admin, is_manager = _effective_account_roles(account)
+        is_admin, is_manager, _is_oai_user = _effective_account_roles(account)
         if not (is_admin or is_manager):
             _flash_err(_("You do not have the required permissions to access this section."))
             return redirect(url_for("main.index"))
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def oai_editor_required(f):
+    """Require an admin, manager, or institution-scoped OAI editor account."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        account = _authenticated_account()
+        if account is None:
+            _flash_err(_("Your session has expired or you are not logged in."))
+            return redirect(url_for("auth.login"))
+
+        is_admin, is_manager, is_oai_user = _effective_account_roles(account)
+        if not (is_admin or is_manager or is_oai_user):
+            _flash_err(_("You do not have permission to manage OAI-PMH content."))
+            return redirect(url_for("oai_pmh.index"))
 
         return f(*args, **kwargs)
     return decorated_function
@@ -100,9 +120,9 @@ def institution_required(f):
     Require an authenticated account and expose its authorized institution.
 
     Administrators may use their validated institution-switcher selection.
-    Managers and standard users are always bound to the institution currently
-    assigned to their database account, even when their session contains stale
-    institutional context.
+    Managers, OAI editors, and standard users are always bound to the
+    institution currently assigned to their database account, even when their
+    session contains stale institutional context.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):

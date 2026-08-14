@@ -1,0 +1,23 @@
+{% macro format_grid(format_urls) %}
+<div class="oai-format-grid">
+  {% set formats = [
+    ('oai_dc', 'fa-code', _('Mandatory OAI-PMH Dublin Core format; its element names cannot be renamed without invalidating the standard.'), false),
+    ('oai_openaire', 'fa-globe-americas', _('OpenAIRE 4 profile with COAR resource and access vocabularies, suitable as a starting point for ANID and LA Referencia interoperability.'), true),
+    ('dataorcid', 'fa-random', _('Custom profile whose destination names can be adapted to each DSpace or external repository crosswalk.'), false)
+  ] %}
+  {% for prefix, icon, description, recommended in formats %}
+    {% if format_urls[prefix] %}
+    <a class="oai-format-card{% if recommended %} is-recommended{% endif %}" href="{{ format_urls[prefix] }}" target="_blank" rel="noopener" aria-label="{{ _('Open %(format)s records', format=prefix) }}">
+    {% else %}
+    <div class="oai-format-card is-disabled{% if recommended %} is-recommended{% endif %}" title="{{ _('Enable the provider to open this format.') }}">
+    {% endif %}
+      <span class="oai-format-icon"><i class="fas {{ icon }}" aria-hidden="true"></i></span>
+      <div>
+        <strong><code>{{ prefix }}</code>{% if recommended %}<span class="badge badge-success ml-2">{{ _('Default') }}</span>{% endif %}</strong>
+        <small>{{ description }}</small>
+      </div>
+      {% if format_urls[prefix] %}<i class="fas fa-external-link-alt oai-format-open" aria-hidden="true"></i>{% endif %}
+    {% if format_urls[prefix] %}</a>{% else %}</div>{% endif %}
+  {% endfor %}
+</div>
+{% endmacro %}

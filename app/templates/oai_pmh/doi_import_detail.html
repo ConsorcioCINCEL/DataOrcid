@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('DOI import audit · OAI-PMH · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<span class="app-page-eyebrow">{{ _('OAI-PMH interoperability') }}</span>
+<h1>{{ _('DOI import audit') }}</h1>
+<p>{{ batch.filename }}</p>
+{% endblock %}
+
+{% block header_actions %}
+<a class="btn btn-outline-secondary" href="{{ url_for('oai_pmh.doi_import_workspace') }}"><i class="fas fa-arrow-left mr-1" aria-hidden="true"></i>{{ _('Back to upload history') }}</a>
+{% endblock %}
+
+{% block content %}
+{% include 'oai_pmh/_scope.html' %}
+{% include 'oai_pmh/_tabs.html' %}
+
+<section class="card shadow-sm oai-import-audit-card" aria-labelledby="oaiImportSummaryTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiImportSummaryTitle" class="card-title text-bold mb-1">{{ _('Import summary') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ batch.created_at.strftime('%Y-%m-%d %H:%M') }} · {{ actor_names.get(batch.imported_by_user_id, _('Unknown user')) }} · #{{ batch.id }}</p>
+    </div>
+    <div class="oai-import-summary-actions">
+      {% if batch.undone_at %}<span class="badge badge-secondary"><i class="fas fa-undo-alt mr-1" aria-hidden="true"></i>{{ _('Undone') }}</span>{% else %}<span class="badge badge-success"><i class="fas fa-check mr-1" aria-hidden="true"></i>{{ _('Applied') }}</span>{% endif %}
+      {% if can_undo %}
+      <form method="post" action="{{ url_for('oai_pmh.undo_last_doi_import', batch_id=batch.id) }}" onsubmit="return confirm({{ _('Undo the changes made by this DOI file? Later manual changes will be preserved.')|tojson }});">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-warning" type="submit"><i class="fas fa-undo-alt mr-1" aria-hidden="true"></i>{{ _('Undo this import') }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="oai-import-metric-grid">
+      <div><span>{{ _('DOI rows') }}</span><strong>{{ batch.submitted_count }}</strong></div>
+      <div class="is-success"><span>{{ _('Matched DOI') }}</span><strong>{{ batch.matched_count }}</strong></div>
+      <div class="is-success"><span>{{ _('Activated articles') }}</span><strong>{{ batch.article_count }}</strong></div>
+      <div><span>{{ _('Invalid DOI') }}</span><strong>{{ batch.invalid_count }}</strong></div>
+      <div><span>{{ _('Duplicates') }}</span><strong>{{ batch.duplicate_count }}</strong></div>
+      <div><span>{{ _('Not found') }}</span><strong>{{ batch.unmatched_count }}</strong></div>
+    </div>
+    {% if batch.undone_at %}
+    <div class="alert alert-secondary mb-0 mt-3"><i class="fas fa-history mr-2" aria-hidden="true"></i>{{ _('This import was undone on %(date)s by %(user)s.', date=batch.undone_at.strftime('%Y-%m-%d %H:%M'), user=actor_names.get(batch.undone_by_user_id, _('Unknown user'))) }}</div>
+    {% elif not can_undo %}
+    <div class="alert alert-light border mb-0 mt-3"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('This import remains in the history, but newer active imports must be undone before it can be reversed.') }}</div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="card shadow-sm oai-import-audit-card" aria-labelledby="oaiImportChangesTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiImportChangesTitle" class="card-title text-bold mb-1">{{ _('Article-level changes') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Compare the decision before this file with the current institutional selection.') }}</p>
+    </div>
+    <span class="badge badge-info">{{ ngettext('%(count)s article', '%(count)s articles', changes.total, count=changes.total) }}</span>
+  </div>
+  {% if changes.items %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 oai-import-audit-table">
+      <thead><tr><th>{{ _('Article') }}</th><th>{{ _('Before import') }}</th><th>{{ _('Action performed') }}</th><th>{{ _('Current state') }}</th></tr></thead>
+      <tbody>
+      {% for row in changes.items %}
+      {% set change = row[0] %}{% set article = row[1] %}{% set selection = row[2] %}
+      <tr>
+        <td><strong>{{ article.title or _('Untitled article') }}</strong><small>{{ article.doi_normalized or article.canonical_key }}</small></td>
+        <td>
+          {% if not change.previous_selection_existed %}<span class="text-muted">{{ _('No explicit decision') }}</span>
+          {% elif change.previous_is_included %}<span class="badge badge-success">{{ _('Exposed') }}</span>
+          {% else %}<span class="badge badge-secondary">{{ _('Excluded') }}</span>{% endif %}
+          {% if change.previous_selection_existed %}<small>{{ _('Origin: %(source)s', source=change.previous_decision_source or _('manual')) }}</small>{% endif %}
+        </td>
+        <td><span class="badge badge-info"><i class="fas fa-file-excel mr-1" aria-hidden="true"></i>{{ _('Activated by Excel') }}</span></td>
+        <td>
+          {% if not selection %}<span class="text-muted">{{ _('No explicit decision') }}</span>
+          {% elif selection.doi_import_batch_id == batch.id %}<span class="badge badge-success">{{ _('Active from this import') }}</span>
+          {% elif selection.is_included %}<span class="badge badge-success">{{ _('Currently exposed') }}</span>
+          {% else %}<span class="badge badge-secondary">{{ _('Currently excluded') }}</span>{% endif %}
+          {% if selection and selection.doi_import_batch_id != batch.id %}<small>{{ _('Modified after this import') }}</small>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body"><div class="alert alert-info mb-0">{{ _('This file did not activate any institutional articles.') }}</div></div>
+  {% endif %}
+  {% if changes.pages > 1 %}
+  <div class="card-footer oai-pagination-footer">
+    <span>{{ _('Showing %(start)s–%(end)s of %(total)s', start=(changes.page - 1) * changes.per_page + 1, end=[changes.page * changes.per_page, changes.total]|min, total=changes.total) }}</span>
+    <nav aria-label="{{ _('Import audit pagination') }}"><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not changes.has_prev %}disabled{% endif %}"><a class="page-link" href="{{ url_for('oai_pmh.doi_import_detail', batch_id=batch.id, page=changes.prev_num or 1) }}" aria-label="{{ _('Previous') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a></li>
+      <li class="page-item disabled"><span class="page-link">{{ _('Page %(page)s of %(pages)s', page=changes.page, pages=changes.pages) }}</span></li>
+      <li class="page-item {% if not changes.has_next %}disabled{% endif %}"><a class="page-link" href="{{ url_for('oai_pmh.doi_import_detail', batch_id=batch.id, page=changes.next_num or changes.pages) }}" aria-label="{{ _('Next') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a></li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+<div class="oai-scope-banner">
+  <div>
+    <i class="fas fa-university" aria-hidden="true"></i>
+    <span><strong>{{ institution.name }}</strong><small>ROR: {{ institution.ror_id }}</small></span>
+  </div>
+  <span><i class="fas fa-shield-alt mr-1" aria-hidden="true"></i>{{ _('Only articles linked to this institution can be exposed.') }}</span>
+</div>
+
+{% if not can_manage_content %}
+<div class="alert alert-info oai-access-notice" role="status">
+  <i class="fas fa-user-lock" aria-hidden="true"></i>
+  <div>
+    <strong>{{ _('Read-only OAI access') }}</strong>
+    <span>{{ _('To modify OAI metadata or article selection, contact your administrator and request OAI management access for your account.') }}</span>
+  </div>
+</div>
+{% endif %}

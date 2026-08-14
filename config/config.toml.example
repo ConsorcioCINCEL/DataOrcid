@@ -102,6 +102,16 @@ analytics_cache_ttl = 86400
 
 
 # ------------------------------------------------------------
+# 🔹 OAI-PMH CONFIGURATION
+# ------------------------------------------------------------
+[oai]
+# Number of records returned in each provider response page.
+provider_page_size = 100
+# Signed resumption tokens expire after this many seconds.
+resumption_token_max_age = 3600
+
+
+# ------------------------------------------------------------
 # 🔹 EMAIL CONFIGURATION (SMTP)
 # ------------------------------------------------------------
 [mail]

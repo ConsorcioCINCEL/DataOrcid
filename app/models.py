@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import bcrypt
+import secrets
 from . import db
 from sqlalchemy.orm import validates
 
@@ -24,6 +25,7 @@ class User(db.Model):
 
     is_admin = db.Column(db.Boolean, default=False)   # Superuser
     is_manager = db.Column(db.Boolean, default=False) # Institutional Manager
+    is_oai_user = db.Column(db.Boolean, default=False, nullable=False)
 
     institution_name = db.Column(db.String(120), nullable=True)
     ror_id = db.Column(db.String(20), nullable=True, index=True) # ROR Identifier (e.g., 02ap3w078)
@@ -688,3 +690,136 @@ class SyncJobStep(db.Model):
     error = db.Column(db.Text, nullable=True)
     started_at = db.Column(db.DateTime, nullable=True)
     finished_at = db.Column(db.DateTime, nullable=True)
+
+
+class OaiPmhInstitutionConfig(db.Model):
+    """Institution-scoped OAI-PMH provider and publication policy."""
+    __tablename__ = "oai_pmh_institution_config"
+
+    id = db.Column(db.Integer, primary_key=True)
+    ror_id = db.Column(db.String(32), unique=True, index=True, nullable=False)
+    public_key = db.Column(
+        db.String(64),
+        unique=True,
+        index=True,
+        nullable=False,
+        default=lambda: secrets.token_hex(24),
+    )
+    provider_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    repository_name = db.Column(db.String(255), nullable=False)
+    admin_email = db.Column(db.String(255), nullable=True)
+    publication_policy = db.Column(db.String(16), default="validated", nullable=False)
+    metadata_mapping = db.Column(db.JSON, nullable=True)
+    policy_updated_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    created_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    updated_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class OaiPmhDoiImportBatch(db.Model):
+    """One reversible institutional XLSX import of DOI publication choices."""
+    __tablename__ = "oai_pmh_doi_import_batch"
+    __table_args__ = (
+        db.Index(
+            "ix_oai_pmh_doi_import_batch_ror_undone_created",
+            "ror_id",
+            "undone_at",
+            "created_at",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    ror_id = db.Column(db.String(32), nullable=False, index=True)
+    filename = db.Column(db.String(255), nullable=False)
+    submitted_count = db.Column(db.Integer, default=0, nullable=False)
+    matched_count = db.Column(db.Integer, default=0, nullable=False)
+    article_count = db.Column(db.Integer, default=0, nullable=False)
+    invalid_count = db.Column(db.Integer, default=0, nullable=False)
+    duplicate_count = db.Column(db.Integer, default=0, nullable=False)
+    unmatched_count = db.Column(db.Integer, default=0, nullable=False)
+    imported_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    undone_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    undone_at = db.Column(db.DateTime, nullable=True)
+
+
+class OaiPmhWorkSelection(db.Model):
+    """Explicit publication override for one canonical institutional work."""
+    __tablename__ = "oai_pmh_work_selection"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "ror_id",
+            "canonical_work_id",
+            name="uq_oai_pmh_work_selection_ror_work",
+        ),
+        db.Index(
+            "ix_oai_pmh_work_selection_ror_included_updated",
+            "ror_id",
+            "is_included",
+            "updated_at",
+        ),
+        db.Index(
+            "ix_oai_pmh_work_selection_ror_decision_source",
+            "ror_id",
+            "decision_source",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    canonical_work_id = db.Column(
+        db.Integer,
+        db.ForeignKey("canonical_work.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    ror_id = db.Column(db.String(32), nullable=False, index=True)
+    is_included = db.Column(db.Boolean, nullable=False)
+    decision_source = db.Column(
+        db.String(16),
+        default="manual",
+        nullable=False,
+    )
+    doi_import_batch_id = db.Column(
+        db.Integer,
+        db.ForeignKey("oai_pmh_doi_import_batch.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    updated_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class OaiPmhDoiImportChange(db.Model):
+    """Previous state needed to undo one DOI import without crossing tenants."""
+    __tablename__ = "oai_pmh_doi_import_change"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "batch_id",
+            "canonical_work_id",
+            name="uq_oai_pmh_doi_import_change_batch_work",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    batch_id = db.Column(
+        db.Integer,
+        db.ForeignKey("oai_pmh_doi_import_batch.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    canonical_work_id = db.Column(
+        db.Integer,
+        db.ForeignKey("canonical_work.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    previous_selection_existed = db.Column(db.Boolean, nullable=False)
+    previous_is_included = db.Column(db.Boolean, nullable=True)
+    previous_decision_source = db.Column(db.String(16), nullable=True)
+    previous_import_batch_id = db.Column(
+        db.Integer,
+        db.ForeignKey("oai_pmh_doi_import_batch.id", ondelete="SET NULL"),
+        nullable=True,
+    )

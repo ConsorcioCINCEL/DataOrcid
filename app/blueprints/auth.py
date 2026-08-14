@@ -247,6 +247,7 @@ def login():
                 'display_name': user.full_name,
                 'is_admin': bool(user.is_admin),
                 'is_manager': bool(user.is_manager),
+                'is_oai_user': bool(user.is_oai_user),
                 'institution_name': user.institution_name,
                 'ror_id': user.ror_id,
                 'locale': user.locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'en'),

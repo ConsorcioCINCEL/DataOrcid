@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Article selection · OAI-PMH · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<span class="app-page-eyebrow">{{ _('OAI-PMH interoperability') }}</span>
+<h1>{{ _('Article selection') }}</h1>
+<p>{{ _('Choose exactly which institutional articles DSpace and other repositories are allowed to harvest.') }}</p>
+{% endblock %}
+
+{% block content %}
+{% include 'oai_pmh/_scope.html' %}
+{% include 'oai_pmh/_tabs.html' %}
+
+<section class="card shadow-sm oai-records-card" aria-labelledby="oaiRecordsTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiRecordsTitle" class="card-title text-bold mb-1">{{ _('Institutional articles') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Review affiliation evidence and define the effective OAI publication status.') }}</p>
+    </div>
+    <div class="oai-record-export-actions">
+      <small>{{ _('Export all filtered results for auditing') }}</small>
+      <div class="btn-group" role="group" aria-label="{{ _('Export complete article table') }}">
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('oai_pmh.export_article_listing', format='csv', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction) }}"><i class="fas fa-file-csv mr-1" aria-hidden="true"></i>CSV</a>
+        <a class="btn btn-sm btn-outline-success" href="{{ url_for('oai_pmh.export_article_listing', format='xlsx', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction) }}"><i class="fas fa-file-excel mr-1" aria-hidden="true"></i>XLSX</a>
+      </div>
+    </div>
+  </div>
+  <div class="card-body border-bottom">
+    <form method="get" action="{{ url_for('oai_pmh.articles') }}" class="app-filter-grid oai-filter-grid">
+      <input type="hidden" name="sort" value="{{ selected_sort }}">
+      <input type="hidden" name="direction" value="{{ selected_direction }}">
+      <div>
+        <label for="oaiRecordSearch">{{ _('Search') }}</label>
+        <div class="input-group"><div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search" aria-hidden="true"></i></span></div><input id="oaiRecordSearch" class="form-control" type="search" name="q" value="{{ query }}" placeholder="{{ _('Title, author, affiliation, ROR, journal, or DOI') }}"></div>
+      </div>
+      <div>
+        <label for="oaiStatusFilter">{{ _('OAI publication status') }}</label>
+        <select id="oaiStatusFilter" class="form-control" name="status">
+          <option value="all" {% if selected_status == 'all' %}selected{% endif %}>{{ _('All statuses') }}</option>
+          <option value="included" {% if selected_status == 'included' %}selected{% endif %}>{{ _('Exposed') }}</option>
+          <option value="excluded" {% if selected_status == 'excluded' %}selected{% endif %}>{{ _('Excluded') }}</option>
+        </select>
+      </div>
+      <div>
+        <label for="oaiValidationFilter">{{ _('OpenAlex validation') }}</label>
+        <select id="oaiValidationFilter" class="form-control" name="validation">
+          <option value="all" {% if selected_validation == 'all' %}selected{% endif %}>{{ _('All validation states') }}</option>
+          <option value="validated" {% if selected_validation == 'validated' %}selected{% endif %}>{{ _('Validated for this institution') }}</option>
+          <option value="unvalidated" {% if selected_validation == 'unvalidated' %}selected{% endif %}>{{ _('Not validated for this institution') }}</option>
+        </select>
+      </div>
+      <div>
+        <label for="oaiTypeFilter">{{ _('Document type') }}</label>
+        <select id="oaiTypeFilter" class="form-control" name="type"><option value="">{{ _('All types') }}</option>{% for value in type_options %}<option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select>
+      </div>
+      <div>
+        <label for="oaiSourceFilter">{{ _('Activation origin') }}</label>
+        <select id="oaiSourceFilter" class="form-control" name="source">
+          <option value="all" {% if selected_source == 'all' %}selected{% endif %}>{{ _('All origins') }}</option>
+          <option value="xlsx" {% if selected_source == 'xlsx' %}selected{% endif %}>{{ _('Activated by Excel import') }}</option>
+        </select>
+      </div>
+      <div class="oai-filter-actions"><a class="btn btn-outline-secondary" href="{{ url_for('oai_pmh.articles') }}"><i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Reset') }}</a><button class="btn btn-primary" type="submit"><i class="fas fa-filter mr-1" aria-hidden="true"></i>{{ _('Apply filters') }}</button></div>
+    </form>
+  </div>
+
+  {% if records %}
+  <form method="post" action="{{ url_for('oai_pmh.update_publication') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="q" value="{{ query }}">
+    <input type="hidden" name="status" value="{{ selected_status }}">
+    <input type="hidden" name="type" value="{{ selected_type }}">
+    <input type="hidden" name="validation" value="{{ selected_validation }}">
+    <input type="hidden" name="source" value="{{ selected_source }}">
+    <input type="hidden" name="sort" value="{{ selected_sort }}">
+    <input type="hidden" name="direction" value="{{ selected_direction }}">
+    <input type="hidden" name="page" value="{{ pagination.page }}">
+    {% if can_manage_content %}
+    <div class="oai-bulk-toolbar">
+      <div class="custom-control custom-checkbox"><input class="custom-control-input" type="checkbox" id="oaiSelectAll"><label class="custom-control-label" for="oaiSelectAll">{{ _('Select this page') }}</label></div>
+      <div><button class="btn btn-sm btn-success" type="submit" name="action" value="include"><i class="fas fa-check mr-1" aria-hidden="true"></i>{{ _('Expose selected') }}</button><button class="btn btn-sm btn-outline-danger" type="submit" name="action" value="exclude"><i class="fas fa-ban mr-1" aria-hidden="true"></i>{{ _('Exclude selected') }}</button></div>
+    </div>
+    {% endif %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 oai-record-table">
+        <thead>
+          <tr>
+            {% if can_manage_content %}<th class="oai-select-cell"><span class="sr-only">{{ _('Select') }}</span></th>{% endif %}
+            {% for column, label in [('title', _('Article')), ('creator', _('Creators')), ('year', _('Year')), ('type', _('Type')), ('affiliation', _('Affiliations')), ('validation', _('OpenAlex affiliation')), ('status', _('OAI status'))] %}
+            <th aria-sort="{% if selected_sort == column %}{{ 'ascending' if selected_direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+              <a class="oai-sort-link" href="{{ article_sort_url(column) }}">
+                <span>{{ label }}</span>
+                <i class="fas {% if selected_sort == column %}{{ 'fa-sort-up' if selected_direction == 'asc' else 'fa-sort-down' }}{% else %}fa-sort{% endif %}" aria-hidden="true"></i>
+              </a>
+            </th>
+            {% endfor %}
+            {% if can_manage_content %}<th class="text-right">{{ _('Quick action') }}</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+        {% for record in records %}
+          <tr>
+            {% if can_manage_content %}<td class="oai-select-cell"><div class="custom-control custom-checkbox"><input class="custom-control-input oai-record-checkbox" type="checkbox" id="oaiRecord{{ record.canonical_work_id }}" name="work_ids" value="{{ record.canonical_work_id }}"><label class="custom-control-label" for="oaiRecord{{ record.canonical_work_id }}"><span class="sr-only">{{ _('Select %(title)s', title=record.title or record.canonical_key) }}</span></label></div></td>{% endif %}
+            <td><strong>{{ record.title or _('Untitled article') }}</strong><small class="d-block text-muted text-break">{{ record.doi_normalized or record.canonical_key }}</small>{% if record.landing_page_url %}<a href="{{ record.landing_page_url }}" target="_blank" rel="noopener" class="small"><i class="fas fa-external-link-alt mr-1" aria-hidden="true"></i>{{ _('Open article') }}</a>{% endif %}</td>
+            <td class="oai-creators-cell">{{ record.creators|join(', ') or (record.orcid or _('Not available')) }}</td>
+            <td>{{ record.publication_year or '—' }}</td>
+            <td>{{ record.document_type or '—' }}</td>
+            <td class="oai-affiliations-cell">
+              {% if record.displayed_affiliations %}
+              <ul class="oai-affiliation-list">
+                {% for affiliation in record.displayed_affiliations %}
+                <li class="{% if affiliation.is_selected %}is-selected{% endif %}">
+                  {% if affiliation.is_selected %}<i class="fas fa-check-circle" aria-hidden="true"></i>{% else %}<i class="far fa-building" aria-hidden="true"></i>{% endif %}
+                  <span><strong>{{ affiliation.name }}</strong>{% if affiliation.ror_id %}<small>ROR: {{ affiliation.ror_id }}</small>{% endif %}</span>
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <span class="text-muted">{{ _('No affiliations available') }}</span>
+              {% endif %}
+              {% if record.additional_affiliation_count %}<span class="oai-affiliation-overflow">+ {{ ngettext('%(count)s additional institution', '%(count)s additional institutions', record.additional_affiliation_count, count=record.additional_affiliation_count) }}</span>{% endif %}
+              {% if record.is_openalex_validated %}<span class="badge badge-success mt-1"><i class="fas fa-university mr-1" aria-hidden="true"></i>{{ _('Includes selected institution') }}</span>{% endif %}
+            </td>
+            <td>{% if record.is_openalex_validated %}<span class="badge badge-success"><i class="fas fa-check-circle mr-1" aria-hidden="true"></i>{{ _('Validated') }}</span><small class="d-block text-muted mt-1">{{ _('Matches active ROR') }}</small>{% else %}<span class="badge badge-warning"><i class="fas fa-question-circle mr-1" aria-hidden="true"></i>{{ _('Not validated') }}</span><small class="d-block text-muted mt-1">{{ _('No matching OpenAlex affiliation') }}</small>{% endif %}</td>
+            <td>{% if record.is_included %}<span class="badge badge-success">{{ _('Exposed') }}</span>{% else %}<span class="badge badge-secondary">{{ _('Excluded') }}</span>{% endif %}{% if record.publication_source == 'xlsx' and record.is_included %}<span class="badge badge-info d-block mt-1" title="{{ _('The DOI was found in the active institutional profile and activated through an Excel import.') }}"><i class="fas fa-file-excel mr-1" aria-hidden="true"></i>{{ _('Activated by Excel') }}</span>{% elif record.has_manual_override %}<small class="d-block text-muted mt-1"><i class="fas fa-user-edit mr-1" aria-hidden="true"></i>{{ _('Manual decision') }}</small>{% endif %}</td>
+            {% if can_manage_content %}<td class="text-right oai-quick-action-cell">{% if record.is_included %}<button class="btn btn-sm btn-outline-danger" type="submit" name="single_exclude" value="{{ record.canonical_work_id }}" title="{{ _('Exclude only this article') }}"><i class="fas fa-ban mr-1" aria-hidden="true"></i>{{ _('Exclude') }}</button>{% else %}<button class="btn btn-sm btn-outline-success" type="submit" name="single_include" value="{{ record.canonical_work_id }}" title="{{ _('Expose only this article') }}"><i class="fas fa-broadcast-tower mr-1" aria-hidden="true"></i>{{ _('Expose') }}</button>{% endif %}</td>{% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+  {% else %}
+  <div class="card-body"><div class="alert alert-info mb-0"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('No DataORCID articles match the selected filters.') }}</div></div>
+  {% endif %}
+
+  {% if pagination.pages > 1 %}
+  <div class="card-footer oai-pagination-footer">
+    <span>{{ _('Showing %(start)s–%(end)s of %(total)s', start=(pagination.page - 1) * pagination.per_page + 1, end=[pagination.page * pagination.per_page, pagination.total]|min, total=pagination.total) }}</span>
+    <nav aria-label="{{ _('Article pagination') }}"><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}"><a class="page-link" href="{{ url_for('oai_pmh.articles', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction, page=pagination.prev_num or 1) }}" aria-label="{{ _('Previous') }}"><i class="fas fa-chevron-left" aria-hidden="true"></i></a></li>
+      <li class="page-item disabled"><span class="page-link">{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span></li>
+      <li class="page-item {% if not pagination.has_next %}disabled{% endif %}"><a class="page-link" href="{{ url_for('oai_pmh.articles', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction, page=pagination.next_num or pagination.pages) }}" aria-label="{{ _('Next') }}"><i class="fas fa-chevron-right" aria-hidden="true"></i></a></li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const selectAll = document.getElementById('oaiSelectAll');
+  if (!selectAll) return;
+  selectAll.addEventListener('change', function () {
+    document.querySelectorAll('.oai-record-checkbox').forEach(function (checkbox) {
+      checkbox.checked = selectAll.checked;
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('OAI-PMH administration · Data ORCID-Chile') }}{% endblock %}
+
+{% block header_title %}
+<div class="app-section-heading">
+  <h1>{{ _('OAI-PMH repositories') }}</h1>
+  <p>{{ _('Review provider availability, effective exposure, OpenAlex validation, and manual publication decisions.') }}</p>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item">{{ _('Administration') }}</li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('OAI-PMH repositories') }}</li>
+{% endblock %}
+
+{% block content %}
+<section class="app-kpi-strip oai-admin-kpi-strip" style="--app-kpi-columns: 4" aria-label="{{ _('OAI-PMH repository summary') }}">
+  <article class="app-kpi">
+    <span class="app-kpi-icon" aria-hidden="true"><i class="fas fa-university"></i></span>
+    <div><span class="app-kpi-label">{{ _('Configured repositories') }}</span><strong>{{ summary.repositories }}</strong><small>{{ _('%(count)s public providers enabled', count=summary.enabled) }}</small></div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-purple" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+    <div><span class="app-kpi-label">{{ _('Associated articles') }}</span><strong>{{ summary.available }}</strong><small>{{ _('Public and deduplicated works') }}</small></div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-broadcast-tower"></i></span>
+    <div><span class="app-kpi-label">{{ _('Exposed articles') }}</span><strong>{{ summary.exposed }}</strong><small>{{ _('%(count)s validated by OpenAlex', count=summary.validated) }}</small></div>
+  </article>
+  <article class="app-kpi">
+    <span class="app-kpi-icon is-orange" aria-hidden="true"><i class="fas fa-user-edit"></i></span>
+    <div><span class="app-kpi-label">{{ _('Manual decisions') }}</span><strong>{{ summary.manual }}</strong><small>{{ _('Explicit include or exclude overrides') }}</small></div>
+  </article>
+</section>
+
+<section class="card shadow-sm oai-admin-card" aria-labelledby="oaiAdminTableTitle">
+  <div class="card-header">
+    <div>
+      <h2 id="oaiAdminTableTitle" class="card-title text-bold mb-1">{{ _('Institutional providers') }}</h2>
+      <p class="activity-card-subtitle mb-0">{{ _('Counts reflect the same effective publication policy used by external harvesters.') }}</p>
+    </div>
+  </div>
+  {% if repositories %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 oai-admin-table">
+      <thead>
+        <tr>
+          <th>{{ _('Institution and repository') }}</th>
+          <th>{{ _('Provider') }}</th>
+          <th>{{ _('Article exposure') }}</th>
+          <th>{{ _('Validation and decisions') }}</th>
+          <th>{{ _('Public endpoint') }}</th>
+          <th class="text-right">{{ _('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for repository in repositories %}
+        {% set config = repository.config %}
+        <tr>
+          <td>
+            <strong class="d-block">{{ repository.institution_name }}</strong>
+            <span class="d-block">{{ config.repository_name }}</span>
+            <small class="text-muted">ROR: {{ config.ror_id }}</small>
+          </td>
+          <td>
+            <span class="badge badge-{{ 'success' if config.provider_enabled else 'secondary' }}"><i class="fas fa-circle mr-1" aria-hidden="true"></i>{{ _('Enabled') if config.provider_enabled else _('Disabled') }}</span>
+            <small class="d-block text-muted mt-2">{% if config.publication_policy == 'all' %}{{ _('All articles by default') }}{% elif config.publication_policy == 'selected' %}{{ _('Only explicitly selected') }}{% else %}{{ _('OpenAlex-validated by default') }}{% endif %}</small>
+            <small class="d-block text-muted">{{ _('Updated %(date)s', date=config.updated_at|datetimeformat) }}</small>
+          </td>
+          <td class="oai-admin-exposure">
+            <div><strong>{{ repository.exposed }}</strong><span>/ {{ repository.available }} {{ _('articles') }}</span><b>{{ repository.exposure_rate }}%</b></div>
+            <div class="progress progress-xs" role="progressbar" aria-label="{{ _('Exposure for %(institution)s', institution=repository.institution_name) }}" aria-valuenow="{{ repository.exposure_rate }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-success" style="width: {{ repository.exposure_rate }}%"></div></div>
+            <small class="text-muted">{{ _('%(count)s excluded', count=repository.excluded) }}</small>
+          </td>
+          <td>
+            <span class="oai-admin-detail"><i class="fas fa-check-circle text-success" aria-hidden="true"></i><strong>{{ repository.validated }}</strong> {{ _('validated') }}</span>
+            <span class="oai-admin-detail"><i class="fas fa-user-edit text-warning" aria-hidden="true"></i><strong>{{ repository.manual }}</strong> {{ _('manual') }}</span>
+          </td>
+          <td>
+            <code class="oai-admin-url" id="oaiAdminUrl{{ config.id }}">{{ repository.provider_url }}</code>
+            {% if config.provider_enabled %}<a class="small d-block mt-2" href="{{ repository.provider_url }}?verb=Identify" target="_blank" rel="noopener"><i class="fas fa-external-link-alt mr-1" aria-hidden="true"></i>{{ _('Open public presentation') }}</a>{% endif %}
+          </td>
+          <td class="text-right">
+            <div class="oai-admin-actions">
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-copy-text="{{ repository.provider_url }}" title="{{ _('Copy public endpoint') }}"><i class="far fa-copy" aria-hidden="true"></i><span class="sr-only">{{ _('Copy public endpoint') }}</span></button>
+              <form method="post" action="{{ url_for('admin.open_oai_repository', ror_id=config.ror_id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>{{ _('Manage') }}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body">
+    <div class="alert alert-info mb-0"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('There are no OAI-PMH repositories configured within your administration scope.') }}</div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-copy-text]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      navigator.clipboard.writeText(button.dataset.copyText).catch(function () {});
+      const icon = button.querySelector('i');
+      icon.classList.remove('fa-copy');
+      icon.classList.add('fa-check');
+      window.setTimeout(function () {
+        icon.classList.remove('fa-check');
+        icon.classList.add('fa-copy');
+      }, 1400);
+    });
+  });
+});
+</script>
+{% endblock %}

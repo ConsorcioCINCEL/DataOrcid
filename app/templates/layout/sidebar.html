@@ -14,10 +14,14 @@
   'main.integration_pull',
   'main.integration_guide',
   'main.resources',
-  'auth.am_settings'
+  'auth.am_settings',
+  'oai_pmh.index',
+  'oai_pmh.metadata_mapping'
 ] %}
 {% set administration_endpoints = [
   'admin.users_list',
+  'admin.oai_repositories',
+  'admin.open_oai_repository',
   'admin.statistics',
   'admin.jobs'
 ] %}
@@ -136,6 +140,12 @@
       </a>
     </li>
     <li class="nav-item">
+      <a href="{{ url_for('oai_pmh.index') }}" class="nav-link {% if request.endpoint in ['oai_pmh.index', 'oai_pmh.metadata_mapping'] %}active{% endif %}">
+        <i class="fas fa-broadcast-tower nav-icon" aria-hidden="true"></i>
+        <p>{{ _('OAI-PMH repository') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
       <a href="{{ url_for('main.resources') }}" class="nav-link {% if request.endpoint == 'main.resources' %}active{% endif %}">
         <i class="fas fa-book-open nav-icon" aria-hidden="true"></i>
         <p>{{ _('ORCID resources') }}</p>
@@ -172,6 +182,12 @@
       <a href="{{ url_for('admin.statistics') }}" class="nav-link {% if request.endpoint == 'admin.statistics' %}active{% endif %}">
         <i class="fas fa-history nav-icon" aria-hidden="true"></i>
         <p>{{ _('System activity') }}</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ url_for('admin.oai_repositories') }}" class="nav-link {% if request.endpoint in ['admin.oai_repositories', 'admin.open_oai_repository'] %}active{% endif %}">
+        <i class="fas fa-broadcast-tower nav-icon" aria-hidden="true"></i>
+        <p>{{ _('OAI-PMH repositories') }}</p>
       </a>
     </li>
     {% if session.get('is_admin') %}

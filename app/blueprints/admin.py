@@ -14,7 +14,14 @@ from flask_babel import _
 from sqlalchemy import and_, case, func, not_, or_
 
 from .. import db
-from ..models import SyncJob, SyncJobStep, TrackingLog, User, utc_now
+from ..models import (
+    OaiPmhInstitutionConfig,
+    SyncJob,
+    SyncJobStep,
+    TrackingLog,
+    User,
+    utc_now,
+)
 from ..decorators import (
     login_required, admin_required,
     normalize_ror_id
@@ -23,6 +30,7 @@ from ..utils.flashes import flash_err, flash_ok, flash_info
 from ..utils.emailer import send_email
 from ..services.ror_service import fetch_grid_from_ror
 from ..services.institution_registry_service import get_institution_by_ror, get_institution_options
+from ..services.oai_pmh_service import oai_repository_summaries
 
 bp_admin = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
@@ -30,7 +38,7 @@ logger = logging.getLogger(__name__)
 _STATISTICS_PERIODS = {"24h", "7d", "30d", "all", "custom"}
 _STATISTICS_KINDS = {"interactive", "background", "all"}
 _STATISTICS_PER_PAGE = {25, 50, 100}
-_USER_ROLES = {"all", "admin", "manager", "user"}
+_USER_ROLES = {"all", "admin", "manager", "oai_user", "user"}
 _USER_ACTIVITY_STATES = {"all", "active", "inactive", "never"}
 _USER_SORT_OPTIONS = {"created", "name", "institution", "activity"}
 _USER_PER_PAGE = {25, 50, 100}
@@ -373,10 +381,13 @@ def users_list():
         users_query = users_query.filter(User.is_admin.is_(True))
     elif selected_role == 'manager':
         users_query = users_query.filter(User.is_manager.is_(True))
+    elif selected_role == 'oai_user':
+        users_query = users_query.filter(User.is_oai_user.is_(True))
     elif selected_role == 'user':
         users_query = users_query.filter(
             User.is_admin.is_(False),
             User.is_manager.is_(False),
+            User.is_oai_user.is_(False),
         )
 
     if selected_institution:
@@ -465,6 +476,7 @@ def users_list():
             func.count(User.id),
             func.coalesce(func.sum(case((User.is_admin.is_(True), 1), else_=0)), 0),
             func.coalesce(func.sum(case((User.is_manager.is_(True), 1), else_=0)), 0),
+            func.coalesce(func.sum(case((User.is_oai_user.is_(True), 1), else_=0)), 0),
             func.coalesce(
                 func.sum(case((User.username.in_(active_usernames), 1), else_=0)),
                 0,
@@ -477,7 +489,8 @@ def users_list():
         'total': int(summary_row[0] or 0),
         'admins': int(summary_row[1] or 0),
         'managers': int(summary_row[2] or 0),
-        'active': int(summary_row[3] or 0),
+        'oai_users': int(summary_row[3] or 0),
+        'active': int(summary_row[4] or 0),
     }
 
     institution_options = []
@@ -558,7 +571,12 @@ def users_new():
     # Roles and Preferences
     is_admin = bool(request.form.get('is_admin'))
     is_manager = bool(request.form.get('is_manager'))
+    is_oai_user = bool(request.form.get('is_oai_user'))
     locale = request.form.get('locale') or 'en'
+
+    if is_oai_user and not ror_id:
+        flash_err(_('An OAI user must be assigned to an institution.'))
+        return redirect(_users_return_url())
 
     # Automatic GRID lookup via ROR service (Data Healing)
     if ror_id and not grid_id:
@@ -587,6 +605,7 @@ def users_new():
         am_client_id=am_client_id if am_client_id else None,
         is_admin=is_admin,
         is_manager=is_manager,
+        is_oai_user=is_oai_user,
         locale=locale
     )
 
@@ -595,7 +614,14 @@ def users_new():
         db.session.add(new_user)
         db.session.commit()
         
-        role_label = " (Admin)" if is_admin else (" (Manager)" if is_manager else "")
+        assigned_roles = []
+        if is_admin:
+            assigned_roles.append(_("Administrator"))
+        if is_manager:
+            assigned_roles.append(_("Manager"))
+        if is_oai_user:
+            assigned_roles.append(_("OAI user"))
+        role_label = f" ({', '.join(assigned_roles)})" if assigned_roles else ""
         flash_ok(_('User "%(u)s" created%(r)s. Password: %(p)s', 
                  u=username, r=role_label, p=temp_password))
     except Exception as exc:
@@ -734,11 +760,16 @@ def users_update(user_id: int):
     
     want_admin = bool(request.form.get('is_admin'))
     want_manager = bool(request.form.get('is_manager'))
+    want_oai_user = bool(request.form.get('is_oai_user'))
     locale = request.form.get('locale')
 
     # Security Safeguard: Admins cannot remove their own admin role
     if user.id == session.get('user_id') and not want_admin:
         flash_err(_('You cannot remove admin role from your own account.'))
+        return redirect(_users_return_url())
+
+    if want_oai_user and not user.ror_id:
+        flash_err(_('An OAI user must be assigned to an institution.'))
         return redirect(_users_return_url())
 
     # GRID ID Healing (if missing but ROR is present)
@@ -751,6 +782,7 @@ def users_update(user_id: int):
     try:
         user.is_admin = want_admin
         user.is_manager = want_manager
+        user.is_oai_user = want_oai_user
         
         # Update locale session if the user modifies their own profile
         if locale in ['es', 'en']:
@@ -765,6 +797,7 @@ def users_update(user_id: int):
             session['ror_id'] = user.ror_id
             session['is_admin'] = bool(user.is_admin)
             session['is_manager'] = bool(user.is_manager)
+            session['is_oai_user'] = bool(user.is_oai_user)
 
         db.session.commit()
         flash_ok(_('User "%(u)s" updated successfully.', u=user.username))
@@ -1120,6 +1153,87 @@ def jobs():
             "refreshed_at": context["refreshed_at"].isoformat(),
         })
     return render_template("admin/jobs.html", **context)
+
+
+@bp_admin.route("/oai-pmh")
+@login_required
+def oai_repositories():
+    """Summarize configured OAI providers inside the current staff scope."""
+    if not _require_admin_or_manager():
+        return redirect(url_for("main.index"))
+
+    account = db.session.get(User, session.get("user_id"))
+    is_admin = bool(account and account.is_admin and session.get("is_admin"))
+    is_manager = bool(account and account.is_manager and session.get("is_manager"))
+    if not is_admin and not is_manager:
+        flash_err(_("You need admin or manager role to access this section."))
+        return redirect(url_for("main.index"))
+
+    manager_ror = normalize_ror_id(account.ror_id) if account else None
+    if not is_admin and not manager_ror:
+        flash_err(_("Your account does not have an institution assigned."))
+        return redirect(url_for("main.index"))
+
+    repositories = oai_repository_summaries(None if is_admin else [manager_ror])
+    institution_lookup = {
+        item["ror_id"]: item["name"] for item in get_institution_options()
+    }
+    configured_base = (current_app.config.get("APP_BASE_URL") or "").rstrip("/")
+    for repository in repositories:
+        config = repository["config"]
+        path = url_for("oai_pmh.provider", public_key=config.public_key)
+        repository["provider_url"] = (
+            f"{configured_base}{path}"
+            if configured_base
+            else url_for("oai_pmh.provider", public_key=config.public_key, _external=True)
+        )
+        repository["institution_name"] = institution_lookup.get(
+            config.ror_id,
+            config.repository_name or config.ror_id,
+        )
+        repository["excluded"] = max(repository["available"] - repository["exposed"], 0)
+        repository["exposure_rate"] = round(
+            repository["exposed"] * 100 / repository["available"], 1
+        ) if repository["available"] else 0
+
+    summary = {
+        "repositories": len(repositories),
+        "enabled": sum(1 for item in repositories if item["config"].provider_enabled),
+        "available": sum(item["available"] for item in repositories),
+        "exposed": sum(item["exposed"] for item in repositories),
+        "validated": sum(item["validated"] for item in repositories),
+        "manual": sum(item["manual"] for item in repositories),
+    }
+    return render_template(
+        "admin/oai_pmh_repositories.html",
+        repositories=repositories,
+        summary=summary,
+        is_admin=is_admin,
+    )
+
+
+@bp_admin.route("/oai-pmh/<ror_id>/open", methods=["POST"])
+@login_required
+def open_oai_repository(ror_id: str):
+    """Open one permitted repository in the institution-scoped OAI workspace."""
+    if not _require_admin_or_manager():
+        return redirect(url_for("main.index"))
+
+    account = db.session.get(User, session.get("user_id"))
+    requested_ror = normalize_ror_id(ror_id)
+    is_admin = bool(account and account.is_admin and session.get("is_admin"))
+    is_manager = bool(account and account.is_manager and session.get("is_manager"))
+    manager_ror = normalize_ror_id(account.ror_id) if account else None
+    config_exists = bool(requested_ror and OaiPmhInstitutionConfig.query.filter_by(
+        ror_id=requested_ror
+    ).first())
+    if not config_exists or not (is_admin or (is_manager and manager_ror == requested_ror)):
+        flash_err(_("Action not allowed"))
+        return redirect(url_for("admin.oai_repositories"))
+
+    if is_admin:
+        session["admin_selected_ror"] = requested_ror
+    return redirect(url_for("oai_pmh.index"))
 
 
 @bp_admin.route("/statistics")

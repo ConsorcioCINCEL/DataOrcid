@@ -83,6 +83,27 @@ class AdminUserUpdateTest(unittest.TestCase):
             selected = db.session.get(User, self.second_id)
             self.assertEqual("second@example.org", selected.username)
 
+    def test_admin_can_assign_institution_scoped_oai_user_role(self):
+        response = self.client.post(
+            f"/admin/users/{self.second_id}/update",
+            data={
+                "username": "second@example.org",
+                "email": "second@example.org",
+                "institution_name": "Institution A",
+                "ror_id": "01aaa1111",
+                "is_oai_user": "on",
+                "locale": "en",
+            },
+        )
+
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            selected = db.session.get(User, self.second_id)
+            self.assertTrue(selected.is_oai_user)
+            self.assertFalse(selected.is_manager)
+            self.assertFalse(selected.is_admin)
+            self.assertEqual("01aaa1111", selected.ror_id)
+
     def test_users_list_paginates_filters_and_summarizes_accounts(self):
         with self.app.app_context():
             extra_users = []

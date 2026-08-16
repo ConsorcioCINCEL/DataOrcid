@@ -31,11 +31,13 @@ def populate_users() -> Tuple[str, int]:
             db.session.add(new_admin)
             created_count += 1
 
-            logger.info("System Admin created. Temporary password: %s", admin_pwd)
-
         db.session.commit()
         logger.info("Database seeding completed. %d users created.", created_count)
-        
+
+        if created_count:
+            # Returned to the interactive CLI exactly once; never write the
+            # plaintext credential to application logs.
+            return f"Seeding process completed successfully. Initial admin password: {admin_pwd}", 200
         return "Seeding process completed successfully", 200
 
     except Exception as exc:

@@ -21,8 +21,8 @@
     <div class="oai-record-export-actions">
       <small>{{ _('Export all filtered results for auditing') }}</small>
       <div class="btn-group" role="group" aria-label="{{ _('Export complete article table') }}">
-        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('oai_pmh.export_article_listing', format='csv', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction) }}"><i class="fas fa-file-csv mr-1" aria-hidden="true"></i>CSV</a>
-        <a class="btn btn-sm btn-outline-success" href="{{ url_for('oai_pmh.export_article_listing', format='xlsx', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction) }}"><i class="fas fa-file-excel mr-1" aria-hidden="true"></i>XLSX</a>
+        <a class="btn btn-sm btn-outline-secondary js-background-export" href="{{ url_for('oai_pmh.export_article_listing', format='csv', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction) }}"><i class="fas fa-file-csv mr-1" aria-hidden="true"></i>CSV</a>
+        <a class="btn btn-sm btn-outline-success js-background-export" href="{{ url_for('oai_pmh.export_article_listing', format='xlsx', q=query, status=selected_status, type=selected_type, validation=selected_validation, source=selected_source, sort=selected_sort, direction=selected_direction) }}"><i class="fas fa-file-excel mr-1" aria-hidden="true"></i>XLSX</a>
       </div>
     </div>
   </div>

@@ -7,17 +7,19 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from flask import (
-    Blueprint, render_template, request, redirect,
+    abort, Blueprint, render_template, request, redirect,
     url_for, session, current_app, g, jsonify
 )
 from flask_babel import _
 from sqlalchemy import and_, case, func, not_, or_
 
-from .. import db
+from .. import DEFAULT_LANGUAGES, db
 from ..models import (
     OaiPmhInstitutionConfig,
     SyncJob,
     SyncJobStep,
+    SystemModule,
+    SystemError,
     TrackingLog,
     User,
     utc_now,
@@ -45,6 +47,10 @@ _USER_PER_PAGE = {25, 50, 100}
 _JOB_STATUSES = {"all", "active", "queued", "running", "success", "partial", "failed", "interrupted"}
 _JOB_PER_PAGE = {10, 25, 50}
 _JOB_SORT_OPTIONS = {"created", "started", "status", "type", "institution"}
+_ERROR_STATUSES = {"all", "open", "resolved"}
+_ERROR_SOURCES = {"all", "request", "background_job", "application"}
+_ERROR_PER_PAGE = {25, 50, 100}
+_ERROR_SORT_OPTIONS = {"occurred", "source", "user", "exception", "status"}
 
 
 def _background_request_condition():
@@ -572,7 +578,9 @@ def users_new():
     is_admin = bool(request.form.get('is_admin'))
     is_manager = bool(request.form.get('is_manager'))
     is_oai_user = bool(request.form.get('is_oai_user'))
-    locale = request.form.get('locale') or 'en'
+    locale = request.form.get('locale') or current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+    if locale not in current_app.config.get('LANGUAGES', DEFAULT_LANGUAGES):
+        locale = current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
 
     if is_oai_user and not ror_id:
         flash_err(_('An OAI user must be assigned to an institution.'))
@@ -675,7 +683,6 @@ def users_send_creds(user_id: int):
 
     temp_pwd = generate_temp_password()
     user.set_password(temp_pwd)
-    db.session.commit()
 
     base_url = current_app.config.get('APP_BASE_URL', '').rstrip('/')
     login_url = f"{base_url}{url_for('auth.login')}" if base_url else url_for('auth.login', _external=True)
@@ -713,8 +720,17 @@ def users_send_creds(user_id: int):
     )
 
     if success:
-        flash_ok(_("Credentials sent to %(r)s.", r=recipient))
+        try:
+            db.session.commit()
+            flash_ok(_("Credentials sent to %(r)s.", r=recipient))
+        except Exception as exc:
+            db.session.rollback()
+            logger.exception("Could not save the new password for %s: %s", user.username, exc)
+            flash_err(_("Could not update credentials."))
     else:
+        # The password change and email delivery form one logical operation.
+        # Do not lock the account behind a credential the user never received.
+        db.session.rollback()
         logger.error("Email Delivery Failed to %s: %s", recipient, error)
         flash_err(_("Could not send email."))
 
@@ -785,7 +801,7 @@ def users_update(user_id: int):
         user.is_oai_user = want_oai_user
         
         # Update locale session if the user modifies their own profile
-        if locale in ['es', 'en']:
+        if locale in current_app.config.get('LANGUAGES', DEFAULT_LANGUAGES):
             user.locale = locale
             if user.id == session.get('user_id'):
                 session['locale'] = locale
@@ -870,6 +886,81 @@ def set_ror(ror_id: str):
     
     flash_ok(_("Active institution changed to: %(r)s", r=display_name))
     return redirect(request.referrer or url_for('main.index'))
+
+
+@bp_admin.route("/modules", methods=["GET", "POST"])
+@admin_required
+def modules():
+    """Manage global visibility and access for optional application modules."""
+    from ..services.module_access import MODULE_DEFINITIONS, MODULE_KEYS
+
+    if request.method == "POST":
+        mode = request.form.get("mode")
+        if mode == "enable_all":
+            enabled_keys = set(MODULE_KEYS)
+        elif mode == "disable_all":
+            enabled_keys = set()
+        else:
+            enabled_keys = set(request.form.getlist("enabled")) & set(MODULE_KEYS)
+
+        stored = {
+            row.key: row
+            for row in SystemModule.query.filter(SystemModule.key.in_(MODULE_KEYS)).all()
+        }
+        changed = 0
+        now = utc_now()
+        for definition in MODULE_DEFINITIONS:
+            key = definition["key"]
+            requested_state = key in enabled_keys
+            row = stored.get(key)
+            if row is None:
+                row = SystemModule(key=key)
+                db.session.add(row)
+            elif bool(row.is_enabled) == requested_state:
+                continue
+            row.is_enabled = requested_state
+            row.updated_at = now
+            row.updated_by_user_id = session.get("user_id")
+            row.updated_by_username = session.get("username")
+            changed += 1
+        db.session.commit()
+        flash_ok(
+            _("Module availability updated. %(count)s setting(s) changed.", count=changed)
+        )
+        return redirect(url_for("admin.modules"))
+
+    stored = {
+        row.key: row
+        for row in SystemModule.query.filter(SystemModule.key.in_(MODULE_KEYS)).all()
+    }
+    module_rows = []
+    for definition in MODULE_DEFINITIONS:
+        row = stored.get(definition["key"])
+        label = definition["label"]
+        description = definition["description"]
+        group_label = definition["group"]
+        module_rows.append({
+            **definition,
+            "label": _(label),
+            "description": _(description),
+            "group_label": _(group_label),
+            "is_enabled": True if row is None else bool(row.is_enabled),
+            "updated_at": row.updated_at if row else None,
+            "updated_by": row.updated_by_username if row else None,
+        })
+
+    grouped_modules = []
+    for group in ("Explore", "Manage data", "Integrate", "Support", "Administration"):
+        items = [item for item in module_rows if item["group"] == group]
+        if items:
+            grouped_modules.append({"label": _(group), "items": items})
+    enabled_count = sum(1 for item in module_rows if item["is_enabled"])
+    return render_template(
+        "admin/modules.html",
+        grouped_modules=grouped_modules,
+        enabled_count=enabled_count,
+        module_count=len(module_rows),
+    )
 
 
 def _job_dashboard_context() -> dict:
@@ -1153,6 +1244,249 @@ def jobs():
             "refreshed_at": context["refreshed_at"].isoformat(),
         })
     return render_template("admin/jobs.html", **context)
+
+
+def _system_error_dashboard_context() -> dict:
+    """Build the administrator-only runtime error dashboard."""
+    page = max(request.args.get("page", 1, type=int), 1)
+    requested_per_page = request.args.get("per_page", 25, type=int)
+    per_page = requested_per_page if requested_per_page in _ERROR_PER_PAGE else 25
+    search_query = request.args.get("q", "").strip()
+
+    selected_status = request.args.get("status", "open").strip().lower()
+    if selected_status not in _ERROR_STATUSES:
+        selected_status = "open"
+    selected_source = request.args.get("source", "all").strip().lower()
+    if selected_source not in _ERROR_SOURCES:
+        selected_source = "all"
+    selected_exception = request.args.get("exception", "").strip()
+    selected_user = request.args.get("user", "").strip()
+
+    selected_period, period_start, period_end, date_from, date_to = _statistics_period_bounds(
+        request.args.get("period", "7d").strip().lower(),
+        request.args.get("date_from", "").strip(),
+        request.args.get("date_to", "").strip(),
+    )
+    sort_key = request.args.get("sort", "occurred").strip().lower()
+    if sort_key not in _ERROR_SORT_OPTIONS:
+        sort_key = "occurred"
+    sort_direction = request.args.get("dir", "desc").strip().lower()
+    if sort_direction not in {"asc", "desc"}:
+        sort_direction = "desc"
+
+    def errors_url(**updates):
+        params = request.args.to_dict(flat=True)
+        params.update(updates)
+        clean_params = {
+            key: value for key, value in params.items()
+            if value not in (None, "")
+        }
+        return url_for("admin.system_errors", **clean_params)
+
+    dimension_query = SystemError.query
+    if selected_source != "all":
+        dimension_query = dimension_query.filter(SystemError.source == selected_source)
+    if selected_exception:
+        dimension_query = dimension_query.filter(
+            SystemError.exception_type == selected_exception
+        )
+    if selected_user:
+        dimension_query = dimension_query.filter(SystemError.username == selected_user)
+    if search_query:
+        pattern = f"%{search_query}%"
+        dimension_query = dimension_query.filter(or_(
+            SystemError.event_id.ilike(pattern),
+            SystemError.request_id.ilike(pattern),
+            SystemError.job_id.ilike(pattern),
+            SystemError.username.ilike(pattern),
+            SystemError.institution_ror.ilike(pattern),
+            SystemError.endpoint.ilike(pattern),
+            SystemError.path.ilike(pattern),
+            SystemError.exception_type.ilike(pattern),
+            SystemError.message.ilike(pattern),
+        ))
+
+    period_query = dimension_query
+    if period_start is not None:
+        period_query = period_query.filter(SystemError.occurred_at >= period_start)
+    if period_end is not None:
+        period_query = period_query.filter(SystemError.occurred_at < period_end)
+
+    recurring = (
+        period_query.with_entities(SystemError.fingerprint)
+        .group_by(SystemError.fingerprint)
+        .having(func.count(SystemError.id) > 1)
+        .subquery()
+    )
+    summary = {
+        "total": period_query.count(),
+        "open": period_query.filter(SystemError.is_resolved.is_(False)).count(),
+        "users": period_query.with_entities(
+            func.count(func.distinct(SystemError.username))
+        ).filter(SystemError.username.isnot(None), SystemError.username != "").scalar() or 0,
+        "background": period_query.filter(
+            SystemError.source == "background_job"
+        ).count(),
+        "recurring": db.session.query(func.count()).select_from(recurring).scalar() or 0,
+    }
+
+    table_query = period_query
+    if selected_status == "open":
+        table_query = table_query.filter(SystemError.is_resolved.is_(False))
+    elif selected_status == "resolved":
+        table_query = table_query.filter(SystemError.is_resolved.is_(True))
+
+    sort_columns = {
+        "occurred": SystemError.occurred_at,
+        "source": SystemError.source,
+        "user": SystemError.username,
+        "exception": SystemError.exception_type,
+        "status": SystemError.is_resolved,
+    }
+    sort_column = sort_columns[sort_key]
+    primary_order = sort_column.asc() if sort_direction == "asc" else sort_column.desc()
+    order_clauses = [primary_order]
+    if sort_key != "occurred":
+        order_clauses.append(SystemError.occurred_at.desc())
+    pagination = table_query.order_by(*order_clauses).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False,
+    )
+
+    fingerprints = {item.fingerprint for item in pagination.items}
+    occurrence_counts = {}
+    if fingerprints:
+        occurrence_counts = {
+            fingerprint: int(count)
+            for fingerprint, count in (
+                period_query.with_entities(
+                    SystemError.fingerprint,
+                    func.count(SystemError.id),
+                )
+                .filter(SystemError.fingerprint.in_(fingerprints))
+                .group_by(SystemError.fingerprint)
+                .all()
+            )
+        }
+
+    missing_user_ids = {
+        item.user_id
+        for item in pagination.items
+        if item.user_id and not item.username
+    }
+    user_lookup = {
+        user.id: user.username
+        for user in User.query.filter(User.id.in_(missing_user_ids)).all()
+    } if missing_user_ids else {}
+
+    source_labels = {
+        "request": _("Web request"),
+        "background_job": _("Background job"),
+        "application": _("Application"),
+    }
+    errors = []
+    for item in pagination.items:
+        item.display_username = item.username or user_lookup.get(item.user_id) or _("System")
+        item.display_source = source_labels.get(item.source, item.source)
+        item.display_exception = (
+            item.exception_type.rsplit(".", 1)[-1]
+            if item.exception_type else _("Logged error")
+        )
+        item.occurrence_count = occurrence_counts.get(item.fingerprint, 1)
+        errors.append(item)
+
+    exception_types = [
+        row[0] for row in (
+            db.session.query(SystemError.exception_type)
+            .filter(SystemError.exception_type.isnot(None), SystemError.exception_type != "")
+            .distinct()
+            .order_by(SystemError.exception_type.asc())
+            .all()
+        )
+    ]
+    usernames = [
+        row[0] for row in (
+            db.session.query(SystemError.username)
+            .filter(SystemError.username.isnot(None), SystemError.username != "")
+            .distinct()
+            .order_by(SystemError.username.asc())
+            .all()
+        )
+    ]
+    period_labels = {
+        "24h": _("Last 24 hours"),
+        "7d": _("Last 7 days"),
+        "30d": _("Last 30 days"),
+        "all": _("All time"),
+        "custom": _("Custom range"),
+    }
+    return {
+        "errors": errors,
+        "pagination": pagination,
+        "summary": summary,
+        "q": search_query,
+        "selected_status": selected_status,
+        "selected_source": selected_source,
+        "selected_exception": selected_exception,
+        "selected_user": selected_user,
+        "selected_period": selected_period,
+        "period_label": period_labels[selected_period],
+        "date_from": date_from,
+        "date_to": date_to,
+        "sort_key": sort_key,
+        "sort_direction": sort_direction,
+        "per_page": per_page,
+        "per_page_options": sorted(_ERROR_PER_PAGE),
+        "exception_types": exception_types,
+        "usernames": usernames,
+        "source_labels": source_labels,
+        "errors_url": errors_url,
+    }
+
+
+@bp_admin.route("/errors")
+@admin_required
+def system_errors():
+    """Inspect sanitized runtime failures without exposing request payloads."""
+    return render_template(
+        "admin/errors.html",
+        **_system_error_dashboard_context(),
+    )
+
+
+@bp_admin.route("/errors/<event_id>/status", methods=["POST"])
+@admin_required
+def update_system_error_status(event_id: str):
+    """Resolve or reopen one diagnostic event while preserving its history."""
+    error = SystemError.query.filter_by(event_id=event_id).first()
+    if not error:
+        abort(404)
+    action = request.form.get("action")
+    if action not in {"resolve", "reopen"}:
+        abort(400)
+
+    if action == "resolve":
+        error.is_resolved = True
+        error.resolved_at = utc_now()
+        error.resolved_by_user_id = session.get("user_id")
+        error.resolved_by_username = session.get("username")
+        error.resolution_note = (request.form.get("resolution_note") or "").strip()[:2000] or None
+        flash_ok(_("The error was marked as resolved."))
+    else:
+        error.is_resolved = False
+        error.resolved_at = None
+        error.resolved_by_user_id = None
+        error.resolved_by_username = None
+        error.resolution_note = None
+        flash_info(_("The error was reopened."))
+    db.session.commit()
+    return redirect(url_for(
+        "admin.system_errors",
+        q=error.event_id,
+        status="all",
+        period="all",
+    ))
 
 
 @bp_admin.route("/oai-pmh")

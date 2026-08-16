@@ -131,6 +131,39 @@ class AuthProfileTest(unittest.TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.user_id, captured["user"].id)
 
+    def test_bcrypt_length_limit_is_handled_without_server_error(self):
+        too_long = "á" * 37  # 74 UTF-8 bytes despite being only 37 characters.
+        with patch("app.blueprints.auth.render_template", return_value="change-password"):
+            response = self.client.post(
+                "/auth/change-password",
+                data={
+                    "current_password": "test-password",
+                    "new_password": too_long,
+                    "confirm_password": too_long,
+                },
+            )
+
+        self.assertEqual(200, response.status_code)
+        with self.app.app_context():
+            user = db.session.get(User, self.user_id)
+            self.assertTrue(user.check_password("test-password"))
+            self.assertFalse(user.check_password("x" * 73))
+            with self.assertRaisesRegex(ValueError, "72 UTF-8 bytes"):
+                user.set_password("x" * 73)
+
+    def test_password_recovery_does_not_reveal_email_delivery_failure(self):
+        with patch("app.blueprints.auth.send_email", return_value=(False, "SMTP offline")):
+            response = self.client.post(
+                "/auth/forgot-password",
+                data={"email": "old@example.org"},
+            )
+
+        self.assertEqual(302, response.status_code)
+        with self.client.session_transaction() as client_session:
+            flashes = client_session.get("_flashes", [])
+        self.assertEqual(1, len(flashes))
+        self.assertNotIn("could not", flashes[0][1].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

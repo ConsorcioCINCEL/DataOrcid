@@ -3,6 +3,7 @@
 import csv
 from datetime import timedelta
 from io import BytesIO, StringIO
+import tempfile
 import unittest
 from unittest.mock import patch
 from xml.etree import ElementTree as ET
@@ -13,6 +14,7 @@ from openpyxl import Workbook, load_workbook
 
 from app import babel, csrf, db
 from app.blueprints.admin import bp_admin
+from app.blueprints.background_exports import bp_background_exports
 from app.blueprints.oai_pmh import bp_oai_pmh
 from app.models import (
     CanonicalWork,
@@ -30,10 +32,12 @@ from app.models import (
     utc_now,
 )
 from app.services.oai_pmh_service import OAI_NS, oai_repository_summaries
+from app.services.background_jobs import run_queued_job
 
 
 class OaiPmhModuleTest(unittest.TestCase):
     def setUp(self):
+        self.export_root = tempfile.TemporaryDirectory()
         self.app = Flask(__name__)
         self.app.config.update(
             SECRET_KEY="test-key",
@@ -43,12 +47,18 @@ class OaiPmhModuleTest(unittest.TestCase):
             OAI_RESUMPTION_TOKEN_MAX_AGE=3600,
             WTF_CSRF_ENABLED=False,
             TESTING=True,
+            JOB_EXECUTION_MODE="queue",
+            EXPORT_DIRECTORY=self.export_root.name,
+            EXPORT_RETENTION_HOURS=24,
+            EXPORT_MAX_ACTIVE_PER_USER=3,
+            EXPORT_MAX_ACTIVE_GLOBAL=20,
         )
         db.init_app(self.app)
         babel.init_app(self.app)
         csrf.init_app(self.app)
         self.app.register_blueprint(bp_oai_pmh)
         self.app.register_blueprint(bp_admin)
+        self.app.register_blueprint(bp_background_exports)
         self.app.add_url_rule("/login", endpoint="auth.login", view_func=lambda: "login")
         self.app.add_url_rule("/", endpoint="main.index", view_func=lambda: "home")
 
@@ -144,6 +154,7 @@ class OaiPmhModuleTest(unittest.TestCase):
             db.drop_all()
             db.session.remove()
             engine.dispose()
+        self.export_root.cleanup()
 
     @staticmethod
     def _add_work(ror_id, orcid, put_code, title, doi, suffix, updated_at, *, validated):
@@ -470,6 +481,20 @@ class OaiPmhModuleTest(unittest.TestCase):
             self.assertEqual("Validated", article_rows[1][9])
         finally:
             workbook.close()
+
+    def test_article_audit_background_csv_matches_direct_export(self):
+        self._login(self.standard_id)
+        url = "/oai-pmh/works/export?format=csv&sort=title&direction=asc"
+        direct = self.client.get(url)
+        queued_response = self.client.get(f"{url}&background=1")
+
+        self.assertEqual(202, queued_response.status_code)
+        job_id = queued_response.get_json()["job"]["id"]
+        self.assertEqual(job_id, run_queued_job(self.app, "oai-export-worker"))
+        status = self.client.get(f"/exports/jobs/{job_id}").get_json()["job"]
+        self.assertEqual("success", status["status"])
+        generated = self.client.get(status["download_url"])
+        self.assertEqual(direct.data, generated.data)
 
     def test_doi_excel_import_is_institution_scoped_filterable_and_reversible(self):
         self._login(self.oai_editor_id, is_oai_user=True)

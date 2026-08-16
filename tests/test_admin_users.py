@@ -23,6 +23,7 @@ class AdminUserUpdateTest(unittest.TestCase):
         db.init_app(self.app)
         babel.init_app(self.app)
         self.app.register_blueprint(bp_admin)
+        self.app.add_url_rule("/login", endpoint="auth.login", view_func=lambda: "login")
 
         with self.app.app_context():
             db.create_all()
@@ -82,6 +83,25 @@ class AdminUserUpdateTest(unittest.TestCase):
         with self.app.app_context():
             selected = db.session.get(User, self.second_id)
             self.assertEqual("second@example.org", selected.username)
+
+    def test_update_route_accepts_new_locales_and_ignores_unknown_ones(self):
+        response = self.client.post(
+            f"/admin/users/{self.second_id}/update",
+            data={"username": "second@example.org", "locale": "de"},
+        )
+
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            self.assertEqual("de", db.session.get(User, self.second_id).locale)
+
+        response = self.client.post(
+            f"/admin/users/{self.second_id}/update",
+            data={"username": "second@example.org", "locale": "it"},
+        )
+
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            self.assertEqual("de", db.session.get(User, self.second_id).locale)
 
     def test_admin_can_assign_institution_scoped_oai_user_role(self):
         response = self.client.post(
@@ -212,6 +232,10 @@ class AdminUserUpdateTest(unittest.TestCase):
 
     def test_manager_list_is_scoped_to_their_institution(self):
         with self.app.app_context():
+            manager = db.session.get(User, self.admin_id)
+            manager.is_admin = False
+            manager.is_manager = True
+            manager.ror_id = "01aaa1111"
             managed = db.session.get(User, self.second_id)
             managed.ror_id = "01aaa1111"
             outside = User(username="outside@example.org", ror_id="02bbb2222")
@@ -236,8 +260,23 @@ class AdminUserUpdateTest(unittest.TestCase):
             response = self.client.get("/admin/users")
 
         self.assertEqual(200, response.status_code)
-        self.assertEqual(["second@example.org"], [user.username for user in captured["users"]])
-        self.assertEqual(1, captured["summary"]["total"])
+        self.assertEqual(
+            {"admin@example.org", "second@example.org"},
+            {user.username for user in captured["users"]},
+        )
+        self.assertEqual(2, captured["summary"]["total"])
+
+    def test_failed_credential_email_keeps_the_existing_password(self):
+        with self.app.app_context():
+            before = db.session.get(User, self.second_id).password_hash
+
+        with patch("app.blueprints.admin.send_email", return_value=(False, "SMTP offline")):
+            response = self.client.post(f"/admin/users/{self.second_id}/send-creds")
+
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            after = db.session.get(User, self.second_id).password_hash
+        self.assertEqual(before, after)
 
 
 if __name__ == "__main__":

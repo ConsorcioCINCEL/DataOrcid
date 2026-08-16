@@ -8,6 +8,7 @@ from flask import Blueprint, redirect, render_template, request, send_file, sess
 from flask_babel import _
 
 from ..decorators import login_required, staff_required
+from ..spreadsheet import excel_safe_dataframe
 from ..services.institution_registry_service import get_institution_by_ror
 from ..services.duplicate_profile_service import (
     DUPLICATE_REVIEW_STATUSES,
@@ -98,6 +99,21 @@ def download():
     if ror_ids == []:
         flash_err(_("No active ROR context found. Please log in again or select an institution."))
         return redirect(url_for("duplicates.index"))
+
+    if request.args.get("background") == "1":
+        from flask import current_app
+        from ..services.export_jobs import queue_export_response
+
+        return queue_export_response(
+            "duplicate_profiles",
+            request.args.get("format") or "csv",
+            {
+                "ror_ids": ror_ids,
+                "scope": scope,
+                "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "en"),
+            },
+            _("Duplicate profiles"),
+        )
 
     report = build_duplicate_report(ror_ids=ror_ids)
     rows = _localized_export_rows(flatten_duplicate_rows(report["groups"]))
@@ -268,24 +284,31 @@ def _excel_response(report: dict, rows: list[dict], filename: str):
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         candidates = pd.DataFrame(rows, columns=_export_column_order())
-        candidates.rename(columns=_export_column_labels()).to_excel(
+        candidates = candidates.rename(columns=_export_column_labels())
+        excel_safe_dataframe(candidates).to_excel(
             writer,
             sheet_name=_("Candidates"),
             index=False,
         )
-        pd.DataFrame(report["institutions"]).rename(columns=_institution_column_labels()).to_excel(
+        institutions = pd.DataFrame(report["institutions"]).rename(
+            columns=_institution_column_labels()
+        )
+        excel_safe_dataframe(institutions).to_excel(
             writer,
             sheet_name=_("Institutions"),
             index=False,
         )
-        pd.DataFrame(report["profile_activity"], columns=_activity_column_order()).rename(
+        activity = pd.DataFrame(
+            report["profile_activity"], columns=_activity_column_order()
+        ).rename(
             columns=_activity_column_labels()
-        ).to_excel(
+        )
+        excel_safe_dataframe(activity).to_excel(
             writer,
             sheet_name=_("ORCID Activity"),
             index=False,
         )
-        pd.DataFrame(_methodology_rows()).to_excel(
+        excel_safe_dataframe(pd.DataFrame(_methodology_rows())).to_excel(
             writer,
             sheet_name=_("Methodology"),
             index=False,

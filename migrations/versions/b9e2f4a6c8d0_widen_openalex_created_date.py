@@ -16,20 +16,20 @@ depends_on = None
 
 
 def upgrade():
-    op.alter_column(
-        "openalex_work_metadata",
-        "raw_created_date",
-        existing_type=sa.String(length=10),
-        type_=sa.String(length=32),
-        existing_nullable=True,
-    )
+    with op.batch_alter_table("openalex_work_metadata") as batch_op:
+        batch_op.alter_column(
+            "raw_created_date",
+            existing_type=sa.String(length=10),
+            type_=sa.String(length=32),
+            existing_nullable=True,
+        )
 
 
 def downgrade():
-    op.alter_column(
-        "openalex_work_metadata",
-        "raw_created_date",
-        existing_type=sa.String(length=32),
-        type_=sa.String(length=10),
-        existing_nullable=True,
-    )
+    with op.batch_alter_table("openalex_work_metadata") as batch_op:
+        batch_op.alter_column(
+            "raw_created_date",
+            existing_type=sa.String(length=32),
+            type_=sa.String(length=10),
+            existing_nullable=True,
+        )

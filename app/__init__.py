@@ -6,20 +6,31 @@ import datetime as dt
 import html
 import mimetypes
 import re
+import secrets
 from pathlib import Path
+from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 from flask import Flask, session, request, g, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_babel import Babel
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 db = SQLAlchemy()
 migrate = Migrate()
 babel = Babel()
 csrf = CSRFProtect()
 CHILE_TIMEZONE = ZoneInfo("America/Santiago")
-APP_VERSION = "2.0"
+APP_VERSION = "2.1"
+DEFAULT_LANGUAGES = ("en", "es", "fr", "pt", "de")
+LANGUAGE_LABELS = {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "pt": "Português",
+    "de": "Deutsch",
+}
 
 mimetypes.add_type("application/xml", ".xsd")
 mimetypes.add_type("application/xslt+xml", ".xsl")
@@ -34,7 +45,7 @@ def get_locale() -> str:
     """
     from flask import current_app
     
-    supported = current_app.config.get('LANGUAGES', ['en', 'es'])
+    supported = current_app.config.get('LANGUAGES', DEFAULT_LANGUAGES)
     
     lang_arg = request.args.get('lang')
     if lang_arg in supported:
@@ -50,8 +61,11 @@ def get_locale() -> str:
                 db.session.rollback()
         return lang_arg
 
-    if session.get('locale'):
-        return session['locale']
+    session_locale = session.get('locale')
+    if session_locale in supported:
+        return session_locale
+    if session_locale:
+        session.pop('locale', None)
 
     if session.get('user_id'):
         try:
@@ -130,7 +144,47 @@ def locale_url(language: str) -> str:
     return url_for(request.endpoint, **values)
 
 
-def create_app() -> Flask:
+def _first_environment_value(*names: str) -> str | None:
+    """Return the first non-empty environment value from ``names``."""
+    for name in names:
+        value = os.environ.get(name)
+        if value:
+            return value
+    return None
+
+
+def _validate_runtime_security(app: Flask) -> None:
+    """Reject explicitly hardened deployments that still use unsafe settings."""
+    if app.config.get("TESTING"):
+        return
+
+    environment = str(app.config.get("APP_ENVIRONMENT") or "development").lower()
+    # Development installations may opt into placeholder credentials for a
+    # frictionless local setup. Production can never bypass these checks,
+    # even when a copied example configuration still contains the dev flag.
+    if environment != "production" and app.config.get("ALLOW_INSECURE_DEV_CONFIG", True):
+        return
+
+    errors = []
+    secret_key = str(app.config.get("SECRET_KEY") or "")
+    password_salt = str(app.config.get("SECURITY_PASSWORD_SALT") or "")
+    if len(secret_key) < 32 or secret_key in {"dev_key_only", "CHANGEME_IN_RUNTIME"}:
+        errors.append("SECRET_KEY must contain at least 32 non-placeholder characters")
+    if len(password_salt) < 16 or password_salt == "CHANGE_ME_SALT":
+        errors.append("SECURITY_PASSWORD_SALT must contain at least 16 non-placeholder characters")
+
+    if environment == "production":
+        if not app.config.get("SESSION_COOKIE_SECURE"):
+            errors.append("SESSION_COOKIE_SECURE must be enabled in production")
+        base_url = str(app.config.get("APP_BASE_URL") or "")
+        if not base_url.startswith("https://"):
+            errors.append("APP_BASE_URL must use HTTPS in production")
+
+    if errors:
+        raise RuntimeError("Unsafe runtime configuration: " + "; ".join(errors))
+
+
+def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
     """Create and configure the Flask application."""
     app = Flask(__name__)
 
@@ -141,18 +195,38 @@ def create_app() -> Flask:
     if not cfg_path.is_file():
          cfg_path = project_root / "config" / "config.toml"
 
-    if not cfg_path.is_file():
+    if cfg_path.is_file():
+        config_data = toml.load(str(cfg_path))
+    elif config_overrides:
+        # Tests and embedding applications may provide a complete runtime
+        # configuration without creating a credential-bearing TOML file.
+        config_data = {}
+    else:
         raise FileNotFoundError(f"CRITICAL: Missing configuration file at: {cfg_path}")
-
-    config_data = toml.load(str(cfg_path))
     app.config.update(config_data)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = config_data["database"]["uri"]
+    override_values = dict(config_overrides or {})
+    database_uri = (
+        _first_environment_value("ORCID_DATABASE_URI", "DATABASE_URL")
+        or override_values.get("SQLALCHEMY_DATABASE_URI")
+        or config_data.get("database", {}).get("uri")
+    )
+    if not database_uri:
+        raise RuntimeError("No database URI was provided.")
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
     flask_sec = config_data.get("flask", {})
-    app.config["SECRET_KEY"] = flask_sec.get("secret_key", "dev_key_only")
-    app.config["SECURITY_PASSWORD_SALT"] = flask_sec.get("password_salt", "CHANGE_ME_SALT")
+    app.config["SECRET_KEY"] = (
+        _first_environment_value("SECRET_KEY", "ORCID_SECRET_KEY")
+        or flask_sec.get("secret_key")
+        or "dev_key_only"
+    )
+    app.config["SECURITY_PASSWORD_SALT"] = (
+        _first_environment_value("SECURITY_PASSWORD_SALT", "ORCID_PASSWORD_SALT")
+        or flask_sec.get("password_salt")
+        or "CHANGE_ME_SALT"
+    )
     
     app.config["SESSION_COOKIE_SECURE"] = flask_sec.get("session_cookie_secure", False)
     app.config["SESSION_COOKIE_HTTPONLY"] = flask_sec.get("session_cookie_httponly", True)
@@ -161,14 +235,49 @@ def create_app() -> Flask:
     app_cfg = config_data.get("app", {})
     app.config["APP_BASE_URL"] = app_cfg.get("base_url", "").rstrip("/")
     app.config["APP_VERSION"] = str(app_cfg.get("version") or APP_VERSION)
+    app.config["APP_ENVIRONMENT"] = (
+        _first_environment_value("ORCID_APP_ENV", "FLASK_ENV")
+        or app_cfg.get("environment")
+        or "development"
+    ).strip().lower()
+    app.config["ALLOW_INSECURE_DEV_CONFIG"] = bool(
+        flask_sec.get(
+            "allow_insecure_dev_config",
+            app.config["APP_ENVIRONMENT"] != "production",
+        )
+    )
+    app.config["PERMANENT_SESSION_LIFETIME"] = dt.timedelta(
+        days=max(int(flask_sec.get("permanent_session_days", 31)), 1)
+    )
     cache_cfg = config_data.get("cache", {})
     tracking_cfg = config_data.get("tracking", {})
     jobs_cfg = config_data.get("jobs", {})
     app.config["CACHE_STALE_DAYS"] = int(cache_cfg.get("stale_days", 30))
     app.config["TRACKING_RETENTION_DAYS"] = int(tracking_cfg.get("retention_days", 90))
+    app.config["ERROR_MONITORING_ENABLED"] = bool(
+        tracking_cfg.get("error_monitoring_enabled", True)
+    )
+    app.config["ERROR_LOG_RETENTION_DAYS"] = max(
+        int(tracking_cfg.get("error_retention_days", 90)),
+        1,
+    )
     app.config["JOB_STALE_MINUTES"] = int(jobs_cfg.get("stale_minutes", 30))
+    app.config["JOB_EXECUTION_MODE"] = str(
+        os.environ.get("JOB_EXECUTION_MODE")
+        or jobs_cfg.get("execution_mode", "thread")
+    ).strip().lower()
+    if app.config["JOB_EXECUTION_MODE"] not in {"thread", "queue"}:
+        raise RuntimeError("jobs.execution_mode must be either 'thread' or 'queue'.")
+    app.config["JOB_MAX_ATTEMPTS"] = max(int(jobs_cfg.get("max_attempts", 3)), 1)
+    app.config["JOB_HEARTBEAT_SECONDS"] = max(
+        int(jobs_cfg.get("heartbeat_seconds", 30)),
+        1,
+    )
 
-    app.config["LANGUAGES"] = config_data.get("languages", {}).get("supported", ["en", "es"])
+    app.config["LANGUAGES"] = config_data.get("languages", {}).get(
+        "supported",
+        list(DEFAULT_LANGUAGES),
+    )
     app.config["BABEL_DEFAULT_LOCALE"] = config_data.get("languages", {}).get("default", "en")
     app.config["BABEL_DEFAULT_TIMEZONE"] = "America/Santiago"
 
@@ -186,8 +295,11 @@ def create_app() -> Flask:
     search_url = api_cfg.get("search_url") or orcid_cfg.get("search_url") or member_url
 
     app.config.update(
-        ORCID_CLIENT_ID=orcid_cfg.get("client_id"),
-        ORCID_CLIENT_SECRET=orcid_cfg.get("client_secret"),
+        ORCID_CLIENT_ID=_first_environment_value("ORCID_CLIENT_ID") or orcid_cfg.get("client_id"),
+        ORCID_CLIENT_SECRET=(
+            _first_environment_value("ORCID_CLIENT_SECRET")
+            or orcid_cfg.get("client_secret")
+        ),
         ORCID_TOKEN_URL=orcid_cfg.get("token_url", "https://orcid.org/oauth/token"),
         # Canonical ORCID endpoints used by the service layer.
         ORCID_MEMBER_URL=member_url,
@@ -234,13 +346,43 @@ def create_app() -> Flask:
         MAIL_USE_TLS=bool(mail_cfg.get("use_tls", True)),
         MAIL_USE_SSL=bool(mail_cfg.get("use_ssl", False)),
         MAIL_USERNAME=mail_cfg.get("smtp_user"),
-        MAIL_PASSWORD=mail_cfg.get("smtp_pass"),
+        MAIL_PASSWORD=_first_environment_value("MAIL_PASSWORD", "SMTP_PASSWORD") or mail_cfg.get("smtp_pass"),
         MAIL_DEFAULT_SENDER=(mail_cfg.get("from_name", "DataOrcid"), mail_cfg.get("from_email")),
     )
+
+    export_cfg = config_data.get("exports", {})
+    export_directory = Path(export_cfg.get("directory") or (Path(app.instance_path) / "exports"))
+    if not export_directory.is_absolute():
+        export_directory = project_root / export_directory
+    app.config.update(
+        EXPORT_DIRECTORY=str(export_directory),
+        EXPORT_RETENTION_HOURS=max(int(export_cfg.get("retention_hours", 24)), 1),
+        EXPORT_MAX_ACTIVE_PER_USER=max(int(export_cfg.get("max_active_per_user", 3)), 1),
+        EXPORT_MAX_ACTIVE_GLOBAL=max(int(export_cfg.get("max_active_global", 20)), 1),
+    )
+
+    proxy_cfg = config_data.get("proxy", {})
+    trusted_proxy_hops = max(int(proxy_cfg.get("trusted_hops", 0)), 0)
+    app.config["TRUSTED_PROXY_HOPS"] = trusted_proxy_hops
+    if trusted_proxy_hops:
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=trusted_proxy_hops,
+            x_proto=trusted_proxy_hops,
+            x_host=trusted_proxy_hops,
+            x_port=trusted_proxy_hops,
+        )
+
+    app.config.update(override_values)
+    if app.config.get("JOB_EXECUTION_MODE") not in {"thread", "queue"}:
+        raise RuntimeError("JOB_EXECUTION_MODE must be either 'thread' or 'queue'.")
+    _validate_runtime_security(app)
 
     @app.context_processor
     def inject_global_template_vars():
         """Expose global template data used by the layout."""
+        from .services.module_access import is_module_enabled
+
         institutions = []
         try:
             # Only global admins can switch institutional context.
@@ -265,13 +407,34 @@ def create_app() -> Flask:
             "current_year": dt.datetime.now().year,
             "institutions": institutions,
             "locale_url": locale_url,
+            "language_options": [
+                (code, LANGUAGE_LABELS.get(code, code.upper()))
+                for code in app.config["LANGUAGES"]
+            ],
+            "module_enabled": is_module_enabled,
         }
 
-    EXCLUDED_LOG_PATHS = ("/static/", "/favicon.ico", "/robots.txt", "/health", "/oai/")
+    EXCLUDED_LOG_PATHS = (
+        "/static/",
+        "/favicon.ico",
+        "/robots.txt",
+        "/health",
+        "/oai/",
+        "/exports/jobs",
+    )
 
     @app.before_request
     def track_request_start():
         g._start_time = dt.datetime.now(dt.timezone.utc)
+        # Generate this locally; a caller-controlled request ID would make
+        # diagnostic correlation ambiguous.
+        g.request_id = secrets.token_hex(16)
+
+    @app.before_request
+    def enforce_module_availability():
+        from .services.module_access import enforce_current_module
+
+        return enforce_current_module()
 
     @app.after_request
     def track_request_end(response):
@@ -284,6 +447,7 @@ def create_app() -> Flask:
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+        response.headers.setdefault("X-Request-ID", getattr(g, "request_id", ""))
 
         try:
             if app.config.get("TESTING") or request.path.startswith(EXCLUDED_LOG_PATHS):
@@ -319,13 +483,17 @@ def create_app() -> Flask:
                 method=request.method,
                 path=request.path,
                 status_code=response.status_code,
-                ip=request.headers.get("X-Forwarded-For", request.remote_addr),
+                # ProxyFix, when explicitly configured, has already replaced
+                # remote_addr with the trusted client address. Never trust a
+                # raw forwarding header here.
+                ip=request.remote_addr,
                 user_agent=(request.user_agent.string or "")[:250],
                 duration_ms=duration,
             )
             db.session.add(log_entry)
             db.session.commit()
         except Exception as exc:
+            db.session.rollback()
             app.logger.error("Request tracking failed: %s", exc)
         return response
 
@@ -337,53 +505,43 @@ def create_app() -> Flask:
     app.jinja_env.filters["timestamp_to_date"] = timestamp_to_date
     app.jinja_env.filters["plain_text"] = plain_text
 
-    with app.app_context():
-        # Register every model before create_all() checks the database schema.
-        from . import models as _models  # noqa: F401
+    # Import all models for Alembic metadata without creating or mutating the
+    # schema. Database structure is owned exclusively by migrations.
+    from . import models as _models  # noqa: F401
+    from .services.error_monitoring import install_error_monitoring
 
-        db.create_all()
-        try:
-            from .services.institution_registry_service import seed_chilean_universities
-            seed_chilean_universities()
-        except Exception as exc:
-            db.session.rollback()
-            app.logger.warning("Institution registry seed failed: %s", exc)
+    install_error_monitoring(app)
 
-        try:
-            from .services.background_jobs import recover_interrupted_jobs
-            recover_interrupted_jobs(app.config["JOB_STALE_MINUTES"])
-        except Exception as exc:
-            db.session.rollback()
-            app.logger.warning("Interrupted job recovery failed: %s", exc)
+    from .blueprints.main import bp_main
+    from .blueprints.cache_control import bp_cache
+    from .blueprints.admin import bp_admin
+    from .blueprints.auth import bp_auth
+    from .blueprints.works import bp_works
+    from .blueprints.export import bp_export
+    from .blueprints.dashboard import bp_dash
+    from .blueprints.api_misc import bp_api
+    from .blueprints.duplicates import bp_duplicates
+    from .blueprints.help import bp_help
+    from .blueprints.oai_pmh import bp_oai_pmh
+    from .blueprints.background_exports import bp_background_exports
 
-        from .blueprints.main import bp_main
-        from .blueprints.cache_control import bp_cache
-        from .blueprints.admin import bp_admin
-        from .blueprints.auth import bp_auth
-        from .blueprints.works import bp_works
-        from .blueprints.export import bp_export
-        from .blueprints.dashboard import bp_dash
-        from .blueprints.api_misc import bp_api
-        from .blueprints.duplicates import bp_duplicates
-        from .blueprints.help import bp_help
-        from .blueprints.oai_pmh import bp_oai_pmh
+    app.register_blueprint(bp_main)
+    app.register_blueprint(bp_cache)
+    app.register_blueprint(bp_admin)
+    app.register_blueprint(bp_auth)
+    app.register_blueprint(bp_works)
+    app.register_blueprint(bp_export)
+    app.register_blueprint(bp_dash)
+    app.register_blueprint(bp_api)
+    app.register_blueprint(bp_duplicates)
+    app.register_blueprint(bp_help)
+    app.register_blueprint(bp_oai_pmh)
+    app.register_blueprint(bp_background_exports)
 
-        app.register_blueprint(bp_main)
-        app.register_blueprint(bp_cache)
-        app.register_blueprint(bp_admin)
-        app.register_blueprint(bp_auth)
-        app.register_blueprint(bp_works)
-        app.register_blueprint(bp_export)
-        app.register_blueprint(bp_dash)
-        app.register_blueprint(bp_api)
-        app.register_blueprint(bp_duplicates)
-        app.register_blueprint(bp_help)
-        app.register_blueprint(bp_oai_pmh)
-
-        try:
-            from .commands import register_commands
-            register_commands(app)
-        except ImportError:
-            app.logger.warning("CLI commands module not found.")
+    try:
+        from .commands import register_commands
+        register_commands(app)
+    except ImportError:
+        app.logger.warning("CLI commands module not found.")
 
     return app

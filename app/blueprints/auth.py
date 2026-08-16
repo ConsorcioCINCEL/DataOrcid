@@ -1,9 +1,11 @@
 """Authentication, password recovery, and account settings routes."""
 
 import logging
+import hashlib
 import re
 import threading
 import time
+from datetime import timedelta
 from urllib.parse import urlsplit
 from flask import (
     Blueprint, render_template, request, redirect,
@@ -11,9 +13,10 @@ from flask import (
 )
 from flask_babel import _
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from sqlalchemy import text
 
 from .. import db
-from ..models import User
+from ..models import AuthRateLimitEvent, User, password_fits_bcrypt, utc_now
 from ..utils.flashes import flash_err, flash_ok, flash_success
 from ..decorators import login_required
 from ..utils.emailer import send_email
@@ -36,16 +39,49 @@ def _safe_redirect_target(target: str | None) -> str | None:
 
 
 def _client_ip() -> str:
-    """Return the best available client IP for local rate limiting."""
-    forwarded_for = request.headers.get("X-Forwarded-For", "")
-    return (forwarded_for.split(",", 1)[0].strip() or request.remote_addr or "unknown")[:50]
+    """Return the client address after any explicitly configured ProxyFix."""
+    return (request.remote_addr or "unknown")[:50]
+
+
+def _rate_limit_key(action: str) -> tuple[str, str]:
+    client_digest = hashlib.sha256(_client_ip().encode("utf-8")).hexdigest()
+    return action[:32], client_digest
 
 
 def _is_rate_limited(action: str, limit: int, window_seconds: int) -> bool:
-    """Apply a small process-local rate limit for sensitive auth actions."""
+    """Apply a database-backed rate limit shared by all application workers."""
+    action_key, client_key = _rate_limit_key(action)
+    cutoff_datetime = utc_now() - timedelta(seconds=window_seconds)
+    try:
+        if db.session.get_bind().dialect.name == "postgresql":
+            db.session.execute(
+                text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 2))"),
+                {"key": f"{action_key}:{client_key}"},
+            )
+        # Prune this bucket while it is already being touched so old attempts do
+        # not accumulate indefinitely.
+        AuthRateLimitEvent.query.filter_by(
+            action=action_key,
+            client_key=client_key,
+        ).filter(AuthRateLimitEvent.occurred_at < cutoff_datetime).delete(
+            synchronize_session=False
+        )
+        attempts = AuthRateLimitEvent.query.filter_by(
+            action=action_key,
+            client_key=client_key,
+        ).filter(AuthRateLimitEvent.occurred_at >= cutoff_datetime).count()
+        db.session.add(AuthRateLimitEvent(action=action_key, client_key=client_key))
+        db.session.commit()
+        return attempts >= limit
+    except Exception as exc:
+        db.session.rollback()
+        logger.warning("Shared authentication rate limiter unavailable: %s", exc)
+
+    # Compatibility fallback for a database undergoing maintenance. It is not
+    # the primary limiter, but still avoids leaving authentication unprotected.
     now = time.time()
     cutoff = now - window_seconds
-    key = f"{action}:{_client_ip()}"
+    key = f"{action_key}:{client_key}"
     with _RATE_LIMIT_LOCK:
         attempts = [ts for ts in _RATE_LIMIT_BUCKETS.get(key, []) if ts >= cutoff]
         blocked = len(attempts) >= limit
@@ -56,7 +92,18 @@ def _is_rate_limited(action: str, limit: int, window_seconds: int) -> bool:
 
 def _clear_rate_limit(action: str) -> None:
     """Clear a client's failed-attempt history after successful authentication."""
-    key = f"{action}:{_client_ip()}"
+    action_key, client_key = _rate_limit_key(action)
+    try:
+        AuthRateLimitEvent.query.filter_by(
+            action=action_key,
+            client_key=client_key,
+        ).delete(synchronize_session=False)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        logger.warning("Could not clear shared authentication rate limit: %s", exc)
+
+    key = f"{action_key}:{client_key}"
     with _RATE_LIMIT_LOCK:
         _RATE_LIMIT_BUCKETS.pop(key, None)
 
@@ -156,7 +203,6 @@ def forgot_password():
 
                 if not success:
                     logger.error("Email reset failed for user %s: %s", user.username, error)
-                    flash_err(_("Could not send recovery email."))
             except Exception as exc:
                 logger.exception("CRITICAL: Token generation error during password reset: %s", exc)
 
@@ -201,6 +247,8 @@ def reset_password(token: str):
 
         if not pwd or len(pwd) < 8:
             flash_err(_("Password must be at least 8 characters."))
+        elif not password_fits_bcrypt(pwd):
+            flash_err(_("Password must be 72 UTF-8 bytes or fewer."))
         elif pwd != confirm:
             flash_err(_("Passwords do not match."))
         else:
@@ -363,6 +411,8 @@ def change_password():
             flash_err(_("New passwords do not match."))
         elif not new_pwd or len(new_pwd) < 8:
             flash_err(_("New password too short (min 8 chars)."))
+        elif not password_fits_bcrypt(new_pwd):
+            flash_err(_("Password must be 72 UTF-8 bytes or fewer."))
         else:
             user.set_password(new_pwd)
             db.session.commit()

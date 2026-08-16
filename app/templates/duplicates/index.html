@@ -71,7 +71,9 @@
     <div class="app-card-tools duplicate-toolbar-actions">
       {{ export_links(
         url_for('duplicates.download', scope=scope, format='csv'),
-        url_for('duplicates.download', scope=scope, format='xlsx')
+        url_for('duplicates.download', scope=scope, format='xlsx'),
+        _('Duplicate profiles'),
+        true
       ) }}
       <div class="dropdown">
         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="duplicateMoreActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

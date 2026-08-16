@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% macro export_actions(csv_url, excel_url, dataset, large_export=false) %}
+{% macro export_actions(csv_url, excel_url, dataset, large_export=true) %}
   <div class="cache-export-actions" aria-label="{{ _('Download options for %(dataset)s', dataset=dataset) }}">
     <a href="{{ csv_url }}"
        class="app-icon-action is-csv cache-export-action{% if large_export %} js-large-export{% endif %}"
@@ -616,22 +616,6 @@
   </aside>
 </div>
 
-{% if session.get('is_admin') or session.get('is_manager') %}
-<div class="modal fade" id="modalExportPreparing" tabindex="-1" role="dialog" aria-labelledby="modalExportPreparingTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-body d-flex align-items-center">
-        <div class="mr-3 text-primary"><i class="fas fa-circle-notch fa-spin fa-2x" aria-hidden="true"></i></div>
-        <div>
-          <h2 id="modalExportPreparingTitle" class="h5 mb-1">{{ _('Preparing download...') }}</h2>
-          <p class="text-muted mb-0">{{ _('Large exports can take a few minutes. The file will start downloading automatically.') }}</p>
-        </div>
-      </div>
-      <div class="modal-footer py-2"><button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">{{ _('Close') }}</button></div>
-    </div>
-  </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -680,25 +664,6 @@ $(function () {
   });
   {% endif %}
 
-  {% if session.get('is_admin') or session.get('is_manager') %}
-  $('.js-large-export').on('click', function () {
-    const token = `download-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const url = new URL(this.href, window.location.origin);
-    url.searchParams.set('download_token', token);
-    this.href = url.toString();
-    $('#modalExportPreparing').modal('show');
-
-    let checks = 0;
-    const interval = window.setInterval(function () {
-      checks += 1;
-      if (document.cookie.indexOf(`orcid_download_token=${token}`) !== -1 || checks > 240) {
-        document.cookie = 'orcid_download_token=; Max-Age=0; path=/';
-        window.clearInterval(interval);
-        $('#modalExportPreparing').modal('hide');
-      }
-    }, 500);
-  });
-  {% endif %}
 });
 </script>
 {% endblock %}

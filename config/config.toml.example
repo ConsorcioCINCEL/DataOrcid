@@ -28,13 +28,16 @@ password_salt = "CHANGE_ME_SALT"
 session_cookie_secure = true
 session_cookie_httponly = true
 session_cookie_samesite = "Lax"
+# Keep this true only for a local development configuration.
+allow_insecure_dev_config = true
+permanent_session_days = 31
 
 
 # ------------------------------------------------------------
 # 🔹 LANGUAGES (i18n)
 # ------------------------------------------------------------
 [languages]
-supported = ["en", "es"]
+supported = ["en", "es", "fr", "pt", "de"]
 default = "en"
 
 
@@ -50,19 +53,47 @@ datasets_dir = "app/datasets"
 # ------------------------------------------------------------
 [app]
 base_url = "http://localhost:5000"
-version = "2.0"
+version = "2.1"
+environment = "development"
+
+[proxy]
+# Number of explicitly trusted reverse-proxy hops. Leave at zero when Flask is
+# exposed directly; never enable this merely to accept arbitrary X-Forwarded-*.
+trusted_hops = 0
 
 [cache]
 # Shared freshness threshold used by summary, cache, and quality views.
 stale_days = 30
 
 [jobs]
-# Running jobs without a recent heartbeat are marked as interrupted on startup.
+# "thread" preserves the convenient single-process development behavior.
+# Use "queue" in multi-worker production and run `flask run-job-worker` as a
+# separate supervised process.
+execution_mode = "thread"
 stale_minutes = 30
+max_attempts = 3
+# Independent lease refresh for jobs blocked in long API or spreadsheet work.
+heartbeat_seconds = 30
+
+[exports]
+# Generated files stay outside the public static tree and are removed after the
+# retention period. Relative paths are resolved from the repository root. In a
+# distributed deployment this directory must be shared by web and job workers.
+directory = "instance/exports"
+retention_hours = 24
+# These limits keep accidental repeated clicks or automated requests from
+# creating an unbounded backlog. The shared worker limit still controls CPU use.
+max_active_per_user = 3
+max_active_global = 20
 
 [tracking]
 # Apply with: flask cleanup-tracking-logs
 retention_days = 90
+# Runtime exceptions and application ERROR logs are stored separately for the
+# administrator diagnostics module. Request payloads and credentials are never
+# included. Apply retention with: flask cleanup-system-errors
+error_monitoring_enabled = true
+error_retention_days = 90
 
 
 # ------------------------------------------------------------

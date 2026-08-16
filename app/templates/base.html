@@ -15,7 +15,7 @@
   {% if session.get('logged_in') and session.get('is_admin') %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
   {% endif %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css', v=config.get('APP_VERSION', '2.0')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css', v=config.get('APP_VERSION', '2.1')) }}">
   
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
   
@@ -87,14 +87,13 @@
           <i class="fas fa-chevron-down app-dropdown-caret" aria-hidden="true"></i>
         </a>
         <div class="dropdown-menu dropdown-menu-right app-dropdown-menu">
-          <a href="{{ locale_url('en') }}"
-             class="dropdown-item {% if (session.get('locale') or 'en') == 'en' %}active{% endif %}">
-             {{ _('English') }}
+          {% for language_code, language_label in language_options %}
+          <a href="{{ locale_url(language_code) }}"
+             class="dropdown-item {% if (session.get('locale') or config.get('BABEL_DEFAULT_LOCALE', 'en')) == language_code %}active{% endif %}"
+             lang="{{ language_code }}">
+             {{ language_label }}
           </a>
-          <a href="{{ locale_url('es') }}"
-             class="dropdown-item {% if session.get('locale') == 'es' %}active{% endif %}">
-             {{ _('Spanish') }}
-          </a>
+          {% endfor %}
         </div>
       </li>
 
@@ -183,7 +182,7 @@
 
   <footer class="main-footer text-sm app-footer">
     <div class="float-right d-none d-sm-block">
-        <b>{{ _('Version') }}</b> {{ config.get('APP_VERSION', '2.0') }}
+        <b>{{ _('Version') }}</b> {{ config.get('APP_VERSION', '2.1') }}
     </div>
     <strong>&copy; 2026 <a href="{{ url_for('main.index') }}">Data ORCID-Chile</a>.</strong>
     
@@ -193,6 +192,44 @@
         <a href="mailto:gastonolivares@gmail.com" class="font-weight-bold text-dark">Gastón Olivares</a>
     </span>
   </footer>
+
+  {% if logged_in %}
+  <aside id="backgroundExportCenter"
+         class="background-export-center"
+         data-list-url="{{ url_for('background_exports.list_exports') }}"
+         data-clear-url="{{ url_for('background_exports.clear_exports') }}"
+         data-csrf-token="{{ csrf_token() }}"
+         data-preparing-label="{{ _('Preparing export') }}"
+         data-queued-label="{{ _('Waiting for an available worker') }}"
+         data-running-label="{{ _('Creating your file') }}"
+         data-ready-label="{{ _('Your file is ready') }}"
+         data-reused-label="{{ _('An existing file was reused') }}"
+         data-failed-label="{{ _('The export could not be completed') }}"
+         data-download-label="{{ _('Download file') }}"
+         data-request-failed-label="{{ _('Could not start the export. Please try again.') }}"
+         data-records-label="{{ _('records') }}"
+         data-close-label="{{ _('Close') }}"
+         data-clear-all-label="{{ _('Delete all') }}"
+         data-clear-confirm-label="{{ _('Delete all your completed exports and their files? Active exports will be kept.') }}"
+         data-clearing-label="{{ _('Deleting') }}"
+         aria-live="polite"
+         aria-label="{{ _('Background exports') }}"
+         hidden>
+    <div class="background-export-header">
+      <div class="background-export-title"><i class="fas fa-file-export" aria-hidden="true"></i><strong>{{ _('Exports') }}</strong></div>
+      <div class="background-export-actions">
+        <button type="button" class="background-export-clear" title="{{ _('Delete all') }}" hidden>
+          <i class="fas fa-trash-alt" aria-hidden="true"></i>
+          <span>{{ _('Delete all') }}</span>
+        </button>
+        <button type="button" class="background-export-toggle" aria-label="{{ _('Minimize export notifications') }}" aria-expanded="true">
+          <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div class="background-export-list"></div>
+  </aside>
+  {% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
@@ -263,5 +300,8 @@
 
 {% block scripts %}{% endblock %}
 <script src="{{ url_for('static', filename='js/chart_exports.js') }}"></script>
+{% if logged_in %}
+<script src="{{ url_for('static', filename='js/background_exports.js', v=config.get('APP_VERSION', '2.1')) }}"></script>
+{% endif %}
 </body>
 </html>

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Module unavailable') }} · Data ORCID-Chile{% endblock %}
+
+{% block header_title %}
+<div class="dashboard-page-heading">
+  <h1>{{ _('Module unavailable') }}</h1>
+  <p>{{ module.label }}</p>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}{% endblock %}
+
+{% block content %}
+<section class="module-disabled-state" aria-labelledby="moduleDisabledTitle">
+  <span class="module-disabled-icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>
+  <div>
+    <h2 id="moduleDisabledTitle">{{ _('This module is currently unavailable.') }}</h2>
+    <p>{{ _('An administrator has temporarily disabled access for every account and access method.') }}</p>
+    {% if session.get('is_admin') %}
+    <a class="btn btn-primary" href="{{ url_for('admin.modules') }}">
+      <i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>{{ _('Manage modules') }}
+    </a>
+    {% else %}
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}">{{ _('Return to overview') }}</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

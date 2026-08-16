@@ -21,22 +21,37 @@ def send_email(
     Returns `(success, error_message)` so routes can show user-friendly feedback.
     """
     try:
+        # The application factory normalizes TOML and environment variables to
+        # Flask's conventional MAIL_* keys. Keep the nested mapping only as a
+        # compatibility fallback for small embedding applications.
         mail_conf = current_app.config.get("mail", {})
-        if not mail_conf.get("enabled", False):
+        enabled = current_app.config.get("MAIL_ENABLED")
+        if enabled is None:
+            enabled = mail_conf.get("enabled", False)
+        if not enabled:
             msg = "Email service is disabled in configuration (MAIL_ENABLED=False)."
             logger.info(msg)
             return False, msg
 
-        host = mail_conf.get("smtp_host")
-        port = mail_conf.get("smtp_port")
-        user = mail_conf.get("smtp_user")
-        pwd = mail_conf.get("smtp_pass")
-        
-        use_tls = mail_conf.get("use_tls", True)
-        use_ssl = mail_conf.get("use_ssl", False)
-        
-        from_name = mail_conf.get("from_name", "Data ORCID-Chile")
-        from_email = mail_conf.get("from_email", "no-reply@example.com")
+        host = current_app.config.get("MAIL_SERVER") or mail_conf.get("smtp_host")
+        port = current_app.config.get("MAIL_PORT") or mail_conf.get("smtp_port")
+        user = current_app.config.get("MAIL_USERNAME") or mail_conf.get("smtp_user")
+        pwd = current_app.config.get("MAIL_PASSWORD") or mail_conf.get("smtp_pass")
+
+        use_tls = current_app.config.get("MAIL_USE_TLS")
+        if use_tls is None:
+            use_tls = mail_conf.get("use_tls", True)
+        use_ssl = current_app.config.get("MAIL_USE_SSL")
+        if use_ssl is None:
+            use_ssl = mail_conf.get("use_ssl", False)
+
+        sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+        if isinstance(sender, (tuple, list)):
+            from_name = (sender[0] if sender else None) or "Data ORCID-Chile"
+            from_email = sender[1] if len(sender) > 1 else None
+        else:
+            from_name = mail_conf.get("from_name", "Data ORCID-Chile")
+            from_email = sender or mail_conf.get("from_email", "no-reply@example.com")
 
         if not all([host, port, user, pwd]):
             msg = "Missing required SMTP parameters: host, port, username, or password."

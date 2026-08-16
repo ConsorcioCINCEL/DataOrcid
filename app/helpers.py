@@ -15,6 +15,7 @@ from flask_babel import _
 from requests.exceptions import RequestException, Timeout
 
 from .orcid_queries import fetch_person, fetch_activities
+from .spreadsheet import excel_safe_dataframe
 
 logger = logging.getLogger(__name__)
 def timestamp_to_date(ms_timestamp: Any) -> str:
@@ -302,7 +303,9 @@ def build_excel_for_section(orcid_id: str, section: str) -> Tuple[BytesIO, str]:
     
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         safe_df = df if not df.empty else pd.DataFrame({'status': [_('No data available')]})
-        safe_df.to_excel(writer, sheet_name=section[:31], index=False)
+        excel_safe_dataframe(safe_df).to_excel(
+            writer, sheet_name=section[:31], index=False
+        )
     
     output.seek(0)
     filename = f"orcid_{orcid_id}_{section}.xlsx"

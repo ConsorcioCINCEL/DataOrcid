@@ -15,7 +15,11 @@ from app.models import (
     WorkCache,
     utc_now,
 )
-from app.services.background_jobs import submit_background_job
+from app.services.background_jobs import (
+    recover_interrupted_jobs,
+    run_queued_job,
+    submit_background_job,
+)
 from app.services.openalex_service import (
     _final_sync_status,
     collect_title_match_candidates,
@@ -354,6 +358,33 @@ class OpenAlexSyncResilienceTest(unittest.TestCase):
 
         self.assertEqual("active-job", job_id)
         submit.assert_not_called()
+
+    def test_database_queue_persists_and_executes_an_importable_job(self):
+        self.app.config["JOB_EXECUTION_MODE"] = "queue"
+        with self.app.app_context(), patch(
+            "app.services.background_jobs._EXECUTOR.submit"
+        ) as submit:
+            job_id = submit_background_job(
+                self.app,
+                "durable-test-job",
+                recover_interrupted_jobs,
+                30,
+            )
+            queued = db.session.get(SyncJob, job_id)
+            self.assertEqual("queued", queued.status)
+            self.assertEqual(
+                "app.services.background_jobs:recover_interrupted_jobs",
+                queued.handler,
+            )
+            self.assertEqual({"args": [30], "kwargs": {}}, queued.payload_json)
+            submit.assert_not_called()
+
+        self.assertEqual(job_id, run_queued_job(self.app, "test-worker"))
+        with self.app.app_context():
+            completed = db.session.get(SyncJob, job_id)
+            self.assertEqual("success", completed.status)
+            self.assertEqual(1, completed.attempt_count)
+            self.assertIsNone(completed.claimed_by)
 
 
 if __name__ == "__main__":

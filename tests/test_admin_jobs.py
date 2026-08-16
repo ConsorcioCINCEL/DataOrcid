@@ -9,7 +9,11 @@ from flask import Flask
 from app import babel, db
 from app.blueprints.admin import _job_step_label, bp_admin
 from app.models import SyncJob, SyncJobStep, User, utc_now
-from app.services.background_jobs import recover_interrupted_jobs, update_job_progress
+from app.services.background_jobs import (
+    recover_interrupted_jobs,
+    run_queued_job,
+    update_job_progress,
+)
 
 
 class AdminJobsDashboardTest(unittest.TestCase):
@@ -192,11 +196,29 @@ class AdminJobsDashboardTest(unittest.TestCase):
     def test_item_progress_is_persisted_separately_from_steps(self):
         with self.app.app_context():
             update_job_progress("running-job", 75, 100, "candidates")
+            db.session.expire_all()
             job = db.session.get(SyncJob, "running-job")
             self.assertEqual(75, job.items_current)
             self.assertEqual(100, job.items_total)
             self.assertEqual("candidates", job.progress_unit)
             self.assertEqual(1, job.progress_current)
+
+    def test_item_progress_does_not_commit_the_handler_session(self):
+        with self.app.app_context():
+            job = db.session.get(SyncJob, "running-job")
+            original_message = job.message
+            job.message = "uncommitted handler change"
+
+            update_job_progress("running-job", 80, 100, "records")
+
+            self.assertTrue(db.session.is_modified(job))
+            db.session.rollback()
+            db.session.expire_all()
+            refreshed = db.session.get(SyncJob, "running-job")
+            self.assertEqual(original_message, refreshed.message)
+            self.assertEqual(80, refreshed.items_current)
+            self.assertEqual(100, refreshed.items_total)
+            self.assertEqual("records", refreshed.progress_unit)
 
     def test_institution_steps_include_the_registry_name(self):
         self.assertEqual(
@@ -220,6 +242,89 @@ class AdminJobsDashboardTest(unittest.TestCase):
             self.assertEqual("interrupted", job.status)
             self.assertEqual("interrupted", steps["openalex"].status)
             self.assertIsNotNone(steps["openalex"].finished_at)
+
+    def test_stale_durable_job_is_requeued_for_another_worker(self):
+        with self.app.app_context():
+            existing = db.session.get(SyncJob, "running-job")
+            existing.heartbeat_at = utc_now()
+            recoverable = SyncJob(
+                id="recoverable-job",
+                name="recoverable-job",
+                job_type="generic",
+                status="running",
+                handler="app.services.background_jobs:recover_interrupted_jobs",
+                payload_json={"args": [30], "kwargs": {}},
+                attempt_count=1,
+                max_attempts=3,
+                heartbeat_at=utc_now() - timedelta(hours=1),
+            )
+            db.session.add(recoverable)
+            db.session.add(SyncJobStep(
+                sync_job_id=recoverable.id,
+                name="recovery",
+                position=1,
+                status="running",
+                started_at=utc_now() - timedelta(hours=1),
+            ))
+            db.session.commit()
+
+            recovered = recover_interrupted_jobs(stale_minutes=30)
+            job = db.session.get(SyncJob, recoverable.id)
+            step = SyncJobStep.query.filter_by(sync_job_id=recoverable.id).one()
+
+            self.assertEqual(1, recovered)
+            self.assertEqual("queued", job.status)
+            self.assertIsNone(job.claimed_by)
+            self.assertEqual("pending", step.status)
+            self.assertIsNone(step.finished_at)
+
+    def test_old_queued_job_is_not_misclassified_as_abandoned(self):
+        with self.app.app_context():
+            queued = SyncJob(
+                id="old-queued-job",
+                name="old queued job",
+                job_type="generic",
+                status="queued",
+                handler="app.services.background_jobs:recover_interrupted_jobs",
+                payload_json={"args": [30], "kwargs": {}},
+                heartbeat_at=utc_now() - timedelta(hours=2),
+            )
+            db.session.add(queued)
+            db.session.commit()
+
+            recovered = recover_interrupted_jobs(stale_minutes=30)
+            queued = db.session.get(SyncJob, queued.id)
+
+            self.assertEqual(1, recovered)  # The stale fixture running-job only.
+            self.assertEqual("queued", queued.status)
+            self.assertIsNone(queued.error)
+
+    def test_recovered_job_clears_recovery_error_after_success(self):
+        self.app.config["JOB_EXECUTION_MODE"] = "queue"
+        with self.app.app_context():
+            existing = db.session.get(SyncJob, "running-job")
+            existing.heartbeat_at = utc_now()
+            recoverable = SyncJob(
+                id="recovered-success-job",
+                name="recovered success",
+                job_type="generic",
+                status="running",
+                handler="app.services.background_jobs:recover_interrupted_jobs",
+                payload_json={"args": [30], "kwargs": {}},
+                attempt_count=1,
+                max_attempts=3,
+                heartbeat_at=utc_now() - timedelta(hours=2),
+            )
+            db.session.add(recoverable)
+            db.session.commit()
+            self.assertEqual(1, recover_interrupted_jobs(stale_minutes=30))
+            self.assertIsNotNone(db.session.get(SyncJob, recoverable.id).error)
+
+        self.assertEqual(recoverable.id, run_queued_job(self.app, "test-worker"))
+        with self.app.app_context():
+            completed = db.session.get(SyncJob, recoverable.id)
+            self.assertEqual("success", completed.status)
+            self.assertIsNone(completed.error)
 
 
 if __name__ == "__main__":

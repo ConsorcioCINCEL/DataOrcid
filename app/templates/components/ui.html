@@ -1,13 +1,13 @@
-{% macro export_links(csv_url, xlsx_url, label=None) -%}
+{% macro export_links(csv_url, xlsx_url, label=None, background=false) -%}
 <div class="app-export-actions" role="group" aria-label="{{ label or _('Export table') }}">
   <a href="{{ csv_url }}"
-     class="app-icon-action is-csv"
+     class="app-icon-action is-csv{% if background %} js-background-export{% endif %}"
      aria-label="{{ _('Download CSV') }}"
      title="{{ _('Download CSV') }}">
     <i class="fas fa-file-csv" aria-hidden="true"></i>
   </a>
   <a href="{{ xlsx_url }}"
-     class="app-icon-action is-xlsx"
+     class="app-icon-action is-xlsx{% if background %} js-background-export{% endif %}"
      aria-label="{{ _('Download Excel') }}"
      title="{{ _('Download Excel') }}">
     <i class="fas fa-file-excel" aria-hidden="true"></i>

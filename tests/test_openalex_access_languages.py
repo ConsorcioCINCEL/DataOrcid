@@ -225,7 +225,7 @@ class OpenAlexAccessLanguageAnalyticsTest(unittest.TestCase):
             db.session.commit()
 
             with patch(
-                "app.blueprints.works._institution_lookup",
+                "app.blueprints.works_global_analytics._institution_lookup",
                 return_value={
                     "01alpha123": "Alpha University",
                     "01beta456": "Beta University",
@@ -393,7 +393,7 @@ class OpenAlexAccessLanguageAnalyticsTest(unittest.TestCase):
             db.session.commit()
 
             with patch(
-                "app.blueprints.works._institution_lookup",
+                "app.blueprints.works_global_analytics._institution_lookup",
                 return_value=institution_names,
             ):
                 analytics = _openalex_global_analytics({"tab": "open_access"})
@@ -446,7 +446,7 @@ class OpenAlexAccessLanguageAnalyticsTest(unittest.TestCase):
             db.session.commit()
 
             with patch(
-                "app.blueprints.works._institution_lookup",
+                "app.blueprints.works_global_analytics._institution_lookup",
                 return_value=institution_names,
             ):
                 priority = _openalex_global_analytics({

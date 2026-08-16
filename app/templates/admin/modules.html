@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Module management') }} · Data ORCID-Chile{% endblock %}
+
+{% block header_title %}
+<div class="dashboard-page-heading">
+  <h1>{{ _('Module management') }}</h1>
+  <p>{{ _('Control which optional areas are visible and accessible throughout the system.') }}</p>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Module management') }}</li>
+{% endblock %}
+
+{% block content %}
+<section class="module-admin-summary" aria-label="{{ _('Module availability summary') }}">
+  <div>
+    <span class="module-admin-summary-icon" aria-hidden="true"><i class="fas fa-toggle-on"></i></span>
+    <div>
+      <strong>{{ _('%(enabled)s of %(total)s modules enabled', enabled=enabled_count, total=module_count) }}</strong>
+      <p>{{ _('Disabled modules disappear from navigation and return access denied for pages, forms, APIs, downloads, and public endpoints.') }}</p>
+    </div>
+  </div>
+  <span class="badge badge-success">{{ _('Core access remains protected') }}</span>
+</section>
+
+<div class="alert alert-info module-admin-notice" role="note">
+  <i class="fas fa-lock mr-2" aria-hidden="true"></i>
+  <div>
+    <strong>{{ _('Recovery access') }}</strong>
+    <span>{{ _('Overview, authentication, personal settings, sign out, and this control panel always remain available.') }}</span>
+  </div>
+</div>
+
+<form method="post" class="module-admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% for group in grouped_modules %}
+  <section class="card module-admin-group" aria-labelledby="moduleGroup{{ loop.index }}">
+    <div class="card-header">
+      <h2 class="card-title" id="moduleGroup{{ loop.index }}">{{ group.label }}</h2>
+      <span>{{ _('%(count)s modules', count=group['items']|length) }}</span>
+    </div>
+    <div class="module-admin-grid">
+      {% for module in group['items'] %}
+      <label class="module-admin-item {% if not module.is_enabled %}is-disabled{% endif %}">
+        <span class="module-admin-icon" aria-hidden="true"><i class="{{ module.icon }}"></i></span>
+        <span class="module-admin-copy">
+          <strong>{{ module.label }}</strong>
+          <small>{{ module.description }}</small>
+          {% if module.updated_at %}
+          <span class="module-admin-audit">
+            {{ _('Last changed %(date)s', date=module.updated_at|datetimeformat) }}
+            {% if module.updated_by %} · {{ module.updated_by }}{% endif %}
+          </span>
+          {% endif %}
+        </span>
+        <span class="custom-control custom-switch module-admin-switch">
+          <input class="custom-control-input" type="checkbox" name="enabled" value="{{ module.key }}" id="moduleToggle{{ module.key }}" {% if module.is_enabled %}checked{% endif %}>
+          <span class="custom-control-label" aria-hidden="true"></span>
+          <span class="sr-only">{{ _('Enable %(module)s', module=module.label) }}</span>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <div class="module-admin-actions">
+    <div>
+      <button class="btn btn-outline-success" type="submit" name="mode" value="enable_all">
+        <i class="fas fa-check-double mr-1" aria-hidden="true"></i>{{ _('Enable all') }}
+      </button>
+      <button class="btn btn-outline-danger" type="submit" name="mode" value="disable_all" onclick="return confirm({{ _('Disable every optional module for all users?')|tojson }});">
+        <i class="fas fa-eye-slash mr-1" aria-hidden="true"></i>{{ _('Disable all') }}
+      </button>
+    </div>
+    <button class="btn btn-primary" type="submit">
+      <i class="fas fa-save mr-1" aria-hidden="true"></i>{{ _('Save module availability') }}
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.querySelectorAll('.module-admin-switch input').forEach(function (input) {
+  input.addEventListener('change', function () {
+    input.closest('.module-admin-item').classList.toggle('is-disabled', !input.checked);
+  });
+});
+</script>
+{% endblock %}

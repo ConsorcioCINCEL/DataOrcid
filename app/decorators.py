@@ -19,6 +19,10 @@ def _flash_err(msg: str) -> None:
 
 def _authenticated_account():
     """Return the database account for the current authenticated session."""
+    cached_account = getattr(g, "current_account", None)
+    if cached_account is not None:
+        return cached_account
+
     user_id = session.get("user_id")
     if not session.get("logged_in") or not user_id:
         return None
@@ -53,25 +57,29 @@ def _effective_account_roles(account) -> tuple[bool, bool, bool]:
 
 
 def login_required(f):
-    """Require an authenticated session."""
+    """Require a session backed by an account that still exists."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get("logged_in"):
+        account = _authenticated_account()
+        if account is None:
             flash(_("You must log in to access this page."), "warning")
             return redirect(url_for("auth.login"))
+        _effective_account_roles(account)
         return f(*args, **kwargs)
     return decorated_function
 
 
 def admin_required(f):
-    """Require an authenticated admin session."""
+    """Require a current database account with administrator privileges."""
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not session.get("logged_in"):
+        account = _authenticated_account()
+        if account is None:
             flash(_("You must log in to access this page."), "warning")
             return redirect(url_for("auth.login"))
-        
-        if not session.get("is_admin"):
+
+        is_admin, _is_manager, _is_oai_user = _effective_account_roles(account)
+        if not is_admin:
             flash(_("Access restricted to administrators."), "danger")
             return redirect(url_for("main.index"))
             
@@ -152,10 +160,15 @@ def institution_required(f):
 
 
 def admin_or_manager_required(f):
-    """Compatibility alias for routes that require admin or manager access."""
+    """Require a current database account with admin or manager privileges."""
     @wraps(f)
     def wrapped(*args, **kwargs):
-        if not (session.get("is_admin") or session.get("is_manager")):
+        account = _authenticated_account()
+        if account is None:
+            _flash_err(_("Your session has expired or you are not logged in."))
+            return redirect(url_for("auth.login"))
+        is_admin, is_manager, _is_oai_user = _effective_account_roles(account)
+        if not (is_admin or is_manager):
             flash(_("This action requires administrator or manager permissions."), "danger")
             return redirect(url_for("main.index"))
         return f(*args, **kwargs)

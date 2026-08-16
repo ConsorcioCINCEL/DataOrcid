@@ -11,6 +11,81 @@ logger = logging.getLogger(__name__)
 def register_commands(app):
     """Register maintenance commands on the Flask application."""
 
+    @app.cli.command("seed-db")
+    @with_appcontext
+    def seed_db_command():
+        """Seed the institution registry and create the initial admin account."""
+        from .database import populate_users
+        from .services.institution_registry_service import seed_chilean_universities
+
+        institution_count = seed_chilean_universities()
+        message, status = populate_users()
+        if status >= 400:
+            raise click.ClickException(message)
+        click.echo(
+            f"Database seed completed. Institutional changes: {institution_count}. {message}"
+        )
+
+    @app.cli.command("recover-interrupted-jobs")
+    @click.option(
+        "--minutes",
+        default=None,
+        type=click.IntRange(min=1),
+        help="Override the configured stale heartbeat threshold.",
+    )
+    @with_appcontext
+    def recover_interrupted_jobs_command(minutes):
+        """Requeue recoverable jobs abandoned by a stopped worker."""
+        from .services.background_jobs import recover_interrupted_jobs
+
+        stale_minutes = minutes or int(current_app.config.get("JOB_STALE_MINUTES", 30))
+        count = recover_interrupted_jobs(stale_minutes)
+        click.echo(f"Recovered {count} stale background job(s).")
+
+    @app.cli.command("cleanup-exports")
+    @with_appcontext
+    def cleanup_exports_command():
+        """Delete private generated exports beyond their retention period."""
+        from .services.export_jobs import cleanup_expired_exports
+
+        result = cleanup_expired_exports(force=True)
+        click.echo(
+            "Removed "
+            f"{result['files']} expired export file(s) and "
+            f"{result['jobs']} completed job record(s)."
+        )
+
+    @app.cli.command("run-job-worker")
+    @click.option("--once", is_flag=True, help="Process at most one queued job and exit.")
+    @click.option(
+        "--poll-seconds",
+        default=2.0,
+        type=click.FloatRange(min=0.1),
+        show_default=True,
+        help="Delay between empty queue checks.",
+    )
+    @with_appcontext
+    def run_job_worker_command(once, poll_seconds):
+        """Run the durable database-backed synchronization worker."""
+        import time
+        import uuid
+
+        from .services.background_jobs import run_queued_job
+
+        app_object = current_app._get_current_object()
+        worker_id = f"cli:{uuid.uuid4().hex[:12]}"
+        click.echo(f"Background job worker started ({worker_id}).")
+        while True:
+            job_id = run_queued_job(app_object, worker_id)
+            if job_id:
+                click.echo(f"Processed job {job_id}.")
+            elif once:
+                click.echo("No queued jobs found.")
+                return
+            if once:
+                return
+            time.sleep(poll_seconds)
+
     @app.cli.command("rebuild-caches")
     @click.option("--ror", default=None, help="Target specific ROR ID. If omitted, scans all active institutions.")
     @click.option("--start-at", default=None, help="Resume an all-institution rebuild at this ROR ID.")
@@ -405,6 +480,27 @@ def register_commands(app):
             db.session.commit()
         verb = "Would delete" if dry_run else "Deleted"
         click.echo(f"{verb} {count} tracking log row(s) older than {retention_days} days.")
+
+    @app.cli.command("cleanup-system-errors")
+    @click.option("--days", default=None, type=click.IntRange(min=1), help="Override the configured retention period.")
+    @click.option("--dry-run", is_flag=True, help="Count eligible rows without deleting them.")
+    @with_appcontext
+    def cleanup_system_errors_command(days, dry_run):
+        """Delete sanitized system errors beyond their retention period."""
+        from datetime import timedelta
+
+        from . import db
+        from .models import SystemError, utc_now
+
+        retention_days = days or int(current_app.config.get("ERROR_LOG_RETENTION_DAYS", 90))
+        cutoff = utc_now() - timedelta(days=retention_days)
+        query = SystemError.query.filter(SystemError.occurred_at < cutoff)
+        count = query.count()
+        if not dry_run and count:
+            query.delete(synchronize_session=False)
+            db.session.commit()
+        verb = "Would delete" if dry_run else "Deleted"
+        click.echo(f"{verb} {count} system error row(s) older than {retention_days} days.")
 
     @app.cli.command("repair-openalex-integrity")
     @with_appcontext

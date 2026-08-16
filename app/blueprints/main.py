@@ -22,6 +22,7 @@ from ..models import (
     WorkRecordLink, OpenAlexWorkMetadata,
 )
 from ..decorators import login_required
+from ..spreadsheet import excel_safe_dataframe
 from ..utils.flashes import flash_err
 from ..utils.session_helpers import get_active_ror_id
 from ..services.orcid_service import (
@@ -568,7 +569,10 @@ def index():
     )
 
 
-def _researcher_directory_rows(ror_id: str) -> list[dict]:
+def _researcher_directory_rows(
+    ror_id: str,
+    fallback_institution_name: str | None = None,
+) -> list[dict]:
     """Build one normalized directory row per researcher in the active scope."""
     institution = InstitutionRegistry.query.filter_by(ror_id=ror_id).first()
     association_rows = []
@@ -619,7 +623,13 @@ def _researcher_directory_rows(ror_id: str) -> list[dict]:
         .group_by(FundingCache.orcid)
         .all()
     )
-    institution_name = institution.name if institution else session.get('institution_name')
+    institution_name = (
+        institution.name
+        if institution
+        else fallback_institution_name
+        if fallback_institution_name is not None
+        else session.get('institution_name')
+    )
     all_researchers = []
     for orcid in sorted_orcids:
         profile = metadata.get(orcid)
@@ -665,21 +675,25 @@ def _researcher_directory_rows(ror_id: str) -> list[dict]:
     return all_researchers
 
 
-def _filter_researcher_directory(rows: list[dict]) -> tuple[list[dict], dict]:
+def _filter_researcher_directory(
+    rows: list[dict],
+    filter_values=None,
+) -> tuple[list[dict], dict]:
     """Apply server-side directory filters and stable sorting."""
-    query = (request.args.get('q') or '').strip()
-    am_status = request.args.get('am', 'all')
+    values = request.args if filter_values is None else filter_values
+    query = (values.get('q') or '').strip()
+    am_status = values.get('am', 'all')
     if am_status not in {'all', 'managed', 'unmanaged'}:
         am_status = 'all'
-    match_source = request.args.get('match', 'all')
+    match_source = values.get('match', 'all')
     if match_source not in {'all', 'verified', 'inferred', 'ror', 'grid', 'ringgold'}:
         match_source = 'all'
-    sort = request.args.get('sort', 'name')
+    sort = values.get('sort', 'name')
     if sort not in {
         'name', 'orcid', 'activity', 'managed', 'relationship', 'works', 'fundings'
     }:
         sort = 'name'
-    direction = request.args.get('dir', 'asc').lower()
+    direction = (values.get('dir') or 'asc').lower()
     if direction not in {'asc', 'desc'}:
         direction = 'asc'
 
@@ -734,6 +748,31 @@ def _filter_researcher_directory(rows: list[dict]) -> tuple[list[dict], dict]:
         'sort': sort,
         'dir': direction,
     }
+
+
+def _researcher_directory_export_dataframe(
+    ror_id: str,
+    filter_values=None,
+    fallback_institution_name: str | None = None,
+) -> pd.DataFrame:
+    """Build the localized researcher directory export used by web and jobs."""
+    rows, _filters = _filter_researcher_directory(
+        _researcher_directory_rows(ror_id, fallback_institution_name),
+        filter_values,
+    )
+    return pd.DataFrame([{
+        _('Name'): row['display-name'],
+        _('ORCID iD'): row['orcid-id'],
+        _('Email'): row['email'] or '',
+        _('Institution'): row['institution-name'] or '',
+        _('Affiliation Manager'): _('Yes') if row['is_managed'] else _('No'),
+        _('Matched by'): ', '.join(value.upper() for value in row['matched_by']),
+        _('Relationship evidence'): (
+            _('Verified') if row['association_verified'] else _('Inferred from local caches')
+        ),
+        _('Works'): row['works_count'],
+        _('Fundings'): row['fundings_count'],
+    } for row in rows])
 
 
 @bp_main.route('/researcher-list')
@@ -806,25 +845,32 @@ def researcher_list_export():
         flash_err(_('No active ROR ID found.'))
         return redirect(url_for('main.index'))
 
-    rows, _filters = _filter_researcher_directory(_researcher_directory_rows(ror_id))
-    data_frame = pd.DataFrame([{
-        _('Name'): row['display-name'],
-        _('ORCID iD'): row['orcid-id'],
-        _('Email'): row['email'] or '',
-        _('Institution'): row['institution-name'] or '',
-        _('Affiliation Manager'): _('Yes') if row['is_managed'] else _('No'),
-        _('Matched by'): ', '.join(value.upper() for value in row['matched_by']),
-        _('Relationship evidence'): (
-            _('Verified') if row['association_verified'] else _('Inferred from local caches')
-        ),
-        _('Works'): row['works_count'],
-        _('Fundings'): row['fundings_count'],
-    } for row in rows])
+    if request.args.get("background") == "1":
+        from ..services.export_jobs import queue_export_response
+
+        return queue_export_response(
+            "researcher_directory",
+            request.args.get("format") or "csv",
+            {
+                "ror_id": ror_id,
+                "filters": {
+                    key: request.args.get(key)
+                    for key in ("q", "am", "match", "sort", "dir")
+                },
+                "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "en"),
+                "institution_name": session.get("institution_name") or "",
+            },
+            _("Researcher directory"),
+        )
+
+    data_frame = _researcher_directory_export_dataframe(ror_id)
     output = io.BytesIO()
     export_format = request.args.get('format', 'csv').lower()
     if export_format == 'xlsx':
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            data_frame.to_excel(writer, index=False, sheet_name=_('Researchers')[:31])
+            excel_safe_dataframe(data_frame).to_excel(
+                writer, index=False, sheet_name=_('Researchers')[:31]
+            )
         output.seek(0)
         return send_file(output, as_attachment=True, download_name=f'researchers_{ror_id}.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     output.write(data_frame.to_csv(index=False).encode('utf-8-sig'))
@@ -1150,7 +1196,9 @@ def download_metrics_data(chart_type):
 
         if fmt == 'excel':
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False, sheet_name=chart_type)
+                excel_safe_dataframe(df).to_excel(
+                    writer, index=False, sheet_name=chart_type
+                )
             output.seek(0)
             return send_file(output, as_attachment=True, download_name=f"{filename}.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         else:

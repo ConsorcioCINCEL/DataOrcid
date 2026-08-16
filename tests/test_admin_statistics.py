@@ -5,23 +5,51 @@ from datetime import datetime, timezone
 
 from flask import session
 
-from app import create_app
+from app import create_app, db
 from app.blueprints.admin import (
     _format_latency,
     _statistics_period_bounds,
     _user_agent_summary,
 )
+from app.models import TrackingLog, User, utc_now
 
 
 class AdminStatisticsTest(unittest.TestCase):
     def setUp(self):
-        self.app = create_app()
-        self.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
+        self.app = create_app({
+            "TESTING": True,
+            "WTF_CSRF_ENABLED": False,
+            "SQLALCHEMY_DATABASE_URI": "sqlite://",
+        })
+        with self.app.app_context():
+            db.create_all()
+            admin = User(
+                username="qa-admin@example.org",
+                is_admin=True,
+                ror_id="02ap3w078",
+            )
+            admin.set_password("test-password")
+            db.session.add(admin)
+            db.session.flush()
+            db.session.add(TrackingLog(
+                user_id=admin.id,
+                username=admin.username,
+                institution_ror=admin.ror_id,
+                role="admin",
+                action="works.openalex_sync",
+                method="POST",
+                path="/openalex/sync",
+                status_code=302,
+                duration_ms=125,
+                timestamp=utc_now(),
+            ))
+            db.session.commit()
+            self.admin_id = admin.id
         self.client = self.app.test_client()
         with self.client.session_transaction() as session:
             session.update(
                 logged_in=True,
-                user_id=1,
+                user_id=self.admin_id,
                 username="qa-admin@example.org",
                 is_admin=True,
                 is_manager=False,
@@ -29,6 +57,13 @@ class AdminStatisticsTest(unittest.TestCase):
                 ror_id="02ap3w078",
                 admin_selected_ror="02ap3w078",
             )
+
+    def tearDown(self):
+        with self.app.app_context():
+            engine = db.engine
+            db.session.remove()
+            db.drop_all()
+            engine.dispose()
 
     def test_custom_period_normalizes_reversed_dates(self):
         with self.app.app_context():

@@ -7,6 +7,14 @@ from . import db
 from sqlalchemy.orm import validates
 
 
+BCRYPT_MAX_PASSWORD_BYTES = 72
+
+
+def password_fits_bcrypt(password: str | None) -> bool:
+    """Return whether a value can be processed by bcrypt without truncation."""
+    return isinstance(password, str) and len(password.encode("utf-8")) <= BCRYPT_MAX_PASSWORD_BYTES
+
+
 def utc_now() -> datetime:
     """Return a naive UTC timestamp for database columns without time zones."""
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -39,15 +47,24 @@ class User(db.Model):
 
     def set_password(self, password: str) -> None:
         """Hash and store a password using bcrypt."""
+        if not password_fits_bcrypt(password):
+            raise ValueError("Password must contain at most 72 UTF-8 bytes.")
         self.password_hash = bcrypt.hashpw(
             password.encode("utf-8"), bcrypt.gensalt()
         ).decode("utf-8")
 
     def check_password(self, password: str) -> bool:
         """Return whether the provided password matches the stored hash."""
-        return bcrypt.checkpw(
-            password.encode("utf-8"), self.password_hash.encode("utf-8")
-        )
+        if not password_fits_bcrypt(password) or not self.password_hash:
+            return False
+        try:
+            return bcrypt.checkpw(
+                password.encode("utf-8"), self.password_hash.encode("utf-8")
+            )
+        except (TypeError, ValueError):
+            # A malformed legacy hash must be treated as an authentication
+            # failure, not as a server error exposed by the login route.
+            return False
 
     @property
     def full_name(self) -> str:
@@ -630,7 +647,7 @@ class TrackingLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=True, index=True)
-    username = db.Column(db.String(80), nullable=True)
+    username = db.Column(db.String(80), nullable=True, index=True)
     institution_ror = db.Column(db.String(32), nullable=True, index=True)
     role = db.Column(db.String(24), nullable=True, index=True)
     action = db.Column(db.String(80), nullable=True, index=True)
@@ -643,6 +660,80 @@ class TrackingLog(db.Model):
     user_agent = db.Column(db.String(255))
     duration_ms = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
+class SystemError(db.Model):
+    """Sanitized application error available to the administrator console."""
+    __tablename__ = "system_error"
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(
+        db.String(36),
+        default=lambda: secrets.token_hex(16),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    fingerprint = db.Column(db.String(64), nullable=False, index=True)
+    source = db.Column(db.String(32), nullable=False, index=True)
+    severity = db.Column(db.String(16), nullable=False)
+    logger_name = db.Column(db.String(160), nullable=True)
+    exception_type = db.Column(db.String(255), nullable=True, index=True)
+    message = db.Column(db.Text, nullable=False)
+    traceback = db.Column(db.Text, nullable=True)
+
+    user_id = db.Column(db.Integer, nullable=True, index=True)
+    username = db.Column(db.String(80), nullable=True)
+    institution_ror = db.Column(db.String(32), nullable=True, index=True)
+    role = db.Column(db.String(24), nullable=True)
+
+    endpoint = db.Column(db.String(160), nullable=True, index=True)
+    method = db.Column(db.String(10), nullable=True)
+    path = db.Column(db.String(500), nullable=True)
+    status_code = db.Column(db.Integer, nullable=True)
+    request_id = db.Column(db.String(36), nullable=True, index=True)
+    job_id = db.Column(db.String(36), nullable=True, index=True)
+    ip = db.Column(db.String(50), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
+    process_id = db.Column(db.Integer, nullable=True)
+    thread_name = db.Column(db.String(80), nullable=True)
+    context_json = db.Column(db.JSON, nullable=True)
+
+    occurred_at = db.Column(db.DateTime, default=utc_now, nullable=False, index=True)
+    is_resolved = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    resolved_by_user_id = db.Column(db.Integer, nullable=True)
+    resolved_by_username = db.Column(db.String(80), nullable=True)
+    resolution_note = db.Column(db.Text, nullable=True)
+
+
+class AuthRateLimitEvent(db.Model):
+    """Shared authentication-attempt window used by every web worker."""
+    __tablename__ = "auth_rate_limit_event"
+    __table_args__ = (
+        db.Index(
+            "ix_auth_rate_limit_action_client_time",
+            "action",
+            "client_key",
+            "occurred_at",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    action = db.Column(db.String(32), nullable=False)
+    client_key = db.Column(db.String(64), nullable=False)
+    occurred_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
+class SystemModule(db.Model):
+    """Global availability switch for an optional application module."""
+    __tablename__ = "system_module"
+
+    key = db.Column(db.String(64), primary_key=True)
+    is_enabled = db.Column(db.Boolean, default=True, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    updated_by_user_id = db.Column(db.Integer, nullable=True)
+    updated_by_username = db.Column(db.String(80), nullable=True)
 
 
 class SyncJob(db.Model):
@@ -663,6 +754,12 @@ class SyncJob(db.Model):
     message = db.Column(db.Text, nullable=True)
     result_json = db.Column(db.JSON, nullable=True)
     error = db.Column(db.Text, nullable=True)
+    handler = db.Column(db.String(255), nullable=True)
+    payload_json = db.Column(db.JSON, nullable=True)
+    attempt_count = db.Column(db.Integer, default=0, nullable=False)
+    max_attempts = db.Column(db.Integer, default=3, nullable=False)
+    claimed_by = db.Column(db.String(80), nullable=True, index=True)
+    claimed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     started_at = db.Column(db.DateTime, nullable=True)
     finished_at = db.Column(db.DateTime, nullable=True)

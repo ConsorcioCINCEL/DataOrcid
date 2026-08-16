@@ -7,6 +7,7 @@ from flask import Blueprint, request, send_file, abort
 from flask_babel import _
 
 from ..decorators import login_required
+from ..spreadsheet import excel_safe_dataframe
 
 bp_export = Blueprint("export", __name__)
 logger = logging.getLogger(__name__)
@@ -134,22 +135,29 @@ def _write_personal_info(writer: pd.ExcelWriter, orcid_id: str, person: dict) ->
             _('Created'): (name_node.get('created-date') or {}).get('value'),
             _('Visibility'): name_node.get('visibility')
         }])
-        personal_df.to_excel(writer, sheet_name=_('Identity'), index=False)
+        excel_safe_dataframe(personal_df).to_excel(
+            writer, sheet_name=_('Identity'), index=False
+        )
 
         # --- Sheet 2: Biography (Optional) ---
         bio_node = person.get('biography') or {}
         if bio_node.get('content'):
-            pd.DataFrame([{
+            biography = pd.DataFrame([{
                 _('Biography'): bio_node.get('content'),
                 _('Visibility'): bio_node.get('visibility')
-            }]).to_excel(writer, sheet_name=_('Biography'), index=False)
+            }])
+            excel_safe_dataframe(biography).to_excel(
+                writer, sheet_name=_('Biography'), index=False
+            )
 
         # --- Sheet 3: External Identifiers ---
         ext_ids = (person.get('external-identifiers') or {}).get('external-identifier') or []
         if ext_ids:
             # List comprehension to flatten the nested JSON structure
             data = [{_('Type'): x.get('external-id-type'), _('Value'): x.get('external-id-value')} for x in ext_ids]
-            pd.DataFrame(data).to_excel(writer, sheet_name=_('ExternalIDs'), index=False)
+            excel_safe_dataframe(pd.DataFrame(data)).to_excel(
+                writer, sheet_name=_('ExternalIDs'), index=False
+            )
 
     except Exception as exc:
         logger.error("Error writing personal info: %s", exc)
@@ -175,7 +183,9 @@ def _write_activities(writer: pd.ExcelWriter, activities: dict) -> None:
                 })
         
         if funding_list:
-            pd.DataFrame(funding_list).to_excel(writer, sheet_name=_('Fundings'), index=False)
+            excel_safe_dataframe(pd.DataFrame(funding_list)).to_excel(
+                writer, sheet_name=_('Fundings'), index=False
+            )
 
         # --- Sheet 5: Works (Publications) ---
         works_list = []
@@ -196,7 +206,9 @@ def _write_activities(writer: pd.ExcelWriter, activities: dict) -> None:
                 })
         
         if works_list:
-            pd.DataFrame(works_list).to_excel(writer, sheet_name=_('Works'), index=False)
+            excel_safe_dataframe(pd.DataFrame(works_list)).to_excel(
+                writer, sheet_name=_('Works'), index=False
+            )
 
     except Exception as exc:
         logger.error("Error writing activities: %s", exc)

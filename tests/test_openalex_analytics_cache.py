@@ -8,20 +8,30 @@ from unittest.mock import Mock, patch
 
 from flask import session
 
-from app import create_app
-from app.blueprints import works
+from app import create_app, db
+from app.blueprints import works_analytics_cache as works
 
 
 class OpenAlexAnalyticsCacheTest(unittest.TestCase):
     def setUp(self):
-        self.app = create_app()
-        self.app.config.update(TESTING=True, OPENALEX_ANALYTICS_CACHE_TTL=900)
+        self.app = create_app({
+            "TESTING": True,
+            "SQLALCHEMY_DATABASE_URI": "sqlite://",
+            "OPENALEX_ANALYTICS_CACHE_TTL": 900,
+        })
+        with self.app.app_context():
+            db.create_all()
         self.cache_root = tempfile.TemporaryDirectory()
         self.app.instance_path = self.cache_root.name
         self.memory_cache = OrderedDict()
         self.cache_lock = RLock()
 
     def tearDown(self):
+        with self.app.app_context():
+            engine = db.engine
+            db.session.remove()
+            db.drop_all()
+            engine.dispose()
         self.cache_root.cleanup()
 
     def _request_context(self, query=""):
@@ -138,8 +148,8 @@ class OpenAlexAnalyticsCacheTest(unittest.TestCase):
         )
         signature = {"works": {"count": 12, "latest": "2026-07-16"}}
 
-        with patch.object(works, "_openalex_data_signature", return_value=signature), patch.object(
-            works, "_openalex_global_analytics", builder
+        with patch.object(works, "_openalex_data_signature", return_value=signature), patch(
+            "app.blueprints.works_global_analytics._openalex_global_analytics", builder
         ), patch.object(
             works, "_OPENALEX_GLOBAL_ANALYTICS_CACHE", self.memory_cache
         ), patch.object(

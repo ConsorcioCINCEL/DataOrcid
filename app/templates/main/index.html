@@ -29,7 +29,7 @@
     {% elif data_health.state == 'failed' %}{{ _('Synchronization needs attention') }}
     {% else %}{{ _('Synchronization pending') }}{% endif %}
   </span>
-  {% if can_sync %}
+  {% if can_sync and module_enabled('synchronization') %}
   <form method="post" action="{{ url_for('works.cache_full_build') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="dashboard-text-action">{{ _('Update now') }}</button>
@@ -48,7 +48,7 @@
     </div>
     <div class="dashboard-insight-copy">
       <h2 id="dashboard-insight-title">
-        {% if quality.duplicate_groups %}
+        {% if quality.duplicate_groups and module_enabled('duplicates') %}
           {{ _('%(count)s potential duplicate profile groups need review.', count=quality.duplicate_groups) }}
         {% elif not has_any_cache %}
           {{ _('Start by synchronizing your institution’s ORCID data.') }}
@@ -69,7 +69,7 @@
       </p>
     </div>
     <div class="dashboard-insight-actions">
-      {% if quality.duplicate_groups %}
+      {% if quality.duplicate_groups and module_enabled('duplicates') %}
         <a class="btn btn-primary dashboard-primary-action" href="{{ url_for('duplicates.index') }}">
           <i class="fas fa-user-friends" aria-hidden="true"></i>
           {{ _('Review profiles') }}
@@ -77,7 +77,7 @@
         <a class="dashboard-secondary-link" href="{{ url_for('duplicates.index', methodology='1') }}">
           {{ _('View methodology') }} <i class="fas fa-external-link-alt" aria-hidden="true"></i>
         </a>
-      {% elif not has_any_cache and can_sync %}
+      {% elif not has_any_cache and can_sync and module_enabled('synchronization') %}
         <form method="post" action="{{ url_for('works.cache_full_build') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn btn-primary dashboard-primary-action">
@@ -85,7 +85,7 @@
             {{ _('Synchronize data') }}
           </button>
         </form>
-      {% else %}
+      {% elif module_enabled('orcid_analytics') %}
         <a class="btn btn-primary dashboard-primary-action" href="{{ url_for('main.metrics_panel') }}">
           <i class="fas fa-chart-bar" aria-hidden="true"></i>
           {{ _('Explore analytics') }}
@@ -227,9 +227,11 @@
           </div>
         </div>
       </div>
+      {% if module_enabled('data_quality') %}
       <a class="dashboard-panel-link" href="{{ url_for('works.data_quality') }}">
         {{ _('View data quality') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
       </a>
+      {% endif %}
     </section>
   </div>
 
@@ -239,9 +241,11 @@
         <h2 id="datasets-title">{{ _('Datasets') }}</h2>
         <p>{{ _('Institutional records available from ORCID and OpenAlex.') }}</p>
       </div>
+      {% if module_enabled('synchronization') %}
       <a class="btn btn-outline-info dashboard-export-action" href="{{ url_for('works.cache_works_status') }}">
         <i class="fas fa-download" aria-hidden="true"></i> {{ _('Manage exports') }}
       </a>
+      {% endif %}
     </div>
     <div class="table-responsive">
       <table class="table dashboard-dataset-table">
@@ -265,7 +269,7 @@
                 {{ _('Updated') if works_count else _('Not synchronized') }}
               </span>
             </td>
-            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.download_all_works_cache') }}" aria-label="{{ _('Download publications') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+            <td class="text-right dashboard-dataset-action">{% if module_enabled('synchronization') %}<a class="js-background-export" href="{{ url_for('works.download_all_works_cache') }}" aria-label="{{ _('Download publications') }}"><i class="fas fa-download" aria-hidden="true"></i></a>{% else %}—{% endif %}</td>
           </tr>
           <tr>
             <th scope="row"><i class="fas fa-coins text-primary" aria-hidden="true"></i> {{ _('Fundings') }}</th>
@@ -277,7 +281,7 @@
                 {{ _('Updated') if fundings_count else _('Not synchronized') }}
               </span>
             </td>
-            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.download_all_fundings_cache') }}" aria-label="{{ _('Download fundings') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+            <td class="text-right dashboard-dataset-action">{% if module_enabled('synchronization') %}<a class="js-background-export" href="{{ url_for('works.download_all_fundings_cache') }}" aria-label="{{ _('Download fundings') }}"><i class="fas fa-download" aria-hidden="true"></i></a>{% else %}—{% endif %}</td>
           </tr>
           <tr>
             <th scope="row"><i class="far fa-id-card text-purple" aria-hidden="true"></i> {{ _('Profiles') }}</th>
@@ -289,7 +293,7 @@
                 {{ _('Updated') if researcher_count else _('Not synchronized') }}
               </span>
             </td>
-            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.download_researchers_cache') }}" aria-label="{{ _('Download profiles') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+            <td class="text-right dashboard-dataset-action">{% if module_enabled('synchronization') %}<a class="js-background-export" href="{{ url_for('works.download_researchers_cache') }}" aria-label="{{ _('Download profiles') }}"><i class="fas fa-download" aria-hidden="true"></i></a>{% else %}—{% endif %}</td>
           </tr>
           <tr>
             <th scope="row"><i class="fas fa-project-diagram text-purple" aria-hidden="true"></i> {{ _('OpenAlex enrichment') }}</th>
@@ -301,7 +305,7 @@
                 {{ _('Updated') if openalex_summary.matched else _('Not synchronized') }}
               </span>
             </td>
-            <td class="text-right dashboard-dataset-action"><a href="{{ url_for('works.openalex_works_export', coverage='enriched') }}" aria-label="{{ _('Download OpenAlex enrichment') }}"><i class="fas fa-download" aria-hidden="true"></i></a></td>
+            <td class="text-right dashboard-dataset-action">{% if module_enabled('openalex_enrichment') %}<a class="js-background-export" href="{{ url_for('works.openalex_works_export', coverage='enriched') }}" aria-label="{{ _('Download OpenAlex enrichment') }}"><i class="fas fa-download" aria-hidden="true"></i></a>{% else %}—{% endif %}</td>
           </tr>
         </tbody>
       </table>

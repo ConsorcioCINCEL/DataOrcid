@@ -263,9 +263,9 @@ class CacheStatusSummaryTest(unittest.TestCase):
             )
 
         with patch(
-            "app.blueprints.works._institution_cache_summaries"
+            "app.blueprints.works_sync._institution_cache_summaries"
         ) as summaries, patch(
-            "app.blueprints.works.render_template", return_value="ok"
+            "app.blueprints.works_sync.render_template", return_value="ok"
         ) as render:
             response = self.client.get("/cache/works/status")
 
@@ -297,9 +297,9 @@ class CacheStatusSummaryTest(unittest.TestCase):
             for index in range(23)
         ]
         with patch(
-            "app.blueprints.works._institution_cache_summaries", return_value=rows
+            "app.blueprints.works_sync._institution_cache_summaries", return_value=rows
         ) as summaries, patch(
-            "app.blueprints.works.render_template", return_value="ok"
+            "app.blueprints.works_sync.render_template", return_value="ok"
         ) as render:
             response = self.client.get(
                 "/cache/works/status?scope=system&institution_page=2"
@@ -481,6 +481,11 @@ class CacheStatusSummaryTest(unittest.TestCase):
         self.assertTrue(submit_job.call_args.kwargs["deduplicate"])
 
     def test_system_openalex_sync_is_queued_without_ror_scope(self):
+        with self.app.app_context():
+            account = db.session.get(User, self.manager_id)
+            account.is_admin = True
+            db.session.commit()
+
         with self.client.session_transaction() as session:
             session.update(
                 logged_in=True,

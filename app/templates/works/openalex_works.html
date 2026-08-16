@@ -48,7 +48,9 @@
       <a href="{{ url_for('works.openalex_analytics') }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-chart-line mr-1" aria-hidden="true"></i>{{ _('Analytics') }}</a>
       {{ export_links(
         url_for('works.openalex_works_export', coverage=coverage, q=query, sort=sort, dir=direction),
-        url_for('works.openalex_works_export', coverage=coverage, q=query, sort=sort, dir=direction, format='excel')
+        url_for('works.openalex_works_export', coverage=coverage, q=query, sort=sort, dir=direction, format='excel'),
+        _('OpenAlex enrichment'),
+        true
       ) }}
     </div>
   </div>

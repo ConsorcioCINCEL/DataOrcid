@@ -102,10 +102,10 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         )
 
         with patch(
-            "app.blueprints.works._openalex_institution_analytics_with_cache",
+            "app.blueprints.works_views._openalex_institution_analytics_with_cache",
             return_value={"summary": {}},
         ) as analytics_builder, patch(
-            "app.blueprints.works.render_template",
+            "app.blueprints.works_views.render_template",
             return_value="analytics",
         ):
             response = self.client.get("/openalex/analytics")
@@ -120,10 +120,10 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         self._login(self.standard_user_id, ror_id="02stale456")
 
         with patch(
-            "app.blueprints.works._openalex_analytics",
+            "app.blueprints.works_views._openalex_analytics",
             return_value={"top_cited": []},
         ) as analytics_builder, patch(
-            "app.blueprints.works._send_dataframe_export",
+            "app.blueprints.works_views._send_dataframe_export",
             return_value=Response("export", status=200),
         ):
             response = self.client.get("/openalex/analytics/export/top_cited")
@@ -145,10 +145,10 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         }
 
         with patch(
-            "app.blueprints.works._openalex_analytics",
+            "app.blueprints.works_views._openalex_analytics",
             return_value={"priority_open_access": priority_open_access},
         ) as analytics_builder, patch(
-            "app.blueprints.works._send_dataframe_export",
+            "app.blueprints.works_views._send_dataframe_export",
             return_value=Response("export", status=200),
         ) as export_sender:
             response = self.client.get(
@@ -168,10 +168,10 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         )
 
         with patch(
-            "app.blueprints.works._openalex_institution_analytics_with_cache",
+            "app.blueprints.works_views._openalex_institution_analytics_with_cache",
             return_value={"summary": {}},
         ) as analytics_builder, patch(
-            "app.blueprints.works.render_template",
+            "app.blueprints.works_views.render_template",
             return_value="analytics",
         ):
             response = self.client.get("/openalex/analytics")
@@ -188,10 +188,10 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         )
 
         with patch(
-            "app.blueprints.works._openalex_institution_analytics_with_cache",
+            "app.blueprints.works_views._openalex_institution_analytics_with_cache",
             return_value={"summary": {}},
         ) as analytics_builder, patch(
-            "app.blueprints.works.render_template",
+            "app.blueprints.works_views.render_template",
             return_value="analytics",
         ):
             response = self.client.get("/openalex/analytics")
@@ -207,7 +207,7 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         )
 
         with patch(
-            "app.blueprints.works._openalex_global_analytics_with_cache",
+            "app.blueprints.works_views._openalex_global_analytics_with_cache",
         ) as analytics_builder:
             page_response = self.client.get("/openalex/global")
             export_response = self.client.get(
@@ -227,7 +227,7 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         )
 
         with patch(
-            "app.blueprints.works._openalex_global_analytics_with_cache",
+            "app.blueprints.works_views._openalex_global_analytics_with_cache",
         ) as analytics_builder:
             response = self.client.get("/openalex/global")
 
@@ -242,10 +242,10 @@ class OpenAlexAccessControlTest(unittest.TestCase):
             with self.subTest(user_id=user_id):
                 self._login(user_id, ror_id=ror_id, **role_values)
                 with patch(
-                    "app.blueprints.works._openalex_global_analytics_with_cache",
+                    "app.blueprints.works_views._openalex_global_analytics_with_cache",
                     return_value={},
                 ) as analytics_builder, patch(
-                    "app.blueprints.works.render_template",
+                    "app.blueprints.works_views.render_template",
                     return_value="comparison",
                 ):
                     response = self.client.get("/openalex/global")
@@ -273,10 +273,10 @@ class OpenAlexAccessControlTest(unittest.TestCase):
         }
 
         with patch(
-            "app.blueprints.works._openalex_global_analytics",
+            "app.blueprints.works_views._openalex_global_analytics",
             return_value={"priority_open_access": priority_open_access},
         ) as analytics_builder, patch(
-            "app.blueprints.works._send_dataframe_export",
+            "app.blueprints.works_views._send_dataframe_export",
             return_value=Response("export", status=200),
         ) as export_sender:
             response = self.client.get(
@@ -289,6 +289,37 @@ class OpenAlexAccessControlTest(unittest.TestCase):
             analytics_builder.call_args.args[0]["tab"],
         )
         export_sender.assert_called_once()
+
+    def test_revoked_admin_role_takes_effect_during_the_current_session(self):
+        self._login(self.admin_id, ror_id="01admin123", is_admin=True)
+        with self.app.app_context():
+            account = db.session.get(User, self.admin_id)
+            account.is_admin = False
+            db.session.commit()
+
+        with patch(
+            "app.blueprints.works_views._openalex_global_analytics_with_cache"
+        ) as analytics_builder:
+            response = self.client.get("/openalex/global")
+
+        self.assertEqual(302, response.status_code)
+        analytics_builder.assert_not_called()
+        with self.client.session_transaction() as client_session:
+            self.assertFalse(client_session["is_admin"])
+
+    def test_deleted_account_invalidates_an_existing_session(self):
+        self._login(self.standard_user_id, ror_id="01user123")
+        with self.app.app_context():
+            account = db.session.get(User, self.standard_user_id)
+            db.session.delete(account)
+            db.session.commit()
+
+        response = self.client.get("/openalex/analytics")
+
+        self.assertEqual(302, response.status_code)
+        self.assertTrue(response.headers["Location"].endswith("/login"))
+        with self.client.session_transaction() as client_session:
+            self.assertNotIn("logged_in", client_session)
 
 
 if __name__ == "__main__":

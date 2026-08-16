@@ -1,11 +1,35 @@
 {% extends 'base.html' %}
 
+{% macro topic_link(slug, icon, label) -%}
+<a href="{{ url_for('help.topic', topic=slug) }}" {% if active_topic == slug %}aria-current="page"{% endif %}>
+  <i class="{{ icon }}" aria-hidden="true"></i>{{ label }}
+</a>
+{%- endmacro %}
+
+{% macro help_issue(issue_id, question, answer) -%}
+<div class="card">
+  <div class="card-header" id="helpIssueHeading{{ issue_id }}">
+    <button type="button" data-toggle="collapse" data-target="#helpIssue{{ issue_id }}" aria-expanded="false" aria-controls="helpIssue{{ issue_id }}">
+      <span>{{ question }}</span><i class="fas fa-chevron-down" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div id="helpIssue{{ issue_id }}" class="collapse" aria-labelledby="helpIssueHeading{{ issue_id }}" data-parent="#helpTroubleshooting">
+    <div class="card-body">{{ answer }}</div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% set has_orcid_data = module_enabled('researchers') or module_enabled('orcid_analytics') or module_enabled('synchronization') or module_enabled('data_quality') or module_enabled('duplicates') or module_enabled('api_read') or module_enabled('orcid_write') or module_enabled('affiliation_manager') or module_enabled('oai_pmh') %}
+{% set has_openalex = module_enabled('openalex_analytics') or module_enabled('openalex_enrichment') %}
+{% set has_cached_data = module_enabled('researchers') or module_enabled('orcid_analytics') or module_enabled('openalex_analytics') or module_enabled('synchronization') or module_enabled('data_quality') or module_enabled('duplicates') or module_enabled('openalex_enrichment') or module_enabled('oai_pmh') %}
+{% set has_exports = module_enabled('researchers') or module_enabled('orcid_analytics') or module_enabled('openalex_analytics') or module_enabled('synchronization') or module_enabled('duplicates') or module_enabled('openalex_enrichment') or module_enabled('oai_pmh') %}
+
 {% block title %}{{ _('Help center · Data ORCID-Chile') }}{% endblock %}
 
 {% block header_title %}
 <div class="app-section-heading">
   <h1>{{ _('Help center') }}</h1>
-  <p>{{ _('Understand the platform, its metadata, and the workflows available to your institution.') }}</p>
+  <p>{% if module_enabled('oai_pmh') %}{{ _('Guidance for the User and OAI User experience in the modules available to your institution.') }}{% else %}{{ _('Guidance for the User experience in the modules available to your institution.') }}{% endif %}</p>
 </div>
 {% endblock %}
 
@@ -20,21 +44,13 @@
     <div class="help-hero-copy">
       <span class="help-eyebrow">{{ _('Data ORCID-Chile documentation') }}</span>
       <h2 id="help-search-title">{{ _('What would you like to understand?') }}</h2>
-      <p>{{ _('Search the documentation or browse the topics below.') }}</p>
+      <p>{{ _('Search the available documentation or browse the topics below.') }}</p>
     </div>
     <div class="help-search-control">
       <i class="fas fa-search" aria-hidden="true"></i>
       <label class="sr-only" for="helpSearch">{{ _('Search help') }}</label>
-      <input
-        id="helpSearch"
-        type="search"
-        class="form-control"
-        placeholder="{{ _('Search metadata, synchronization, exports...') }}"
-        autocomplete="off"
-      >
-      <button type="button" id="helpSearchClear" aria-label="{{ _('Clear search') }}" hidden>
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
+      <input id="helpSearch" type="search" class="form-control" placeholder="{% if module_enabled('oai_pmh') %}{{ _('Search profiles, indicators, OAI, exports...') }}{% else %}{{ _('Search profiles, indicators, exports...') }}{% endif %}" autocomplete="off">
+      <button type="button" id="helpSearchClear" aria-label="{{ _('Clear search') }}" hidden><i class="fas fa-times" aria-hidden="true"></i></button>
     </div>
     <p id="helpSearchStatus" class="help-search-status" aria-live="polite"></p>
   </section>
@@ -43,16 +59,17 @@
     <aside class="help-toc" aria-label="{{ _('Help topics') }}">
       <span class="help-toc-title">{{ _('Browse topics') }}</span>
       <nav>
-        <a href="{{ url_for('help.topic', topic='getting-started') }}" {% if active_topic == 'getting-started' %}aria-current="page"{% endif %}><i class="fas fa-compass" aria-hidden="true"></i>{{ _('Getting started') }}</a>
-        <a href="{{ url_for('help.topic', topic='metadata-sources') }}" {% if active_topic == 'metadata-sources' %}aria-current="page"{% endif %}><i class="fas fa-database" aria-hidden="true"></i>{{ _('Metadata sources') }}</a>
-        <a href="{{ url_for('help.topic', topic='data-flow') }}" {% if active_topic == 'data-flow' %}aria-current="page"{% endif %}><i class="fas fa-random" aria-hidden="true"></i>{{ _('Data flow') }}</a>
-        <a href="{{ url_for('help.topic', topic='metrics') }}" {% if active_topic == 'metrics' %}aria-current="page"{% endif %}><i class="fas fa-chart-line" aria-hidden="true"></i>{{ _('Metrics and methodology') }}</a>
-        <a href="{{ url_for('help.topic', topic='synchronization') }}" {% if active_topic == 'synchronization' %}aria-current="page"{% endif %}><i class="fas fa-sync-alt" aria-hidden="true"></i>{{ _('Synchronization and exports') }}</a>
-        <a href="{{ url_for('help.topic', topic='data-dictionary') }}" {% if active_topic == 'data-dictionary' %}aria-current="page"{% endif %}><i class="fas fa-book" aria-hidden="true"></i>{{ _('Data dictionary') }}</a>
-        <a href="{{ url_for('help.topic', topic='roles-governance') }}" {% if active_topic == 'roles-governance' %}aria-current="page"{% endif %}><i class="fas fa-user-shield" aria-hidden="true"></i>{{ _('Roles and governance') }}</a>
-        <a href="{{ url_for('help.topic', topic='architecture') }}" {% if active_topic == 'architecture' %}aria-current="page"{% endif %}><i class="fas fa-layer-group" aria-hidden="true"></i>{{ _('Technical architecture') }}</a>
-        <a href="{{ url_for('help.topic', topic='troubleshooting') }}" {% if active_topic == 'troubleshooting' %}aria-current="page"{% endif %}><i class="fas fa-life-ring" aria-hidden="true"></i>{{ _('Troubleshooting') }}</a>
-        <a href="{{ url_for('help.topic', topic='release-notes') }}" {% if active_topic == 'release-notes' %}aria-current="page"{% endif %}><i class="fas fa-code-branch" aria-hidden="true"></i>{{ _('Version 2.0 notes') }}</a>
+        {% if 'getting-started' in available_topics %}{{ topic_link('getting-started', 'fas fa-compass', _('Getting started')) }}{% endif %}
+        {% if 'metadata-sources' in available_topics %}{{ topic_link('metadata-sources', 'fas fa-database', _('Metadata sources')) }}{% endif %}
+        {% if 'data-flow' in available_topics %}{{ topic_link('data-flow', 'fas fa-random', _('Data flow')) }}{% endif %}
+        {% if 'metrics' in available_topics %}{{ topic_link('metrics', 'fas fa-chart-line', _('Metrics and methodology')) }}{% endif %}
+        {% if 'synchronization' in available_topics %}{{ topic_link('synchronization', 'fas fa-download', _('Synchronization and exports') if module_enabled('synchronization') else (_('OpenAlex enrichment and exports') if module_enabled('openalex_enrichment') else _('Background exports'))) }}{% endif %}
+        {% if 'integrations' in available_topics %}{{ topic_link('integrations', 'fas fa-plug', _('Integrations and OAI-PMH') if module_enabled('oai_pmh') else _('Integrations')) }}{% endif %}
+        {% if 'data-dictionary' in available_topics %}{{ topic_link('data-dictionary', 'fas fa-book', _('Data dictionary')) }}{% endif %}
+        {% if 'roles-governance' in available_topics %}{{ topic_link('roles-governance', 'fas fa-user-shield', _('User access and privacy')) }}{% endif %}
+        {% if 'architecture' in available_topics %}{{ topic_link('architecture', 'fas fa-layer-group', _('How the platform works')) }}{% endif %}
+        {% if 'troubleshooting' in available_topics %}{{ topic_link('troubleshooting', 'fas fa-life-ring', _('Troubleshooting')) }}{% endif %}
+        {% if 'release-notes' in available_topics %}{{ topic_link('release-notes', 'fas fa-code-branch', _('Version 2.1')) }}{% endif %}
       </nav>
     </aside>
 
@@ -61,368 +78,220 @@
       <div id="helpTopicPrompt" class="help-section help-topic-prompt">
         <i class="far fa-compass" aria-hidden="true"></i>
         <h2>{{ _('Choose a help topic') }}</h2>
-        <p>{{ _('Open a focused guide from the topic list, or search across all documentation.') }}</p>
+        <p>{{ _('Open a focused guide from the topic list, or search across all available documentation.') }}</p>
       </div>
       {% endif %}
+
+      {% if 'getting-started' in available_topics %}
       <section id="getting-started" class="help-section help-searchable" {% if active_topic != 'getting-started' %}hidden{% endif %}>
         <div class="help-section-heading">
           <span class="help-section-icon"><i class="fas fa-compass" aria-hidden="true"></i></span>
-          <div>
-            <h2>{{ _('Getting started') }}</h2>
-            <p>{{ _('What the platform does and how its institutional context works.') }}</p>
-          </div>
+          <div><h2>{{ _('Getting started') }}</h2><p>{{ _('Your institutional context and the areas currently available to you.') }}</p></div>
         </div>
         <div class="help-prose">
-          <p>{{ _('Data ORCID-Chile helps consortium institutions discover researchers associated with an institution, cache public ORCID metadata, enrich publication records, review data quality, and export reusable datasets.') }}</p>
+          <p>{{ _('Data ORCID-Chile brings together public research metadata for the institution assigned to your account. The visible dashboards and tools depend on the modules enabled in this installation.') }}</p>
           <div class="help-callout is-info">
             <i class="fas fa-university" aria-hidden="true"></i>
-            <div>
-              <strong>{{ _('Institutional context') }}</strong>
-              <p>{{ _('Every dashboard, table, synchronization, and export uses the active institution shown in the top navigation. Administrators may switch institutions; other users remain within their assigned institution.') }}</p>
-            </div>
+            <div><strong>{{ _('Institutional context') }}</strong><p>{{ _('Your account remains linked to its assigned institution. Dashboards, tables, searches, and exports use that same institutional scope.') }}</p></div>
+          </div>
+          <div class="help-callout is-neutral">
+            <i class="fas fa-users" aria-hidden="true"></i>
+            <div><strong>{{ _('Who this guide is for') }}</strong><p>{% if module_enabled('oai_pmh') %}{{ _('The same help center is visible to every signed-in profile, but its instructions cover only the everyday User and OAI User experience.') }}{% else %}{{ _('The same help center is visible to every signed-in profile, but its instructions cover only the everyday User experience.') }}{% endif %}</p></div>
           </div>
         </div>
         <div class="help-link-grid">
-          <a href="{{ url_for('main.index') }}" class="help-link-card">
-            <i class="fas fa-th-large" aria-hidden="true"></i>
-            <span><strong>{{ _('Open the overview') }}</strong><small>{{ _('Review current coverage and data freshness.') }}</small></span>
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </a>
-          <a href="{{ url_for('main.researcher_list') }}" class="help-link-card">
-            <i class="fas fa-user-graduate" aria-hidden="true"></i>
-            <span><strong>{{ _('Browse researchers') }}</strong><small>{{ _('Inspect the institutional researcher directory.') }}</small></span>
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </a>
-          <a href="{{ url_for('works.cache_works_status') }}" class="help-link-card">
-            <i class="fas fa-sync-alt" aria-hidden="true"></i>
-            <span><strong>{{ _('Manage institutional data') }}</strong><small>{{ _('Synchronize caches and download datasets.') }}</small></span>
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </a>
+          <a href="{{ url_for('main.index') }}" class="help-link-card"><i class="fas fa-th-large" aria-hidden="true"></i><span><strong>{{ _('Open the overview') }}</strong><small>{{ _('Review institutional coverage and data freshness.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+          {% if module_enabled('researchers') %}<a href="{{ url_for('main.researcher_list') }}" class="help-link-card"><i class="fas fa-user-graduate" aria-hidden="true"></i><span><strong>{{ _('Browse researchers') }}</strong><small>{{ _('Inspect public profiles linked to your institution.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('orcid_analytics') %}<a href="{{ url_for('main.metrics_panel') }}" class="help-link-card"><i class="fas fa-chart-line" aria-hidden="true"></i><span><strong>{{ _('Explore ORCID analytics') }}</strong><small>{{ _('Filter works, funding, and researcher indicators.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('openalex_analytics') %}<a href="{{ url_for('works.openalex_analytics') }}" class="help-link-card"><i class="fas fa-project-diagram" aria-hidden="true"></i><span><strong>{{ _('Explore OpenAlex analytics') }}</strong><small>{{ _('Review citations, access, languages, topics, and sources.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('synchronization') %}<a href="{{ url_for('works.cache_works_status') }}" class="help-link-card"><i class="fas fa-database" aria-hidden="true"></i><span><strong>{{ _('Review datasets') }}</strong><small>{{ _('Check freshness and download institutional records.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('data_quality') %}<a href="{{ url_for('works.data_quality') }}" class="help-link-card"><i class="fas fa-shield-alt" aria-hidden="true"></i><span><strong>{{ _('Review data quality') }}</strong><small>{{ _('Understand coverage, provenance, and known limitations.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('duplicates') %}<a href="{{ url_for('duplicates.index') }}" class="help-link-card"><i class="fas fa-user-check" aria-hidden="true"></i><span><strong>{{ _('Review duplicate candidates') }}</strong><small>{{ _('Inspect possible duplicate ORCID profiles and their evidence.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('oai_pmh') %}<a href="{{ url_for('oai_pmh.index') }}" class="help-link-card"><i class="fas fa-broadcast-tower" aria-hidden="true"></i><span><strong>{{ _('Open OAI-PMH publishing') }}</strong><small>{{ _('Review the institutional repository and its published articles.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
         </div>
       </section>
+      {% endif %}
 
+      {% if 'metadata-sources' in available_topics %}
       <section id="metadata-sources" class="help-section help-searchable" {% if active_topic != 'metadata-sources' %}hidden{% endif %}>
-        <div class="help-section-heading">
-          <span class="help-section-icon"><i class="fas fa-database" aria-hidden="true"></i></span>
-          <div>
-            <h2>{{ _('Metadata sources') }}</h2>
-            <p>{{ _('Where each field comes from and how it should be interpreted.') }}</p>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="table help-source-table">
-            <thead>
-              <tr>
-                <th scope="col">{{ _('Source') }}</th>
-                <th scope="col">{{ _('What it provides') }}</th>
-                <th scope="col">{{ _('Important considerations') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row"><span class="help-source-badge is-orcid">ORCID</span></th>
-                <td>{{ _('Researcher identifiers, public profile names, affiliations, works, funding records, and record provenance.') }}</td>
-                <td>{{ _('Coverage depends on what each researcher has added and made visible in their ORCID record.') }}</td>
-              </tr>
-              <tr>
-                <th scope="row"><span class="help-source-badge is-ror">ROR</span></th>
-                <td>{{ _('The canonical identifier and name for each research institution.') }}</td>
-                <td>{{ _('ROR is the primary institutional key used throughout the platform.') }}</td>
-              </tr>
-              <tr>
-                <th scope="row"><span class="help-source-badge is-legacy">GRID / Ringgold</span></th>
-                <td>{{ _('Historical institutional identifiers used to find additional ORCID affiliation records.') }}</td>
-                <td>{{ _('Search results from all verified identifiers are combined and deduplicated by ORCID iD.') }}</td>
-              </tr>
-              <tr>
-                <th scope="row"><span class="help-source-badge is-openalex">OpenAlex</span></th>
-                <td>{{ _('Citation counts, open-access status, publication language, FWCI, topics, authorships, sources, and institutional links.') }}</td>
-                <td>{{ _('OpenAlex enriches ORCID works; it does not replace the original ORCID metadata. Its classifications reflect the OpenAlex update cycle.') }}</td>
-              </tr>
-              <tr>
-                <th scope="row"><span class="help-source-badge is-local">{{ _('Local cache') }}</span></th>
-                <td>{{ _('Verified and inferred institution-researcher relationships, synchronized metadata, canonical outputs, run history, and derived quality indicators.') }}</td>
-                <td>{{ _('Cached data makes dashboards and exports reproducible. Inferred relationships remain labeled separately from verified ORCID search results.') }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="help-callout is-warning">
-          <i class="fas fa-eye" aria-hidden="true"></i>
-          <div>
-            <strong>{{ _('Visibility and completeness') }}</strong>
-            <p>{{ _('A missing work, funding record, or name does not necessarily mean the information does not exist. It may be absent from the source record, private, or not yet synchronized.') }}</p>
-          </div>
-        </div>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-database" aria-hidden="true"></i></span><div><h2>{{ _('Metadata sources') }}</h2><p>{{ _('Where visible information comes from and how to interpret it.') }}</p></div></div>
+        <div class="table-responsive"><table class="table help-source-table"><thead><tr><th scope="col">{{ _('Source') }}</th><th scope="col">{{ _('What it provides') }}</th><th scope="col">{{ _('Important considerations') }}</th></tr></thead><tbody>
+          {% if has_orcid_data %}<tr><th scope="row"><span class="help-source-badge is-orcid">ORCID</span></th><td>{{ _('Public researcher identifiers, profile names, affiliations, works, funding records, and record provenance.') }}</td><td>{{ _('Coverage depends on what each researcher has added and made public in their ORCID record.') }}</td></tr>{% endif %}
+          {% if has_cached_data %}<tr><th scope="row"><span class="help-source-badge is-ror">ROR</span></th><td>{{ _('The canonical identifier and name for the institution assigned to your account.') }}</td><td>{{ _('ROR is the primary institutional key used throughout the platform.') }}</td></tr>
+          <tr><th scope="row"><span class="help-source-badge is-legacy">GRID / Ringgold</span></th><td>{{ _('Verified historical identifiers used to locate additional public ORCID affiliations.') }}</td><td>{{ _('Discovery results are combined and deduplicated by ORCID iD while preserving their evidence source.') }}</td></tr>{% endif %}
+          {% if has_openalex %}<tr><th scope="row"><span class="help-source-badge is-openalex">OpenAlex</span></th><td>{{ _('Citation counts, open-access status, publication language, FWCI, topics, authorships, sources, and institutional links.') }}</td><td>{{ _('OpenAlex enriches ORCID works without replacing their source metadata and follows its own update cycle.') }}</td></tr>{% endif %}
+          {% if has_cached_data %}<tr><th scope="row"><span class="help-source-badge is-local">{{ _('Local cache') }}</span></th><td>{{ _('Institutional relationships, synchronized metadata, canonical outputs, update history, and derived indicators.') }}</td><td>{{ _('Cached data makes dashboards and exports consistent; the update time indicates how current it is.') }}</td></tr>{% endif %}
+          {% if module_enabled('oai_pmh') %}<tr><th scope="row"><span class="help-source-badge is-local">{{ _('OAI-PMH selection') }}</span></th><td>{{ _('Institutional publication decisions, DOI import history, and the metadata fields exposed by the repository.') }}</td><td>{{ _('These records organize publication through OAI-PMH; they do not modify the original upstream source records.') }}</td></tr>{% endif %}
+        </tbody></table></div>
+        <div class="help-callout is-warning"><i class="fas fa-eye" aria-hidden="true"></i><div><strong>{{ _('Visibility and completeness') }}</strong><p>{{ _('Missing information may be private, absent from its source, outside the institutional scope, or not yet present in the latest local update.') }}</p></div></div>
       </section>
+      {% endif %}
 
+      {% if 'data-flow' in available_topics %}
       <section id="data-flow" class="help-section help-searchable" {% if active_topic != 'data-flow' %}hidden{% endif %}>
-        <div class="help-section-heading">
-          <span class="help-section-icon"><i class="fas fa-random" aria-hidden="true"></i></span>
-          <div>
-            <h2>{{ _('How metadata moves through the platform') }}</h2>
-            <p>{{ _('The complete path from institutional discovery to analytics and exports.') }}</p>
-          </div>
-        </div>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-random" aria-hidden="true"></i></span><div><h2>{{ _('How metadata moves through the platform') }}</h2><p>{{ _('The user-visible path from public sources to pages and downloads.') }}</p></div></div>
         <ol class="help-process-list">
-          <li>
-            <span class="help-process-icon"><i class="fas fa-university" aria-hidden="true"></i></span>
-            <div><strong>{{ _('1. Resolve the institution') }}</strong><p>{{ _('The registry identifies the institution by ROR and loads any verified GRID and Ringgold identifiers available for broader discovery.') }}</p></div>
-          </li>
-          <li>
-            <span class="help-process-icon"><i class="fas fa-search" aria-hidden="true"></i></span>
-            <div><strong>{{ _('2. Search ORCID') }}</strong><p>{{ _('Separate expanded searches are run for each institutional identifier. Results retain their match provenance and are deduplicated by ORCID iD.') }}</p></div>
-          </li>
-          <li>
-            <span class="help-process-icon"><i class="fas fa-users" aria-hidden="true"></i></span>
-            <div><strong>{{ _('3. Preserve researcher relationships') }}</strong><p>{{ _('Verified search results are stored before profile downloads. Legacy cache relationships can be backfilled as inferred evidence and remain clearly labeled until a verified search replaces them.') }}</p></div>
-          </li>
-          <li>
-            <span class="help-process-icon"><i class="fas fa-cloud-download-alt" aria-hidden="true"></i></span>
-            <div><strong>{{ _('4. Build ORCID caches') }}</strong><p>{{ _('Public profile names, works, funding records, and institutional management status are downloaded and stored with synchronization results.') }}</p></div>
-          </li>
-          <li>
-            <span class="help-process-icon"><i class="fas fa-link" aria-hidden="true"></i></span>
-            <div><strong>{{ _('5. Build canonical outputs and enrich with OpenAlex') }}</strong><p>{{ _('ORCID work records are linked to a canonical output by normalized DOI or a conservative title-and-year fallback. OpenAlex then enriches eligible outputs.') }}</p></div>
-          </li>
-          <li>
-            <span class="help-process-icon"><i class="fas fa-chart-pie" aria-hidden="true"></i></span>
-            <div><strong>{{ _('6. Present and export') }}</strong><p>{{ _('Dashboards, quality reviews, institutional comparisons, and downloadable files are generated from the local caches.') }}</p></div>
-          </li>
+          <li><span class="help-process-icon"><i class="fas fa-university" aria-hidden="true"></i></span><div><strong>{{ _('Identify the institution') }}</strong><p>{{ _('The assigned ROR, together with verified legacy identifiers when available, defines the institutional scope.') }}</p></div></li>
+          {% if has_orcid_data %}<li><span class="help-process-icon"><i class="fas fa-id-card" aria-hidden="true"></i></span><div><strong>{{ _('Read public ORCID metadata') }}</strong><p>{{ _('Public profiles, affiliations, works, and funding are associated with the institution while their provenance remains visible.') }}</p></div></li>{% endif %}
+          {% if has_cached_data %}<li><span class="help-process-icon"><i class="fas fa-database" aria-hidden="true"></i></span><div><strong>{{ _('Use the institutional cache') }}</strong><p>{{ _('The platform keeps a dated local copy so tables, indicators, and exports use a consistent snapshot.') }}</p></div></li>{% endif %}
+          {% if module_enabled('data_quality') or module_enabled('duplicates') or module_enabled('orcid_analytics') or has_openalex or module_enabled('oai_pmh') %}<li><span class="help-process-icon"><i class="fas fa-link" aria-hidden="true"></i></span><div><strong>{{ _('Normalize and relate records') }}</strong><p>{{ _('DOIs and conservative title-and-year rules connect source records to canonical outputs without hiding their original records.') }}</p></div></li>{% endif %}
+          {% if has_openalex %}<li><span class="help-process-icon"><i class="fas fa-project-diagram" aria-hidden="true"></i></span><div><strong>{{ _('Add OpenAlex enrichment') }}</strong><p>{{ _('Eligible outputs receive citation, access, topic, language, authorship, and source metadata when a reliable match exists.') }}</p></div></li>{% endif %}
+          <li><span class="help-process-icon"><i class="fas fa-chart-pie" aria-hidden="true"></i></span><div><strong>{{ _('Present the enabled modules') }}</strong><p>{{ _('Only currently available areas contribute their dashboards, guidance, links, and downloadable results.') }}</p></div></li>
         </ol>
       </section>
+      {% endif %}
 
+      {% if 'metrics' in available_topics %}
       <section id="metrics" class="help-section help-searchable" {% if active_topic != 'metrics' %}hidden{% endif %}>
-        <div class="help-section-heading">
-          <span class="help-section-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
-          <div>
-            <h2>{{ _('Metrics and methodology') }}</h2>
-            <p>{{ _('How to read the principal indicators and their limitations.') }}</p>
-          </div>
-        </div>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span><div><h2>{{ _('Metrics and methodology') }}</h2><p>{{ _('How to read the indicators that are currently available.') }}</p></div></div>
         <div class="help-definition-grid">
-          <article>
-            <h3>{{ _('Institutional researchers') }}</h3>
-            <p>{{ _('Unique ORCID iDs related to the active institution. Verified search relationships and cache-inferred relationships are always reported separately.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('Work records and unique outputs') }}</h3>
-            <p>{{ _('A work record is one ORCID source item. A unique output combines records sharing a normalized DOI or, when no DOI exists, a conservative normalized title and year.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('Year-to-date comparison') }}</h3>
-            <p>{{ _('The current year is compared with the same completed months of the previous year. Records without a usable month are excluded from this specific comparison.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('Duplicate candidates') }}</h3>
-            <p>{{ _('Candidate groups use normalized profile names and supporting activity evidence. They indicate cases to review, not confirmed identities or automatic merges.') }}</p>
-            <p>{{ _('Institutional staff may dismiss an unsupported match with a reason or prepare a neutral notice for the researcher. Only the researcher and ORCID can resolve duplicate records.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('OpenAlex coverage') }}</h3>
-            <p>{{ _('Coverage is the portion of eligible ORCID works matched to OpenAlex. DOI matches are preferred; title matches use strict confidence thresholds.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('Citation and open-access indicators') }}</h3>
-            <p>{{ _('Citation counts, FWCI, topics, and open-access fields come from OpenAlex and reflect its own update cycle and methodology.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('Diamond and Green Open Access') }}</h3>
-            <p>{{ _('The ANID Open Access module counts the native OpenAlex oa_status categories diamond and green. Diamond means publication in a fully open-access journal without publication fees for authors; Green means the publisher landing page is toll-access while a free copy is available in an open-access repository.') }}</p>
-            <p>{{ _('Counts and percentages follow the active dashboard filters. Percentages use all filtered OpenAlex-enriched articles as the denominator, so Diamond and Green do not represent the full Open Access total.') }}</p>
-            <p>{{ _('The module also ranks journals or sources by Diamond and Green article volume and citations, provides independently paginated journal and article tables, and adds server-side search and column sorting across every matching record, not only the visible page. The global comparison includes the same controls for its university table. Green remains an article-level repository route and does not classify the complete journal as Green.') }}</p>
-            <p>{{ _('For managers and administrators, the global comparison includes the same paginated rankings, annual line charts for articles and citations, and institutional statistics. Its university charts include every Chilean institution with Diamond or Green results in a vertically scrollable area. Global journal and article metrics deduplicate works by DOI, while university metrics count each article once within every local institution where it appears.') }}</p>
-            <p>
-              {{ _('Visual convention: IGI Global presents Platinum Open Access—also known as sponsored or Diamond Open Access—with a gray lock (#595959), and Green Open Access with a green lock (#00B050).') }}
-              {{ _("Compatible OpenAlex statuses also use the guide's exact Gold, Hybrid, and Bronze colors; Closed remains neutral because it is not an IGI color category.") }}
-              <a href="https://www.igi-global.com/newsroom/archive/guide-understanding-colors-open-access/4925/"
-                 target="_blank"
-                 rel="noopener noreferrer">{{ _('Reference: IGI Global guide to the colors of Open Access') }}</a>.
-            </p>
-          </article>
-          <article>
-            <h3>{{ _('Publication languages') }}</h3>
-            <p>{{ _('OpenAlex reports the publication language using ISO 639-1 codes. The analytics panel displays localized names with their source code, groups missing values as unknown, and allows one or more languages to be selected as a filter.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('ORCID analytics charts') }}</h3>
-            <p>{{ _('Institutional ORCID charts count cached source work or funding records after applying the visible filters. Timeline charts exclude records without a valid year; they do not silently convert source records into canonical unique outputs.') }}</p>
-          </article>
-          <article>
-            <h3>{{ _('Individual researcher charts') }}</h3>
-            <p>{{ _('Profile charts are built from the public ORCID work and funding summaries visible when the profile is loaded. Use the information button on each chart to review its unit, grouping rule, and exclusions.') }}</p>
-          </article>
-        </div>
-        <a class="help-inline-link" href="{{ url_for('duplicates.index', methodology='1') }}">
-          {{ _('Open the duplicate-profile methodology') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
-        </a>
-        <a class="help-inline-link ml-md-3" href="{{ url_for('works.openalex_analytics', section='open_access') }}">
-          {{ _('Open the ANID Open Access module') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
-        </a>
-      </section>
-
-      <section id="synchronization" class="help-section help-searchable" {% if active_topic != 'synchronization' %}hidden{% endif %}>
-        <div class="help-section-heading">
-          <span class="help-section-icon"><i class="fas fa-sync-alt" aria-hidden="true"></i></span>
-          <div>
-            <h2>{{ _('Synchronization, freshness, and exports') }}</h2>
-            <p>{{ _('What an update does and how to evaluate whether a dataset is current.') }}</p>
-          </div>
-        </div>
-        <div class="help-prose">
-          <p>{{ _('A full institutional synchronization discovers researchers, refreshes profiles, works, funding and management status, rebuilds canonical outputs, and enriches eligible works with OpenAlex. Every background job and step is stored with progress and result metadata.') }}</p>
-          <ul class="help-check-list">
-            <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Use the displayed last-update timestamp rather than assuming a fixed refresh schedule.') }}</li>
-            <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Administrators and managers may start synchronization jobs from the web interface.') }}</li>
-            <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OpenAlex-only updates also run in the background. Transient failures wait progressively longer before another automatic attempt, while an explicit full refresh bypasses that waiting period.') }}</li>
-            <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The interface uses current, stale, running, partial, failed, and empty states consistently across the overview and data-management views.') }}</li>
-            <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Exports are generated from the current local cache and therefore share its update timestamp and limitations.') }}</li>
-            <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('When a verified Ringgold identifier is available, authorized users can download the institution search results used to discover authors; results are deduplicated by ORCID iD.') }}</li>
-          </ul>
+          {% if module_enabled('researchers') or module_enabled('orcid_analytics') %}<article><h3>{{ _('Institutional researchers') }}</h3><p>{{ _('Unique ORCID iDs related to your institution. Verified discovery evidence and cache-inferred relationships are reported separately when that distinction is available.') }}</p></article>{% endif %}
+          {% if module_enabled('orcid_analytics') or module_enabled('data_quality') or module_enabled('openalex_analytics') or module_enabled('openalex_enrichment') %}<article><h3>{{ _('Work records and unique outputs') }}</h3><p>{{ _('A work record is one ORCID source item. A unique output combines source records by normalized DOI or, without a DOI, by a conservative title-and-year rule.') }}</p></article>{% endif %}
+          {% if module_enabled('orcid_analytics') %}<article><h3>{{ _('ORCID works and funding') }}</h3><p>{{ _('Filters apply to the assigned institution. Trends count visible cached records and the update label indicates the snapshot date.') }}</p></article>{% endif %}
+          {% if module_enabled('duplicates') %}<article><h3>{{ _('Duplicate candidates') }}</h3><p>{{ _('Name similarity and activity evidence identify cases worth reviewing; they are not confirmed identities or automatic merges. Only the researcher and ORCID can resolve duplicate records.') }}</p></article>{% endif %}
+          {% if module_enabled('data_quality') %}<article><h3>{{ _('Coverage and integrity') }}</h3><p>{{ _('Quality indicators expose provenance, missing identifiers, cache freshness, relationship evidence, and canonical-output limitations before data is reused.') }}</p></article>{% endif %}
+          {% if has_openalex %}<article><h3>{{ _('OpenAlex coverage') }}</h3><p>{{ _('Coverage is the portion of eligible ORCID outputs matched reliably to OpenAlex. DOI matches are preferred; strict fallback rules avoid false associations.') }}</p></article>
+          <article><h3>{{ _('Citations, FWCI, topics, and language') }}</h3><p>{{ _('These values come from OpenAlex and reflect its coverage, classifications, and update cycle. Unknown language values remain explicit.') }}</p></article>
+          <article><h3>{{ _('Diamond and Green Open Access') }}</h3><p>{{ _('Diamond and Green use the native OpenAlex access categories. Dashboard percentages use the records included by the active filters, so they do not represent every form of Open Access.') }}</p></article>{% endif %}
         </div>
         <div class="help-link-grid">
-          <a href="{{ url_for('works.cache_works_status') }}" class="help-link-card">
-            <i class="fas fa-database" aria-hidden="true"></i>
-            <span><strong>{{ _('Synchronization and datasets') }}</strong><small>{{ _('Review runs, refresh caches, and export records.') }}</small></span>
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </a>
-          <a href="{{ url_for('works.openalex_works') }}" class="help-link-card">
-            <i class="fas fa-project-diagram" aria-hidden="true"></i>
-            <span><strong>{{ _('OpenAlex enrichment coverage') }}</strong><small>{{ _('Review matched, unmatched, and pending works.') }}</small></span>
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </a>
-          {% if session.get('is_admin') %}
-          <a href="{{ url_for('admin.jobs') }}" class="help-link-card">
-            <i class="fas fa-tasks" aria-hidden="true"></i>
-            <span><strong>{{ _('Monitor background jobs') }}</strong><small>{{ _('Review live progress, execution stages, heartbeats, and errors.') }}</small></span>
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </a>
-          {% endif %}
+          {% if module_enabled('orcid_analytics') %}<a href="{{ url_for('main.metrics_panel') }}" class="help-link-card"><i class="fas fa-chart-bar" aria-hidden="true"></i><span><strong>{{ _('Open ORCID analytics') }}</strong><small>{{ _('Filter charts and export their underlying data.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('openalex_analytics') %}<a href="{{ url_for('works.openalex_analytics') }}" class="help-link-card"><i class="fas fa-project-diagram" aria-hidden="true"></i><span><strong>{{ _('Open OpenAlex analytics') }}</strong><small>{{ _('Explore enriched institutional indicators and tables.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('data_quality') %}<a href="{{ url_for('works.data_quality') }}" class="help-link-card"><i class="fas fa-shield-alt" aria-hidden="true"></i><span><strong>{{ _('Open data quality') }}</strong><small>{{ _('Review coverage and limitations alongside the metrics.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('duplicates') %}<a href="{{ url_for('duplicates.index', methodology=1) }}" class="help-link-card"><i class="fas fa-user-check" aria-hidden="true"></i><span><strong>{{ _('Open duplicate methodology') }}</strong><small>{{ _('Review the evidence and confidence rules behind candidates.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
         </div>
       </section>
+      {% endif %}
 
-      <section id="data-dictionary" class="help-section help-searchable" {% if active_topic != 'data-dictionary' %}hidden{% endif %}>
-        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-book" aria-hidden="true"></i></span><div><h2>{{ _('Data dictionary') }}</h2><p>{{ _('The unit, source, and interpretation of the principal fields and indicators.') }}</p></div></div>
-        <div class="table-responsive"><table class="table help-source-table"><thead><tr><th>{{ _('Term') }}</th><th>{{ _('Definition') }}</th><th>{{ _('Source and limitation') }}</th></tr></thead><tbody>
-          <tr><th>{{ _('ORCID work record') }}</th><td>{{ _('One visible work item from one ORCID profile.') }}</td><td>{{ _('May describe the same output as another ORCID record.') }}</td></tr>
-          <tr><th>{{ _('Unique scholarly output') }}</th><td>{{ _('Canonical work linked by DOI or a conservative title-and-year fallback.') }}</td><td>{{ _('Fallback matches should be treated with more caution than DOI matches.') }}</td></tr>
-          <tr><th>{{ _('Institution-output relationship') }}</th><td>{{ _('One canonical output observed within one institutional cache.') }}</td><td>{{ _('A global relationship count can exceed the number of globally unique outputs.') }}</td></tr>
-          <tr><th>{{ _('Verified researcher relationship') }}</th><td>{{ _('An ORCID iD returned by a search using a verified ROR, GRID, or Ringgold identifier.') }}</td><td>{{ _('Can include current or historical public affiliations.') }}</td></tr>
-          <tr><th>{{ _('Inferred researcher relationship') }}</th><td>{{ _('A relationship reconstructed from existing works, funding, or management-status caches.') }}</td><td>{{ _('Useful for continuity, but not equivalent to verified search evidence.') }}</td></tr>
-          <tr><th>{{ _('OpenAlex coverage') }}</th><td>{{ _('Unique eligible DOI outputs with normalized OpenAlex metadata divided by all eligible DOI outputs.') }}</td><td>{{ _('OpenAlex and ORCID have independent update cycles.') }}</td></tr>
-          <tr><th>{{ _('Diamond Open Access') }}</th><td>{{ _('An article whose native OpenAlex oa_status value is diamond: published in a fully open-access journal without publication fees for authors.') }}</td><td>{{ _('The platform uses the OpenAlex classification directly and does not infer Diamond status from DOAJ membership.') }}</td></tr>
-          <tr><th>{{ _('Green Open Access') }}</th><td>{{ _('An article whose native OpenAlex oa_status value is green: the publisher landing page is toll-access, while a free copy is available in an open-access repository.') }}</td><td>{{ _('Repository availability and status may change when OpenAlex refreshes its sources.') }}</td></tr>
-          <tr><th>{{ _('Publication language') }}</th><td>{{ _('The ISO 639-1 language code supplied by OpenAlex, displayed with a localized language name in the analytics panel.') }}</td><td>{{ _('A missing or unknown value is kept explicit and is not inferred from the title or journal.') }}</td></tr>
-          <tr><th>{{ _('FWCI') }}</th><td>{{ _('Field-weighted citation impact supplied by OpenAlex.') }}</td><td>{{ _('Interpret using OpenAlex methodology and the displayed coverage denominator.') }}</td></tr>
-          <tr><th>{{ _('Year-to-date change') }}</th><td>{{ _('Current completed months compared with the same months of the previous year.') }}</td><td>{{ _('Records without a usable month are excluded from this comparison.') }}</td></tr>
-        </tbody></table></div>
-      </section>
-
-      <section id="roles-governance" class="help-section help-searchable" {% if active_topic != 'roles-governance' %}hidden{% endif %}>
-        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-user-shield" aria-hidden="true"></i></span><div><h2>{{ _('Roles, permissions, and data governance') }}</h2><p>{{ _('Who can perform each operation and what operational data is retained.') }}</p></div></div>
-        <div class="table-responsive"><table class="table help-source-table"><thead><tr><th>{{ _('Capability') }}</th><th>{{ _('User') }}</th><th>{{ _('Manager') }}</th><th>{{ _('Administrator') }}</th></tr></thead><tbody>
-          <tr><th>{{ _('View institutional analytics and exports') }}</th><td>{{ _('Assigned institution') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any selected institution') }}</td></tr>
-          <tr><th>{{ _('Compare institutions with OpenAlex') }}</th><td>{{ _('No') }}</td><td>{{ _('All institutions') }}</td><td>{{ _('All institutions') }}</td></tr>
-          <tr><th>{{ _('Start synchronization') }}</th><td>{{ _('No') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any or all institutions') }}</td></tr>
-          <tr><th>{{ _('Review duplicate decisions') }}</th><td>{{ _('Read only') }}</td><td>{{ _('Assigned institution') }}</td><td>{{ _('Any institution') }}</td></tr>
-          <tr><th>{{ _('Manage accounts and system activity') }}</th><td>{{ _('No') }}</td><td>{{ _('Institution accounts') }}</td><td>{{ _('All accounts and activity') }}</td></tr>
-          <tr><th>{{ _('Monitor all background jobs') }}</th><td>{{ _('No') }}</td><td>{{ _('No') }}</td><td>{{ _('Live and historical access') }}</td></tr>
-        </tbody></table></div>
-        <div class="help-callout is-warning"><i class="fas fa-shield-alt" aria-hidden="true"></i><div><strong>{{ _('Privacy and operational logs') }}</strong><p>{{ _('ORCID metadata shown by the platform comes from public source records. Request logs can include user, institution, role, path, IP address, and user-agent information and should follow the organization’s retention, access, correction, and deletion policy.') }}</p><p>{{ _('The default local retention period is 90 days and can be changed in the private runtime configuration. Administrators can apply it with the cleanup-tracking-logs command.') }}</p></div></div>
-        <div class="help-link-grid"><a class="help-link-card" href="{{ url_for('auth.profile') }}"><i class="fas fa-user" aria-hidden="true"></i><span><strong>{{ _('Edit profile') }}</strong><small>{{ _('Update your name, position, and email.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a><a class="help-link-card" href="{{ url_for('auth.change_password') }}"><i class="fas fa-key" aria-hidden="true"></i><span><strong>{{ _('Change password') }}</strong><small>{{ _('Keep account credentials current.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a></div>
-      </section>
-
-      <section id="architecture" class="help-section help-searchable" {% if active_topic != 'architecture' %}hidden{% endif %}>
-        <div class="help-section-heading">
-          <span class="help-section-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
-          <div>
-            <h2>{{ _('Technical architecture') }}</h2>
-            <p>{{ _('A maintainable overview of how the application is constructed.') }}</p>
-          </div>
-        </div>
-        <div class="help-architecture-grid">
-          <article><span>{{ _('Application') }}</span><strong>Flask 3 · Blueprints</strong><p>{{ _('Routes are separated by authentication, administration, dashboards, data management, exports, and integrations.') }}</p></article>
-          <article><span>{{ _('Interface') }}</span><strong>Jinja2 · AdminLTE · Bootstrap</strong><p>{{ _('Server-rendered templates use shared layout components, Chart.js, DataTables, Font Awesome, and responsive CSS.') }}</p></article>
-          <article><span>{{ _('Persistence') }}</span><strong>PostgreSQL · SQLAlchemy · Flask-Migrate</strong><p>{{ _('PostgreSQL stores operational metadata, canonical outputs, durable synchronization jobs, review decisions, and analytical caches. SQLite remains supported for isolated tests.') }}</p></article>
-          <article><span>{{ _('External services') }}</span><strong>ORCID · ROR · OpenAlex</strong><p>{{ _('HTTP clients include retry handling, rate-limit awareness, normalized identifiers, and conservative matching rules.') }}</p></article>
-          <article><span>{{ _('Exports') }}</span><strong>pandas · openpyxl</strong><p>{{ _('Tabular datasets are generated as CSV or Excel-compatible files from cached records.') }}</p></article>
-          <article><span>{{ _('Localization') }}</span><strong>Flask-Babel</strong><p>{{ _('English is the source language and Spanish translations are compiled from Babel catalogs.') }}</p></article>
-        </div>
-        <div class="help-callout is-neutral">
-          <i class="fas fa-shield-alt" aria-hidden="true"></i>
-          <div>
-            <strong>{{ _('Security model') }}</strong>
-            <p>{{ _('Passwords use bcrypt, state-changing forms use CSRF protection, sessions support secure cookie settings, and role checks restrict institutional and administrative operations. Secrets belong in environment variables or the private runtime configuration, never in the repository.') }}</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="troubleshooting" class="help-section help-searchable" {% if active_topic != 'troubleshooting' %}hidden{% endif %}>
-        <div class="help-section-heading">
-          <span class="help-section-icon"><i class="fas fa-life-ring" aria-hidden="true"></i></span>
-          <div>
-            <h2>{{ _('Troubleshooting') }}</h2>
-            <p>{{ _('Common situations and the first checks to perform.') }}</p>
-          </div>
-        </div>
-        <div class="accordion help-accordion" id="helpTroubleshooting">
-          {% set issues = [
-            (_('No researchers appear for an institution'), _('Confirm that the active institution has a ROR ID and verified legacy identifiers. Then review the latest synchronization result for an ORCID authentication, search, or rate-limit error.')),
-            (_('Works or funding totals look incomplete'), _('Check the cache update time and the source ORCID profiles. Only visible source records can be synchronized, and some researchers may have no public activity.')),
-            (_('OpenAlex coverage is low'), _('Review how many ORCID works contain a DOI. Records without a DOI require a strict title match and may remain unmatched to avoid false associations.')),
-            (_('A synchronization remains in progress'), _('Administrators can open Background jobs to inspect its durable state, item progress, and individual stages. A stale heartbeat warns that the process may have been interrupted; after an application restart, abandoned jobs and their open stages are closed as interrupted.')),
-            (_('An export is empty'), _('Verify that the corresponding cache contains records for the active institution and that the selected institutional context has not changed.'))
-          ] %}
-          {% for question, answer in issues %}
-          <div class="card">
-            <div class="card-header" id="helpIssueHeading{{ loop.index }}">
-              <button
-                type="button"
-                data-toggle="collapse"
-                data-target="#helpIssue{{ loop.index }}"
-                aria-expanded="false"
-                aria-controls="helpIssue{{ loop.index }}"
-              >
-                <span>{{ question }}</span><i class="fas fa-chevron-down" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div id="helpIssue{{ loop.index }}" class="collapse" aria-labelledby="helpIssueHeading{{ loop.index }}" data-parent="#helpTroubleshooting">
-              <div class="card-body">{{ answer }}</div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        <div class="help-resource-banner">
-          <div>
-            <i class="fas fa-book-open" aria-hidden="true"></i>
-            <span><strong>{{ _('ORCID resources and consortium guidance') }}</strong><small>{{ _('Member Portal roles, API credentials, Affiliation Manager, and external integration guides.') }}</small></span>
-          </div>
-          <a href="{{ url_for('main.resources') }}" class="btn btn-outline-info">{{ _('Open resources') }}</a>
-        </div>
-      </section>
-
-      <section id="release-notes" class="help-section help-searchable" {% if active_topic != 'release-notes' %}hidden{% endif %}>
-        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-code-branch" aria-hidden="true"></i></span><div><h2>{{ _('Version 2.0 notes') }}</h2><p>{{ _('Major changes that affect interpretation, synchronization, and daily workflows.') }}</p></div></div>
+      {% if 'synchronization' in available_topics %}
+      <section id="synchronization" class="help-section help-searchable" {% if active_topic != 'synchronization' %}hidden{% endif %}>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-download" aria-hidden="true"></i></span><div><h2>{% if module_enabled('synchronization') %}{{ _('Synchronization and exports') }}{% elif module_enabled('openalex_enrichment') %}{{ _('OpenAlex enrichment and exports') }}{% else %}{{ _('Background exports') }}{% endif %}</h2><p>{{ _('How to read freshness, status, and background download notices.') }}</p></div></div>
         <div class="help-prose"><ul class="help-check-list">
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('A shared data-health state now drives the overview, top navigation, and synchronization view.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Researcher relationships distinguish verified ORCID search evidence from cache-derived inference.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Canonical outputs separate unique scholarly results from ORCID source records and institution-output relationships.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Background synchronization jobs and their steps are durable and reviewable after the request finishes.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Administrators have a live background-job monitor with filters, stage and item progress, heartbeat warnings, and execution errors.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Duplicate decisions persist independently from the candidate-analysis cache.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The data-quality center exposes coverage and known limitations before users export or compare data.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Version 2.0 integrates OpenAlex through the normalized DOI of ORCID articles, adding citation, open-access, topic, authorship, and institutional metadata without replacing the ORCID source record.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OpenAlex analytics now highlights Diamond and Green Open Access for ANID and presents publication languages with localized ISO 639-1 labels and filters.') }}</li>
-          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Version 2.0 includes author discovery and download through the institution’s verified Ringgold identifier, with results deduplicated by ORCID iD.') }}</li>
+          {% if module_enabled('synchronization') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The datasets page shows the latest update, record totals, recent results, and downloads for your institution.') }}</li>
+          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('A completed result describes the local snapshot; source records can change later in ORCID.') }}</li>{% endif %}
+          {% if module_enabled('openalex_enrichment') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OpenAlex enrichment reports matched, unmatched, and pending outputs separately so coverage is not overstated.') }}</li>{% endif %}
+          {% if has_exports %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Large CSV and XLSX files are prepared in the background. A floating notice remains visible while the export runs and offers the file when it is ready.') }}</li>
+          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Equivalent requests can reuse an existing active or completed export instead of creating the same file twice.') }}</li>
+          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Generated files expire automatically. Download a finished file before its expiration time if you need to keep it.') }}</li>{% endif %}
         </ul></div>
-        <div class="help-callout is-info"><i class="fas fa-info-circle" aria-hidden="true"></i><div><strong>{{ _('Backfill status') }}</strong><p>{{ _('Existing cache relationships and canonical outputs require a one-time rebuild. Until that job is complete, affected indicators remain partial rather than being presented as current.') }}</p></div></div>
+        <div class="help-link-grid">
+          {% if module_enabled('synchronization') %}<a href="{{ url_for('works.cache_works_status') }}" class="help-link-card"><i class="fas fa-database" aria-hidden="true"></i><span><strong>{{ _('Synchronization and datasets') }}</strong><small>{{ _('Review freshness, recent results, and available downloads.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('openalex_enrichment') %}<a href="{{ url_for('works.openalex_works') }}" class="help-link-card"><i class="fas fa-link" aria-hidden="true"></i><span><strong>{{ _('OpenAlex enrichment coverage') }}</strong><small>{{ _('Review matched, unmatched, and pending works.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+        </div>
       </section>
+      {% endif %}
 
-      <div id="helpNoResults" class="help-no-results" hidden>
-        <i class="far fa-file-alt" aria-hidden="true"></i>
-        <h2>{{ _('No help topics matched your search') }}</h2>
-        <p>{{ _('Try a broader term such as ORCID, metadata, synchronization, or export.') }}</p>
-      </div>
+      {% if 'integrations' in available_topics %}
+      <section id="integrations" class="help-section help-searchable" {% if active_topic != 'integrations' %}hidden{% endif %}>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-plug" aria-hidden="true"></i></span><div><h2>{% if module_enabled('oai_pmh') %}{{ _('Integrations and OAI-PMH') }}{% else %}{{ _('Integrations') }}{% endif %}</h2><p>{{ _('Guides and workspaces available from the Integrate menu.') }}</p></div></div>
+        <div class="help-definition-grid">
+          {% if module_enabled('api_read') %}<article><h3>{{ _('Read from the ORCID API') }}</h3><p>{{ _('The guide explains how to request cached or live public ORCID data and how to interpret the response for a specific ORCID iD.') }}</p></article>{% endif %}
+          {% if module_enabled('orcid_write') %}<article><h3>{{ _('Write to ORCID') }}</h3><p>{{ _('The integration guide provides the available institutional examples and downloadable files for preparing ORCID updates.') }}</p></article>{% endif %}
+          {% if module_enabled('affiliation_manager') %}<article><h3>{{ _('Affiliation Manager identifier') }}</h3><p>{{ _('Your account can store its institutional APP identifier. A valid value begins with APP- and can be updated from that workspace.') }}</p></article>{% endif %}
+          {% if module_enabled('oai_pmh') %}<article><h3>{{ _('OAI-PMH publishing') }}</h3><p>{{ _('The workspace displays repository status, article inclusion, metadata formats, and DOI import history for your institution.') }}</p></article>
+          <article><h3>{{ _('User access in OAI-PMH') }}</h3><p>{{ _('A User can review repository information, articles, mappings, and import history, and export the article audit without changing publication content.') }}</p></article>
+          <article><h3>{{ _('OAI User access in OAI-PMH') }}</h3><p>{{ _('An OAI User can also include or exclude articles, import DOI decisions with the provided template, undo the latest active import, and customize the DataORCID field mapping.') }}</p></article>{% endif %}
+        </div>
+        <div class="help-link-grid">
+          {% if module_enabled('api_read') %}<a href="{{ url_for('main.integration_pull') }}" class="help-link-card"><i class="fas fa-code" aria-hidden="true"></i><span><strong>{{ _('Read from the API') }}</strong><small>{{ _('Open the public-data request guide.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('orcid_write') %}<a href="{{ url_for('main.integration_guide') }}" class="help-link-card"><i class="fas fa-terminal" aria-hidden="true"></i><span><strong>{{ _('Write to ORCID') }}</strong><small>{{ _('Open examples and integration downloads.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('affiliation_manager') %}<a href="{{ url_for('auth.am_settings') }}" class="help-link-card"><i class="fas fa-key" aria-hidden="true"></i><span><strong>{{ _('Affiliation Manager') }}</strong><small>{{ _('Review or update your account identifier.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if module_enabled('oai_pmh') %}<a href="{{ url_for('oai_pmh.index') }}" class="help-link-card"><i class="fas fa-broadcast-tower" aria-hidden="true"></i><span><strong>{{ _('OAI-PMH repository') }}</strong><small>{{ _('Open the institutional publishing workspace.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+        </div>
+      </section>
+      {% endif %}
+
+      {% if 'data-dictionary' in available_topics %}
+      <section id="data-dictionary" class="help-section help-searchable" {% if active_topic != 'data-dictionary' %}hidden{% endif %}>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-book" aria-hidden="true"></i></span><div><h2>{{ _('Data dictionary') }}</h2><p>{{ _('Definitions for the records and indicators in enabled modules.') }}</p></div></div>
+        <div class="table-responsive"><table class="table help-source-table"><thead><tr><th>{{ _('Term') }}</th><th>{{ _('Definition') }}</th><th>{{ _('Source and limitation') }}</th></tr></thead><tbody>
+          {% if module_enabled('researchers') or module_enabled('orcid_analytics') or module_enabled('synchronization') or module_enabled('data_quality') or module_enabled('duplicates') %}<tr><th>{{ _('ORCID iD') }}</th><td>{{ _('The persistent identifier of one ORCID record.') }}</td><td>{{ _('It identifies the record, not a locally verified real-world identity.') }}</td></tr>
+          <tr><th>{{ _('Researcher relationship') }}</th><td>{{ _('An association between an ORCID iD and the assigned institution, supported by verified discovery evidence or marked as inferred from cached activity.') }}</td><td>{{ _('Public affiliations can be current or historical and may be incomplete.') }}</td></tr>{% endif %}
+          {% if module_enabled('orcid_analytics') or module_enabled('synchronization') or module_enabled('data_quality') or has_openalex or module_enabled('oai_pmh') %}<tr><th>{{ _('ORCID work record') }}</th><td>{{ _('One public work item from one ORCID profile.') }}</td><td>{{ _('Several source records can describe the same scholarly output.') }}</td></tr>
+          <tr><th>{{ _('Unique scholarly output') }}</th><td>{{ _('A canonical work linked by normalized DOI or a conservative title-and-year fallback.') }}</td><td>{{ _('Fallback matches should be interpreted more cautiously than DOI matches.') }}</td></tr>{% endif %}
+          {% if module_enabled('duplicates') %}<tr><th>{{ _('Duplicate candidate') }}</th><td>{{ _('A group of ORCID records with similar names and supporting activity evidence.') }}</td><td>{{ _('It is a review signal, not a confirmed duplicate or an automatic merge.') }}</td></tr>{% endif %}
+          {% if has_openalex %}<tr><th>{{ _('OpenAlex coverage') }}</th><td>{{ _('Eligible canonical outputs with normalized OpenAlex metadata divided by all eligible outputs.') }}</td><td>{{ _('OpenAlex and ORCID have independent coverage and update cycles.') }}</td></tr>
+          <tr><th>{{ _('FWCI') }}</th><td>{{ _('Field-weighted citation impact supplied by OpenAlex.') }}</td><td>{{ _('Interpret it with the displayed coverage and the OpenAlex methodology.') }}</td></tr>
+          <tr><th>{{ _('Diamond Open Access') }}</th><td>{{ _('The native OpenAlex category for an article published in a fully open journal without publication fees for authors.') }}</td><td>{{ _('The platform does not infer this status from another directory.') }}</td></tr>
+          <tr><th>{{ _('Green Open Access') }}</th><td>{{ _('The native OpenAlex category for a toll-access publisher page with a free copy in a repository.') }}</td><td>{{ _('Availability can change when source records are refreshed.') }}</td></tr>{% endif %}
+          {% if module_enabled('oai_pmh') %}<tr><th>{{ _('OAI-PMH publication decision') }}</th><td>{{ _('The effective inclusion or exclusion of a canonical article in the institutional repository.') }}</td><td>{{ _('A specific article decision can override the repository default and remains institution-scoped.') }}</td></tr>
+          <tr><th>{{ _('Metadata prefix') }}</th><td>{{ _('The OAI-PMH format requested by a harvester, such as oai_dc, oai_openaire, or dataorcid.') }}</td><td>{{ _('Available fields depend on the source metadata and the active DataORCID mapping.') }}</td></tr>{% endif %}
+        </tbody></table></div>
+      </section>
+      {% endif %}
+
+      {% if 'roles-governance' in available_topics %}
+      <section id="roles-governance" class="help-section help-searchable" {% if active_topic != 'roles-governance' %}hidden{% endif %}>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-user-shield" aria-hidden="true"></i></span><div><h2>{% if module_enabled('oai_pmh') %}{{ _('User and OAI User access') }}{% else %}{{ _('User access and privacy') }}{% endif %}</h2><p>{{ _('What these everyday profiles can see and change.') }}</p></div></div>
+        <div class="table-responsive"><table class="table help-source-table"><thead><tr><th>{{ _('Capability') }}</th><th>{{ _('User') }}</th>{% if module_enabled('oai_pmh') %}<th>{{ _('OAI User') }}</th>{% endif %}</tr></thead><tbody>
+          <tr><th>{{ _('Use enabled institutional modules') }}</th><td>{{ _('Assigned institution') }}</td>{% if module_enabled('oai_pmh') %}<td>{{ _('Assigned institution') }}</td>{% endif %}</tr>
+          {% if has_exports %}<tr><th>{{ _('Download visible datasets and reports') }}</th><td>{{ _('Available') }}</td>{% if module_enabled('oai_pmh') %}<td>{{ _('Available') }}</td>{% endif %}</tr>{% endif %}
+          {% if module_enabled('duplicates') %}<tr><th>{{ _('Inspect duplicate candidates') }}</th><td>{{ _('Read only') }}</td>{% if module_enabled('oai_pmh') %}<td>{{ _('Read only') }}</td>{% endif %}</tr>{% endif %}
+          {% if module_enabled('oai_pmh') %}<tr><th>{{ _('Review OAI-PMH repository content') }}</th><td>{{ _('Read only') }}</td><td>{{ _('Available') }}</td></tr>
+          <tr><th>{{ _('Select articles, import DOI decisions, and map metadata') }}</th><td>{{ _('Read only') }}</td><td>{{ _('Available') }}</td></tr>{% endif %}
+          <tr><th>{{ _('Update own profile and password') }}</th><td>{{ _('Available') }}</td>{% if module_enabled('oai_pmh') %}<td>{{ _('Available') }}</td>{% endif %}</tr>
+        </tbody></table></div>
+        <div class="help-callout is-warning"><i class="fas fa-shield-alt" aria-hidden="true"></i><div><strong>{{ _('Privacy and traceability') }}</strong><p>{{ _('The research metadata shown here comes from public source records. Your signed-in activity can be recorded with account, institution, path, time, browser, and network information to protect the service and diagnose failures.') }}</p><p>{{ _('Do not enter credentials or private personal data into searches, filters, filenames, or support descriptions. Use your institutional support channel if you need access, correction, or deletion assistance.') }}</p></div></div>
+        <div class="help-link-grid">
+          <a class="help-link-card" href="{{ url_for('auth.profile') }}"><i class="fas fa-user" aria-hidden="true"></i><span><strong>{{ _('Edit profile') }}</strong><small>{{ _('Update your name, position, and email.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+          <a class="help-link-card" href="{{ url_for('auth.change_password') }}"><i class="fas fa-key" aria-hidden="true"></i><span><strong>{{ _('Change password') }}</strong><small>{{ _('Keep your account credentials current.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+      </section>
+      {% endif %}
+
+      {% if 'architecture' in available_topics %}
+      <section id="architecture" class="help-section help-searchable" {% if active_topic != 'architecture' %}hidden{% endif %}>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span><div><h2>{{ _('How the platform works') }}</h2><p>{{ _('A user-oriented view of scope, freshness, and results.') }}</p></div></div>
+        <div class="help-architecture-grid">
+          <article><span>{{ _('Scope') }}</span><strong>{{ _('One assigned institution') }}</strong><p>{{ _('Your account supplies the institutional context used by pages, filters, counts, and downloads.') }}</p></article>
+          {% if has_orcid_data %}<article><span>{{ _('Public source') }}</span><strong>ORCID</strong><p>{{ _('Only metadata made public by the record holder can appear in discovery, profiles, works, or funding.') }}</p></article>{% endif %}
+          {% if has_cached_data %}<article><span>{{ _('Consistent snapshot') }}</span><strong>{{ _('Local cache') }}</strong><p>{{ _('Visible update times tell you when source data was last incorporated into the institutional dataset.') }}</p></article>{% endif %}
+          {% if has_openalex %}<article><span>{{ _('Enrichment') }}</span><strong>OpenAlex</strong><p>{{ _('Reliable matches add analytical fields while ORCID remains identifiable as the original work source.') }}</p></article>{% endif %}
+          {% if has_exports %}<article><span>{{ _('Downloads') }}</span><strong>{{ _('Background exports') }}</strong><p>{{ _('Large files are prepared outside the page request and remain available through the floating export notice until they expire.') }}</p></article>{% endif %}
+          {% if module_enabled('oai_pmh') %}<article><span>{{ _('Repository') }}</span><strong>OAI-PMH</strong><p>{{ _('Institutional decisions determine which canonical articles and metadata fields are exposed to compatible harvesters.') }}</p></article>{% endif %}
+        </div>
+        <div class="help-callout is-neutral"><i class="fas fa-info-circle" aria-hidden="true"></i><div><strong>{{ _('Reading results responsibly') }}</strong><p>{{ _('Always consider the displayed institutional scope, filters, source, coverage, and last update before comparing or reusing a result.') }}</p></div></div>
+      </section>
+      {% endif %}
+
+      {% if 'troubleshooting' in available_topics %}
+      <section id="troubleshooting" class="help-section help-searchable" {% if active_topic != 'troubleshooting' %}hidden{% endif %}>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-life-ring" aria-hidden="true"></i></span><div><h2>{{ _('Troubleshooting') }}</h2><p>{% if module_enabled('oai_pmh') %}{{ _('Common situations and useful checks for User and OAI User profiles.') }}{% else %}{{ _('Common situations and useful checks for User profiles.') }}{% endif %}</p></div></div>
+        <div class="accordion help-accordion" id="helpTroubleshooting">
+          {% if module_enabled('researchers') %}{{ help_issue('researchers', _('No researchers appear for my institution'), _('Confirm that your account shows the expected institution. Public discovery also depends on verified institutional identifiers and visible affiliations in ORCID.')) }}{% endif %}
+          {% if module_enabled('orcid_analytics') or module_enabled('synchronization') %}{{ help_issue('totals', _('Works or funding totals look incomplete'), _('Check the displayed update time and the source ORCID profiles. Only public source records present in the current institutional snapshot can be counted.')) }}{% endif %}
+          {% if has_openalex %}{{ help_issue('openalex', _('OpenAlex coverage is low'), _('Review how many ORCID outputs have a DOI. Records without one require a strict fallback match and may remain unmatched to prevent false associations.')) }}{% endif %}
+          {% if module_enabled('synchronization') or module_enabled('openalex_enrichment') %}{{ help_issue('sync', _('An update still appears in progress'), _('Wait for the displayed status to change and refresh the page after a few minutes. Avoid repeating the same operation; if the status remains unchanged, report the institution, view, and approximate start time through your support channel.')) }}{% endif %}
+          {% if has_exports %}{{ help_issue('export', _('My export is pending, empty, or failed'), _('Keep the floating export notice open while the file is prepared. For an empty file, confirm the filters and that the relevant dataset contains records. For a failed export, report the view, format, filters, and time shown by the notice.')) }}{% endif %}
+          {% if module_enabled('oai_pmh') %}{{ help_issue('oai', _('I cannot change an OAI-PMH article or mapping'), _('A standard User has read-only access. Sign in with an OAI User account assigned to the institution when publication selection, DOI imports, or metadata mapping must be changed.')) }}{% endif %}
+          {{ help_issue('session', _('A page sends me back to the overview'), _('Your session may have expired or the requested module may no longer be available. Sign in again and use the current menu; contact your support channel if an expected area is still missing.')) }}
+        </div>
+        {% if module_enabled('resources') %}<div class="help-resource-banner"><div><i class="fas fa-book-open" aria-hidden="true"></i><span><strong>{{ _('ORCID resources and consortium guidance') }}</strong><small>{{ _('External ORCID documentation, member resources, and integration references.') }}</small></span></div><a href="{{ url_for('main.resources') }}" class="btn btn-outline-info">{{ _('Open resources') }}</a></div>{% endif %}
+      </section>
+      {% endif %}
+
+      {% if 'release-notes' in available_topics %}
+      <section id="release-notes" class="help-section help-searchable" {% if active_topic != 'release-notes' %}hidden{% endif %}>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-code-branch" aria-hidden="true"></i></span><div><h2>{{ _('Version 2.1') }}</h2><p>{{ _('User-facing capabilities included in this release and available in this installation.') }}</p></div></div>
+        <div class="help-prose"><ul class="help-check-list">
+          <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The overview summarizes the assigned institution and the freshness of its available data.') }}</li>
+          {% if module_enabled('researchers') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Researcher discovery combines verified institutional identifiers and preserves relationship evidence.') }}</li>{% endif %}
+          {% if module_enabled('orcid_analytics') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('ORCID analytics provides filterable work, funding, and researcher indicators with CSV and XLSX data exports.') }}</li>{% endif %}
+          {% if module_enabled('data_quality') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Data quality exposes coverage, integrity, provenance, and known limitations before reuse.') }}</li>{% endif %}
+          {% if module_enabled('duplicates') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Duplicate analysis shows possible profile matches, their evidence, methodology, and downloadable results.') }}</li>{% endif %}
+          {% if module_enabled('synchronization') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The datasets workspace presents cache status, recent update results, record totals, and institutional downloads.') }}</li>{% endif %}
+          {% if module_enabled('openalex_analytics') or module_enabled('openalex_enrichment') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OpenAlex adds coverage, citation, open-access, topic, language, authorship, source, and institutional metadata to eligible outputs.') }}</li>{% endif %}
+          {% if has_exports %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Large exports run in the background, avoid duplicate generation, report progress in a floating notice, and expire automatically.') }}</li>{% endif %}
+          {% if module_enabled('api_read') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The API reading guide documents access to cached or live public ORCID profile data.') }}</li>{% endif %}
+          {% if module_enabled('orcid_write') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The ORCID writing area provides the institutional integration guides and example downloads available on the server.') }}</li>{% endif %}
+          {% if module_enabled('affiliation_manager') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Each account can review or update its Affiliation Manager APP identifier.') }}</li>{% endif %}
+          {% if module_enabled('oai_pmh') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OAI-PMH exposes repository status, article selection, metadata formats, audit exports, and traceable DOI imports according to User or OAI User access.') }}</li>{% endif %}
+        </ul></div>
+        <div class="help-callout is-info"><i class="fas fa-toggle-on" aria-hidden="true"></i><div><strong>{{ _('Documentation follows module availability') }}</strong><p>{{ _('This help center only displays information for areas currently available in the installation. When an area is turned off, its topic, blocks, links, and direct help URL are removed as applicable.') }}</p></div></div>
+      </section>
+      {% endif %}
+
+      <div id="helpNoResults" class="help-no-results" hidden><i class="far fa-file-alt" aria-hidden="true"></i><h2>{{ _('No help topics matched your search') }}</h2><p>{% if module_enabled('oai_pmh') %}{{ _('Try a broader term such as profile, metadata, indicator, OAI, or export.') }}{% else %}{{ _('Try a broader term such as profile, metadata, indicator, or export.') }}{% endif %}</p></div>
     </main>
   </div>
 </div>
@@ -440,32 +309,26 @@ $(function () {
   const $prompt = $('#helpTopicPrompt');
   const routeTopic = {{ (active_topic or '')|tojson }};
   const hashTopic = window.location.hash.replace(/^#/, '');
-  const initialTopic = routeTopic || hashTopic;
+  const availableTopicIds = new Set($sections.map(function () { return this.id; }).get());
+  const requestedTopic = routeTopic || hashTopic;
+  const initialTopic = availableTopicIds.has(requestedTopic) ? requestedTopic : '';
 
   function filterHelp() {
     const query = ($search.val() || '').trim().toLocaleLowerCase();
     let visible = 0;
-
     $sections.each(function () {
-      const matches = query
-        ? $(this).text().toLocaleLowerCase().includes(query)
-        : Boolean(initialTopic && this.id === initialTopic);
+      const matches = query ? $(this).text().toLocaleLowerCase().includes(query) : Boolean(initialTopic && this.id === initialTopic);
       $(this).prop('hidden', !matches);
       if (matches) visible += 1;
     });
-
     $clear.prop('hidden', !query);
     $empty.prop('hidden', !query || visible > 0);
     $prompt.prop('hidden', Boolean(query || initialTopic));
-    $status.text(query
-      ? {{ _('%(count)s help sections found', count='__COUNT__') | tojson }}.replace('__COUNT__', visible)
-      : '');
+    $status.text(query ? {{ _('%(count)s help sections found', count='__COUNT__') | tojson }}.replace('__COUNT__', visible) : '');
   }
 
   $search.on('input', filterHelp);
-  $clear.on('click', function () {
-    $search.val('').trigger('input').focus();
-  });
+  $clear.on('click', function () { $search.val('').trigger('input').focus(); });
   filterHelp();
 });
 </script>

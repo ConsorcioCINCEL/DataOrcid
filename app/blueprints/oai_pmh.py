@@ -620,6 +620,23 @@ def export_article_listing():
         created_at=utc_now().replace(microsecond=0),
         updated_at=utc_now().replace(microsecond=0),
     )
+    if request.args.get("background") == "1":
+        from ..services.export_jobs import queue_export_response
+
+        return queue_export_response(
+            "oai_article_audit",
+            export_format,
+            {
+                "ror_id": ror_id,
+                "institution_name": institution_name,
+                "filters": {
+                    key: request.args.get(key)
+                    for key in ("q", "status", "type", "validation", "source", "sort", "direction")
+                },
+                "locale": session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE", "en"),
+            },
+            _("OAI article audit"),
+        )
     listing = _article_listing(config, request.args, load_type_options=False)
     ordered_query = listing["query"].order_by(
         listing["ordering"],

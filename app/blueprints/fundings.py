@@ -11,6 +11,7 @@ from flask_babel import _
 
 from .. import db
 from ..decorators import login_required
+from ..spreadsheet import excel_safe_dataframe
 from ..utils.flashes import flash_err, flash_ok
 from ..utils.session_helpers import get_active_ror_id
 
@@ -159,7 +160,9 @@ def download_all_fundings_cache():
         if export_format == 'excel':
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Fundings', index=False)
+                excel_safe_dataframe(df).to_excel(
+                    writer, sheet_name='Fundings', index=False
+                )
             output.seek(0)
             
             return send_file(

@@ -53,7 +53,9 @@
       <button class="btn btn-sm btn-outline-primary d-md-none" type="button" data-toggle="collapse" data-target="#researcherFilters" aria-expanded="{{ 'true' if has_active_filters else 'false' }}" aria-controls="researcherFilters"><i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>{{ _('Show filters') }}</button>
       {{ export_links(
         url_for('main.researcher_list_export', format='csv', q=filters.q, am=filters.am, match=filters.match, sort=filters.sort, dir=filters.dir),
-        url_for('main.researcher_list_export', format='xlsx', q=filters.q, am=filters.am, match=filters.match, sort=filters.sort, dir=filters.dir)
+        url_for('main.researcher_list_export', format='xlsx', q=filters.q, am=filters.am, match=filters.match, sort=filters.sort, dir=filters.dir),
+        _('Researcher directory'),
+        true
       ) }}
       <a href="{{ url_for('works.cache_works_status') }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>{{ _('Synchronization') }}</a>
     </div>

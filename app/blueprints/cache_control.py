@@ -80,11 +80,20 @@ def _log_run_web(model_class, ror_id, status, count, error_msg=None):
 def _run_member_cache_rebuild(
     target: str,
     ror_id: str,
-    base_url: str,
-    headers: dict,
+    base_url: str | None = None,
+    headers: dict | None = None,
     job_id: str | None = None,
 ) -> None:
     """Run a member API cache rebuild outside the request lifecycle."""
+    if not base_url or not headers:
+        token = get_client_credentials_token()
+        if not token:
+            raise RuntimeError("Could not obtain an ORCID Member API token.")
+        base_url = current_app.config.get("ORCID_MEMBER_URL") or "https://api.orcid.org/v3.0/"
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {token}",
+        }
     update_job_step(job_id, target, "running")
     try:
         if target == 'works':
@@ -144,8 +153,6 @@ def rebuild_cache(target):
         _run_member_cache_rebuild,
         target,
         ror_id,
-        base_url,
-        headers,
         job_type=f"member_{target}_sync",
         ror_id=ror_id,
         requested_by_user_id=session.get("user_id"),

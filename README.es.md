@@ -22,6 +22,9 @@ Los identificadores Ringgold incluidos fueron validados contra afiliaciones púb
 - Menú lateral organizado por tareas y Centro de ayuda buscable, visible para
   todos los perfiles autenticados, pero dedicado exclusivamente a Usuario y
   Usuario OAI y filtrado por los módulos activos.
+- Landing pública autoexplicativa con llamadas a la acción y formulario de
+  contacto con bandeja administrativa privada, avisos SMTP opcionales y
+  activación global desde Administración.
 
 ---
 
@@ -147,6 +150,7 @@ smtp_user = "usuario"
 smtp_pass = "password"
 from_name = "Data ORCID-Chile"
 from_email= "no-reply@midominio.cl"
+reply_to = "contacto@midominio.cl" # destinatario del formulario público
 ```
 
 ---
@@ -289,6 +293,13 @@ responde con acceso denegado ante sus páginas, formularios, API, descargas y
 endpoints públicos. El resumen, la autenticación, los ajustes personales y el
 propio panel de módulos permanecen siempre activos para evitar un bloqueo
 administrativo. La configuración se conserva en la tabla `system_module`.
+El interruptor **Página pública de presentación** controla la portada para
+visitantes y su formulario de contacto; al desactivarlo, `/` vuelve a enviar a
+los visitantes directamente al inicio de sesión. Las cuentas autenticadas
+siempre conservan el panel institucional en `/`. Las consultas válidas se
+guardan de forma durable en la bandeja privada `/admin/contact-inquiries`
+incluso si SMTP no está disponible; el correo es sólo un canal de aviso
+opcional y no el registro principal.
 
 El Centro de ayuda autenticado está disponible en `/help/` para todos los
 roles. Su contenido describe intencionalmente sólo los flujos de Usuario y
@@ -417,6 +428,7 @@ Ejemplos de proveedor:
 | `OrcidCache` | Almacenamiento JSON por año |
 | `OpenAlexInstitutionWorkFact` | Capa intermedia indexada para filtros y métricas OpenAlex |
 | `AnalyticsDataVersion` | Versión de datos usada para invalidar cachés analíticas |
+| `ContactInquiry` | Consultas privadas recibidas desde la portada y estado de su gestión |
 
 ---
 

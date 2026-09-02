@@ -736,6 +736,30 @@ class SystemModule(db.Model):
     updated_by_username = db.Column(db.String(80), nullable=True)
 
 
+class ContactInquiry(db.Model):
+    """Private, durable message submitted through the public landing page."""
+    __tablename__ = "contact_inquiry"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(254), nullable=False, index=True)
+    institution = db.Column(db.String(160), nullable=True)
+    topic = db.Column(db.String(32), nullable=False, index=True)
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False, index=True)
+
+    notification_status = db.Column(
+        db.String(32),
+        default="pending",
+        nullable=False,
+        index=True,
+    )
+    is_resolved = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    resolved_by_user_id = db.Column(db.Integer, nullable=True)
+    resolved_by_username = db.Column(db.String(80), nullable=True)
+
+
 class SyncJob(db.Model):
     """Durable status for a user-triggered background synchronization job."""
     __tablename__ = "sync_job"

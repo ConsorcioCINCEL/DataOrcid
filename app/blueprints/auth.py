@@ -1,11 +1,7 @@
 """Authentication, password recovery, and account settings routes."""
 
 import logging
-import hashlib
 import re
-import threading
-import time
-from datetime import timedelta
 from urllib.parse import urlsplit
 from flask import (
     Blueprint, render_template, request, redirect,
@@ -13,18 +9,19 @@ from flask import (
 )
 from flask_babel import _
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from sqlalchemy import text
-
 from .. import db
-from ..models import AuthRateLimitEvent, User, password_fits_bcrypt, utc_now
+from ..models import User, password_fits_bcrypt
 from ..utils.flashes import flash_err, flash_ok, flash_success
 from ..decorators import login_required
 from ..utils.emailer import send_email
+from ..services.rate_limit import (
+    client_ip as _client_ip,
+    clear_rate_limit as _clear_rate_limit,
+    is_rate_limited as _is_rate_limited,
+)
 
 bp_auth = Blueprint("auth", __name__, url_prefix="/auth")
 logger = logging.getLogger(__name__)
-_RATE_LIMIT_LOCK = threading.Lock()
-_RATE_LIMIT_BUCKETS: dict[str, list[float]] = {}
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+$")
 
 
@@ -36,76 +33,6 @@ def _safe_redirect_target(target: str | None) -> str | None:
     if parsed.scheme or parsed.netloc:
         return None
     return target if target.startswith("/") else None
-
-
-def _client_ip() -> str:
-    """Return the client address after any explicitly configured ProxyFix."""
-    return (request.remote_addr or "unknown")[:50]
-
-
-def _rate_limit_key(action: str) -> tuple[str, str]:
-    client_digest = hashlib.sha256(_client_ip().encode("utf-8")).hexdigest()
-    return action[:32], client_digest
-
-
-def _is_rate_limited(action: str, limit: int, window_seconds: int) -> bool:
-    """Apply a database-backed rate limit shared by all application workers."""
-    action_key, client_key = _rate_limit_key(action)
-    cutoff_datetime = utc_now() - timedelta(seconds=window_seconds)
-    try:
-        if db.session.get_bind().dialect.name == "postgresql":
-            db.session.execute(
-                text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 2))"),
-                {"key": f"{action_key}:{client_key}"},
-            )
-        # Prune this bucket while it is already being touched so old attempts do
-        # not accumulate indefinitely.
-        AuthRateLimitEvent.query.filter_by(
-            action=action_key,
-            client_key=client_key,
-        ).filter(AuthRateLimitEvent.occurred_at < cutoff_datetime).delete(
-            synchronize_session=False
-        )
-        attempts = AuthRateLimitEvent.query.filter_by(
-            action=action_key,
-            client_key=client_key,
-        ).filter(AuthRateLimitEvent.occurred_at >= cutoff_datetime).count()
-        db.session.add(AuthRateLimitEvent(action=action_key, client_key=client_key))
-        db.session.commit()
-        return attempts >= limit
-    except Exception as exc:
-        db.session.rollback()
-        logger.warning("Shared authentication rate limiter unavailable: %s", exc)
-
-    # Compatibility fallback for a database undergoing maintenance. It is not
-    # the primary limiter, but still avoids leaving authentication unprotected.
-    now = time.time()
-    cutoff = now - window_seconds
-    key = f"{action_key}:{client_key}"
-    with _RATE_LIMIT_LOCK:
-        attempts = [ts for ts in _RATE_LIMIT_BUCKETS.get(key, []) if ts >= cutoff]
-        blocked = len(attempts) >= limit
-        attempts.append(now)
-        _RATE_LIMIT_BUCKETS[key] = attempts
-        return blocked
-
-
-def _clear_rate_limit(action: str) -> None:
-    """Clear a client's failed-attempt history after successful authentication."""
-    action_key, client_key = _rate_limit_key(action)
-    try:
-        AuthRateLimitEvent.query.filter_by(
-            action=action_key,
-            client_key=client_key,
-        ).delete(synchronize_session=False)
-        db.session.commit()
-    except Exception as exc:
-        db.session.rollback()
-        logger.warning("Could not clear shared authentication rate limit: %s", exc)
-
-    key = f"{action_key}:{client_key}"
-    with _RATE_LIMIT_LOCK:
-        _RATE_LIMIT_BUCKETS.pop(key, None)
 
 
 def make_password_reset_token(user: User) -> str:

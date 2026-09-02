@@ -10,6 +10,13 @@ from ..models import SystemModule
 
 MODULE_DEFINITIONS = (
     {
+        "key": "landing_page",
+        "group": "Public site",
+        "label": "Public landing page",
+        "description": "Single-page service overview and public contact form.",
+        "icon": "fas fa-bullhorn",
+    },
+    {
         "key": "researchers",
         "group": "Explore",
         "label": "Researchers",
@@ -137,6 +144,9 @@ MODULE_BY_KEY = {item["key"]: item for item in MODULE_DEFINITIONS}
 def _module_description_translation_markers():
     """Keep data-driven module descriptions in the gettext catalog."""
     return (
+        _("Public site"),
+        _("Public landing page"),
+        _("Single-page service overview and public contact form."),
         _("Researcher directory, ORCID profiles, and profile exports."),
         _("Institutional ORCID indicators, charts, and metric downloads."),
         _("Institutional analytics and cross-institution comparisons."),
@@ -157,6 +167,9 @@ def _module_description_translation_markers():
     )
 
 _ENDPOINT_MODULES = {
+    "main.contact": "landing_page",
+    "admin.contact_inquiries": "landing_page",
+    "admin.update_contact_inquiry": "landing_page",
     "main.researcher_list": "researchers",
     "main.researcher_list_export": "researchers",
     "main.orcid_profile": "researchers",

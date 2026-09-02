@@ -19,6 +19,9 @@ Ringgold identifiers in the bundled Chilean university dataset were validated ag
 - A task-oriented sidebar and a searchable Help center. Help remains visible to
   every signed-in role, documents only the User and OAI User experience, and
   automatically omits content and direct topic routes for disabled modules.
+- A self-explanatory public landing page with calls to action and a contact form
+  that stores inquiries in a private administrative inbox, with optional SMTP
+  notifications, and can be enabled or disabled globally.
 - A five-language interface with English as the source language and complete
   Spanish, French, Portuguese, and German Babel catalogs.
 
@@ -212,6 +215,12 @@ Global availability for optional application areas is managed at
 server deny its pages, forms, APIs, downloads, and public endpoints. Overview,
 authentication, personal settings, and the module control panel remain active
 to preserve administrative recovery. Settings are stored in `system_module`.
+The **Public landing page** switch controls both the visitor homepage and its
+contact form. When disabled, `/` sends visitors directly to sign-in; signed-in
+accounts always keep the institutional dashboard at `/`. Valid contact messages
+are stored durably in the private inbox at `/admin/contact-inquiries` even when
+SMTP is unavailable; email is an optional notification channel, not the system
+of record.
 
 The authenticated Help center is available at `/help/` to every role. Its
 content deliberately covers only standard User and OAI User workflows; staff

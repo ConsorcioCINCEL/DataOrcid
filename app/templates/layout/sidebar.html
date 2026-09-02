@@ -24,6 +24,8 @@
   'admin.jobs',
   'admin.system_errors',
   'admin.update_system_error_status',
+  'admin.contact_inquiries',
+  'admin.update_contact_inquiry',
   'admin.modules'
 ] %}
 {% set explore_active = request.endpoint in explore_endpoints %}
@@ -253,6 +255,15 @@
       <a href="{{ url_for('admin.modules') }}" class="nav-link {% if request.endpoint == 'admin.modules' %}active{% endif %}">
         <i class="fas fa-toggle-on nav-icon" aria-hidden="true"></i>
         <p>{{ _('Module availability') }}</p>
+      </a>
+    </li>
+    {% endif %}
+    {% if session.get('is_admin') and module_enabled('landing_page') %}
+    <li class="app-sidebar-subheader"><span>{{ _('Public site') }}</span></li>
+    <li class="nav-item">
+      <a href="{{ url_for('admin.contact_inquiries') }}" class="nav-link {% if request.endpoint in ['admin.contact_inquiries', 'admin.update_contact_inquiry'] %}active{% endif %}">
+        <i class="fas fa-inbox nav-icon" aria-hidden="true"></i>
+        <p>{{ _('Contact inquiries') }}</p>
       </a>
     </li>
     {% endif %}

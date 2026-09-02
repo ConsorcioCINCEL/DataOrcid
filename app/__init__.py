@@ -345,9 +345,15 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
         MAIL_PORT=int(mail_cfg.get("smtp_port", 587)),
         MAIL_USE_TLS=bool(mail_cfg.get("use_tls", True)),
         MAIL_USE_SSL=bool(mail_cfg.get("use_ssl", False)),
+        MAIL_FORCE_IPV4=bool(mail_cfg.get("force_ipv4", False)),
         MAIL_USERNAME=mail_cfg.get("smtp_user"),
         MAIL_PASSWORD=_first_environment_value("MAIL_PASSWORD", "SMTP_PASSWORD") or mail_cfg.get("smtp_pass"),
         MAIL_DEFAULT_SENDER=(mail_cfg.get("from_name", "DataOrcid"), mail_cfg.get("from_email")),
+        MAIL_REPLY_TO=(
+            _first_environment_value("CONTACT_EMAIL")
+            or mail_cfg.get("reply_to")
+            or mail_cfg.get("from_email")
+        ),
     )
 
     export_cfg = config_data.get("exports", {})

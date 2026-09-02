@@ -15,6 +15,7 @@ from sqlalchemy import and_, case, func, not_, or_
 
 from .. import DEFAULT_LANGUAGES, db
 from ..models import (
+    ContactInquiry,
     OaiPmhInstitutionConfig,
     SyncJob,
     SyncJobStep,
@@ -51,6 +52,8 @@ _ERROR_STATUSES = {"all", "open", "resolved"}
 _ERROR_SOURCES = {"all", "request", "background_job", "application"}
 _ERROR_PER_PAGE = {25, 50, 100}
 _ERROR_SORT_OPTIONS = {"occurred", "source", "user", "exception", "status"}
+_CONTACT_STATUSES = {"all", "open", "resolved"}
+_CONTACT_PER_PAGE = {25, 50, 100}
 
 
 def _background_request_condition():
@@ -950,7 +953,14 @@ def modules():
         })
 
     grouped_modules = []
-    for group in ("Explore", "Manage data", "Integrate", "Support", "Administration"):
+    for group in (
+        "Public site",
+        "Explore",
+        "Manage data",
+        "Integrate",
+        "Support",
+        "Administration",
+    ):
         items = [item for item in module_rows if item["group"] == group]
         if items:
             grouped_modules.append({"label": _(group), "items": items})
@@ -961,6 +971,102 @@ def modules():
         enabled_count=enabled_count,
         module_count=len(module_rows),
     )
+
+
+@bp_admin.route("/contact-inquiries")
+@admin_required
+def contact_inquiries():
+    """Review private messages submitted through the public landing page."""
+    page = max(request.args.get("page", 1, type=int), 1)
+    requested_per_page = request.args.get("per_page", 25, type=int)
+    per_page = requested_per_page if requested_per_page in _CONTACT_PER_PAGE else 25
+    selected_status = (request.args.get("status") or "open").strip().lower()
+    if selected_status not in _CONTACT_STATUSES:
+        selected_status = "open"
+    search_query = (request.args.get("q") or "").strip()[:160]
+
+    query = ContactInquiry.query
+    if selected_status == "open":
+        query = query.filter(ContactInquiry.is_resolved.is_(False))
+    elif selected_status == "resolved":
+        query = query.filter(ContactInquiry.is_resolved.is_(True))
+    if search_query:
+        pattern = f"%{search_query}%"
+        query = query.filter(or_(
+            ContactInquiry.name.ilike(pattern),
+            ContactInquiry.email.ilike(pattern),
+            ContactInquiry.institution.ilike(pattern),
+            ContactInquiry.message.ilike(pattern),
+        ))
+
+    pagination = query.order_by(ContactInquiry.created_at.desc()).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False,
+    )
+    topic_labels = {
+        "demo": _("Demonstration"),
+        "access": _("Institutional access"),
+        "integration": _("Integrations and OAI-PMH"),
+        "support": _("Support"),
+        "other": _("Other inquiry"),
+    }
+    notification_labels = {
+        "pending": (_("Pending"), "badge-secondary"),
+        "delivered": (_("Notification sent"), "badge-success"),
+        "authentication_failed": (_("SMTP authentication failed"), "badge-warning"),
+        "connection_failed": (_("SMTP connection failed"), "badge-warning"),
+        "not_configured": (_("Email not configured"), "badge-secondary"),
+        "delivery_failed": (_("Notification not sent"), "badge-warning"),
+    }
+    return render_template(
+        "admin/contact_inquiries.html",
+        inquiries=pagination.items,
+        pagination=pagination,
+        selected_status=selected_status,
+        q=search_query,
+        per_page=per_page,
+        per_page_options=sorted(_CONTACT_PER_PAGE),
+        topic_labels=topic_labels,
+        notification_labels=notification_labels,
+        summary={
+            "total": ContactInquiry.query.count(),
+            "open": ContactInquiry.query.filter(ContactInquiry.is_resolved.is_(False)).count(),
+            "resolved": ContactInquiry.query.filter(ContactInquiry.is_resolved.is_(True)).count(),
+            "unnotified": ContactInquiry.query.filter(
+                ContactInquiry.notification_status != "delivered"
+            ).count(),
+        },
+    )
+
+
+@bp_admin.post("/contact-inquiries/<int:inquiry_id>/status")
+@admin_required
+def update_contact_inquiry(inquiry_id: int):
+    """Resolve, reopen, or permanently delete one private contact message."""
+    inquiry = db.session.get(ContactInquiry, inquiry_id)
+    if inquiry is None:
+        abort(404)
+    action = (request.form.get("action") or "").strip().lower()
+    if action == "resolve":
+        inquiry.is_resolved = True
+        inquiry.resolved_at = utc_now()
+        inquiry.resolved_by_user_id = session.get("user_id")
+        inquiry.resolved_by_username = session.get("username")
+        flash_ok(_("The inquiry was marked as resolved."))
+    elif action == "reopen":
+        inquiry.is_resolved = False
+        inquiry.resolved_at = None
+        inquiry.resolved_by_user_id = None
+        inquiry.resolved_by_username = None
+        flash_info(_("The inquiry was reopened."))
+    elif action == "delete":
+        db.session.delete(inquiry)
+        flash_ok(_("The inquiry and its personal data were deleted."))
+    else:
+        abort(400)
+    db.session.commit()
+    return redirect(url_for("admin.contact_inquiries", status="all"))
 
 
 def _job_dashboard_context() -> dict:

@@ -151,6 +151,7 @@ smtp_host    = "smtp.gmail.com"
 smtp_port    = 587
 use_tls      = true
 use_ssl      = false
+force_ipv4   = false  # Set true if the SMTP provider rejects this host's IPv6 address.
 smtp_user    = "your-email@cincel.cl"
 smtp_pass    = "your-app-password"
 from_name    = "Data ORCID-Chile"

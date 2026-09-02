@@ -16,6 +16,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: app/services/module_access.py
+msgid "Public site"
+msgstr "Site público"
+
+#: app/services/module_access.py
+msgid "Public landing page"
+msgstr "Página inicial pública"
+
+#: app/services/module_access.py
+msgid "Single-page service overview and public contact form."
+msgstr "Apresentação do serviço em página única e formulário público de contato."
+
 #: app/decorators.py:65 app/decorators.py:78
 msgid "You must log in to access this page."
 msgstr "Você deve fazer login para acessar esta página."
@@ -10157,3 +10169,883 @@ msgstr "Abrir em OpenAlex"
 #: app/templates/works/openalex_works.html:162
 msgid "OpenAlex pagination"
 msgstr "Paginação OpenAlex"
+
+#: public landing page and contact inbox
+msgid "Demonstration"
+msgstr "Demonstração"
+
+#: public landing page and contact inbox
+msgid "Institutional access"
+msgstr "Acesso institucional"
+
+#: public landing page and contact inbox
+msgid "Other inquiry"
+msgstr "Outra consulta"
+
+#: public landing page and contact inbox
+msgid "Notification sent"
+msgstr "Notificação enviada"
+
+#: public landing page and contact inbox
+msgid "SMTP authentication failed"
+msgstr "Falha na autenticação SMTP"
+
+#: public landing page and contact inbox
+msgid "SMTP connection failed"
+msgstr "Falha na conexão SMTP"
+
+#: public landing page and contact inbox
+msgid "Email not configured"
+msgstr "E-mail não configurado"
+
+#: public landing page and contact inbox
+msgid "Notification not sent"
+msgstr "Notificação não enviada"
+
+#: public landing page and contact inbox
+msgid "The inquiry was marked as resolved."
+msgstr "A consulta foi marcada como resolvida."
+
+#: public landing page and contact inbox
+msgid "The inquiry was reopened."
+msgstr "A consulta foi reaberta."
+
+#: public landing page and contact inbox
+msgid "The inquiry and its personal data were deleted."
+msgstr "A consulta e seus dados pessoais foram excluídos."
+
+#: public landing page and contact inbox
+msgid "Request a demonstration"
+msgstr "Solicitar uma demonstração"
+
+#: public landing page and contact inbox
+msgid "You have sent several messages recently. Please try again later."
+msgstr "Você enviou várias mensagens recentemente. Tente novamente mais tarde."
+
+#: public landing page and contact inbox
+msgid "Thank you. We received your message and will reply shortly."
+msgstr "Obrigado. Recebemos sua mensagem e responderemos em breve."
+
+#: public landing page and contact inbox
+msgid "Enter a name between 2 and 120 characters."
+msgstr "Digite um nome entre 2 e 120 caracteres."
+
+#: public landing page and contact inbox
+msgid "The institution name cannot exceed 160 characters."
+msgstr "O nome da instituição não pode exceder 160 caracteres."
+
+#: public landing page and contact inbox
+msgid "The message must contain between 20 and 3,000 characters."
+msgstr "A mensagem deve conter entre 20 e 3.000 caracteres."
+
+#: public landing page and contact inbox
+msgid "You must consent to the use of these data so we can answer your inquiry."
+msgstr "Você deve consentir com o uso destes dados para que possamos responder à sua consulta."
+
+#: public landing page and contact inbox
+msgid "Review the highlighted fields before sending your inquiry."
+msgstr "Revise os campos destacados antes de enviar sua consulta."
+
+#: public landing page and contact inbox
+msgid "We could not save your message. Please try again later."
+msgstr "Não foi possível salvar sua mensagem. Tente novamente mais tarde."
+
+#: public landing page and contact inbox
+msgid "Not provided"
+msgstr "Não informado"
+
+#: public landing page and contact inbox
+msgid "New inquiry from Data ORCID-Chile"
+msgstr "Nova consulta do Data ORCID-Chile"
+
+#: public landing page and contact inbox
+msgid "Inquiry type"
+msgstr "Tipo de consulta"
+
+#: public landing page and contact inbox
+msgid "Contact inquiries"
+msgstr "Consultas de contato"
+
+#: public landing page and contact inbox
+msgid "Review messages from the public page and privately track each response."
+msgstr "Revise as mensagens da página pública e acompanhe cada resposta de forma privada."
+
+#: public landing page and contact inbox
+msgid "Public inquiry summary"
+msgstr "Resumo das consultas públicas"
+
+#: public landing page and contact inbox
+msgid "Total"
+msgstr "Total"
+
+#: public landing page and contact inbox
+msgid "Stored messages"
+msgstr "Mensagens armazenadas"
+
+#: public landing page and contact inbox
+msgid "Awaiting a response"
+msgstr "Aguardando resposta"
+
+#: public landing page and contact inbox
+msgid "Processing completed"
+msgstr "Atendimento concluído"
+
+#: public landing page and contact inbox
+msgid "Without email notification"
+msgstr "Sem notificação por e-mail"
+
+#: public landing page and contact inbox
+msgid "Messages remain stored"
+msgstr "As mensagens permanecem armazenadas"
+
+#: public landing page and contact inbox
+msgid "Private data."
+msgstr "Dados privados."
+
+#: public landing page and contact inbox
+msgid "Use the name, email, institution, and message only to answer the inquiry. Delete the record when it no longer needs to be retained."
+msgstr "Use o nome, e-mail, instituição e mensagem apenas para responder à consulta. Exclua o registro quando não for mais necessário mantê-lo."
+
+#: public landing page and contact inbox
+msgid "Search and filter"
+msgstr "Pesquisar e filtrar"
+
+#: public landing page and contact inbox
+msgid "Name, email, institution, or content"
+msgstr "Nome, e-mail, instituição ou conteúdo"
+
+#: public landing page and contact inbox
+msgid "Search inquiries"
+msgstr "Pesquisar consultas"
+
+#: public landing page and contact inbox
+msgid "Inbox"
+msgstr "Caixa de entrada"
+
+#: public landing page and contact inbox
+msgid "1 inquiry in this filter"
+msgstr "1 consulta neste filtro"
+
+#: public landing page and contact inbox
+msgid "%(count)s inquiries in this filter"
+msgstr "%(count)s consultas neste filtro"
+
+#: public landing page and contact inbox
+msgid "No results"
+msgstr "Sem resultados"
+
+#: public landing page and contact inbox
+msgid "Public inquiries received"
+msgstr "Consultas públicas recebidas"
+
+#: public landing page and contact inbox
+msgid "Messages submitted through the public form"
+msgstr "Mensagens enviadas pelo formulário público"
+
+#: public landing page and contact inbox
+msgid "Received"
+msgstr "Recebida"
+
+#: public landing page and contact inbox
+msgid "Contact"
+msgstr "Contato"
+
+#: public landing page and contact inbox
+msgid "Notification"
+msgstr "Notificação"
+
+#: public landing page and contact inbox
+msgid "Institution not provided"
+msgstr "Instituição não informada"
+
+#: public landing page and contact inbox
+msgid "administration"
+msgstr "administração"
+
+#: public landing page and contact inbox
+msgid "Reply to your Data ORCID-Chile inquiry"
+msgstr "Resposta à sua consulta sobre o Data ORCID-Chile"
+
+#: public landing page and contact inbox
+msgid "Reply by email"
+msgstr "Responder por e-mail"
+
+#: public landing page and contact inbox
+msgid "Reopen"
+msgstr "Reabrir"
+
+#: public landing page and contact inbox
+msgid "Permanently delete this inquiry and its personal data?"
+msgstr "Excluir permanentemente esta consulta e seus dados pessoais?"
+
+#: public landing page and contact inbox
+msgid "Delete"
+msgstr "Excluir"
+
+#: public landing page and contact inbox
+msgid "No inquiries match this filter"
+msgstr "Nenhuma consulta corresponde a este filtro"
+
+#: public landing page and contact inbox
+msgid "New messages will appear here even when the email notification cannot be sent."
+msgstr "Novas mensagens aparecerão aqui mesmo quando a notificação por e-mail não puder ser enviada."
+
+#: public landing page and contact inbox
+msgid "Inquiry pages"
+msgstr "Páginas de consultas"
+
+#: public landing page
+msgid "Data ORCID-Chile brings together public ORCID and OpenAlex metadata for institutional analytics, data quality, exports, and interoperability."
+msgstr "O Data ORCID-Chile reúne metadados públicos do ORCID e do OpenAlex para análise institucional, qualidade de dados, exportações e interoperabilidade."
+
+#: public landing page
+msgid "Data ORCID-Chile · Intelligence for research management"
+msgstr "Data ORCID-Chile · Inteligência para a gestão da pesquisa"
+
+#: public landing page
+msgid "An institutional platform to connect, review, and reuse research metadata."
+msgstr "Uma plataforma institucional para conectar, revisar e reutilizar metadados de pesquisa."
+
+#: public landing page
+msgid "Data ORCID-Chile · Trusted institutional metadata"
+msgstr "Data ORCID-Chile · Metadados institucionais confiáveis"
+
+#: public landing page
+msgid "Data ORCID-Chile home"
+msgstr "Início do Data ORCID-Chile"
+
+#: public landing page
+msgid "The service"
+msgstr "O serviço"
+
+#: public landing page
+msgid "Capabilities"
+msgstr "Recursos"
+
+#: public landing page
+msgid "How it works"
+msgstr "Como funciona"
+
+#: public landing page
+msgid "Infrastructure for research management"
+msgstr "Infraestrutura para a gestão da pesquisa"
+
+#: public landing page
+msgid "Turn scattered metadata into a"
+msgstr "Transforme metadados dispersos em uma"
+
+#: public landing page
+msgid "trusted institutional view"
+msgstr "visão institucional confiável"
+
+#: public landing page
+msgid "Data ORCID-Chile connects public ORCID and OpenAlex information so universities and research centers can understand their output, improve data quality, and share it with other systems."
+msgstr "O Data ORCID-Chile conecta informações públicas do ORCID e do OpenAlex para que universidades e centros de pesquisa compreendam sua produção, melhorem a qualidade dos dados e os compartilhem com outros sistemas."
+
+#: public landing page
+msgid "See how it works"
+msgstr "Veja como funciona"
+
+#: public landing page
+msgid "Key features"
+msgstr "Principais recursos"
+
+#: public landing page
+msgid "Public, traceable data"
+msgstr "Dados públicos e rastreáveis"
+
+#: public landing page
+msgid "Institution-based management"
+msgstr "Gestão por instituição"
+
+#: public landing page
+msgid "Open interoperability"
+msgstr "Interoperabilidade aberta"
+
+#: public landing page
+msgid "Overview of the service capabilities"
+msgstr "Visão geral dos recursos do serviço"
+
+#: public landing page
+msgid "Connected profiles"
+msgstr "Perfis conectados"
+
+#: public landing page
+msgid "Research output"
+msgstr "Produção científica"
+
+#: public landing page
+msgid "Consolidated works"
+msgstr "Trabalhos consolidados"
+
+#: public landing page
+msgid "Quality"
+msgstr "Qualidade"
+
+#: public landing page
+msgid "Verifiable evidence"
+msgstr "Evidências verificáveis"
+
+#: public landing page
+msgid "Traceable"
+msgstr "Rastreável"
+
+#: public landing page
+msgid "Research output over time"
+msgstr "Evolução da produção científica"
+
+#: public landing page
+msgid "A clear view of the institutional context"
+msgstr "Uma visão clara do contexto institucional"
+
+#: public landing page
+msgid "Open access"
+msgstr "Acesso aberto"
+
+#: public landing page
+msgid "From individual records to institutional intelligence"
+msgstr "Dos registros individuais à inteligência institucional"
+
+#: public landing page
+msgid "One place for data that used to live apart"
+msgstr "Um ponto de encontro para dados que antes estavam separados"
+
+#: public landing page
+msgid "The platform organizes the complete flow, from information retrieval to analysis and publication."
+msgstr "A plataforma organiza o fluxo completo, da recuperação das informações à análise e publicação."
+
+#: public landing page
+msgid "Connect"
+msgstr "Conectar"
+
+#: public landing page
+msgid "Find profiles and public activity linked to the institution through reliable identifiers."
+msgstr "Encontre perfis e atividades públicas vinculados à instituição por meio de identificadores confiáveis."
+
+#: public landing page
+msgid "Enrich"
+msgstr "Enriquecer"
+
+#: public landing page
+msgid "Add OpenAlex, open access, citations, topics, authorships, and affiliations to publication records."
+msgstr "Adicione OpenAlex, acesso aberto, citações, temas, autorias e afiliações aos registros de publicações."
+
+#: public landing page
+msgid "Activate"
+msgstr "Ativar"
+
+#: public landing page
+msgid "Turn data into indicators, quality controls, exports, and interoperable services."
+msgstr "Transforme dados em indicadores, controles de qualidade, exportações e serviços interoperáveis."
+
+#: public landing page
+msgid "Everything you need to steward and reuse research metadata"
+msgstr "Tudo o que você precisa para cuidar e reutilizar metadados de pesquisa"
+
+#: public landing page
+msgid "Integrated analytics"
+msgstr "Análise integrada"
+
+#: public landing page
+msgid "Understand institutional research output"
+msgstr "Compreenda a produção científica institucional"
+
+#: public landing page
+msgid "Explore trends, collaboration, impact, open access, and subject areas by combining ORCID and OpenAlex."
+msgstr "Explore tendências, colaboração, impacto, acesso aberto e áreas temáticas combinando ORCID e OpenAlex."
+
+#: public landing page
+msgid "Comparable indicators"
+msgstr "Indicadores comparáveis"
+
+#: public landing page
+msgid "Bring together profiles associated with the institution and preserve the evidence used to find them."
+msgstr "Reúna perfis associados à instituição e preserve as evidências usadas para encontrá-los."
+
+#: public landing page
+msgid "Quality and trust"
+msgstr "Qualidade e confiança"
+
+#: public landing page
+msgid "Identify gaps, inferred relationships, incomplete records, and possible duplicate profiles."
+msgstr "Identifique lacunas, relações inferidas, registros incompletos e possíveis perfis duplicados."
+
+#: public landing page
+msgid "Exports at scale"
+msgstr "Exportações em escala"
+
+#: public landing page
+msgid "Generate CSV and Excel datasets in the background with progress, retention, and private access."
+msgstr "Gere conjuntos de dados CSV e Excel em segundo plano, com progresso, retenção e acesso privado."
+
+#: public landing page
+msgid "Expose selected articles in standard formats for repositories and harvesters."
+msgstr "Exponha artigos selecionados em formatos padrão para repositórios e coletores."
+
+#: public landing page
+msgid "Separate administration, management, OAI editing, and university-level consultation responsibilities."
+msgstr "Separe as responsabilidades de administração, gestão, edição OAI e consulta por universidade."
+
+#: public landing page
+msgid "From a public source to an informed decision"
+msgstr "De uma fonte pública a uma decisão informada"
+
+#: public landing page
+msgid "Data ORCID-Chile does not replace institutional systems: it provides a shared layer for discovery, review, and interoperability."
+msgstr "O Data ORCID-Chile não substitui os sistemas institucionais: ele fornece uma camada compartilhada de descoberta, revisão e interoperabilidade."
+
+#: public landing page
+msgid "Define the institutional context"
+msgstr "Defina o contexto institucional"
+
+#: public landing page
+msgid "ROR acts as the canonical identifier, complemented by validated GRID and Ringgold evidence."
+msgstr "O ROR atua como identificador canônico, complementado por evidências GRID e Ringgold validadas."
+
+#: public landing page
+msgid "Synchronize and review"
+msgstr "Sincronize e revise"
+
+#: public landing page
+msgid "Durable processes retrieve activity and build layers ready for exploration and quality control."
+msgstr "Processos duráveis recuperam atividades e criam camadas prontas para exploração e controle de qualidade."
+
+#: public landing page
+msgid "Analyze, export, or publish"
+msgstr "Analise, exporte ou publique"
+
+#: public landing page
+msgid "Each team uses the same trusted data in dashboards, downloadable files, or OAI-PMH endpoints."
+msgstr "Cada equipe usa os mesmos dados confiáveis em painéis, arquivos para download ou endpoints OAI-PMH."
+
+#: public landing page
+msgid "Service principles"
+msgstr "Princípios do serviço"
+
+#: public landing page
+msgid "Designed for institutions"
+msgstr "Projetado para instituições"
+
+#: public landing page
+msgid "More than collecting records, we want every data point to be explainable, reviewable, and reusable."
+msgstr "Mais do que acumular registros, queremos que cada dado possa ser explicado, revisado e reutilizado."
+
+#: public landing page
+msgid "Traceability"
+msgstr "Rastreabilidade"
+
+#: public landing page
+msgid "Visible sources and evidence"
+msgstr "Fontes e evidências visíveis"
+
+#: public landing page
+msgid "Openness"
+msgstr "Abertura"
+
+#: public landing page
+msgid "Standards and public information"
+msgstr "Padrões e informações públicas"
+
+#: public landing page
+msgid "Continuity"
+msgstr "Continuidade"
+
+#: public landing page
+msgid "Recoverable processes"
+msgstr "Processos recuperáveis"
+
+#: public landing page
+msgid "Context"
+msgstr "Contexto"
+
+#: public landing page
+msgid "One platform, different teams"
+msgstr "Uma plataforma, diferentes equipes"
+
+#: public landing page
+msgid "Useful information for people who manage, analyze, and integrate"
+msgstr "Informações úteis para quem gerencia, analisa e integra"
+
+#: public landing page
+msgid "Research offices"
+msgstr "Pró-reitorias de pesquisa"
+
+#: public landing page
+msgid "A consolidated view for monitoring and decision-making."
+msgstr "Uma visão consolidada para monitoramento e tomada de decisões."
+
+#: public landing page
+msgid "Information teams"
+msgstr "Equipes de informação"
+
+#: public landing page
+msgid "Exportable, traceable data prepared for reuse."
+msgstr "Dados exportáveis, rastreáveis e preparados para reutilização."
+
+#: public landing page
+msgid "Libraries and repositories"
+msgstr "Bibliotecas e repositórios"
+
+#: public landing page
+msgid "Interoperable selection and publication of research output."
+msgstr "Seleção e publicação interoperável da produção científica."
+
+#: public landing page
+msgid "ORCID managers"
+msgstr "Gestores ORCID"
+
+#: public landing page
+msgid "Context for improving affiliations, profiles, and coverage."
+msgstr "Contexto para melhorar afiliações, perfis e cobertura."
+
+#: public landing page
+msgid "Let’s talk"
+msgstr "Vamos conversar"
+
+#: public landing page
+msgid "Would you like to explore the service with your institution?"
+msgstr "Gostaria de explorar o serviço com sua instituição?"
+
+#: public landing page
+msgid "Tell us what you need. We can show you the platform, discuss institutional access, or review an integration scenario."
+msgstr "Conte-nos do que você precisa. Podemos apresentar a plataforma, conversar sobre acesso institucional ou revisar um cenário de integração."
+
+#: public landing page
+msgid "You can also write to"
+msgstr "Você também pode escrever para"
+
+#: public landing page
+msgid "Typical response time"
+msgstr "Tempo de resposta habitual"
+
+#: public landing page
+msgid "Within 2 business days"
+msgstr "Em até 2 dias úteis"
+
+#: public landing page
+msgid "Website"
+msgstr "Site"
+
+#: public landing page
+msgid "Institutional email"
+msgstr "E-mail institucional"
+
+#: public landing page
+msgid "Reason for contacting us"
+msgstr "Motivo do contato"
+
+#: public landing page
+msgid "How can we help?"
+msgstr "Como podemos ajudar?"
+
+#: public landing page
+msgid "Do not include passwords or sensitive personal data."
+msgstr "Não inclua senhas nem dados pessoais sensíveis."
+
+#: public landing page
+msgid "I consent to the use of these data solely to answer my inquiry."
+msgstr "Autorizo o uso destes dados exclusivamente para responder à minha consulta."
+
+#: public landing page
+msgid "Send inquiry"
+msgstr "Enviar consulta"
+
+#: public landing page
+msgid "Your message is stored privately so the team can answer it even if email is temporarily unavailable."
+msgstr "Sua mensagem é armazenada de forma privada para que a equipe possa respondê-la mesmo que o e-mail esteja temporariamente indisponível."
+
+#: public landing page
+msgid "Public metadata serving institutional research."
+msgstr "Metadados públicos a serviço da pesquisa institucional."
+
+#: public landing page
+msgid "User access"
+msgstr "Acesso de usuários"
+
+#: app/templates/landing/index.html
+msgid "Follow-up"
+msgstr "Acompanhamento"
+
+#: app/templates/landing/index.html
+msgid "We will reply to your institutional email"
+msgstr "Responderemos ao seu e-mail institucional"
+
+#: app/templates/landing/index.html
+msgid "Data ORCID-Chile integrates public ORCID records with OpenAlex enrichment to support institution-scoped analysis, metadata quality assessment, export, and OAI-PMH dissemination."
+msgstr "O Data ORCID-Chile integra registros públicos do ORCID com enriquecimento do OpenAlex para apoiar análises de escopo institucional, avaliação da qualidade dos metadados, exportação e disseminação via OAI-PMH."
+
+#: app/templates/landing/index.html
+msgid "Data ORCID-Chile · Institutional research metadata infrastructure"
+msgstr "Data ORCID-Chile · Infraestrutura institucional de metadados de pesquisa"
+
+#: app/templates/landing/index.html
+msgid "An institution-scoped platform for discovering, documenting, analyzing, and disseminating public research metadata."
+msgstr "Uma plataforma de escopo institucional para descobrir, documentar, analisar e disseminar metadados públicos de pesquisa."
+
+#: app/templates/landing/index.html
+msgid "Infrastructure for research information management"
+msgstr "Infraestrutura para a gestão da informação de pesquisa"
+
+#: app/templates/landing/index.html
+msgid "Build an auditable institutional evidence base from"
+msgstr "Construa uma base institucional de evidências auditáveis a partir de"
+
+#: app/templates/landing/index.html
+msgid "public research metadata"
+msgstr "metadados públicos de pesquisa"
+
+#: app/templates/landing/index.html
+msgid "Data ORCID-Chile identifies researchers through verified institutional identifiers, retrieves metadata they have made public in ORCID, and enriches eligible scholarly outputs with OpenAlex. Source provenance and update context remain visible throughout the workflow."
+msgstr "O Data ORCID-Chile identifica pesquisadores por meio de identificadores institucionais verificados, recupera os metadados que eles tornaram públicos no ORCID e enriquece produções científicas elegíveis com o OpenAlex. A proveniência das fontes e o contexto de atualização permanecem visíveis em todo o fluxo."
+
+#: app/templates/landing/index.html
+msgid "Request an institutional demonstration"
+msgstr "Solicitar uma demonstração institucional"
+
+#: app/templates/landing/index.html
+msgid "Review the methodology"
+msgstr "Consultar a metodologia"
+
+#: app/templates/landing/index.html
+msgid "Public source metadata"
+msgstr "Metadados de fontes públicas"
+
+#: app/templates/landing/index.html
+msgid "Institution-scoped records"
+msgstr "Registros de escopo institucional"
+
+#: app/templates/landing/index.html
+msgid "Documented provenance"
+msgstr "Proveniência documentada"
+
+#: app/templates/landing/index.html
+msgid "Illustrative summary of the service data model"
+msgstr "Resumo ilustrativo do modelo de dados do serviço"
+
+#: app/templates/landing/index.html
+msgid "Institutional metadata overview"
+msgstr "Visão geral dos metadados institucionais"
+
+#: app/templates/landing/index.html
+msgid "Snapshot status recorded"
+msgstr "Status do instantâneo registrado"
+
+#: app/templates/landing/index.html
+msgid "Public profiles"
+msgstr "Perfis públicos"
+
+#: app/templates/landing/index.html
+msgid "Scholarly outputs"
+msgstr "Produções científicas"
+
+#: app/templates/landing/index.html
+msgid "Canonical outputs"
+msgstr "Produções canônicas"
+
+#: app/templates/landing/index.html
+msgid "Provenance"
+msgstr "Proveniência"
+
+#: app/templates/landing/index.html
+msgid "Source evidence"
+msgstr "Evidências da fonte"
+
+#: app/templates/landing/index.html
+msgid "Documented"
+msgstr "Documentado"
+
+#: app/templates/landing/index.html
+msgid "Annual scholarly output"
+msgstr "Produção científica anual"
+
+#: app/templates/landing/index.html
+msgid "Illustrative time-series view"
+msgstr "Visão temporal ilustrativa"
+
+#: app/templates/landing/index.html
+msgid "Affiliation evidence"
+msgstr "Evidências de afiliação"
+
+#: app/templates/landing/index.html
+msgid "Institutional data workflow"
+msgstr "Fluxo de dados institucional"
+
+#: app/templates/landing/index.html
+msgid "A documented workflow from source discovery to responsible reuse"
+msgstr "Um fluxo documentado, da descoberta nas fontes à reutilização responsável"
+
+#: app/templates/landing/index.html
+msgid "The platform preserves the distinction between source records, derived relationships, analytical indicators, and institutional publication decisions."
+msgstr "A plataforma preserva a distinção entre registros de origem, relações derivadas, indicadores analíticos e decisões institucionais de publicação."
+
+#: app/templates/landing/index.html
+msgid "Identify"
+msgstr "Identificar"
+
+#: app/templates/landing/index.html
+msgid "Define institutional scope with ROR and verified legacy identifiers, then locate public ORCID affiliations while retaining their evidence source."
+msgstr "Defina o escopo institucional com ROR e identificadores históricos verificados; em seguida, localize afiliações públicas no ORCID preservando a respectiva fonte de evidência."
+
+#: app/templates/landing/index.html
+msgid "Synchronize public profiles, affiliations, works, and funding records; enrich eligible outputs when a reliable OpenAlex match is available."
+msgstr "Sincronize perfis públicos, afiliações, trabalhos e registros de financiamento; enriqueça produções elegíveis quando houver uma correspondência confiável no OpenAlex."
+
+#: app/templates/landing/index.html
+msgid "Analyze and disseminate"
+msgstr "Analisar e disseminar"
+
+#: app/templates/landing/index.html
+msgid "Examine coverage and provenance, produce controlled exports, and publish institution-approved articles through OAI-PMH."
+msgstr "Examine cobertura e proveniência, produza exportações controladas e publique via OAI-PMH os artigos aprovados pela instituição."
+
+#: app/templates/landing/index.html
+msgid "Functions for institutional research information stewardship"
+msgstr "Funções para a gestão responsável da informação institucional de pesquisa"
+
+#: app/templates/landing/index.html
+msgid "Coverage-aware analytics"
+msgstr "Análises com cobertura explícita"
+
+#: app/templates/landing/index.html
+msgid "Analyze research activity with stated coverage"
+msgstr "Analise a atividade de pesquisa com cobertura declarada"
+
+#: app/templates/landing/index.html
+msgid "Examine works, funding, citations, open-access status, topics, sources, and collaboration within the selected institutional snapshot."
+msgstr "Examine trabalhos, financiamentos, citações, status de acesso aberto, temas, fontes e colaboração no instantâneo institucional selecionado."
+
+#: app/templates/landing/index.html
+msgid "Source-dependent indicators"
+msgstr "Indicadores dependentes das fontes"
+
+#: app/templates/landing/index.html
+msgid "Review public ORCID profiles associated with the institution and the identifier evidence used during discovery."
+msgstr "Revise os perfis públicos do ORCID associados à instituição e as evidências de identificadores usadas durante a descoberta."
+
+#: app/templates/landing/index.html
+msgid "Assess metadata completeness, affiliation evidence, canonicalization, and possible duplicate profiles; candidate matches remain subject to human review."
+msgstr "Avalie a completude dos metadados, as evidências de afiliação, a canonização e possíveis perfis duplicados; as correspondências candidatas permanecem sujeitas à revisão humana."
+
+#: app/templates/landing/index.html
+msgid "Generate UTF-8 CSV and XLSX datasets as durable background jobs with progress reporting, private access, and defined retention."
+msgstr "Gere conjuntos de dados CSV UTF-8 e XLSX como tarefas duráveis em segundo plano, com relatório de progresso, acesso privado e retenção definida."
+
+#: app/templates/landing/index.html
+msgid "Expose institution-approved canonical articles through oai_dc, OpenAIRE, or configurable DataORCID metadata for compatible harvesters."
+msgstr "Exponha artigos canônicos aprovados pela instituição por meio de metadados oai_dc, OpenAIRE ou DataORCID configuráveis para coletores compatíveis."
+
+#: app/templates/landing/index.html
+msgid "Apply institutional scope and differentiated permissions for standard users, OAI editors, managers, and administrators."
+msgstr "Aplique escopo institucional e permissões diferenciadas para usuários padrão, editores OAI, gestores e administradores."
+
+#: app/templates/landing/index.html
+msgid "From public records to documented institutional evidence"
+msgstr "De registros públicos a evidências institucionais documentadas"
+
+#: app/templates/landing/index.html
+msgid "The platform does not modify upstream ORCID or OpenAlex records. It stores synchronized snapshots and derived relationships so their origin, update context, and institutional scope can be examined."
+msgstr "A plataforma não modifica os registros originais do ORCID ou do OpenAlex. Ela armazena instantâneos sincronizados e relações derivadas para que sua origem, contexto de atualização e escopo institucional possam ser examinados."
+
+#: app/templates/landing/index.html
+msgid "Define the institutional scope"
+msgstr "Defina o escopo institucional"
+
+#: app/templates/landing/index.html
+msgid "ROR is the canonical institutional identifier. Verified GRID and historical Ringgold identifiers are used as additional discovery evidence when available, and results are deduplicated by ORCID iD."
+msgstr "O ROR é o identificador institucional canônico. Quando disponíveis, identificadores GRID verificados e identificadores Ringgold históricos são usados como evidências adicionais de descoberta, e os resultados são deduplicados por ORCID iD."
+
+#: app/templates/landing/index.html
+msgid "Synchronize and document"
+msgstr "Sincronize e documente"
+
+#: app/templates/landing/index.html
+msgid "Only metadata made public by ORCID record holders is retrieved. Synchronization runs and cache timestamps document the resulting institutional snapshot."
+msgstr "Somente metadados tornados públicos pelos titulares dos registros ORCID são recuperados. As execuções de sincronização e os registros de data e hora do cache documentam o instantâneo institucional resultante."
+
+#: app/templates/landing/index.html
+msgid "Relate, analyze, and disseminate"
+msgstr "Relacionar, analisar e disseminar"
+
+#: app/templates/landing/index.html
+msgid "DOIs and conservative title-and-year rules support canonical outputs; OpenAlex enrichment and OAI-PMH publication decisions remain distinguishable from source records."
+msgstr "DOIs e regras conservadoras de título e ano dão suporte a produções canônicas; o enriquecimento do OpenAlex e as decisões de publicação OAI-PMH permanecem distinguíveis dos registros de origem."
+
+#: app/templates/landing/index.html
+msgid "Methodological principles"
+msgstr "Princípios metodológicos"
+
+#: app/templates/landing/index.html
+msgid "Institutional indicators are interpretable only when their source, coverage, update date, and derivation rules are explicit."
+msgstr "Indicadores institucionais só são interpretáveis quando sua fonte, cobertura, data de atualização e regras de derivação são explícitas."
+
+#: app/templates/landing/index.html
+msgid "Source and matching evidence retained"
+msgstr "Fontes e evidências de correspondência preservadas"
+
+#: app/templates/landing/index.html
+msgid "Open standards"
+msgstr "Padrões abertos"
+
+#: app/templates/landing/index.html
+msgid "Public metadata and standards-based exchange"
+msgstr "Metadados públicos e intercâmbio baseado em padrões"
+
+#: app/templates/landing/index.html
+msgid "Operational continuity"
+msgstr "Continuidade operacional"
+
+#: app/templates/landing/index.html
+msgid "Durable, recoverable background processes"
+msgstr "Processos duráveis e recuperáveis em segundo plano"
+
+#: app/templates/landing/index.html
+msgid "Institutional scope"
+msgstr "Escopo institucional"
+
+#: app/templates/landing/index.html
+msgid "Results bounded by institution and access role"
+msgstr "Resultados delimitados por instituição e função de acesso"
+
+#: app/templates/landing/index.html
+msgid "Institutional applications"
+msgstr "Aplicações institucionais"
+
+#: app/templates/landing/index.html
+msgid "A shared evidence layer for research management and scholarly communication"
+msgstr "Uma camada compartilhada de evidências para a gestão da pesquisa e a comunicação científica"
+
+#: app/templates/landing/index.html
+msgid "Monitor public-profile coverage and examine institution-scoped output and funding indicators."
+msgstr "Monitore a cobertura de perfis públicos e examine indicadores de produção e financiamento de escopo institucional."
+
+#: app/templates/landing/index.html
+msgid "Prepare documented datasets for analysis, reporting, and controlled reuse."
+msgstr "Prepare conjuntos de dados documentados para análise, elaboração de relatórios e reutilização controlada."
+
+#: app/templates/landing/index.html
+msgid "Curate institutional article selection and interoperable metadata dissemination."
+msgstr "Faça a curadoria da seleção institucional de artigos e da disseminação interoperável de metadados."
+
+#: app/templates/landing/index.html
+msgid "Review public affiliations, discovery evidence, and profile coverage gaps."
+msgstr "Revise afiliações públicas, evidências de descoberta e lacunas de cobertura dos perfis."
+
+#: app/templates/landing/index.html
+msgid "Institutional enquiries"
+msgstr "Consultas institucionais"
+
+#: app/templates/landing/index.html
+msgid "Assess the service in relation to your institution’s information needs"
+msgstr "Avalie o serviço em relação às necessidades de informação da sua instituição"
+
+#: app/templates/landing/index.html
+msgid "Describe your institutional context, available identifiers, intended analyses, or interoperability requirements. The team can present the workflow and discuss technical or governance considerations."
+msgstr "Descreva o contexto institucional, os identificadores disponíveis, as análises pretendidas ou os requisitos de interoperabilidade. A equipe pode apresentar o fluxo e discutir considerações técnicas ou de governança."
+
+#: app/templates/landing/index.html
+msgid "Direct contact"
+msgstr "Contato direto"
+
+#: app/templates/landing/index.html
+msgid "Open research metadata infrastructure for Chilean institutions."
+msgstr "Infraestrutura aberta de metadados de pesquisa para instituições chilenas."

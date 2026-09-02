@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Contact inquiries') }} · Data ORCID-Chile{% endblock %}
+
+{% block header_title %}
+<div class="app-section-heading">
+  <h1>{{ _('Contact inquiries') }}</h1>
+  <p>{{ _('Review messages from the public page and privately track each response.') }}</p>
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item">{{ _('Administration') }}</li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('Contact inquiries') }}</li>
+{% endblock %}
+
+{% block content %}
+<section class="app-kpi-strip mb-4" style="--app-kpi-columns: 4" aria-label="{{ _('Public inquiry summary') }}">
+  <article class="app-kpi"><span class="app-kpi-icon is-blue" aria-hidden="true"><i class="fas fa-inbox"></i></span><div><span class="app-kpi-label">{{ _('Total') }}</span><strong>{{ summary.total }}</strong><small>{{ _('Stored messages') }}</small></div></article>
+  <article class="app-kpi"><span class="app-kpi-icon is-amber" aria-hidden="true"><i class="far fa-clock"></i></span><div><span class="app-kpi-label">{{ _('Pending') }}</span><strong>{{ summary.open }}</strong><small>{{ _('Awaiting a response') }}</small></div></article>
+  <article class="app-kpi"><span class="app-kpi-icon is-green" aria-hidden="true"><i class="fas fa-check"></i></span><div><span class="app-kpi-label">{{ _('Resolved') }}</span><strong>{{ summary.resolved }}</strong><small>{{ _('Processing completed') }}</small></div></article>
+  <article class="app-kpi"><span class="app-kpi-icon is-purple" aria-hidden="true"><i class="far fa-envelope"></i></span><div><span class="app-kpi-label">{{ _('Without email notification') }}</span><strong>{{ summary.unnotified }}</strong><small>{{ _('Messages remain stored') }}</small></div></article>
+</section>
+
+<div class="alert alert-info d-flex align-items-start" role="note">
+  <i class="fas fa-shield-alt mt-1 mr-2" aria-hidden="true"></i>
+  <div><strong>{{ _('Private data.') }}</strong> {{ _('Use the name, email, institution, and message only to answer the inquiry. Delete the record when it no longer needs to be retained.') }}</div>
+</div>
+
+<section class="card shadow-sm mb-4 activity-filter-card" aria-labelledby="contactFiltersTitle">
+  <div class="card-header"><h2 id="contactFiltersTitle" class="card-title text-bold mb-0">{{ _('Search and filter') }}</h2></div>
+  <div class="card-body">
+    <form method="get" action="{{ url_for('admin.contact_inquiries') }}">
+      <div class="form-row align-items-end">
+        <div class="form-group col-md-7">
+          <label for="contactSearch">{{ _('Name, email, institution, or content') }}</label>
+          <div class="input-group"><div class="input-group-prepend"><span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span></div><input id="contactSearch" class="form-control" type="search" name="q" value="{{ q }}" maxlength="160" placeholder="{{ _('Search inquiries') }}"></div>
+        </div>
+        <div class="form-group col-md-3">
+          <label for="contactStatus">{{ _('Status') }}</label>
+          <select id="contactStatus" class="form-control" name="status">
+            <option value="open" {% if selected_status == 'open' %}selected{% endif %}>{{ _('Pending') }}</option>
+            <option value="resolved" {% if selected_status == 'resolved' %}selected{% endif %}>{{ _('Resolved') }}</option>
+            <option value="all" {% if selected_status == 'all' %}selected{% endif %}>{{ _('All statuses') }}</option>
+          </select>
+        </div>
+        <div class="form-group col-md-2"><button class="btn btn-primary btn-block" type="submit"><i class="fas fa-filter mr-1" aria-hidden="true"></i>{{ _('Apply') }}</button></div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="card card-outline card-primary shadow-sm" aria-labelledby="contactInboxTitle">
+  <div class="card-header border-0 d-flex align-items-center">
+    <div>
+      <h2 id="contactInboxTitle" class="card-title text-bold mb-0"><i class="fas fa-comments mr-2" aria-hidden="true"></i>{{ _('Inbox') }}</h2>
+      <p class="activity-card-subtitle mb-0">
+        {% if pagination.total == 1 %}{{ _('1 inquiry in this filter') }}
+        {% elif pagination.total %}{{ _('%(count)s inquiries in this filter', count=pagination.total) }}
+        {% else %}{{ _('No results') }}{% endif %}
+      </p>
+    </div>
+    <div class="ml-auto"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.contact_inquiries', status='open') }}"><i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Reset') }}</a></div>
+  </div>
+
+  {% if inquiries %}
+  <div class="card-body p-0">
+    <div class="table-responsive" aria-label="{{ _('Public inquiries received') }}">
+      <table class="table table-hover mb-0">
+        <caption class="sr-only">{{ _('Messages submitted through the public form') }}</caption>
+        <thead class="bg-light text-muted"><tr><th>{{ _('Received') }}</th><th>{{ _('Contact') }}</th><th>{{ _('Reason') }}</th><th>{{ _('Notification') }}</th><th>{{ _('Status') }}</th><th class="text-right">{{ _('Details') }}</th></tr></thead>
+        <tbody>
+        {% for inquiry in inquiries %}
+          {% set notification = notification_labels.get(inquiry.notification_status, (inquiry.notification_status, 'badge-secondary')) %}
+          <tr>
+            <td class="text-nowrap"><strong>{{ inquiry.created_at|datetimeformat }}</strong><small class="d-block text-muted">#{{ inquiry.id }}</small></td>
+            <td><strong>{{ inquiry.name }}</strong><a class="d-block" href="mailto:{{ inquiry.email }}">{{ inquiry.email }}</a><small class="d-block text-muted">{{ inquiry.institution or _('Institution not provided') }}</small></td>
+            <td>{{ topic_labels.get(inquiry.topic, _('Other inquiry')) }}</td>
+            <td><span class="badge {{ notification[1] }}">{{ notification[0] }}</span></td>
+            <td>{% if inquiry.is_resolved %}<span class="badge badge-success">{{ _('Resolved') }}</span>{% else %}<span class="badge badge-warning">{{ _('Pending') }}</span>{% endif %}</td>
+            <td class="text-right"><button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#contactDetail{{ inquiry.id }}" aria-expanded="false" aria-controls="contactDetail{{ inquiry.id }}"><i class="fas fa-chevron-down mr-1" aria-hidden="true"></i>{{ _('View') }}</button></td>
+          </tr>
+          <tr id="contactDetail{{ inquiry.id }}" class="collapse bg-light"><td colspan="6">
+            <div class="p-3">
+              <h3 class="h6 text-bold">{{ _('Message') }}</h3>
+              <div class="border rounded bg-white p-3 mb-3" style="white-space: pre-wrap;">{{ inquiry.message }}</div>
+              {% if inquiry.is_resolved and inquiry.resolved_at %}
+                {% set resolved_date = inquiry.resolved_at|datetimeformat %}
+                <p class="small text-muted"><i class="fas fa-check-circle mr-1" aria-hidden="true"></i>{{ _('Resolved by %(user)s on %(date)s.', user=inquiry.resolved_by_username or _('administration'), date=resolved_date) }}</p>
+              {% endif %}
+              <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <a class="btn btn-sm btn-outline-primary mb-2" href="mailto:{{ inquiry.email }}?subject={{ _('Reply to your Data ORCID-Chile inquiry')|urlencode }}"><i class="fas fa-reply mr-1" aria-hidden="true"></i>{{ _('Reply by email') }}</a>
+                <div class="d-flex flex-wrap">
+                  <form method="post" action="{{ url_for('admin.update_contact_inquiry', inquiry_id=inquiry.id) }}" class="mr-2 mb-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if inquiry.is_resolved %}<input type="hidden" name="action" value="reopen"><button class="btn btn-sm btn-outline-warning" type="submit"><i class="fas fa-undo mr-1" aria-hidden="true"></i>{{ _('Reopen') }}</button>{% else %}<input type="hidden" name="action" value="resolve"><button class="btn btn-sm btn-success" type="submit"><i class="fas fa-check mr-1" aria-hidden="true"></i>{{ _('Mark as resolved') }}</button>{% endif %}
+                  </form>
+                  <form method="post" action="{{ url_for('admin.update_contact_inquiry', inquiry_id=inquiry.id) }}" class="mb-2" onsubmit="return confirm('{{ _('Permanently delete this inquiry and its personal data?') }}');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete"><button class="btn btn-sm btn-outline-danger" type="submit"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>{{ _('Delete') }}</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card-body text-center py-5"><i class="far fa-check-circle fa-2x text-success mb-3" aria-hidden="true"></i><h3 class="h5">{{ _('No inquiries match this filter') }}</h3><p class="text-muted mb-0">{{ _('New messages will appear here even when the email notification cannot be sent.') }}</p></div>
+  {% endif %}
+
+  {% if pagination.pages > 1 %}
+  <div class="card-footer bg-white d-flex justify-content-center"><nav aria-label="{{ _('Inquiry pages') }}"><ul class="pagination pagination-sm mb-0">
+    {% for page_number in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if page_number %}<li class="page-item {% if page_number == pagination.page %}active{% endif %}">{% if page_number == pagination.page %}<span class="page-link" aria-current="page">{{ page_number }}</span>{% else %}<a class="page-link" href="{{ url_for('admin.contact_inquiries', page=page_number, q=q, status=selected_status, per_page=per_page) }}">{{ page_number }}</a>{% endif %}</li>{% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+    {% endfor %}
+  </ul></nav></div>
+  {% endif %}
+</section>
+{% endblock %}

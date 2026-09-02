@@ -19,6 +19,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: app/services/module_access.py
+msgid "Public site"
+msgstr "Public site"
+
+#: app/services/module_access.py
+msgid "Public landing page"
+msgstr "Public landing page"
+
+#: app/services/module_access.py
+msgid "Single-page service overview and public contact form."
+msgstr "Single-page service overview and public contact form."
+
 #: app/decorators.py:65 app/decorators.py:78
 msgid "You must log in to access this page."
 msgstr ""
@@ -74,7 +86,7 @@ msgstr ""
 #: app/blueprints/main.py:764 app/helpers.py:101 app/helpers.py:102
 #: app/templates/admin/users.html:198
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: app/blueprints/main.py:766 app/helpers.py:111 app/helpers.py:116
 #: app/templates/admin/_user_modals.html:29
@@ -168,7 +180,7 @@ msgstr ""
 #: app/templates/works/cache_status.html:486
 #: app/templates/works/openalex_global.html:1043
 msgid "Institution"
-msgstr ""
+msgstr "Institution"
 
 #: app/helpers.py:191 app/templates/admin/_user_modals.html:68
 #: app/templates/admin/_user_modals.html:223
@@ -311,7 +323,7 @@ msgstr ""
 #: app/templates/works/cache_status.html:487
 #: app/templates/works/cache_status.html:533
 msgid "Researchers"
-msgstr ""
+msgstr "Researchers"
 
 #: app/blueprints/admin.py:258 app/templates/duplicates/index.html:179
 #: app/templates/duplicates/index.html:298 app/templates/main/index.html:287
@@ -711,7 +723,7 @@ msgstr "Errors"
 #: app/templates/works/openalex_works.html:87
 #: app/templates/works/openalex_works.html:118
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: app/blueprints/admin.py:1776 app/templates/admin/users.html:251
 msgid "Access"
@@ -1207,7 +1219,7 @@ msgstr ""
 #: app/templates/duplicates/index.html:121
 #: app/templates/works/data_quality.html:117
 msgid "Resolved"
-msgstr ""
+msgstr "Resolved"
 
 #: app/blueprints/duplicates.py:476
 msgid "Different people with similar names"
@@ -1357,7 +1369,7 @@ msgstr ""
 #: app/templates/main/researcher_list.html:51
 #: app/templates/main/researcher_list.html:57
 msgid "Researcher directory"
-msgstr ""
+msgstr "Researcher directory"
 
 #: app/blueprints/main.py:893 app/blueprints/main.py:895
 #: app/blueprints/main.py:904 app/blueprints/main.py:906
@@ -1669,9 +1681,8 @@ msgid "Journal"
 msgstr "Journal Articles"
 
 #: app/blueprints/oai_pmh.py:1062 app/templates/oai_pmh/articles.html:90
-#, fuzzy
 msgid "Affiliations"
-msgstr "Affiliation"
+msgstr "Affiliations"
 
 #: app/blueprints/oai_pmh.py:1063
 #, fuzzy
@@ -1906,9 +1917,8 @@ msgid "Access right"
 msgstr ""
 
 #: app/blueprints/oai_pmh.py:1312
-#, fuzzy
 msgid "Open-access status"
-msgstr "Open Access Status"
+msgstr "Open-access status"
 
 #: app/blueprints/oai_pmh.py:1313
 #, fuzzy
@@ -2404,7 +2414,7 @@ msgstr ""
 
 #: app/templates/auth/public_base.html:18 app/templates/base.html:27
 msgid "Skip to main content"
-msgstr ""
+msgstr "Skip to main content"
 
 #: app/templates/base.html:31
 msgid "Application toolbar"
@@ -2432,7 +2442,7 @@ msgstr ""
 
 #: app/templates/base.html:74
 msgid "Data up to date"
-msgstr ""
+msgstr "Data up to date"
 
 #: app/templates/base.html:75 app/templates/main/index.html:26
 #: app/templates/works/cache_status.html:157
@@ -2457,7 +2467,7 @@ msgstr ""
 
 #: app/templates/auth/public_base.html:34 app/templates/base.html:84
 msgid "Change language"
-msgstr ""
+msgstr "Change language"
 
 #: app/templates/base.html:92
 msgid "English"
@@ -2486,7 +2496,7 @@ msgstr ""
 
 #: app/templates/base.html:140
 msgid "Primary navigation"
-msgstr ""
+msgstr "Primary navigation"
 
 #: app/templates/admin/errors.html:21 app/templates/admin/jobs.html:13
 #: app/templates/admin/modules.html:13
@@ -2508,11 +2518,11 @@ msgstr ""
 #: app/templates/works/openalex_global.html:355
 #: app/templates/works/openalex_works.html:13
 msgid "Home"
-msgstr ""
+msgstr "Home"
 
 #: app/templates/base.html:186
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: app/templates/base.html:192
 msgid "For questions, support, or to schedule online training, contact:"
@@ -2709,7 +2719,7 @@ msgstr ""
 #: app/templates/admin/statistics.html:259
 #: app/templates/works/openalex_works.html:121
 msgid "Details"
-msgstr ""
+msgstr "Details"
 
 #: app/templates/admin/_jobs_table.html:50
 msgid "Not started"
@@ -2982,7 +2992,7 @@ msgstr ""
 #: app/templates/admin/oai_pmh_repositories.html:14
 #: app/templates/layout/sidebar.html:235
 msgid "Administration"
-msgstr ""
+msgstr "Administration"
 
 #: app/templates/admin/errors.html:27
 msgid "Error metrics for the selected period"
@@ -3040,7 +3050,7 @@ msgstr ""
 #: app/templates/admin/statistics.html:138
 #: app/templates/oai_pmh/articles.html:40
 msgid "All statuses"
-msgstr ""
+msgstr "All statuses"
 
 #: app/templates/admin/errors.html:42
 #, fuzzy
@@ -3129,7 +3139,7 @@ msgstr "your institution"
 
 #: app/templates/admin/errors.html:58
 msgid "View"
-msgstr ""
+msgstr "View"
 
 #: app/templates/admin/errors.html:58
 #: app/templates/works/openalex_works.html:28
@@ -3203,7 +3213,7 @@ msgstr ""
 #: app/templates/admin/errors.html:84
 #, python-format
 msgid "Resolved by %(user)s on %(date)s."
-msgstr ""
+msgstr "Resolved by %(user)s on %(date)s."
 
 #: app/templates/admin/errors.html:84
 #, fuzzy
@@ -3220,7 +3230,7 @@ msgstr ""
 
 #: app/templates/admin/errors.html:84
 msgid "Mark as resolved"
-msgstr ""
+msgstr "Mark as resolved"
 
 #: app/templates/admin/errors.html:88
 msgid "No system errors found"
@@ -4211,7 +4221,7 @@ msgstr ""
 
 #: app/templates/auth/login.html:7
 msgid "Sign in"
-msgstr ""
+msgstr "Sign in"
 
 #: app/templates/auth/login.html:8
 msgid "Sign in to access institutional data"
@@ -4687,7 +4697,7 @@ msgstr "All Institutions"
 #: app/templates/works/cache_status.html:497
 #: app/templates/works/openalex_works.html:98
 msgid "Apply"
-msgstr ""
+msgstr "Apply"
 
 #: app/templates/duplicates/index.html:144
 msgid "Duplicate review sections"
@@ -4901,7 +4911,7 @@ msgstr ""
 
 #: app/templates/duplicates/index.html:358
 msgid "Reason"
-msgstr ""
+msgstr "Reason"
 
 #: app/templates/duplicates/index.html:360
 msgid "Select a reason"
@@ -4929,7 +4939,7 @@ msgstr ""
 
 #: app/templates/duplicates/index.html:389
 msgid "Message"
-msgstr ""
+msgstr "Message"
 
 #: app/templates/duplicates/index.html:393
 msgid "Communication note"
@@ -5041,7 +5051,7 @@ msgstr "OpenAlex Enrichment"
 
 #: app/templates/help/index.html:67 app/templates/help/index.html:186
 msgid "Integrations and OAI-PMH"
-msgstr ""
+msgstr "Integrations and OAI-PMH"
 
 #: app/templates/help/index.html:67 app/templates/help/index.html:186
 #, fuzzy
@@ -5581,7 +5591,7 @@ msgstr ""
 
 #: app/templates/help/index.html:191 app/templates/layout/sidebar.html:190
 msgid "OAI-PMH publishing"
-msgstr ""
+msgstr "OAI-PMH publishing"
 
 #: app/templates/help/index.html:191
 msgid ""
@@ -6244,7 +6254,7 @@ msgstr ""
 
 #: app/templates/layout/sidebar.html:153
 msgid "Integrate"
-msgstr ""
+msgstr "Integrate"
 
 #: app/templates/layout/sidebar.html:186
 msgid "Repositories"
@@ -6252,7 +6262,7 @@ msgstr ""
 
 #: app/templates/layout/sidebar.html:204
 msgid "Support"
-msgstr ""
+msgstr "Support"
 
 #: app/templates/layout/sidebar.html:221 app/templates/main/resources.html:6
 msgid "ORCID resources"
@@ -6283,7 +6293,7 @@ msgstr ""
 
 #: app/templates/main/index.html:8
 msgid "Institutional overview"
-msgstr ""
+msgstr "Institutional overview"
 
 #: app/templates/main/index.html:11 app/templates/main/index.html:13
 #, python-format
@@ -10597,3 +10607,883 @@ msgstr ""
 #: app/templates/works/openalex_works.html:162
 msgid "OpenAlex pagination"
 msgstr "OpenAlex pagination"
+
+#: public landing page and contact inbox
+msgid "Demonstration"
+msgstr "Demonstration"
+
+#: public landing page and contact inbox
+msgid "Institutional access"
+msgstr "Institutional access"
+
+#: public landing page and contact inbox
+msgid "Other inquiry"
+msgstr "Other inquiry"
+
+#: public landing page and contact inbox
+msgid "Notification sent"
+msgstr "Notification sent"
+
+#: public landing page and contact inbox
+msgid "SMTP authentication failed"
+msgstr "SMTP authentication failed"
+
+#: public landing page and contact inbox
+msgid "SMTP connection failed"
+msgstr "SMTP connection failed"
+
+#: public landing page and contact inbox
+msgid "Email not configured"
+msgstr "Email not configured"
+
+#: public landing page and contact inbox
+msgid "Notification not sent"
+msgstr "Notification not sent"
+
+#: public landing page and contact inbox
+msgid "The inquiry was marked as resolved."
+msgstr "The inquiry was marked as resolved."
+
+#: public landing page and contact inbox
+msgid "The inquiry was reopened."
+msgstr "The inquiry was reopened."
+
+#: public landing page and contact inbox
+msgid "The inquiry and its personal data were deleted."
+msgstr "The inquiry and its personal data were deleted."
+
+#: public landing page and contact inbox
+msgid "Request a demonstration"
+msgstr "Request a demonstration"
+
+#: public landing page and contact inbox
+msgid "You have sent several messages recently. Please try again later."
+msgstr "You have sent several messages recently. Please try again later."
+
+#: public landing page and contact inbox
+msgid "Thank you. We received your message and will reply shortly."
+msgstr "Thank you. We received your message and will reply shortly."
+
+#: public landing page and contact inbox
+msgid "Enter a name between 2 and 120 characters."
+msgstr "Enter a name between 2 and 120 characters."
+
+#: public landing page and contact inbox
+msgid "The institution name cannot exceed 160 characters."
+msgstr "The institution name cannot exceed 160 characters."
+
+#: public landing page and contact inbox
+msgid "The message must contain between 20 and 3,000 characters."
+msgstr "The message must contain between 20 and 3,000 characters."
+
+#: public landing page and contact inbox
+msgid "You must consent to the use of these data so we can answer your inquiry."
+msgstr "You must consent to the use of these data so we can answer your inquiry."
+
+#: public landing page and contact inbox
+msgid "Review the highlighted fields before sending your inquiry."
+msgstr "Review the highlighted fields before sending your inquiry."
+
+#: public landing page and contact inbox
+msgid "We could not save your message. Please try again later."
+msgstr "We could not save your message. Please try again later."
+
+#: public landing page and contact inbox
+msgid "Not provided"
+msgstr "Not provided"
+
+#: public landing page and contact inbox
+msgid "New inquiry from Data ORCID-Chile"
+msgstr "New inquiry from Data ORCID-Chile"
+
+#: public landing page and contact inbox
+msgid "Inquiry type"
+msgstr "Inquiry type"
+
+#: public landing page and contact inbox
+msgid "Contact inquiries"
+msgstr "Contact inquiries"
+
+#: public landing page and contact inbox
+msgid "Review messages from the public page and privately track each response."
+msgstr "Review messages from the public page and privately track each response."
+
+#: public landing page and contact inbox
+msgid "Public inquiry summary"
+msgstr "Public inquiry summary"
+
+#: public landing page and contact inbox
+msgid "Total"
+msgstr "Total"
+
+#: public landing page and contact inbox
+msgid "Stored messages"
+msgstr "Stored messages"
+
+#: public landing page and contact inbox
+msgid "Awaiting a response"
+msgstr "Awaiting a response"
+
+#: public landing page and contact inbox
+msgid "Processing completed"
+msgstr "Processing completed"
+
+#: public landing page and contact inbox
+msgid "Without email notification"
+msgstr "Without email notification"
+
+#: public landing page and contact inbox
+msgid "Messages remain stored"
+msgstr "Messages remain stored"
+
+#: public landing page and contact inbox
+msgid "Private data."
+msgstr "Private data."
+
+#: public landing page and contact inbox
+msgid "Use the name, email, institution, and message only to answer the inquiry. Delete the record when it no longer needs to be retained."
+msgstr "Use the name, email, institution, and message only to answer the inquiry. Delete the record when it no longer needs to be retained."
+
+#: public landing page and contact inbox
+msgid "Search and filter"
+msgstr "Search and filter"
+
+#: public landing page and contact inbox
+msgid "Name, email, institution, or content"
+msgstr "Name, email, institution, or content"
+
+#: public landing page and contact inbox
+msgid "Search inquiries"
+msgstr "Search inquiries"
+
+#: public landing page and contact inbox
+msgid "Inbox"
+msgstr "Inbox"
+
+#: public landing page and contact inbox
+msgid "1 inquiry in this filter"
+msgstr "1 inquiry in this filter"
+
+#: public landing page and contact inbox
+msgid "%(count)s inquiries in this filter"
+msgstr "%(count)s inquiries in this filter"
+
+#: public landing page and contact inbox
+msgid "No results"
+msgstr "No results"
+
+#: public landing page and contact inbox
+msgid "Public inquiries received"
+msgstr "Public inquiries received"
+
+#: public landing page and contact inbox
+msgid "Messages submitted through the public form"
+msgstr "Messages submitted through the public form"
+
+#: public landing page and contact inbox
+msgid "Received"
+msgstr "Received"
+
+#: public landing page and contact inbox
+msgid "Contact"
+msgstr "Contact"
+
+#: public landing page and contact inbox
+msgid "Notification"
+msgstr "Notification"
+
+#: public landing page and contact inbox
+msgid "Institution not provided"
+msgstr "Institution not provided"
+
+#: public landing page and contact inbox
+msgid "administration"
+msgstr "administration"
+
+#: public landing page and contact inbox
+msgid "Reply to your Data ORCID-Chile inquiry"
+msgstr "Reply to your Data ORCID-Chile inquiry"
+
+#: public landing page and contact inbox
+msgid "Reply by email"
+msgstr "Reply by email"
+
+#: public landing page and contact inbox
+msgid "Reopen"
+msgstr "Reopen"
+
+#: public landing page and contact inbox
+msgid "Permanently delete this inquiry and its personal data?"
+msgstr "Permanently delete this inquiry and its personal data?"
+
+#: public landing page and contact inbox
+msgid "Delete"
+msgstr "Delete"
+
+#: public landing page and contact inbox
+msgid "No inquiries match this filter"
+msgstr "No inquiries match this filter"
+
+#: public landing page and contact inbox
+msgid "New messages will appear here even when the email notification cannot be sent."
+msgstr "New messages will appear here even when the email notification cannot be sent."
+
+#: public landing page and contact inbox
+msgid "Inquiry pages"
+msgstr "Inquiry pages"
+
+#: public landing page
+msgid "Data ORCID-Chile brings together public ORCID and OpenAlex metadata for institutional analytics, data quality, exports, and interoperability."
+msgstr "Data ORCID-Chile brings together public ORCID and OpenAlex metadata for institutional analytics, data quality, exports, and interoperability."
+
+#: public landing page
+msgid "Data ORCID-Chile · Intelligence for research management"
+msgstr "Data ORCID-Chile · Intelligence for research management"
+
+#: public landing page
+msgid "An institutional platform to connect, review, and reuse research metadata."
+msgstr "An institutional platform to connect, review, and reuse research metadata."
+
+#: public landing page
+msgid "Data ORCID-Chile · Trusted institutional metadata"
+msgstr "Data ORCID-Chile · Trusted institutional metadata"
+
+#: public landing page
+msgid "Data ORCID-Chile home"
+msgstr "Data ORCID-Chile home"
+
+#: public landing page
+msgid "The service"
+msgstr "The service"
+
+#: public landing page
+msgid "Capabilities"
+msgstr "Capabilities"
+
+#: public landing page
+msgid "How it works"
+msgstr "How it works"
+
+#: public landing page
+msgid "Infrastructure for research management"
+msgstr "Infrastructure for research management"
+
+#: public landing page
+msgid "Turn scattered metadata into a"
+msgstr "Turn scattered metadata into a"
+
+#: public landing page
+msgid "trusted institutional view"
+msgstr "trusted institutional view"
+
+#: public landing page
+msgid "Data ORCID-Chile connects public ORCID and OpenAlex information so universities and research centers can understand their output, improve data quality, and share it with other systems."
+msgstr "Data ORCID-Chile connects public ORCID and OpenAlex information so universities and research centers can understand their output, improve data quality, and share it with other systems."
+
+#: public landing page
+msgid "See how it works"
+msgstr "See how it works"
+
+#: public landing page
+msgid "Key features"
+msgstr "Key features"
+
+#: public landing page
+msgid "Public, traceable data"
+msgstr "Public, traceable data"
+
+#: public landing page
+msgid "Institution-based management"
+msgstr "Institution-based management"
+
+#: public landing page
+msgid "Open interoperability"
+msgstr "Open interoperability"
+
+#: public landing page
+msgid "Overview of the service capabilities"
+msgstr "Overview of the service capabilities"
+
+#: public landing page
+msgid "Connected profiles"
+msgstr "Connected profiles"
+
+#: public landing page
+msgid "Research output"
+msgstr "Research output"
+
+#: public landing page
+msgid "Consolidated works"
+msgstr "Consolidated works"
+
+#: public landing page
+msgid "Quality"
+msgstr "Quality"
+
+#: public landing page
+msgid "Verifiable evidence"
+msgstr "Verifiable evidence"
+
+#: public landing page
+msgid "Traceable"
+msgstr "Traceable"
+
+#: public landing page
+msgid "Research output over time"
+msgstr "Research output over time"
+
+#: public landing page
+msgid "A clear view of the institutional context"
+msgstr "A clear view of the institutional context"
+
+#: public landing page
+msgid "Open access"
+msgstr "Open access"
+
+#: public landing page
+msgid "From individual records to institutional intelligence"
+msgstr "From individual records to institutional intelligence"
+
+#: public landing page
+msgid "One place for data that used to live apart"
+msgstr "One place for data that used to live apart"
+
+#: public landing page
+msgid "The platform organizes the complete flow, from information retrieval to analysis and publication."
+msgstr "The platform organizes the complete flow, from information retrieval to analysis and publication."
+
+#: public landing page
+msgid "Connect"
+msgstr "Connect"
+
+#: public landing page
+msgid "Find profiles and public activity linked to the institution through reliable identifiers."
+msgstr "Find profiles and public activity linked to the institution through reliable identifiers."
+
+#: public landing page
+msgid "Enrich"
+msgstr "Enrich"
+
+#: public landing page
+msgid "Add OpenAlex, open access, citations, topics, authorships, and affiliations to publication records."
+msgstr "Add OpenAlex, open access, citations, topics, authorships, and affiliations to publication records."
+
+#: public landing page
+msgid "Activate"
+msgstr "Activate"
+
+#: public landing page
+msgid "Turn data into indicators, quality controls, exports, and interoperable services."
+msgstr "Turn data into indicators, quality controls, exports, and interoperable services."
+
+#: public landing page
+msgid "Everything you need to steward and reuse research metadata"
+msgstr "Everything you need to steward and reuse research metadata"
+
+#: public landing page
+msgid "Integrated analytics"
+msgstr "Integrated analytics"
+
+#: public landing page
+msgid "Understand institutional research output"
+msgstr "Understand institutional research output"
+
+#: public landing page
+msgid "Explore trends, collaboration, impact, open access, and subject areas by combining ORCID and OpenAlex."
+msgstr "Explore trends, collaboration, impact, open access, and subject areas by combining ORCID and OpenAlex."
+
+#: public landing page
+msgid "Comparable indicators"
+msgstr "Comparable indicators"
+
+#: public landing page
+msgid "Bring together profiles associated with the institution and preserve the evidence used to find them."
+msgstr "Bring together profiles associated with the institution and preserve the evidence used to find them."
+
+#: public landing page
+msgid "Quality and trust"
+msgstr "Quality and trust"
+
+#: public landing page
+msgid "Identify gaps, inferred relationships, incomplete records, and possible duplicate profiles."
+msgstr "Identify gaps, inferred relationships, incomplete records, and possible duplicate profiles."
+
+#: public landing page
+msgid "Exports at scale"
+msgstr "Exports at scale"
+
+#: public landing page
+msgid "Generate CSV and Excel datasets in the background with progress, retention, and private access."
+msgstr "Generate CSV and Excel datasets in the background with progress, retention, and private access."
+
+#: public landing page
+msgid "Expose selected articles in standard formats for repositories and harvesters."
+msgstr "Expose selected articles in standard formats for repositories and harvesters."
+
+#: public landing page
+msgid "Separate administration, management, OAI editing, and university-level consultation responsibilities."
+msgstr "Separate administration, management, OAI editing, and university-level consultation responsibilities."
+
+#: public landing page
+msgid "From a public source to an informed decision"
+msgstr "From a public source to an informed decision"
+
+#: public landing page
+msgid "Data ORCID-Chile does not replace institutional systems: it provides a shared layer for discovery, review, and interoperability."
+msgstr "Data ORCID-Chile does not replace institutional systems: it provides a shared layer for discovery, review, and interoperability."
+
+#: public landing page
+msgid "Define the institutional context"
+msgstr "Define the institutional context"
+
+#: public landing page
+msgid "ROR acts as the canonical identifier, complemented by validated GRID and Ringgold evidence."
+msgstr "ROR acts as the canonical identifier, complemented by validated GRID and Ringgold evidence."
+
+#: public landing page
+msgid "Synchronize and review"
+msgstr "Synchronize and review"
+
+#: public landing page
+msgid "Durable processes retrieve activity and build layers ready for exploration and quality control."
+msgstr "Durable processes retrieve activity and build layers ready for exploration and quality control."
+
+#: public landing page
+msgid "Analyze, export, or publish"
+msgstr "Analyze, export, or publish"
+
+#: public landing page
+msgid "Each team uses the same trusted data in dashboards, downloadable files, or OAI-PMH endpoints."
+msgstr "Each team uses the same trusted data in dashboards, downloadable files, or OAI-PMH endpoints."
+
+#: public landing page
+msgid "Service principles"
+msgstr "Service principles"
+
+#: public landing page
+msgid "Designed for institutions"
+msgstr "Designed for institutions"
+
+#: public landing page
+msgid "More than collecting records, we want every data point to be explainable, reviewable, and reusable."
+msgstr "More than collecting records, we want every data point to be explainable, reviewable, and reusable."
+
+#: public landing page
+msgid "Traceability"
+msgstr "Traceability"
+
+#: public landing page
+msgid "Visible sources and evidence"
+msgstr "Visible sources and evidence"
+
+#: public landing page
+msgid "Openness"
+msgstr "Openness"
+
+#: public landing page
+msgid "Standards and public information"
+msgstr "Standards and public information"
+
+#: public landing page
+msgid "Continuity"
+msgstr "Continuity"
+
+#: public landing page
+msgid "Recoverable processes"
+msgstr "Recoverable processes"
+
+#: public landing page
+msgid "Context"
+msgstr "Context"
+
+#: public landing page
+msgid "One platform, different teams"
+msgstr "One platform, different teams"
+
+#: public landing page
+msgid "Useful information for people who manage, analyze, and integrate"
+msgstr "Useful information for people who manage, analyze, and integrate"
+
+#: public landing page
+msgid "Research offices"
+msgstr "Research offices"
+
+#: public landing page
+msgid "A consolidated view for monitoring and decision-making."
+msgstr "A consolidated view for monitoring and decision-making."
+
+#: public landing page
+msgid "Information teams"
+msgstr "Information teams"
+
+#: public landing page
+msgid "Exportable, traceable data prepared for reuse."
+msgstr "Exportable, traceable data prepared for reuse."
+
+#: public landing page
+msgid "Libraries and repositories"
+msgstr "Libraries and repositories"
+
+#: public landing page
+msgid "Interoperable selection and publication of research output."
+msgstr "Interoperable selection and publication of research output."
+
+#: public landing page
+msgid "ORCID managers"
+msgstr "ORCID managers"
+
+#: public landing page
+msgid "Context for improving affiliations, profiles, and coverage."
+msgstr "Context for improving affiliations, profiles, and coverage."
+
+#: public landing page
+msgid "Let’s talk"
+msgstr "Let’s talk"
+
+#: public landing page
+msgid "Would you like to explore the service with your institution?"
+msgstr "Would you like to explore the service with your institution?"
+
+#: public landing page
+msgid "Tell us what you need. We can show you the platform, discuss institutional access, or review an integration scenario."
+msgstr "Tell us what you need. We can show you the platform, discuss institutional access, or review an integration scenario."
+
+#: public landing page
+msgid "You can also write to"
+msgstr "You can also write to"
+
+#: public landing page
+msgid "Typical response time"
+msgstr "Typical response time"
+
+#: public landing page
+msgid "Within 2 business days"
+msgstr "Within 2 business days"
+
+#: public landing page
+msgid "Website"
+msgstr "Website"
+
+#: public landing page
+msgid "Institutional email"
+msgstr "Institutional email"
+
+#: public landing page
+msgid "Reason for contacting us"
+msgstr "Reason for contacting us"
+
+#: public landing page
+msgid "How can we help?"
+msgstr "How can we help?"
+
+#: public landing page
+msgid "Do not include passwords or sensitive personal data."
+msgstr "Do not include passwords or sensitive personal data."
+
+#: public landing page
+msgid "I consent to the use of these data solely to answer my inquiry."
+msgstr "I consent to the use of these data solely to answer my inquiry."
+
+#: public landing page
+msgid "Send inquiry"
+msgstr "Send inquiry"
+
+#: public landing page
+msgid "Your message is stored privately so the team can answer it even if email is temporarily unavailable."
+msgstr "Your message is stored privately so the team can answer it even if email is temporarily unavailable."
+
+#: public landing page
+msgid "Public metadata serving institutional research."
+msgstr "Public metadata serving institutional research."
+
+#: public landing page
+msgid "User access"
+msgstr "User access"
+
+#: app/templates/landing/index.html
+msgid "Follow-up"
+msgstr "Follow-up"
+
+#: app/templates/landing/index.html
+msgid "We will reply to your institutional email"
+msgstr "We will reply to your institutional email"
+
+#: app/templates/landing/index.html
+msgid "Data ORCID-Chile integrates public ORCID records with OpenAlex enrichment to support institution-scoped analysis, metadata quality assessment, export, and OAI-PMH dissemination."
+msgstr "Data ORCID-Chile integrates public ORCID records with OpenAlex enrichment to support institution-scoped analysis, metadata quality assessment, export, and OAI-PMH dissemination."
+
+#: app/templates/landing/index.html
+msgid "Data ORCID-Chile · Institutional research metadata infrastructure"
+msgstr "Data ORCID-Chile · Institutional research metadata infrastructure"
+
+#: app/templates/landing/index.html
+msgid "An institution-scoped platform for discovering, documenting, analyzing, and disseminating public research metadata."
+msgstr "An institution-scoped platform for discovering, documenting, analyzing, and disseminating public research metadata."
+
+#: app/templates/landing/index.html
+msgid "Infrastructure for research information management"
+msgstr "Infrastructure for research information management"
+
+#: app/templates/landing/index.html
+msgid "Build an auditable institutional evidence base from"
+msgstr "Build an auditable institutional evidence base from"
+
+#: app/templates/landing/index.html
+msgid "public research metadata"
+msgstr "public research metadata"
+
+#: app/templates/landing/index.html
+msgid "Data ORCID-Chile identifies researchers through verified institutional identifiers, retrieves metadata they have made public in ORCID, and enriches eligible scholarly outputs with OpenAlex. Source provenance and update context remain visible throughout the workflow."
+msgstr "Data ORCID-Chile identifies researchers through verified institutional identifiers, retrieves metadata they have made public in ORCID, and enriches eligible scholarly outputs with OpenAlex. Source provenance and update context remain visible throughout the workflow."
+
+#: app/templates/landing/index.html
+msgid "Request an institutional demonstration"
+msgstr "Request an institutional demonstration"
+
+#: app/templates/landing/index.html
+msgid "Review the methodology"
+msgstr "Review the methodology"
+
+#: app/templates/landing/index.html
+msgid "Public source metadata"
+msgstr "Public source metadata"
+
+#: app/templates/landing/index.html
+msgid "Institution-scoped records"
+msgstr "Institution-scoped records"
+
+#: app/templates/landing/index.html
+msgid "Documented provenance"
+msgstr "Documented provenance"
+
+#: app/templates/landing/index.html
+msgid "Illustrative summary of the service data model"
+msgstr "Illustrative summary of the service data model"
+
+#: app/templates/landing/index.html
+msgid "Institutional metadata overview"
+msgstr "Institutional metadata overview"
+
+#: app/templates/landing/index.html
+msgid "Snapshot status recorded"
+msgstr "Snapshot status recorded"
+
+#: app/templates/landing/index.html
+msgid "Public profiles"
+msgstr "Public profiles"
+
+#: app/templates/landing/index.html
+msgid "Scholarly outputs"
+msgstr "Scholarly outputs"
+
+#: app/templates/landing/index.html
+msgid "Canonical outputs"
+msgstr "Canonical outputs"
+
+#: app/templates/landing/index.html
+msgid "Provenance"
+msgstr "Provenance"
+
+#: app/templates/landing/index.html
+msgid "Source evidence"
+msgstr "Source evidence"
+
+#: app/templates/landing/index.html
+msgid "Documented"
+msgstr "Documented"
+
+#: app/templates/landing/index.html
+msgid "Annual scholarly output"
+msgstr "Annual scholarly output"
+
+#: app/templates/landing/index.html
+msgid "Illustrative time-series view"
+msgstr "Illustrative time-series view"
+
+#: app/templates/landing/index.html
+msgid "Affiliation evidence"
+msgstr "Affiliation evidence"
+
+#: app/templates/landing/index.html
+msgid "Institutional data workflow"
+msgstr "Institutional data workflow"
+
+#: app/templates/landing/index.html
+msgid "A documented workflow from source discovery to responsible reuse"
+msgstr "A documented workflow from source discovery to responsible reuse"
+
+#: app/templates/landing/index.html
+msgid "The platform preserves the distinction between source records, derived relationships, analytical indicators, and institutional publication decisions."
+msgstr "The platform preserves the distinction between source records, derived relationships, analytical indicators, and institutional publication decisions."
+
+#: app/templates/landing/index.html
+msgid "Identify"
+msgstr "Identify"
+
+#: app/templates/landing/index.html
+msgid "Define institutional scope with ROR and verified legacy identifiers, then locate public ORCID affiliations while retaining their evidence source."
+msgstr "Define institutional scope with ROR and verified legacy identifiers, then locate public ORCID affiliations while retaining their evidence source."
+
+#: app/templates/landing/index.html
+msgid "Synchronize public profiles, affiliations, works, and funding records; enrich eligible outputs when a reliable OpenAlex match is available."
+msgstr "Synchronize public profiles, affiliations, works, and funding records; enrich eligible outputs when a reliable OpenAlex match is available."
+
+#: app/templates/landing/index.html
+msgid "Analyze and disseminate"
+msgstr "Analyze and disseminate"
+
+#: app/templates/landing/index.html
+msgid "Examine coverage and provenance, produce controlled exports, and publish institution-approved articles through OAI-PMH."
+msgstr "Examine coverage and provenance, produce controlled exports, and publish institution-approved articles through OAI-PMH."
+
+#: app/templates/landing/index.html
+msgid "Functions for institutional research information stewardship"
+msgstr "Functions for institutional research information stewardship"
+
+#: app/templates/landing/index.html
+msgid "Coverage-aware analytics"
+msgstr "Coverage-aware analytics"
+
+#: app/templates/landing/index.html
+msgid "Analyze research activity with stated coverage"
+msgstr "Analyze research activity with stated coverage"
+
+#: app/templates/landing/index.html
+msgid "Examine works, funding, citations, open-access status, topics, sources, and collaboration within the selected institutional snapshot."
+msgstr "Examine works, funding, citations, open-access status, topics, sources, and collaboration within the selected institutional snapshot."
+
+#: app/templates/landing/index.html
+msgid "Source-dependent indicators"
+msgstr "Source-dependent indicators"
+
+#: app/templates/landing/index.html
+msgid "Review public ORCID profiles associated with the institution and the identifier evidence used during discovery."
+msgstr "Review public ORCID profiles associated with the institution and the identifier evidence used during discovery."
+
+#: app/templates/landing/index.html
+msgid "Assess metadata completeness, affiliation evidence, canonicalization, and possible duplicate profiles; candidate matches remain subject to human review."
+msgstr "Assess metadata completeness, affiliation evidence, canonicalization, and possible duplicate profiles; candidate matches remain subject to human review."
+
+#: app/templates/landing/index.html
+msgid "Generate UTF-8 CSV and XLSX datasets as durable background jobs with progress reporting, private access, and defined retention."
+msgstr "Generate UTF-8 CSV and XLSX datasets as durable background jobs with progress reporting, private access, and defined retention."
+
+#: app/templates/landing/index.html
+msgid "Expose institution-approved canonical articles through oai_dc, OpenAIRE, or configurable DataORCID metadata for compatible harvesters."
+msgstr "Expose institution-approved canonical articles through oai_dc, OpenAIRE, or configurable DataORCID metadata for compatible harvesters."
+
+#: app/templates/landing/index.html
+msgid "Apply institutional scope and differentiated permissions for standard users, OAI editors, managers, and administrators."
+msgstr "Apply institutional scope and differentiated permissions for standard users, OAI editors, managers, and administrators."
+
+#: app/templates/landing/index.html
+msgid "From public records to documented institutional evidence"
+msgstr "From public records to documented institutional evidence"
+
+#: app/templates/landing/index.html
+msgid "The platform does not modify upstream ORCID or OpenAlex records. It stores synchronized snapshots and derived relationships so their origin, update context, and institutional scope can be examined."
+msgstr "The platform does not modify upstream ORCID or OpenAlex records. It stores synchronized snapshots and derived relationships so their origin, update context, and institutional scope can be examined."
+
+#: app/templates/landing/index.html
+msgid "Define the institutional scope"
+msgstr "Define the institutional scope"
+
+#: app/templates/landing/index.html
+msgid "ROR is the canonical institutional identifier. Verified GRID and historical Ringgold identifiers are used as additional discovery evidence when available, and results are deduplicated by ORCID iD."
+msgstr "ROR is the canonical institutional identifier. Verified GRID and historical Ringgold identifiers are used as additional discovery evidence when available, and results are deduplicated by ORCID iD."
+
+#: app/templates/landing/index.html
+msgid "Synchronize and document"
+msgstr "Synchronize and document"
+
+#: app/templates/landing/index.html
+msgid "Only metadata made public by ORCID record holders is retrieved. Synchronization runs and cache timestamps document the resulting institutional snapshot."
+msgstr "Only metadata made public by ORCID record holders is retrieved. Synchronization runs and cache timestamps document the resulting institutional snapshot."
+
+#: app/templates/landing/index.html
+msgid "Relate, analyze, and disseminate"
+msgstr "Relate, analyze, and disseminate"
+
+#: app/templates/landing/index.html
+msgid "DOIs and conservative title-and-year rules support canonical outputs; OpenAlex enrichment and OAI-PMH publication decisions remain distinguishable from source records."
+msgstr "DOIs and conservative title-and-year rules support canonical outputs; OpenAlex enrichment and OAI-PMH publication decisions remain distinguishable from source records."
+
+#: app/templates/landing/index.html
+msgid "Methodological principles"
+msgstr "Methodological principles"
+
+#: app/templates/landing/index.html
+msgid "Institutional indicators are interpretable only when their source, coverage, update date, and derivation rules are explicit."
+msgstr "Institutional indicators are interpretable only when their source, coverage, update date, and derivation rules are explicit."
+
+#: app/templates/landing/index.html
+msgid "Source and matching evidence retained"
+msgstr "Source and matching evidence retained"
+
+#: app/templates/landing/index.html
+msgid "Open standards"
+msgstr "Open standards"
+
+#: app/templates/landing/index.html
+msgid "Public metadata and standards-based exchange"
+msgstr "Public metadata and standards-based exchange"
+
+#: app/templates/landing/index.html
+msgid "Operational continuity"
+msgstr "Operational continuity"
+
+#: app/templates/landing/index.html
+msgid "Durable, recoverable background processes"
+msgstr "Durable, recoverable background processes"
+
+#: app/templates/landing/index.html
+msgid "Institutional scope"
+msgstr "Institutional scope"
+
+#: app/templates/landing/index.html
+msgid "Results bounded by institution and access role"
+msgstr "Results bounded by institution and access role"
+
+#: app/templates/landing/index.html
+msgid "Institutional applications"
+msgstr "Institutional applications"
+
+#: app/templates/landing/index.html
+msgid "A shared evidence layer for research management and scholarly communication"
+msgstr "A shared evidence layer for research management and scholarly communication"
+
+#: app/templates/landing/index.html
+msgid "Monitor public-profile coverage and examine institution-scoped output and funding indicators."
+msgstr "Monitor public-profile coverage and examine institution-scoped output and funding indicators."
+
+#: app/templates/landing/index.html
+msgid "Prepare documented datasets for analysis, reporting, and controlled reuse."
+msgstr "Prepare documented datasets for analysis, reporting, and controlled reuse."
+
+#: app/templates/landing/index.html
+msgid "Curate institutional article selection and interoperable metadata dissemination."
+msgstr "Curate institutional article selection and interoperable metadata dissemination."
+
+#: app/templates/landing/index.html
+msgid "Review public affiliations, discovery evidence, and profile coverage gaps."
+msgstr "Review public affiliations, discovery evidence, and profile coverage gaps."
+
+#: app/templates/landing/index.html
+msgid "Institutional enquiries"
+msgstr "Institutional enquiries"
+
+#: app/templates/landing/index.html
+msgid "Assess the service in relation to your institution’s information needs"
+msgstr "Assess the service in relation to your institution’s information needs"
+
+#: app/templates/landing/index.html
+msgid "Describe your institutional context, available identifiers, intended analyses, or interoperability requirements. The team can present the workflow and discuss technical or governance considerations."
+msgstr "Describe your institutional context, available identifiers, intended analyses, or interoperability requirements. The team can present the workflow and discuss technical or governance considerations."
+
+#: app/templates/landing/index.html
+msgid "Direct contact"
+msgstr "Direct contact"
+
+#: app/templates/landing/index.html
+msgid "Open research metadata infrastructure for Chilean institutions."
+msgstr "Open research metadata infrastructure for Chilean institutions."

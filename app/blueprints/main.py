@@ -4,14 +4,17 @@ import os
 import io
 import datetime as dt
 import calendar
+import html
 import logging
 import math
+import re
+from email.headerregistry import Address
 import pandas as pd
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
     session, send_from_directory, current_app, send_file
 )
-from flask_babel import _
+from flask_babel import _, get_locale as get_babel_locale
 from sqlalchemy import String, and_, case, cast, func, literal, or_
 
 from .. import db, datetimeformat
@@ -19,12 +22,13 @@ from ..models import (
     WorkCache, FundingCache, WorkCacheRun, 
     FundingCacheRun, InstitutionRegistry, InstitutionResearcher,
     ResearcherAffiliationEvidence, ResearcherStatus, User, ResearcherCache,
-    WorkRecordLink, OpenAlexWorkMetadata,
+    WorkRecordLink, OpenAlexWorkMetadata, ContactInquiry,
 )
 from ..decorators import login_required
 from ..spreadsheet import excel_safe_dataframe
-from ..utils.flashes import flash_err
+from ..utils.flashes import flash_err, flash_ok
 from ..utils.session_helpers import get_active_ror_id
+from ..utils.emailer import send_email
 from ..services.orcid_service import (
     get_full_orcid_profile, 
     list_orcids_for_institution, 
@@ -34,9 +38,12 @@ from ..services.cache_service import ensure_and_heal_grid_for_ror
 from ..services.canonical_work_service import canonical_work_counts
 from ..services.data_health_service import health_presentation, institution_data_health
 from ..services.duplicate_profile_service import build_duplicate_report
+from ..services.module_access import is_module_enabled
+from ..services.rate_limit import is_rate_limited
 
 bp_main = Blueprint("main", __name__)
 logger = logging.getLogger(__name__)
+_CONTACT_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+$")
 
 
 def _five_year_trend(model, year_column, ror_id):
@@ -358,9 +365,171 @@ def inject_global_vars():
         global_data_health=data_health,
         global_data_health_ui=data_health_ui,
     )
+
+
+def _landing_contact_email() -> str:
+    """Return the configured public-contact recipient without exposing SMTP details."""
+    configured = current_app.config.get("MAIL_REPLY_TO")
+    if configured:
+        return str(configured).strip()
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+    if isinstance(sender, (tuple, list)) and len(sender) > 1:
+        return str(sender[1] or "").strip()
+    return str(sender or "").strip()
+
+
+def _render_public_landing(contact_form=None, contact_errors=None):
+    return render_template(
+        "landing/index.html",
+        current_locale=str(get_babel_locale()),
+        contact_email=_landing_contact_email(),
+        contact_form=contact_form or {},
+        contact_errors=contact_errors or {},
+    )
+
+
+def _valid_contact_email(value: str) -> bool:
+    """Accept one syntactically valid address that is safe for Reply-To."""
+    if len(value) > 254 or not _CONTACT_EMAIL_PATTERN.fullmatch(value):
+        return False
+    try:
+        Address(addr_spec=value)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
 @bp_main.route('/')
-@login_required
 def index():
+    """Show the public overview to visitors and the dashboard to signed-in users."""
+    if not session.get("logged_in") and is_module_enabled("landing_page"):
+        return _render_public_landing()
+    return _dashboard_index()
+
+
+@bp_main.post('/contact')
+def contact():
+    """Validate, store, and optionally notify a public service enquiry."""
+    topic_labels = {
+        "demo": _("Request a demonstration"),
+        "access": _("Institutional access"),
+        "integration": _("Integrations and OAI-PMH"),
+        "support": _("Support"),
+        "other": _("Other inquiry"),
+    }
+    form_data = {
+        "name": (request.form.get("name") or "").strip(),
+        "email": (request.form.get("email") or "").strip(),
+        "institution": (request.form.get("institution") or "").strip(),
+        "topic": (request.form.get("topic") or "demo").strip(),
+        "message": (request.form.get("message") or "").strip(),
+    }
+    if form_data["topic"] not in topic_labels:
+        form_data["topic"] = "other"
+
+    if is_rate_limited("landing-contact", limit=5, window_seconds=3600):
+        flash_err(_("You have sent several messages recently. Please try again later."))
+        return _render_public_landing(form_data), 429
+
+    # A visually hidden field catches basic form bots without adding a third-party CAPTCHA.
+    if (request.form.get("website") or "").strip():
+        flash_ok(_("Thank you. We received your message and will reply shortly."))
+        return redirect(url_for("main.index", _anchor="contact"))
+
+    errors = {}
+    if len(form_data["name"]) < 2 or len(form_data["name"]) > 120:
+        errors["name"] = _("Enter a name between 2 and 120 characters.")
+    if not _valid_contact_email(form_data["email"]):
+        errors["email"] = _("Enter a valid email address.")
+    if len(form_data["institution"]) > 160:
+        errors["institution"] = _("The institution name cannot exceed 160 characters.")
+    if len(form_data["message"]) < 20 or len(form_data["message"]) > 3000:
+        errors["message"] = _("The message must contain between 20 and 3,000 characters.")
+    if request.form.get("privacy") != "accepted":
+        errors["privacy"] = _("You must consent to the use of these data so we can answer your inquiry.")
+
+    if errors:
+        flash_err(_("Review the highlighted fields before sending your inquiry."))
+        return _render_public_landing(form_data, errors), 422
+
+    inquiry = ContactInquiry(
+        name=form_data["name"],
+        email=form_data["email"],
+        institution=form_data["institution"] or None,
+        topic=form_data["topic"],
+        message=form_data["message"],
+    )
+    try:
+        db.session.add(inquiry)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception("Could not persist a public contact inquiry.")
+        flash_err(_("We could not save your message. Please try again later."))
+        return _render_public_landing(form_data), 503
+
+    recipient = _landing_contact_email()
+    safe_name = html.escape(form_data["name"])
+    safe_email = html.escape(form_data["email"])
+    safe_institution = html.escape(form_data["institution"] or _("Not provided"))
+    safe_topic = html.escape(topic_labels[form_data["topic"]])
+    safe_message = html.escape(form_data["message"]).replace("\n", "<br>")
+    email_html = f"""
+    <h2>{_("New inquiry from Data ORCID-Chile")}</h2>
+    <p><strong>{_("Name")}:</strong> {safe_name}</p>
+    <p><strong>{_("Email")}:</strong> {safe_email}</p>
+    <p><strong>{_("Institution")}:</strong> {safe_institution}</p>
+    <p><strong>{_("Inquiry type")}:</strong> {safe_topic}</p>
+    <p><strong>{_("Message")}:</strong><br>{safe_message}</p>
+    """
+    email_text = (
+        f"{_('New inquiry from Data ORCID-Chile')}\n\n"
+        f"{_('Name')}: {form_data['name']}\n"
+        f"{_('Email')}: {form_data['email']}\n"
+        f"{_('Institution')}: {form_data['institution'] or _('Not provided')}\n\n"
+        f"{_('Inquiry type')}: {topic_labels[form_data['topic']]}\n\n"
+        f"{_('Message')}:\n{form_data['message']}"
+    )
+    delivered = False
+    error = "Email notification is not configured."
+    if current_app.config.get("MAIL_ENABLED") and recipient:
+        delivered, error = send_email(
+            to_email=recipient,
+            subject=_("New inquiry from Data ORCID-Chile"),
+            html=email_html,
+            text=email_text,
+            reply_to=form_data["email"],
+        )
+
+    if delivered:
+        inquiry.notification_status = "delivered"
+    else:
+        normalized_error = (error or "").lower()
+        if "authentication" in normalized_error or "username and password" in normalized_error:
+            inquiry.notification_status = "authentication_failed"
+        elif "connection" in normalized_error or "network" in normalized_error:
+            inquiry.notification_status = "connection_failed"
+        elif not current_app.config.get("MAIL_ENABLED") or not recipient:
+            inquiry.notification_status = "not_configured"
+        else:
+            inquiry.notification_status = "delivery_failed"
+        logger.warning(
+            "Email notification for contact inquiry %s was not delivered (%s).",
+            inquiry.id,
+            inquiry.notification_status,
+        )
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception("Could not update contact inquiry notification status.")
+
+    flash_ok(_("Thank you. We received your message and will reply shortly."))
+    return redirect(url_for("main.index", _anchor="contact"))
+
+
+@login_required
+def _dashboard_index():
     """
     Main landing view (Dashboard Home).
     

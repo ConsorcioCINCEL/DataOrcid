@@ -1,0 +1,306 @@
+{% from 'components/ui.html' import flash_messages %}
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{ _('Data ORCID-Chile integrates public ORCID records with OpenAlex enrichment to support institution-scoped analysis, metadata quality assessment, export, and OAI-PMH dissemination.') }}">
+  <meta name="theme-color" content="#0f3d56">
+  <meta property="og:title" content="{{ _('Data ORCID-Chile · Institutional research metadata infrastructure') }}">
+  <meta property="og:description" content="{{ _('An institution-scoped platform for discovering, documenting, analyzing, and disseminating public research metadata.') }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ config.get('APP_BASE_URL') or request.url_root }}">
+  <title>{{ _('Data ORCID-Chile · Institutional research metadata infrastructure') }}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css', v=config.get('APP_VERSION', '2.1')) }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body class="landing-page">
+  <a class="landing-skip-link" href="#main-content">{{ _('Skip to main content') }}</a>
+
+  <header class="landing-header" id="top">
+    <div class="landing-container landing-nav">
+      <a class="landing-brand" href="#top" aria-label="{{ _('Data ORCID-Chile home') }}">
+        <span class="landing-brand-wordmark" aria-hidden="true"><span>DATA</span><strong>ORCID</strong></span>
+        <small>Chile</small>
+      </a>
+      <nav aria-label="{{ _('Primary navigation') }}">
+        <a href="#service">{{ _('The service') }}</a>
+        <a href="#capabilities">{{ _('Capabilities') }}</a>
+        <a href="#how-it-works">{{ _('How it works') }}</a>
+        <a href="#contact">{{ _('Contact') }}</a>
+      </nav>
+      <details class="landing-language">
+        <summary aria-label="{{ _('Change language') }}"><i class="fas fa-globe" aria-hidden="true"></i><span>{{ current_locale|upper }}</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+        <div>
+          {% for language_code, language_label in language_options %}
+          <a href="{{ locale_url(language_code) }}" class="{% if current_locale == language_code %}active{% endif %}" lang="{{ language_code }}">{{ language_label }}</a>
+          {% endfor %}
+        </div>
+      </details>
+      <a class="landing-button landing-button--small" href="{{ url_for('auth.login') }}">
+        {{ _('Sign in') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="landing-hero" aria-labelledby="landingHeroTitle">
+      <div class="landing-container landing-hero-grid">
+        <div class="landing-hero-copy">
+          <span class="landing-eyebrow"><i class="fas fa-circle" aria-hidden="true"></i> {{ _('Infrastructure for research information management') }}</span>
+          <h1 id="landingHeroTitle">{{ _('Build an auditable institutional evidence base from') }} <em>{{ _('public research metadata') }}</em></h1>
+          <p>{{ _('Data ORCID-Chile identifies researchers through verified institutional identifiers, retrieves metadata they have made public in ORCID, and enriches eligible scholarly outputs with OpenAlex. Source provenance and update context remain visible throughout the workflow.') }}</p>
+          <div class="landing-hero-actions">
+            <a class="landing-button" href="#contact">{{ _('Request an institutional demonstration') }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+            <a class="landing-text-link" href="#how-it-works"><i class="far fa-play-circle" aria-hidden="true"></i> {{ _('Review the methodology') }}</a>
+          </div>
+          <ul class="landing-trust-list" aria-label="{{ _('Key features') }}">
+            <li><i class="fas fa-check" aria-hidden="true"></i> {{ _('Public source metadata') }}</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> {{ _('Institution-scoped records') }}</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> {{ _('Documented provenance') }}</li>
+          </ul>
+        </div>
+
+        <div class="landing-product" aria-label="{{ _('Illustrative summary of the service data model') }}">
+          <div class="landing-product-glow" aria-hidden="true"></div>
+          <div class="landing-window">
+            <div class="landing-window-bar">
+              <span class="landing-window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span>{{ _('Institutional metadata overview') }}</span>
+              <span class="landing-live"><i></i> {{ _('Snapshot status recorded') }}</span>
+            </div>
+            <div class="landing-window-body">
+              <aside class="landing-window-rail" aria-hidden="true">
+                <span class="is-active"><i class="fas fa-th-large"></i></span>
+                <span><i class="fas fa-chart-line"></i></span>
+                <span><i class="fas fa-database"></i></span>
+                <span><i class="fas fa-broadcast-tower"></i></span>
+              </aside>
+              <div class="landing-window-content">
+                <div class="landing-metric-row">
+                  <article><small>{{ _('Researchers') }}</small><strong>{{ _('Public profiles') }}</strong><span class="is-green"><i class="fas fa-arrow-up"></i> ORCID</span></article>
+                  <article><small>{{ _('Scholarly outputs') }}</small><strong>{{ _('Canonical outputs') }}</strong><span class="is-blue"><i class="fas fa-link"></i> OpenAlex</span></article>
+                  <article><small>{{ _('Provenance') }}</small><strong>{{ _('Source evidence') }}</strong><span class="is-purple"><i class="fas fa-shield-alt"></i> {{ _('Documented') }}</span></article>
+                </div>
+                <div class="landing-chart-card">
+                  <div><strong>{{ _('Annual scholarly output') }}</strong><small>{{ _('Illustrative time-series view') }}</small></div>
+                  <div class="landing-chart" aria-hidden="true">
+                    <span style="--bar: 42%"></span><span style="--bar: 54%"></span><span style="--bar: 49%"></span><span style="--bar: 68%"></span><span style="--bar: 82%"></span><span style="--bar: 92%"></span>
+                  </div>
+                </div>
+                <div class="landing-signal-row">
+                  <span><i class="fas fa-check-circle"></i> {{ _('Affiliation evidence') }}</span>
+                  <span><i class="fas fa-check-circle"></i> {{ _('Open-access status') }}</span>
+                  <span><i class="fas fa-check-circle"></i> OAI-PMH</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-context" id="service" aria-labelledby="landingServiceTitle">
+      <div class="landing-container">
+        <div class="landing-section-heading landing-section-heading--center">
+          <span>{{ _('Institutional data workflow') }}</span>
+          <h2 id="landingServiceTitle">{{ _('A documented workflow from source discovery to responsible reuse') }}</h2>
+          <p>{{ _('The platform preserves the distinction between source records, derived relationships, analytical indicators, and institutional publication decisions.') }}</p>
+        </div>
+        <div class="landing-flow" role="list">
+          <article role="listitem"><span class="landing-flow-number">01</span><i class="fab fa-orcid" aria-hidden="true"></i><div><strong>{{ _('Identify') }}</strong><p>{{ _('Define institutional scope with ROR and verified legacy identifiers, then locate public ORCID affiliations while retaining their evidence source.') }}</p></div></article>
+          <span class="landing-flow-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+          <article role="listitem"><span class="landing-flow-number">02</span><i class="fas fa-layer-group" aria-hidden="true"></i><div><strong>{{ _('Integrate') }}</strong><p>{{ _('Synchronize public profiles, affiliations, works, and funding records; enrich eligible outputs when a reliable OpenAlex match is available.') }}</p></div></article>
+          <span class="landing-flow-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+          <article role="listitem"><span class="landing-flow-number">03</span><i class="fas fa-chart-pie" aria-hidden="true"></i><div><strong>{{ _('Analyze and disseminate') }}</strong><p>{{ _('Examine coverage and provenance, produce controlled exports, and publish institution-approved articles through OAI-PMH.') }}</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-capabilities" id="capabilities" aria-labelledby="landingCapabilitiesTitle">
+      <div class="landing-container">
+        <div class="landing-section-heading">
+          <span>{{ _('Capabilities') }}</span>
+          <h2 id="landingCapabilitiesTitle">{{ _('Functions for institutional research information stewardship') }}</h2>
+        </div>
+        <div class="landing-capability-grid">
+          <article class="landing-capability-card is-featured">
+            <span class="landing-card-icon"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
+            <small>{{ _('Coverage-aware analytics') }}</small>
+            <h3>{{ _('Analyze research activity with stated coverage') }}</h3>
+            <p>{{ _('Examine works, funding, citations, open-access status, topics, sources, and collaboration within the selected institutional snapshot.') }}</p>
+            <span class="landing-card-tag">{{ _('Source-dependent indicators') }}</span>
+          </article>
+          <article class="landing-capability-card">
+            <span class="landing-card-icon"><i class="fas fa-users" aria-hidden="true"></i></span>
+            <h3>{{ _('Researcher directory') }}</h3>
+            <p>{{ _('Review public ORCID profiles associated with the institution and the identifier evidence used during discovery.') }}</p>
+          </article>
+          <article class="landing-capability-card">
+            <span class="landing-card-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
+            <h3>{{ _('Quality and trust') }}</h3>
+            <p>{{ _('Assess metadata completeness, affiliation evidence, canonicalization, and possible duplicate profiles; candidate matches remain subject to human review.') }}</p>
+          </article>
+          <article class="landing-capability-card">
+            <span class="landing-card-icon"><i class="fas fa-file-export" aria-hidden="true"></i></span>
+            <h3>{{ _('Exports at scale') }}</h3>
+            <p>{{ _('Generate UTF-8 CSV and XLSX datasets as durable background jobs with progress reporting, private access, and defined retention.') }}</p>
+          </article>
+          <article class="landing-capability-card">
+            <span class="landing-card-icon"><i class="fas fa-broadcast-tower" aria-hidden="true"></i></span>
+            <h3>{{ _('OAI-PMH publishing') }}</h3>
+            <p>{{ _('Expose institution-approved canonical articles through oai_dc, OpenAIRE, or configurable DataORCID metadata for compatible harvesters.') }}</p>
+          </article>
+          <article class="landing-capability-card">
+            <span class="landing-card-icon"><i class="fas fa-user-lock" aria-hidden="true"></i></span>
+            <h3>{{ _('Institutional access') }}</h3>
+            <p>{{ _('Apply institutional scope and differentiated permissions for standard users, OAI editors, managers, and administrators.') }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-how" id="how-it-works" aria-labelledby="landingHowTitle">
+      <div class="landing-container landing-how-grid">
+        <div class="landing-how-copy">
+          <div class="landing-section-heading">
+            <span>{{ _('How it works') }}</span>
+            <h2 id="landingHowTitle">{{ _('From public records to documented institutional evidence') }}</h2>
+            <p>{{ _('The platform does not modify upstream ORCID or OpenAlex records. It stores synchronized snapshots and derived relationships so their origin, update context, and institutional scope can be examined.') }}</p>
+          </div>
+          <ol class="landing-steps">
+            <li><span>1</span><div><strong>{{ _('Define the institutional scope') }}</strong><p>{{ _('ROR is the canonical institutional identifier. Verified GRID and historical Ringgold identifiers are used as additional discovery evidence when available, and results are deduplicated by ORCID iD.') }}</p></div></li>
+            <li><span>2</span><div><strong>{{ _('Synchronize and document') }}</strong><p>{{ _('Only metadata made public by ORCID record holders is retrieved. Synchronization runs and cache timestamps document the resulting institutional snapshot.') }}</p></div></li>
+            <li><span>3</span><div><strong>{{ _('Relate, analyze, and disseminate') }}</strong><p>{{ _('DOIs and conservative title-and-year rules support canonical outputs; OpenAlex enrichment and OAI-PMH publication decisions remain distinguishable from source records.') }}</p></div></li>
+          </ol>
+        </div>
+        <aside class="landing-principles" aria-label="{{ _('Service principles') }}">
+          <span class="landing-principles-label">{{ _('Methodological principles') }}</span>
+          <blockquote>{{ _('Institutional indicators are interpretable only when their source, coverage, update date, and derivation rules are explicit.') }}</blockquote>
+          <div class="landing-principle-grid">
+            <div><i class="fas fa-fingerprint" aria-hidden="true"></i><strong>{{ _('Provenance') }}</strong><small>{{ _('Source and matching evidence retained') }}</small></div>
+            <div><i class="fas fa-unlock-alt" aria-hidden="true"></i><strong>{{ _('Open standards') }}</strong><small>{{ _('Public metadata and standards-based exchange') }}</small></div>
+            <div><i class="fas fa-sync-alt" aria-hidden="true"></i><strong>{{ _('Operational continuity') }}</strong><small>{{ _('Durable, recoverable background processes') }}</small></div>
+            <div><i class="fas fa-university" aria-hidden="true"></i><strong>{{ _('Institutional scope') }}</strong><small>{{ _('Results bounded by institution and access role') }}</small></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="landing-audience" aria-labelledby="landingAudienceTitle">
+      <div class="landing-container">
+        <div class="landing-section-heading landing-section-heading--center">
+          <span>{{ _('Institutional applications') }}</span>
+          <h2 id="landingAudienceTitle">{{ _('A shared evidence layer for research management and scholarly communication') }}</h2>
+        </div>
+        <div class="landing-audience-grid">
+          <article><i class="fas fa-user-tie" aria-hidden="true"></i><strong>{{ _('Research offices') }}</strong><p>{{ _('Monitor public-profile coverage and examine institution-scoped output and funding indicators.') }}</p></article>
+          <article><i class="fas fa-database" aria-hidden="true"></i><strong>{{ _('Information teams') }}</strong><p>{{ _('Prepare documented datasets for analysis, reporting, and controlled reuse.') }}</p></article>
+          <article><i class="fas fa-book-open" aria-hidden="true"></i><strong>{{ _('Libraries and repositories') }}</strong><p>{{ _('Curate institutional article selection and interoperable metadata dissemination.') }}</p></article>
+          <article><i class="fas fa-id-card" aria-hidden="true"></i><strong>{{ _('ORCID managers') }}</strong><p>{{ _('Review public affiliations, discovery evidence, and profile coverage gaps.') }}</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-contact" id="contact" aria-labelledby="landingContactTitle">
+      <div class="landing-container landing-contact-grid">
+        <div class="landing-contact-copy">
+          <span class="landing-eyebrow landing-eyebrow--light">{{ _('Institutional enquiries') }}</span>
+          <h2 id="landingContactTitle">{{ _('Assess the service in relation to your institution’s information needs') }}</h2>
+          <p>{{ _('Describe your institutional context, available identifiers, intended analyses, or interoperability requirements. The team can present the workflow and discuss technical or governance considerations.') }}</p>
+          <div class="landing-contact-detail"><i class="far fa-envelope" aria-hidden="true"></i><div><small>{{ _('Direct contact') }}</small><a href="mailto:{{ contact_email }}">{{ contact_email }}</a></div></div>
+          <div class="landing-contact-detail"><i class="far fa-clock" aria-hidden="true"></i><div><small>{{ _('Follow-up') }}</small><strong>{{ _('We will reply to your institutional email') }}</strong></div></div>
+        </div>
+
+        <div class="landing-contact-card" id="contactForm">
+          {% with messages = get_flashed_messages(with_categories=True) %}
+            {{ flash_messages(messages) }}
+          {% endwith %}
+          <form method="post" action="{{ url_for('main.contact') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="landing-honeypot" aria-hidden="true">
+              <label for="website">{{ _('Website') }}</label>
+              <input id="website" type="text" name="website" tabindex="-1" autocomplete="off">
+            </div>
+            <div class="landing-form-row">
+              <div class="landing-field">
+                <label for="contactName">{{ _('Name') }} <span aria-hidden="true">*</span></label>
+                <input id="contactName" type="text" name="name" value="{{ contact_form.get('name', '') }}" minlength="2" maxlength="120" autocomplete="name" required aria-describedby="contactNameError" {% if contact_errors.get('name') %}aria-invalid="true"{% endif %}>
+                <small id="contactNameError" class="landing-field-error">{{ contact_errors.get('name', '') }}</small>
+              </div>
+              <div class="landing-field">
+                <label for="contactEmail">{{ _('Institutional email') }} <span aria-hidden="true">*</span></label>
+                <input id="contactEmail" type="email" name="email" value="{{ contact_form.get('email', '') }}" maxlength="254" autocomplete="email" required aria-describedby="contactEmailError" {% if contact_errors.get('email') %}aria-invalid="true"{% endif %}>
+                <small id="contactEmailError" class="landing-field-error">{{ contact_errors.get('email', '') }}</small>
+              </div>
+            </div>
+            <div class="landing-form-row">
+              <div class="landing-field">
+                <label for="contactInstitution">{{ _('Institution') }}</label>
+                <input id="contactInstitution" type="text" name="institution" value="{{ contact_form.get('institution', '') }}" maxlength="160" autocomplete="organization" aria-describedby="contactInstitutionError" {% if contact_errors.get('institution') %}aria-invalid="true"{% endif %}>
+                <small id="contactInstitutionError" class="landing-field-error">{{ contact_errors.get('institution', '') }}</small>
+              </div>
+              <div class="landing-field">
+                <label for="contactTopic">{{ _('Reason for contacting us') }}</label>
+                <select id="contactTopic" name="topic">
+                  {% for value, label in (
+                    ('demo', _('Request a demonstration')),
+                    ('access', _('Institutional access')),
+                    ('integration', _('Integrations and OAI-PMH')),
+                    ('support', _('Support')),
+                    ('other', _('Other inquiry'))
+                  ) %}
+                  <option value="{{ value }}" {% if contact_form.get('topic', 'demo') == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="landing-field">
+              <label for="contactMessage">{{ _('How can we help?') }} <span aria-hidden="true">*</span></label>
+              <textarea id="contactMessage" name="message" rows="5" minlength="20" maxlength="3000" required aria-describedby="contactMessageHint contactMessageError" {% if contact_errors.get('message') %}aria-invalid="true"{% endif %}>{{ contact_form.get('message', '') }}</textarea>
+              <div class="landing-field-meta"><small id="contactMessageHint">{{ _('Do not include passwords or sensitive personal data.') }}</small><small id="contactMessageError" class="landing-field-error">{{ contact_errors.get('message', '') }}</small></div>
+            </div>
+            <label class="landing-consent {% if contact_errors.get('privacy') %}has-error{% endif %}">
+              <input type="checkbox" name="privacy" value="accepted" required>
+              <span>{{ _('I consent to the use of these data solely to answer my inquiry.') }}</span>
+            </label>
+            {% if contact_errors.get('privacy') %}<small class="landing-field-error is-visible">{{ contact_errors.get('privacy') }}</small>{% endif %}
+            <button class="landing-button landing-button--submit" type="submit">{{ _('Send inquiry') }} <i class="fas fa-paper-plane" aria-hidden="true"></i></button>
+            <p class="landing-form-note"><i class="fas fa-lock" aria-hidden="true"></i> {{ _('Your message is stored privately so the team can answer it even if email is temporarily unavailable.') }}</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <div class="landing-container">
+      <div class="landing-footer-brand">
+        <span class="landing-brand-wordmark" aria-hidden="true"><span>DATA</span><strong>ORCID</strong></span>
+        <small>Chile</small>
+        <p>{{ _('Open research metadata infrastructure for Chilean institutions.') }}</p>
+      </div>
+      <div class="landing-footer-links">
+        <a href="#service">{{ _('The service') }}</a>
+        <a href="#capabilities">{{ _('Capabilities') }}</a>
+        <a href="#contact">{{ _('Contact') }}</a>
+        <a href="{{ url_for('auth.login') }}">{{ _('User access') }}</a>
+      </div>
+      <p class="landing-footer-legal">&copy; {{ current_year }} Data ORCID-Chile · {{ _('Version') }} {{ config.get('APP_VERSION', '2.1') }}</p>
+    </div>
+  </footer>
+  <script>
+    document.querySelectorAll('.app-flash-close').forEach(function (button) {
+      button.addEventListener('click', function () {
+        const alert = button.closest('.app-flash');
+        if (alert) alert.remove();
+      });
+    });
+  </script>
+</body>
+</html>

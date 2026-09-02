@@ -60,6 +60,7 @@ class RuntimeHardeningTest(unittest.TestCase):
             MAIL_PORT=2525,
             MAIL_USE_TLS=True,
             MAIL_USE_SSL=False,
+            MAIL_FORCE_IPV4=True,
             MAIL_USERNAME="mailer@example.test",
             MAIL_PASSWORD="environment-secret",
             MAIL_DEFAULT_SENDER=("Data ORCID-Chile", "no-reply@example.test"),
@@ -67,12 +68,27 @@ class RuntimeHardeningTest(unittest.TestCase):
         )
         smtp = MagicMock()
         smtp.__enter__.return_value = smtp
-        with app.app_context(), patch("app.utils.emailer.smtplib.SMTP", return_value=smtp):
-            success, error = send_email("user@example.test", "Subject", "<p>Body</p>")
+        with app.app_context(), patch(
+            "app.utils.emailer.smtplib.SMTP", return_value=smtp
+        ) as smtp_class:
+            success, error = send_email(
+                "user@example.test",
+                "Subject",
+                "<p>Body</p>",
+                reply_to="visitor@example.test",
+            )
 
         self.assertTrue(success)
         self.assertIsNone(error)
+        smtp_class.assert_called_once_with(
+            "smtp.example.test",
+            2525,
+            timeout=20,
+            source_address=("0.0.0.0", 0),
+        )
         smtp.login.assert_called_once_with("mailer@example.test", "environment-secret")
+        message = smtp.send_message.call_args.args[0]
+        self.assertEqual("visitor@example.test", message["Reply-To"])
 
     def test_rate_limit_is_shared_in_the_database_and_ignores_raw_forwarding(self):
         app = Flask(__name__)

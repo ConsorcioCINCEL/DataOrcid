@@ -14,6 +14,7 @@ def send_email(
     subject: str,
     html: str,
     text: Optional[str] = None,
+    reply_to: Optional[str] = None,
 ) -> Tuple[bool, Optional[str]]:
     """
     Send an HTML email with a plain-text fallback.
@@ -44,6 +45,9 @@ def send_email(
         use_ssl = current_app.config.get("MAIL_USE_SSL")
         if use_ssl is None:
             use_ssl = mail_conf.get("use_ssl", False)
+        force_ipv4 = current_app.config.get("MAIL_FORCE_IPV4")
+        if force_ipv4 is None:
+            force_ipv4 = mail_conf.get("force_ipv4", False)
 
         sender = current_app.config.get("MAIL_DEFAULT_SENDER")
         if isinstance(sender, (tuple, list)):
@@ -62,6 +66,8 @@ def send_email(
         msg["Subject"] = subject
         msg["From"] = f"{from_name} <{from_email}>"
         msg["To"] = to_email
+        if reply_to:
+            msg["Reply-To"] = reply_to
 
         plain_text = text or "Please use an HTML-compatible email client to view this message."
         msg.set_content(plain_text)
@@ -72,7 +78,13 @@ def send_email(
         
         logger.debug("Connecting to SMTP server at %s:%s (SSL=%s)", host, port, use_ssl)
 
-        with smtp_class(host, port, timeout=20) as server:
+        connection_options = {"timeout": 20}
+        if force_ipv4:
+            # Binding the IPv4 wildcard makes socket.create_connection skip
+            # IPv6 results while preserving normal DNS resolution and TLS SNI.
+            connection_options["source_address"] = ("0.0.0.0", 0)
+
+        with smtp_class(host, port, **connection_options) as server:
             if use_tls and not use_ssl:
                 server.starttls()
 

@@ -1,6 +1,8 @@
 """Regression tests for updating distinct users from the admin table."""
 
 import unittest
+import tempfile
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
@@ -13,17 +15,20 @@ from app.models import TrackingLog, User
 
 class AdminUserUpdateTest(unittest.TestCase):
     def setUp(self):
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, template_folder=str(Path(__file__).resolve().parents[1] / "app/templates"))
         self.app.config.update(
             SECRET_KEY="test-key",
             SQLALCHEMY_DATABASE_URI="sqlite://",
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             TESTING=True,
+            MAIL_ENABLED=False,
+            BABEL_TRANSLATION_DIRECTORIES=str(Path(__file__).resolve().parents[1] / "app/translations"),
         )
         db.init_app(self.app)
         babel.init_app(self.app)
         self.app.register_blueprint(bp_admin)
         self.app.add_url_rule("/login", endpoint="auth.login", view_func=lambda: "login")
+        self.app.add_url_rule("/manuals/user-guide/<language>.pdf", endpoint="main.user_manual", view_func=lambda language: "PDF")
 
         with self.app.app_context():
             db.create_all()
@@ -277,6 +282,49 @@ class AdminUserUpdateTest(unittest.TestCase):
         with self.app.app_context():
             after = db.session.get(User, self.second_id).password_hash
         self.assertEqual(before, after)
+
+    def test_new_account_sends_welcome_and_manual_in_recipient_language(self):
+        with patch("app.blueprints.admin.send_email", return_value=(True, None)) as sender:
+            response = self.client.post("/admin/users/new", data={
+                "username": "new@example.org", "email": "new@example.org", "locale": "es",
+                "first_name": "Ana", "password": "temporary-test-password",
+            })
+        self.assertEqual(302, response.status_code)
+        sender.assert_called_once()
+        message = sender.call_args.kwargs
+        self.assertEqual("new@example.org", message["to_email"])
+        self.assertEqual("Bienvenido a Data ORCID-Chile", message["subject"])
+        self.assertIn("/manuals/user-guide/es.pdf", message["text"])
+        self.assertNotIn("attachments", message)
+        with self.app.app_context():
+            self.assertTrue(User.query.filter_by(username="new@example.org").one().check_password("temporary-test-password"))
+
+    def test_failed_welcome_preserves_created_account_for_retry(self):
+        with patch("app.blueprints.admin.send_email", return_value=(False, "SMTP offline")):
+            response = self.client.post("/admin/users/new", data={"username": "retry@example.org"})
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            self.assertIsNotNone(User.query.filter_by(username="retry@example.org").first())
+        with self.client.session_transaction() as session:
+            self.assertTrue(any("welcome email could not be sent" in message for category, message in session["_flashes"]))
+
+    def test_missing_manual_keeps_password_and_does_not_send_credentials(self):
+        with self.app.app_context():
+            before = db.session.get(User, self.second_id).password_hash
+        with tempfile.TemporaryDirectory() as folder:
+            self.app.config["USER_MANUAL_DIRECTORY"] = folder
+            with patch("app.blueprints.admin.send_email") as sender:
+                response = self.client.post(f"/admin/users/{self.second_id}/send-creds")
+            sender.assert_not_called()
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            self.assertEqual(before, db.session.get(User, self.second_id).password_hash)
+
+    def test_successful_credential_resend_also_includes_manual(self):
+        with patch("app.blueprints.admin.send_email", return_value=(True, None)) as sender:
+            response = self.client.post(f"/admin/users/{self.second_id}/send-creds")
+        self.assertEqual(302, response.status_code)
+        self.assertIn("/manuals/user-guide/en.pdf", sender.call_args.kwargs["text"])
 
 
 if __name__ == "__main__":

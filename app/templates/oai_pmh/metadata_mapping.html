@@ -21,6 +21,9 @@
     </div>
   </div>
   <div class="card-body border-bottom">
+    {% if oai_config and oai_config.harvester_access_restricted %}
+    <div class="alert alert-info">{{ _('The general URL is blocked. Use a registered private harvesting URL.') }} <a href="{{ url_for('oai_pmh.harvesting_access') }}">{{ _('Harvesting access') }}</a></div>
+    {% endif %}
     {{ format_grid(format_urls) }}
     {% if not oai_config or not oai_config.provider_enabled %}
     <div class="alert alert-warning mb-0 mt-3"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('Enable the public provider before opening live format samples.') }}</div>

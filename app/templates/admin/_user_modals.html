@@ -74,11 +74,11 @@
             <p>{{ _('Review these values only when the institution is not available in the registry or requires custom metadata.') }}</p>
             <div class="form-row">
               <div class="form-group col-md-6">
-                <label for="edit_ror_id">ROR ID</label>
+                <label for="edit_ror_id">{{ _('ROR ID') }}</label>
                 <input id="edit_ror_id" type="text" name="ror_id" class="form-control" placeholder="https://ror.org/...">
               </div>
               <div class="form-group col-md-6">
-                <label for="edit_grid_id">GRID ID</label>
+                <label for="edit_grid_id">{{ _('GRID ID') }}</label>
                 <input id="edit_grid_id" type="text" name="grid_id" class="form-control">
               </div>
             </div>
@@ -165,7 +165,7 @@
       <div class="modal-body">
         <div class="user-creation-note" role="note">
           <i class="fas fa-info-circle" aria-hidden="true"></i>
-          <p>{{ _('A temporary password will be generated when the account is created. You can send a password setup link from the account actions afterward.') }}</p>
+          <p>{{ _('A welcome email with credentials and a link to the PDF user manual will be sent when the account is created. Check the email address and preferred language.') }}</p>
         </div>
 
         <section class="user-form-section" aria-labelledby="newAccountSection">
@@ -230,11 +230,11 @@
             <p>{{ _('Review these values only when the institution is not available in the registry or requires custom metadata.') }}</p>
             <div class="form-row">
               <div class="form-group col-md-6">
-                <label for="new_ror_id">ROR ID</label>
+                <label for="new_ror_id">{{ _('ROR ID') }}</label>
                 <input id="new_ror_id" type="text" name="ror_id" class="form-control" placeholder="https://ror.org/...">
               </div>
               <div class="form-group col-md-6">
-                <label for="new_grid_id">GRID ID</label>
+                <label for="new_grid_id">{{ _('GRID ID') }}</label>
                 <input id="new_grid_id" type="text" name="grid_id" class="form-control">
               </div>
             </div>

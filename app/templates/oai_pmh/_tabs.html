@@ -5,7 +5,7 @@
       <strong id="oaiWorkspaceNavigationTitle">{{ _('Repository workspace') }}</strong>
       <small>{{ _('Choose an area to continue. Your institutional context is preserved.') }}</small>
     </div>
-    <span class="oai-workspace-navigation-count">{{ _('4 sections') }}</span>
+    <span class="oai-workspace-navigation-count">{{ _('5 sections') }}</span>
   </header>
 
   <nav class="oai-workspace-tabs" aria-label="{{ _('OAI-PMH repository sections') }}">
@@ -54,6 +54,17 @@
       </span>
       <span class="oai-workspace-tab-state">
         {% if active_tab == 'doi_import' %}<i class="fas fa-map-marker-alt" aria-hidden="true"></i>{{ _('Current section') }}{% else %}<i class="fas fa-arrow-right" aria-hidden="true"></i>{% endif %}
+      </span>
+    </a>
+    <a class="oai-workspace-tab {% if active_tab == 'access' %}is-active{% endif %}" href="{{ url_for('oai_pmh.harvesting_access') }}" {% if active_tab == 'access' %}aria-current="page"{% endif %}>
+      <span class="oai-workspace-tab-number" aria-hidden="true">05</span>
+      <span class="oai-workspace-tab-icon" aria-hidden="true"><i class="fas fa-key"></i></span>
+      <span class="oai-workspace-tab-copy">
+        <strong>{{ _('Harvesting access') }}</strong>
+        <small>{{ _('Register repositories and manage their private URLs.') }}</small>
+      </span>
+      <span class="oai-workspace-tab-state">
+        {% if active_tab == 'access' %}<i class="fas fa-map-marker-alt" aria-hidden="true"></i>{{ _('Current section') }}{% else %}<i class="fas fa-arrow-right" aria-hidden="true"></i>{% endif %}
       </span>
     </a>
   </nav>

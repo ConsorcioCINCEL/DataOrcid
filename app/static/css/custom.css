@@ -502,11 +502,23 @@
   white-space: nowrap;
 }
 
+.oai-access-mode-header,
+.oai-harvester-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.oai-access-mode-header {
+  justify-content: space-between;
+}
+
 .oai-workspace-tabs {
   align-items: stretch;
   display: grid;
   gap: .65rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   padding: .8rem;
 }
 
@@ -3002,6 +3014,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .app-topbar-actions {
+    flex-shrink: 0;
     gap: 0.35rem;
 }
 
@@ -3029,6 +3042,62 @@ h1, h2, h3, h4, h5, h6,
 .app-topbar-language span {
     font-size: 0.8rem;
     font-weight: 700;
+}
+
+.app-topbar-manual {
+    align-items: center;
+    border-radius: 6px;
+    display: flex !important;
+    font-size: 0.84rem;
+    font-weight: 600;
+    gap: 0.4rem;
+    height: 36px;
+    justify-content: center;
+    min-width: 36px;
+    padding: 0.5rem !important;
+    white-space: nowrap;
+}
+
+.app-topbar .app-topbar-manual:hover,
+.app-topbar .app-topbar-manual:focus-visible {
+    background: #eef5fb;
+    color: var(--app-blue) !important;
+}
+
+.app-topbar-manual:focus-visible {
+    outline: 2px solid var(--app-blue);
+    outline-offset: 2px;
+}
+
+@media (max-width: 575.98px) {
+    .app-topbar.navbar-expand {
+        flex-wrap: wrap;
+        padding-top: 0.3rem;
+    }
+
+    .app-topbar .app-topbar-actions {
+        order: 1;
+    }
+
+    .app-topbar .app-institution-context {
+        border-top: 1px solid var(--app-border);
+        flex: 0 0 100%;
+        margin-top: 0.3rem;
+        order: 2;
+        padding-bottom: 0.3rem;
+        padding-top: 0.3rem;
+    }
+
+    .app-topbar .app-institution-form,
+    .app-topbar .app-institution-name,
+    .app-topbar .app-institution-name span {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .app-topbar .app-institution-form .select2-container--default .select2-selection--single .select2-selection__rendered {
+        max-width: 100%;
+    }
 }
 
 .app-dropdown-caret {

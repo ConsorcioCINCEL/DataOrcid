@@ -231,6 +231,8 @@ class DuplicateProfileCache(db.Model):
 class DuplicateProfileReview(db.Model):
     """Persistent human decision attached to a stable duplicate candidate key."""
     __tablename__ = "duplicate_profile_review"
+    # Migration 8e2f4a6c9d10 creates this constraint as well as the unique index.
+    __table_args__ = (db.UniqueConstraint("group_key"),)
 
     id = db.Column(db.Integer, primary_key=True)
     group_key = db.Column(db.String(64), unique=True, index=True, nullable=False)
@@ -498,6 +500,8 @@ class OpenAlexInstitutionWorkFact(db.Model):
 class CanonicalWork(db.Model):
     """Source-independent scholarly output keyed by DOI or title/year fallback."""
     __tablename__ = "canonical_work"
+    # Keep metadata aligned with the existing constraint and unique index.
+    __table_args__ = (db.UniqueConstraint("canonical_key"),)
 
     id = db.Column(db.Integer, primary_key=True)
     canonical_key = db.Column(db.String(80), unique=True, index=True, nullable=False)
@@ -726,11 +730,12 @@ class AuthRateLimitEvent(db.Model):
 
 
 class SystemModule(db.Model):
-    """Global availability switch for an optional application module."""
+    """Global availability and presentation settings for an optional module."""
     __tablename__ = "system_module"
 
     key = db.Column(db.String(64), primary_key=True)
     is_enabled = db.Column(db.Boolean, default=True, nullable=False)
+    default_locale = db.Column(db.String(8), nullable=True)
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     updated_by_user_id = db.Column(db.Integer, nullable=True)
     updated_by_username = db.Column(db.String(80), nullable=True)
@@ -831,9 +836,31 @@ class OaiPmhInstitutionConfig(db.Model):
     admin_email = db.Column(db.String(255), nullable=True)
     publication_policy = db.Column(db.String(16), default="validated", nullable=False)
     metadata_mapping = db.Column(db.JSON, nullable=True)
+    harvester_access_restricted = db.Column(db.Boolean, default=False, nullable=False)
     policy_updated_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     created_by_user_id = db.Column(db.Integer, nullable=True, index=True)
     updated_by_user_id = db.Column(db.Integer, nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class OaiPmhHarvester(db.Model):
+    """A repository reference and revocable credential owned by one provider."""
+    __tablename__ = "oai_pmh_harvester"
+    __table_args__ = (
+        db.UniqueConstraint("config_id", "base_uri", name="uq_oai_pmh_harvester_config_uri"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    config_id = db.Column(
+        db.Integer, db.ForeignKey("oai_pmh_institution_config.id", ondelete="CASCADE"),
+        nullable=False, index=True,
+    )
+    base_uri = db.Column(db.String(2048), nullable=False)
+    access_key = db.Column(db.String(64), unique=True, nullable=False, default=lambda: secrets.token_hex(24))
+    is_enabled = db.Column(db.Boolean, default=True, nullable=False)
+    created_by_user_id = db.Column(db.Integer, nullable=True)
+    updated_by_user_id = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 

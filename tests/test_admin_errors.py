@@ -18,6 +18,7 @@ class AdminSystemErrorsTest(unittest.TestCase):
         source = (
             "postgresql://user:db-secret@localhost/database "
             "https://service.test/path?email=user@example.test&token=query-secret "
+            "https://dataorcid.test/oai/institution-secret/harvester-secret?verb=Identify "
             "Authorization: Bearer header-secret "
             "{'password': 'form secret', 'client_secret': \"client-secret\"}"
         )
@@ -29,6 +30,8 @@ class AdminSystemErrorsTest(unittest.TestCase):
             "user@example.test",
             "query-secret",
             "header-secret",
+            "institution-secret",
+            "harvester-secret",
             "form secret",
             "client-secret",
         ):

@@ -1,0 +1,2 @@
+# Preserve generated PDFs as binary files in Git and on checkout.
+*.pdf binary

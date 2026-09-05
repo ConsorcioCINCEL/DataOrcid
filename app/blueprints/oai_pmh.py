@@ -18,7 +18,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_babel import _
+from flask_babel import _, force_locale, get_locale
 from openpyxl import Workbook, load_workbook
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.comments import Comment
@@ -28,13 +28,14 @@ from sqlalchemy import and_, func, or_
 from werkzeug.datastructures import CombinedMultiDict
 from werkzeug.utils import secure_filename
 
-from .. import csrf, db
+from .. import DEFAULT_LANGUAGES, csrf, db
 from ..decorators import institution_required, oai_editor_required, staff_required
 from ..models import (
     CanonicalWork,
     OaiPmhDoiImportBatch,
     OaiPmhDoiImportChange,
     OaiPmhInstitutionConfig,
+    OaiPmhHarvester,
     OaiPmhWorkSelection,
     OpenAlexInstitutionWorkFact,
     OpenAlexWorkMetadata,
@@ -46,6 +47,7 @@ from ..models import (
 )
 from ..services.institution_registry_service import get_institution_by_ror
 from ..services.doi_service import normalize_doi
+from ..services.oai_access import MAX_HARVESTERS, normalize_harvester_uri
 from ..services.oai_pmh_service import (
     METADATA_FIELD_CATALOG,
     METADATA_SOURCE_FIELDS,
@@ -212,13 +214,13 @@ def metadata_mapping():
     provider_url = _provider_url(stored_config.public_key) if stored_config else None
     format_urls = {
         "oai_dc": f"{provider_url}?verb=ListRecords&metadataPrefix=oai_dc"
-        if stored_config and stored_config.provider_enabled
+        if stored_config and stored_config.provider_enabled and not stored_config.harvester_access_restricted
         else None,
         "oai_openaire": f"{provider_url}?verb=ListRecords&metadataPrefix=oai_openaire"
-        if stored_config and stored_config.provider_enabled
+        if stored_config and stored_config.provider_enabled and not stored_config.harvester_access_restricted
         else None,
         "dataorcid": f"{provider_url}?verb=ListRecords&metadataPrefix=dataorcid"
-        if stored_config and stored_config.provider_enabled
+        if stored_config and stored_config.provider_enabled and not stored_config.harvester_access_restricted
         else None,
     }
     return render_template(
@@ -346,6 +348,103 @@ def doi_import_detail(batch_id: int):
         active_tab="doi_import",
         can_manage_content=_can_manage_oai_content(),
     )
+
+
+@bp_oai_pmh.route("/oai-pmh/access/")
+@institution_required
+def harvesting_access():
+    """Show repositories belonging to the authenticated institution."""
+    ror_id = g.institution_ror_id
+    institution = get_institution_by_ror(ror_id) or {}
+    config = OaiPmhInstitutionConfig.query.filter_by(ror_id=ror_id).first()
+    harvesters = OaiPmhHarvester.query.filter_by(config_id=config.id).order_by(
+        OaiPmhHarvester.created_at, OaiPmhHarvester.id,
+    ).all() if config else []
+    can_manage = _can_manage_oai_content()
+    response = current_app.make_response(render_template(
+        "oai_pmh/harvesting_access.html",
+        institution={"ror_id": ror_id, "name": institution.get("name") or ror_id},
+        oai_config=config,
+        harvesters=harvesters,
+        harvester_urls={item.id: _provider_url(config.public_key, item.access_key)
+                        for item in harvesters if item.is_enabled} if can_manage else {},
+        can_manage_content=can_manage,
+        active_tab="access",
+    ))
+    response.headers.update({"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer"})
+    return response
+
+
+@bp_oai_pmh.route("/oai-pmh/access/", methods=["POST"])
+@oai_editor_required
+@institution_required
+def save_harvesting_access():
+    """Register a private URL or change only this institution's access mode."""
+    # Serialize changes within one institution, including the repository limit.
+    config = OaiPmhInstitutionConfig.query.filter_by(
+        ror_id=g.institution_ror_id,
+    ).with_for_update().first()
+    if config is None:
+        flash_err(_("Ask the responsible team to configure this OAI-PMH provider before managing harvesting access."))
+        return redirect(url_for("oai_pmh.harvesting_access"))
+    action = request.form.get("action")
+    try:
+        if action == "register":
+            uri = normalize_harvester_uri(request.form.get("base_uri", ""))
+            if OaiPmhHarvester.query.filter_by(config_id=config.id, base_uri=uri).first():
+                raise ValueError(_("Each repository URI must appear only once."))
+            if OaiPmhHarvester.query.filter_by(config_id=config.id).count() >= MAX_HARVESTERS:
+                raise ValueError(_("You can register up to 20 repositories per institution."))
+            db.session.add(OaiPmhHarvester(
+                config_id=config.id, base_uri=uri,
+                created_by_user_id=session.get("user_id"),
+                updated_by_user_id=session.get("user_id"),
+            ))
+        elif action == "policy":
+            restricted = request.form.get("restrict_access") == "on"
+            if restricted and not OaiPmhHarvester.query.filter_by(config_id=config.id, is_enabled=True).first():
+                raise ValueError(_("Add at least one active repository before restricting harvesting access."))
+            config.harvester_access_restricted = restricted
+        else:
+            abort(400)
+    except ValueError as exc:
+        db.session.rollback()
+        flash_err(str(exc))
+        return redirect(url_for("oai_pmh.harvesting_access"))
+    config.updated_by_user_id = session.get("user_id")
+    config.updated_at = utc_now().replace(microsecond=0)
+    db.session.commit()
+    flash_ok(_("Harvesting access updated for this institution."))
+    return redirect(url_for("oai_pmh.harvesting_access"))
+
+
+@bp_oai_pmh.route("/oai-pmh/access/<int:harvester_id>/", methods=["POST"])
+@oai_editor_required
+@institution_required
+def update_harvester(harvester_id: int):
+    """Revoke, replace, or remove a credential without crossing institution scope."""
+    config = OaiPmhInstitutionConfig.query.filter_by(
+        ror_id=g.institution_ror_id,
+    ).with_for_update().first_or_404()
+    harvester = OaiPmhHarvester.query.filter_by(id=harvester_id, config_id=config.id).first_or_404()
+    action = request.form.get("action")
+    if action == "revoke":
+        harvester.is_enabled = False
+    elif action == "rotate":
+        harvester.access_key = generate_public_key()
+        harvester.is_enabled = True
+    elif action == "delete":
+        db.session.delete(harvester)
+    else:
+        abort(400)
+    # Revoking the final credential keeps restricted mode closed.
+    harvester.updated_by_user_id = session.get("user_id")
+    harvester.updated_at = utc_now().replace(microsecond=0)
+    config.updated_by_user_id = session.get("user_id")
+    config.updated_at = harvester.updated_at
+    db.session.commit()
+    flash_ok(_("Harvesting access updated for this institution."))
+    return redirect(url_for("oai_pmh.harvesting_access"))
 
 
 @bp_oai_pmh.route("/oai-pmh/settings", methods=["POST"])
@@ -1208,27 +1307,54 @@ def _read_doi_import(upload) -> dict[str, object]:
         workbook.close()
 
 
-@bp_oai_pmh.route("/oai/<public_key>", methods=["GET", "POST"])
+@bp_oai_pmh.route("/oai-pmh/stylesheet/<language>.xsl")
+def browser_stylesheet(language: str):
+    """Translate browser presentation without changing harvested metadata."""
+    if language not in DEFAULT_LANGUAGES:
+        abort(404)
+    with force_locale(language):
+        content = render_template("oai_pmh/provider.xsl", language=language)
+    return Response(content, content_type="text/xsl; charset=utf-8")
+
+
+@bp_oai_pmh.route("/oai/<public_key>", methods=["GET", "POST"], defaults={"harvester_key": None})
+@bp_oai_pmh.route("/oai/<public_key>/<harvester_key>", methods=["GET", "POST"])
 @csrf.exempt
-def provider(public_key: str):
-    """Expose one public OAI-PMH 2.0 provider endpoint per institution."""
+def provider(public_key: str, harvester_key: str | None):
+    """Authorize the requested institution and credential before building metadata."""
+    headers = {"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer"}
     config = OaiPmhInstitutionConfig.query.filter_by(
         public_key=public_key,
         provider_enabled=True,
     ).first()
     if not config:
-        return Response("OAI-PMH repository not found.", status=404, mimetype="text/plain")
+        return Response(_("OAI-PMH repository not found."), status=404, mimetype="text/plain", headers=headers)
+    if harvester_key is not None:
+        harvester = OaiPmhHarvester.query.filter_by(
+            config_id=config.id, access_key=harvester_key, is_enabled=True,
+        ).first()
+        if not harvester:
+            return Response(_("OAI-PMH repository not found."), status=404, mimetype="text/plain", headers=headers)
+    elif config.harvester_access_restricted:
+        return Response(_("A private harvesting URL is required."), status=403, mimetype="text/plain", headers=headers)
 
     params = CombinedMultiDict((request.args, request.form))
-    payload = build_oai_response(config, params, _provider_url(config.public_key))
-    return Response(payload, status=200, content_type="text/xml; charset=utf-8")
+    language = str(get_locale())
+    if language not in DEFAULT_LANGUAGES:
+        language = "en"
+    payload = build_oai_response(
+        config, params, _provider_url(config.public_key, harvester_key),
+        stylesheet_url=url_for("oai_pmh.browser_stylesheet", language=language),
+    )
+    return Response(payload, status=200, content_type="text/xml; charset=utf-8", headers=headers)
 
 
-def _provider_url(public_key: str) -> str:
+def _provider_url(public_key: str, harvester_key: str | None = None) -> str:
     configured_base = (current_app.config.get("APP_BASE_URL") or "").rstrip("/")
-    path = url_for("oai_pmh.provider", public_key=public_key)
+    values = {"public_key": public_key, "harvester_key": harvester_key}
+    path = url_for("oai_pmh.provider", **values)
     return f"{configured_base}{path}" if configured_base else url_for(
-        "oai_pmh.provider", public_key=public_key, _external=True
+        "oai_pmh.provider", **values, _external=True
     )
 
 

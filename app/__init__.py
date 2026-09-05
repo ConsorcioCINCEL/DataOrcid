@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 from flask import Flask, session, request, g, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_babel import Babel
+from flask_babel import Babel, get_locale as get_babel_locale
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -38,7 +38,7 @@ mimetypes.add_type("application/xslt+xml", ".xsl")
 
 def get_locale() -> str:
     """
-    Resolve the request locale from URL, session, user preference, then default.
+    Resolve URL, session, account, then the landing or application default.
 
     URL changes are persisted so the language selector updates the user's stored
     preference when they are logged in.
@@ -76,6 +76,10 @@ def get_locale() -> str:
                  return user.locale
         except Exception:
             pass
+
+    if not session.get('logged_in') and request.endpoint in {'main.index', 'main.contact'}:
+        from .services.module_access import get_landing_default_locale
+        return get_landing_default_locale()
 
     return current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
 
@@ -411,6 +415,7 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
 
         return {
             "current_year": dt.datetime.now().year,
+            "current_locale": str(get_babel_locale()),
             "institutions": institutions,
             "locale_url": locale_url,
             "language_options": [
@@ -464,6 +469,7 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
                 duration = (dt.datetime.now(dt.timezone.utc) - g._start_time).total_seconds() * 1000
 
             from .models import TrackingLog
+            from .services.oai_access import redact_oai_urls
             role = (
                 "admin"
                 if session.get("is_admin")
@@ -487,7 +493,7 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
                 action=request.endpoint,
                 job_id=request.values.get("job_id"),
                 method=request.method,
-                path=request.path,
+                path=redact_oai_urls(request.path),
                 status_code=response.status_code,
                 # ProxyFix, when explicitly configured, has already replaced
                 # remote_addr with the trusted client address. Never trust a

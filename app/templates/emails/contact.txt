@@ -1,0 +1,15 @@
+{% if preview %}{{ _('Test email — demonstration data. No account has been created or changed.') }}
+
+{% endif %}{{ subject }}
+
+{{ _('Name') }}: {{ inquiry.name }}
+{{ _('Email') }}: {{ inquiry.email }}
+{{ _('Institution') }}: {{ inquiry.institution or _('Not provided') }}
+{{ _('Inquiry type') }}: {{ topic_label }}
+
+{{ _('Message') }}:
+{{ inquiry.message }}
+
+{{ _('Reply to this email to answer the person who submitted the inquiry.') }}
+
+Data ORCID-Chile · CINCEL

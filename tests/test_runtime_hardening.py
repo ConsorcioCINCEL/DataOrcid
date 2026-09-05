@@ -68,6 +68,7 @@ class RuntimeHardeningTest(unittest.TestCase):
         )
         smtp = MagicMock()
         smtp.__enter__.return_value = smtp
+        smtp.send_message.return_value = {}
         with app.app_context(), patch(
             "app.utils.emailer.smtplib.SMTP", return_value=smtp
         ) as smtp_class:

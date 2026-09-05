@@ -31,6 +31,7 @@ from ..decorators import (
 )
 from ..utils.flashes import flash_err, flash_ok, flash_info
 from ..utils.emailer import send_email
+from ..services.transactional_email import render_credentials_email
 from ..services.ror_service import fetch_grid_from_ror
 from ..services.institution_registry_service import get_institution_by_ror, get_institution_options
 from ..services.oai_pmh_service import oai_repository_summaries
@@ -639,6 +640,13 @@ def users_new():
         db.session.rollback()
         logger.exception("CRITICAL: Failed to create user: %s", exc)
         flash_err(_('Could not create user. Check logs.'))
+        return redirect(_users_return_url())
+
+    delivered, _error = _send_account_email(new_user, temp_password, welcome=True)
+    if delivered:
+        flash_ok(_("Welcome email and PDF manual link sent to %(r)s.", r=new_user.email or new_user.username))
+    else:
+        flash_err(_("The account was created, but its welcome email could not be sent. Retry from the account actions."))
 
     return redirect(_users_return_url())
 
@@ -669,13 +677,28 @@ def users_reset_password(user_id: int):
     return redirect(_users_return_url())
 
 
+def _send_account_email(user, password: str, *, welcome: bool = False):
+    """Deliver account access with a guide link, or report a recoverable failure."""
+    recipient = user.email or user.username
+    if not recipient or '@' not in recipient:
+        return False, "The account has no valid email recipient."
+    base_url = (current_app.config.get('APP_BASE_URL') or '').rstrip('/')
+    login_url = f"{base_url}{url_for('auth.login')}" if base_url else url_for('auth.login', _external=True)
+    try:
+        message = render_credentials_email(user, password, login_url, welcome=welcome)
+    except Exception:
+        logger.exception("Could not prepare account email with its required PDF manual link for user %s.", user.id)
+        return False, "Could not prepare the account email or its required PDF manual link."
+    return send_email(to_email=recipient, **message)
+
+
 @bp_admin.route('/users/<int:user_id>/send-creds', methods=['POST'])
 @login_required
 @admin_required
 def users_send_creds(user_id: int):
     """
     Resets user password and sends the new credentials via email.
-    The email content is automatically translated based on the current locale.
+    The recipient language controls the message and PDF manual link.
     """
     user = db.get_or_404(User, user_id)
     recipient = (user.email or user.username)
@@ -687,40 +710,7 @@ def users_send_creds(user_id: int):
     temp_pwd = generate_temp_password()
     user.set_password(temp_pwd)
 
-    base_url = current_app.config.get('APP_BASE_URL', '').rstrip('/')
-    login_url = f"{base_url}{url_for('auth.login')}" if base_url else url_for('auth.login', _external=True)
-
-    # Email Subject (Translated)
-    subject = _("Access to Data ORCID-Chile (credentials)")
-
-    # Email Body (Multi-language construction)
-    # Using _() allows Babel to pick the translation from your .po files
-    greeting = _("Hello")
-    intro_text = _("Your access credentials for <strong>Data ORCID-Chile</strong> have been updated:")
-    label_url = _("URL")
-    label_user = _("Username")
-    label_pass = _("Temporary Password")
-    security_note = _("For security reasons, please change your password upon login.")
-
-    email_html = f"""
-    <p>{greeting} {user.first_name or user.username},</p>
-    <p>{intro_text}</p>
-    <ul>
-      <li><b>{label_url}:</b> <a href="{login_url}">{login_url}</a></li>
-      <li><b>{label_user}:</b> {user.username}</li>
-      <li><b>{label_pass}:</b> {temp_pwd}</li>
-    </ul>
-    <p>{security_note}</p>
-    """
-
-    email_text = f"{greeting} {user.username}\n{label_url}: {login_url}\n{label_user}: {user.username}\n{label_pass}: {temp_pwd}"
-
-    success, error = send_email(
-        to_email=recipient,
-        subject=subject,
-        html=email_html,
-        text=email_text,
-    )
+    success, error = _send_account_email(user, temp_pwd)
 
     if success:
         try:
@@ -894,10 +884,14 @@ def set_ror(ror_id: str):
 @bp_admin.route("/modules", methods=["GET", "POST"])
 @admin_required
 def modules():
-    """Manage global visibility and access for optional application modules."""
-    from ..services.module_access import MODULE_DEFINITIONS, MODULE_KEYS
+    """Manage availability and public presentation of optional modules."""
+    from ..services.module_access import MODULE_DEFINITIONS, MODULE_KEYS, get_landing_default_locale
 
     if request.method == "POST":
+        landing_locale = request.form.get("landing_default_locale")
+        if landing_locale is not None and landing_locale not in current_app.config.get("LANGUAGES", DEFAULT_LANGUAGES):
+            flash_err(_("Choose a supported default language for the public landing page."))
+            return redirect(url_for("admin.modules"))
         mode = request.form.get("mode")
         if mode == "enable_all":
             enabled_keys = set(MODULE_KEYS)
@@ -916,19 +910,24 @@ def modules():
             key = definition["key"]
             requested_state = key in enabled_keys
             row = stored.get(key)
+            locale_changed = key == "landing_page" and landing_locale is not None and (
+                row is None or row.default_locale != landing_locale
+            )
             if row is None:
                 row = SystemModule(key=key)
                 db.session.add(row)
-            elif bool(row.is_enabled) == requested_state:
+            elif bool(row.is_enabled) == requested_state and not locale_changed:
                 continue
             row.is_enabled = requested_state
+            if locale_changed:
+                row.default_locale = landing_locale
             row.updated_at = now
             row.updated_by_user_id = session.get("user_id")
             row.updated_by_username = session.get("username")
             changed += 1
         db.session.commit()
         flash_ok(
-            _("Module availability updated. %(count)s setting(s) changed.", count=changed)
+            _("Module settings updated. %(count)s setting(s) changed.", count=changed)
         )
         return redirect(url_for("admin.modules"))
 
@@ -970,6 +969,7 @@ def modules():
         grouped_modules=grouped_modules,
         enabled_count=enabled_count,
         module_count=len(module_rows),
+        landing_default_locale=get_landing_default_locale(),
     )
 
 

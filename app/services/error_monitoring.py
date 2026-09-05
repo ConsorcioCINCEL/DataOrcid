@@ -16,6 +16,7 @@ from werkzeug.exceptions import HTTPException
 
 from .. import db
 from ..models import SystemError, utc_now
+from .oai_access import redact_oai_urls
 
 
 _STATE = local()
@@ -40,7 +41,7 @@ _BEARER_RE = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+")
 
 def _redact(value: object, limit: int) -> str:
     """Remove common credential forms and cap stored diagnostic text."""
-    text = str(value or "")
+    text = redact_oai_urls(str(value or ""))
     text = _CREDENTIAL_URL_RE.sub(r"\1[REDACTED]@", text)
     text = _QUERY_STRING_RE.sub(r"\1?[REDACTED]", text)
     text = _AUTHORIZATION_RE.sub(r"\1[REDACTED]", text)
@@ -78,7 +79,7 @@ def _request_context() -> dict:
             "endpoint": request.endpoint,
             "method": request.method,
             # Deliberately omit query strings, form bodies, cookies and headers.
-            "path": request.path,
+            "path": redact_oai_urls(request.path),
             "request_id": getattr(g, "request_id", None),
             "ip": request.remote_addr,
             "user_agent": request.user_agent.string or "",

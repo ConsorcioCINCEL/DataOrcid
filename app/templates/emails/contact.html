@@ -1,0 +1,15 @@
+{% extends 'emails/base.html' %}
+{% from 'emails/_components.html' import detail %}
+{% block content %}
+<p style="margin:0 0 8px;color:#0069b0;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{{ _('Institutional enquiries') }}</p>
+<h1 style="margin:0 0 22px;color:#1f2631;font-size:28px;line-height:35px;">{{ _('New inquiry from Data ORCID-Chile') }}</h1>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background-color:#f8fafc;border:1px solid #dfe5ec;border-radius:6px;">
+  {{ detail(_('Name'), inquiry.name) }}
+  {{ detail(_('Email'), inquiry.email) }}
+  {{ detail(_('Institution'), inquiry.institution or _('Not provided')) }}
+  {{ detail(_('Inquiry type'), topic_label) }}
+</table>
+<h2 style="margin:0 0 12px;color:#1f2631;font-size:18px;line-height:26px;">{{ _('Message') }}</h2>
+<div style="padding:16px 20px;background-color:#fff6f1;border-left:3px solid #c14320;font-size:15px;line-height:24px;word-break:break-word;overflow-wrap:anywhere;">{% for line in inquiry.message.splitlines() %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>
+<p style="margin:22px 0 0;color:#617084;font-size:14px;line-height:22px;">{{ _('Reply to this email to answer the person who submitted the inquiry.') }}</p>
+{% endblock %}

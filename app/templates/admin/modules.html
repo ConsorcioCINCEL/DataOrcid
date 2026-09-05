@@ -62,6 +62,17 @@
           <span class="sr-only">{{ _('Enable %(module)s', module=module.label) }}</span>
         </span>
       </label>
+      {% if module.key == 'landing_page' %}
+      <div class="p-3 border-bottom">
+        <label for="landingDefaultLocale">{{ _('Default landing page language') }}</label>
+        <select class="custom-select" id="landingDefaultLocale" name="landing_default_locale" aria-describedby="landingDefaultLocaleHelp">
+          {% for language_code, language_label in language_options %}
+          <option value="{{ language_code }}" {% if landing_default_locale == language_code %}selected{% endif %}>{{ language_label }}</option>
+          {% endfor %}
+        </select>
+        <small id="landingDefaultLocaleHelp" class="form-text text-muted">{{ _('Shown to visitors who have not chosen a language. Their language selection takes priority. The setting is kept when the landing page is disabled.') }}</small>
+      </div>
+      {% endif %}
       {% endfor %}
     </div>
   </section>
@@ -77,7 +88,7 @@
       </button>
     </div>
     <button class="btn btn-primary" type="submit">
-      <i class="fas fa-save mr-1" aria-hidden="true"></i>{{ _('Save module availability') }}
+      <i class="fas fa-save mr-1" aria-hidden="true"></i>{{ _('Save module settings') }}
     </button>
   </div>
 </form>

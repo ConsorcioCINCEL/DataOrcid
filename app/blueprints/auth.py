@@ -14,6 +14,7 @@ from ..models import User, password_fits_bcrypt
 from ..utils.flashes import flash_err, flash_ok, flash_success
 from ..decorators import login_required
 from ..utils.emailer import send_email
+from ..services.transactional_email import render_password_reset_email
 from ..services.rate_limit import (
     client_ip as _client_ip,
     clear_rate_limit as _clear_rate_limit,
@@ -113,20 +114,8 @@ def forgot_password():
             try:
                 reset_url = make_password_reset_url(user)
 
-                email_html = f"""
-                <p>Hello {user.first_name or user.username},</p>
-                <p>A password reset was requested for your <strong>Data ORCID-Chile</strong> account.</p>
-                <p>Click the link below to set a new password (valid for 24 hours):</p>
-                <p><a href="{reset_url}">{reset_url}</a></p>
-                <p>If you did not request this, please ignore this email.</p>
-                """
-
-                success, error = send_email(
-                    to_email=user.email or user.username,
-                    subject=_("Recover your password — Data ORCID-Chile"),
-                    html=email_html,
-                    text=f"Reset link: {reset_url}",
-                )
+                message = render_password_reset_email(user, reset_url)
+                success, error = send_email(to_email=user.email or user.username, **message)
 
                 if not success:
                     logger.error("Email reset failed for user %s: %s", user.username, error)

@@ -1,0 +1,558 @@
+# DATA ORCID CHILE
+
+Guide des options et fonctions pour Utilisateur et Utilisateur OAI.
+
+**VERSION:** 2.1 · **MISE À JOUR:** Septembre 2026
+
+## 1. Objectif et portée
+
+DATA ORCID CHILE permet de consulter et d’analyser les informations publiques d’ORCID enrichies par les métadonnées d’OpenAlex. Ce manuel accompagne les profils Utilisateur et Utilisateur OAI : accès, consultation, analyses, téléchargements, intégration et paramètres du compte.
+
+Les deux profils travaillent dans le périmètre de l’établissement associé à leur compte et des modules activés. Le profil Utilisateur OAI permet aussi de sélectionner des articles, d’importer des DOI, de modifier la correspondance des métadonnées OAI-PMH et de gérer l’accès au moissonnage.
+
+Cette édition présente les exportations en arrière-plan, la publication OAI-PMH et l’aide adaptée aux modules disponibles.
+
+| ACTION | UTILISATEUR | UTILISATEUR OAI |
+| --- | --- | --- |
+| Consulter les modules institutionnels | Disponible | Disponible |
+| Télécharger les données et rapports visibles | Disponible | Disponible |
+| Examiner les doublons potentiels | Consultation | Consultation |
+| Consulter le contenu OAI-PMH | Consultation | Disponible |
+| Sélectionner des articles et importer des DOI | Consultation | Disponible |
+| Modifier la correspondance dataorcid | Consultation | Disponible |
+| Modifier son compte et son mot de passe | Disponible | Disponible |
+
+> **IMPORTANT:** Les captures présentent l’interface de la version 2.1 avec des données fictives. Les noms, ORCID iD, DOI, ROR et adresses d’exemple ne doivent pas être utilisés comme des références réelles.
+
+## 2. Accès et navigation
+
+### 2.1 Connexion
+
+Rendez-vous sur www.orcid.cl et connectez-vous avec votre nom d’utilisateur ou votre adresse institutionnelle et votre mot de passe. Réservez l’option de maintien de la connexion à un appareil personnel ou géré par votre établissement.
+
+Le message de bienvenue contient vos identifiants et un lien vers ce manuel PDF, téléchargeable sans connexion. Il ouvre l’édition correspondant à la langue du compte : anglais, espagnol, français, portugais ou allemand. Changez le mot de passe temporaire lors de la connexion.
+
+Si vous avez oublié votre mot de passe, ouvrez le lien de récupération, saisissez l’adresse de votre compte et suivez le lien reçu. La réponse à l’écran ne révèle pas si l’adresse est enregistrée. En l’absence de message, vérifiez les indésirables et contactez l’équipe responsable.
+
+Le sélecteur propose les langues activées : anglais, espagnol, français, portugais et allemand. Le choix effectué pendant une session est enregistré dans les préférences du compte.
+
+![FIGURE 1. Connexion et sélection de la langue.](assets/screenshots/fr/login.png)
+
+FIGURE 1. Connexion et sélection de la langue.
+
+## 2.2 Structure de l’interface
+
+Le menu latéral regroupe les fonctions sous Explorer, Gérer les données, Intégrer et Assistance, avec un raccourci vers la Vue d’ensemble. La barre supérieure affiche l’établissement actif, la langue et les options personnelles. Les modules disponibles dépendent de la configuration du service et du rôle du compte. Le lien « Manuel d’utilisation », accompagné d’une icône PDF à côté des options de votre compte, télécharge ce manuel dans la langue active.
+
+Les indicateurs de mise à jour signalent si les informations sont récentes ou nécessitent une intervention. Vérifiez cet état avant d’interpréter un chiffre ou de télécharger un jeu de données.
+
+![FIGURE 2. Vue d’ensemble institutionnelle et navigation du profil Utilisateur.](assets/screenshots/fr/overview.png)
+
+FIGURE 2. Vue d’ensemble institutionnelle et navigation du profil Utilisateur.
+
+1. Vérifiez que l’établissement affiché correspond à votre compte.
+2. Développez un groupe du menu et choisissez la page souhaitée.
+3. Vérifiez les filtres et les dates de mise à jour dans chaque vue.
+4. Lorsque vous avez terminé, déconnectez-vous en bas du menu latéral.
+
+## 3. Explorer
+
+### 3.1 Vue d’ensemble institutionnelle
+
+La Vue d’ensemble réunit les chercheurs de l’établissement, les productions scientifiques uniques, les financements et les publications enrichies par OpenAlex. Elle présente les tendances, la couverture, la qualité des données et des raccourcis vers les consultations et téléchargements.
+
+Commencez ici pour examiner la situation générale. Ouvrez l’analyse correspondante pour approfondir un chiffre et utilisez les liens de qualité pour comprendre les lacunes d’information.
+
+Les chiffres reflètent les informations disponibles dans la plateforme. Un chercheur peut figurer dans l’annuaire institutionnel sans avoir d’œuvres ni de financements publics en cache.
+
+![FIGURE 3. Indicateurs généraux de l’établissement de démonstration.](assets/screenshots/fr/overview.png)
+
+FIGURE 3. Indicateurs généraux de l’établissement de démonstration.
+
+> **IMPORTANT:** Les enregistrements ORCID comptent les occurrences dans la source. Les productions canoniques regroupent les répétitions possibles. Ces chiffres peuvent différer sans qu’il y ait d’erreur.
+
+## 3.2 Annuaire des chercheurs
+
+L’annuaire permet une recherche par nom, ORCID iD ou adresse électronique, un filtrage par Affiliation Manager et par preuve de rattachement institutionnel, ainsi que le tri des résultats. Vous pouvez afficher 10, 25 ou 50 lignes par page.
+
+La recherche et le tri portent sur tout l’ensemble de résultats. Les exports CSV et Excel incluent les résultats filtrés au-delà de la page visible.
+
+Les preuves vérifiées peuvent provenir d’identifiants ROR, GRID ou Ringgold. Un rattachement déduit du cache constitue un indice opérationnel, à distinguer d’une association vérifiée.
+
+![FIGURE 4. Annuaire avec filtres, tri, pagination et exportations.](assets/screenshots/fr/directory.png)
+
+FIGURE 4. Annuaire avec filtres, tri, pagination et exportations.
+
+1. Saisissez un critère de recherche et appliquez les filtres pertinents.
+2. Sélectionnez un en-tête de colonne pour changer le tri.
+3. Ouvrez un ORCID iD pour consulter son portfolio ou exportez l’ensemble filtré.
+
+## 3.3 Portfolio du chercheur
+
+En ouvrant un ORCID iD depuis l’annuaire, vous pouvez consulter les informations publiques du dossier, la biographie, les identifiants, les synthèses visuelles, le contexte institutionnel et les activités disponibles.
+
+Actualiser depuis ORCID récupère à nouveau ce profil public, sans actualiser tout l’établissement. Télécharger le rapport complet produit un fichier Excel. Vous pouvez aussi exporter les sections disponibles : formation, emplois, œuvres et financements.
+
+Le lien ORCID.org ouvre le dossier public d’origine. Une section peut être absente faute de données publiques. Le contexte institutionnel permet de distinguer les enregistrements d’œuvres des productions uniques consolidées.
+
+![FIGURE 5. Portfolio public d’un chercheur fictif.](assets/screenshots/fr/portfolio.png)
+
+FIGURE 5. Portfolio public d’un chercheur fictif.
+
+## 3.4 Analyses ORCID
+
+Les Analyses ORCID utilisent les enregistrements institutionnels conservés en cache depuis ORCID. Les filtres combinent période, type d’œuvre, type de financement et chercheur. Un filtre vide inclut toutes les valeurs disponibles.
+
+Les sections Vue d’ensemble, Publications, Financement et Chercheurs proposent différentes lectures de l’ensemble filtré. Vérifiez les filtres lorsque vous changez de section.
+
+Chaque graphique propose l’export de ses données en CSV ou Excel. Lorsqu’un bouton d’image est présent, vous pouvez également enregistrer la visualisation.
+
+![FIGURE 6. Vue d’ensemble des Analyses ORCID et filtres communs.](assets/screenshots/fr/orcid-overview.png)
+
+FIGURE 6. Vue d’ensemble des Analyses ORCID et filtres communs.
+
+## 3.4.1 Publications
+
+Publications présente l’évolution annuelle, les types d’œuvres et les principales revues ou sources. Les indicateurs reposent sur les enregistrements ORCID du périmètre institutionnel et les filtres actifs.
+
+Utilisez la période pour préciser la consultation et le type d’œuvre pour comparer des ensembles équivalents. Avant d’intégrer un graphique à un rapport, conservez sa date de consultation et les critères utilisés.
+
+Une œuvre peut apparaître dans plusieurs profils ORCID. La somme des enregistrements ne représente donc pas nécessairement les publications uniques de l’établissement.
+
+![FIGURE 7. Indicateurs des publications ORCID.](assets/screenshots/fr/orcid-publications.png)
+
+FIGURE 7. Indicateurs des publications ORCID.
+
+## 3.4.2 Financement
+
+Financement regroupe les enregistrements par année de début, type et organisme financeur. Combinez les filtres de période, type de financement et chercheur pour examiner l’activité déclarée.
+
+Les données proviennent des dossiers publics ORCID. L’absence de montant, de devise ou de numéro de projet correspond à une lacune des informations disponibles.
+
+La présence d’une œuvre et d’un financement dans le même profil ne prouve pas que le projet a financé cette publication. Interprétez les tableaux et graphiques comme un contexte de l’activité enregistrée.
+
+![FIGURE 8. Indicateurs des financements déclarés publiquement dans ORCID.](assets/screenshots/fr/orcid-funding.png)
+
+FIGURE 8. Indicateurs des financements déclarés publiquement dans ORCID.
+
+## 3.4.3 Chercheurs
+
+Chercheurs identifie les personnes ayant le plus d’enregistrements d’œuvres ou de financements dans l’ensemble filtré. Les noms et ORCID iD donnent accès aux portfolios individuels ; les listes sont exportables.
+
+La position dans ces listes reflète l’activité enregistrée et sa couverture. Elle ne constitue pas une évaluation globale des performances et peut omettre une partie de la production d’une personne.
+
+Pour vérifier un résultat, conservez la période et les filtres, ouvrez le portfolio et comparez les informations avec le dossier public d’origine.
+
+![FIGURE 9. Listes de chercheurs selon l’activité enregistrée.](assets/screenshots/fr/orcid-researchers.png)
+
+FIGURE 9. Listes de chercheurs selon l’activité enregistrée.
+
+## 4. Gérer les données
+
+### 4.1 Synchronisation et téléchargements
+
+Pour Utilisateur et Utilisateur OAI, cette page sert de suivi et de centre de téléchargement. Elle indique l’actualité des œuvres, financements, profils et métadonnées OpenAlex, ainsi que la dernière exécution disponible.
+
+Les téléchargements institutionnels comprennent les œuvres ORCID, les financements, les chercheurs et l’enrichissement OpenAlex, selon les jeux de données disponibles. Les fichiers reflètent l’état du cache indiqué sur la page.
+
+Ces profils consultent l’état et téléchargent les données disponibles. Si une synchronisation institutionnelle est nécessaire ou si une exécution a échoué, demandez à l’équipe responsable de l’examiner.
+
+![FIGURE 10. État des données institutionnelles et jeux téléchargeables.](assets/screenshots/fr/downloads.png)
+
+FIGURE 10. État des données institutionnelles et jeux téléchargeables.
+
+## 4.2 Exportations en arrière-plan
+
+Les téléchargements CSV et Excel volumineux se préparent en arrière-plan. Le centre flottant Exportations affiche l’attente, la progression et un lien privé lorsque le fichier est prêt. Vous pouvez continuer à naviguer dans la plateforme.
+
+Une demande équivalente peut réutiliser un fichier encore valide. Si les données sources changent, une nouvelle exportation est préparée. Les fichiers ont une durée de validité limitée ; redemandez un fichier expiré depuis sa vue d’origine.
+
+L’action de suppression globale efface vos exportations terminées et leurs fichiers. Les tâches en attente ou en cours sont conservées. Fermer ou réduire une notification modifie uniquement son affichage.
+
+![FIGURE 11. Centre flottant avec une exportation de démonstration prête à télécharger.](assets/screenshots/fr/exports.png)
+
+FIGURE 11. Centre flottant avec une exportation de démonstration prête à télécharger.
+
+1. Appliquez les filtres et le tri souhaités.
+2. Sélectionnez CSV ou Excel et consultez la notification flottante.
+3. Lorsque le fichier est prêt, choisissez l’action de téléchargement.
+4. Conservez le fichier avec la date, le périmètre institutionnel et les filtres de la consultation.
+
+## 4.3 Qualité des données
+
+La qualité des données distingue quatre perspectives : vue d’ensemble, preuves concernant les chercheurs, contexte des financements et intégrité technique. Elle présente la couverture des DOI et des années, la complétude des financements, les rattachements vérifiés ou déduits et la cohérence d’OpenAlex.
+
+Les pourcentages décrivent les champs disponibles. Une absence constitue une lacune de couverture et ne doit pas être automatiquement interprétée comme une erreur du système.
+
+Utilisez ces vues pour documenter les limites d’un rapport et repérer les dossiers à examiner. Si vous constatez une incohérence, notez le module et l’identifiant concernés et signalez-la à l’équipe responsable.
+
+![FIGURE 12. Vue d’ensemble de la qualité des données institutionnelles.](assets/screenshots/fr/quality.png)
+
+FIGURE 12. Vue d’ensemble de la qualité des données institutionnelles.
+
+## 4.4 Profils en double
+
+Ce module repère par algorithme des candidats pouvant correspondre à plusieurs ORCID iD pour une même personne. Vous pouvez rechercher, filtrer par confiance ou état, changer de vue, consulter la méthode, actualiser l’analyse et exporter les résultats.
+
+Utilisateur et Utilisateur OAI consultent les candidats et leurs indices. Un candidat ne confirme pas un doublon ; actualiser l’analyse ne fusionne ni ne modifie les dossiers ORCID.
+
+Comparez les noms, identifiants et indices disponibles avant de signaler un cas. Une homonymie ne suffit pas à conclure que deux dossiers appartiennent à la même personne.
+
+![FIGURE 13. Examen des profils potentiellement en double.](assets/screenshots/fr/duplicates.png)
+
+FIGURE 13. Examen des profils potentiellement en double.
+
+## 4.5 Enrichissement OpenAlex
+
+La vue d’enrichissement classe les articles selon leur état : correspondance trouvée, en attente, introuvable, erreur ou sans DOI. Vous pouvez rechercher par titre, DOI, ORCID iD, source ou thème, trier les résultats, changer le nombre de lignes et développer les détails.
+
+L’exportation conserve les filtres de l’ensemble. Le lien d’analyse ouvre les résultats agrégés. La couverture se calcule sur les articles ORCID admissibles, et non sur toute la production possible de l’établissement.
+
+La correspondance privilégie le DOI. Certains dossiers peuvent être reliés par une comparaison prudente du titre, de l’année et du type. Un dossier sans correspondance reste présent dans ORCID, même sans métadonnées enrichies.
+
+![FIGURE 14. Articles et états d’enrichissement OpenAlex.](assets/screenshots/fr/enrichment.png)
+
+FIGURE 14. Articles et états d’enrichissement OpenAlex.
+
+## 5. Analyses OpenAlex
+
+### 5.1 Filtres, indicateurs et exportations
+
+Les Analyses OpenAlex complètent les articles ORCID de votre établissement par les citations, le libre accès, les auteurs, affiliations, thèmes, langues, sources et FWCI. Vérifiez la couverture de l’ensemble avant d’interpréter les résultats.
+
+Les filtres généraux comprennent la période, le type de document, le libre accès, la langue et l’affiliation. Le choix des indicateurs visibles personnalise les cartes ; les boutons d’information expliquent les définitions et méthodes.
+
+Les graphiques proposent PNG ou SVG lorsque le bouton est disponible. Les tableaux proposent CSV ou Excel. La recherche, le tri et la pagination des tableaux portent sur tout l’ensemble, au-delà des lignes visibles.
+
+![FIGURE 15. Vue d’ensemble OpenAlex avec filtres, indicateurs et évolution annuelle.](assets/screenshots/fr/openalex-overview.png)
+
+FIGURE 15. Vue d’ensemble OpenAlex avec filtres, indicateurs et évolution annuelle.
+
+## 5.2 Libre accès · ANID
+
+Cette section présente la production, les citations, les sources et les tendances des articles en libre accès diamant et vert correspondant aux filtres actifs. Ces catégories suivent le statut de libre accès enregistré par OpenAlex.
+
+Les catégories sont mutuellement exclusives selon ce statut. Le pourcentage de chaque groupe a pour dénominateur tous les articles enrichis correspondant aux filtres, et pas seulement les articles en libre accès.
+
+Les visualisations montrent l’évolution, la composition et les revues ayant le plus de publications ou de citations. Dans les graphiques étendus, utilisez le défilement vertical interne pour parcourir les catégories.
+
+![FIGURE 16. Indicateurs du libre accès diamant et vert.](assets/screenshots/fr/openalex-oa.png)
+
+FIGURE 16. Indicateurs du libre accès diamant et vert.
+
+> **IMPORTANT:** Le libre accès vert décrit la disponibilité d’un article dans un dépôt. Il ne signifie pas que toute la revue est verte et ne certifie pas, à lui seul, la conformité à une politique.
+
+## 5.2.1 Tableaux du libre accès
+
+Les tableaux des revues et des articles les plus cités proposent recherche, tri par colonne, taille de page, pagination et exportation. Les résultats respectent les filtres généraux de la page.
+
+Pour examiner une source, recherchez son nom et triez par production ou citations. Pour identifier des articles, utilisez le tableau correspondant et vérifiez le DOI, l’année et le statut de libre accès.
+
+Conservez le dénominateur et la date de consultation lorsque vous communiquez un pourcentage. Une variation peut résulter de la période, des filtres, d’une mise à jour d’OpenAlex ou d’une meilleure couverture des correspondances.
+
+![FIGURE 17. Tableaux des sources et articles en libre accès.](assets/screenshots/fr/openalex-oa-tables.png)
+
+FIGURE 17. Tableaux des sources et articles en libre accès.
+
+## 5.3 Collaboration
+
+Collaboration présente les auteurs rattachés au Chili ainsi que les pays et établissements figurant dans les données d’auteurs OpenAlex. Ces vues décrivent les affiliations des articles enrichis retenus par les filtres.
+
+Un article peut compter dans plusieurs pays ou établissements. La somme des catégories peut donc dépasser le nombre d’articles. Une affiliation mentionnée dans une œuvre ne garantit pas non plus un lien d’emploi actuel.
+
+Consultez le bouton d’information de chaque graphique pour vérifier la méthode et exportez les données pour documenter une collaboration. Ces vues ne constituent pas un recensement de tous les profils ORCID de l’établissement.
+
+![FIGURE 18. Collaboration issue des auteurs et affiliations OpenAlex.](assets/screenshots/fr/openalex-collaboration.png)
+
+FIGURE 18. Collaboration issue des auteurs et affiliations OpenAlex.
+
+## 5.4 Thèmes et sources
+
+Cette section répartit les articles par domaines et champs thématiques, type de document, libre accès, langue et source. Les thèmes proviennent de la classification OpenAlex.
+
+Les langues sont affichées sous leur nom traduit à partir du code disponible. Les valeurs absentes sont regroupées comme inconnues ; cette catégorie ne représente pas une langue ou une discipline supplémentaire.
+
+Utilisez les filtres pour examiner une période ou un ensemble précis, puis exportez tableaux ou graphiques. La répartition décrit les articles enrichis disponibles, et non toute l’activité disciplinaire de l’établissement.
+
+![FIGURE 19. Champs thématiques, langues, types de documents et sources.](assets/screenshots/fr/openalex-topics.png)
+
+FIGURE 19. Champs thématiques, langues, types de documents et sources.
+
+## 5.5 Impact des citations
+
+L’impact des citations classe les articles filtrés selon leur nombre actuel de citations dans OpenAlex. Les totaux peuvent changer lors de mises à jour ultérieures. Vérifiez DOI, année et source pour comparer des publications.
+
+La tendance des citations regroupe ce compteur actuel par année de publication. Elle ne représente pas les citations reçues pendant chaque année civile.
+
+Le FWCI mesure l’impact normalisé par champ, année et type de document lorsqu’OpenAlex fournit une valeur. Une valeur absente n’est pas un zéro. Consultez la définition de l’indicateur avant de l’utiliser dans un rapport.
+
+![FIGURE 20. Articles ayant le plus de citations à ce jour.](assets/screenshots/fr/openalex-impact.png)
+
+FIGURE 20. Articles ayant le plus de citations à ce jour.
+
+## 6. Intégrer
+
+### 6.1 Lire depuis l’API ORCID
+
+Le guide de lecture de l’API réunit des exemples cURL de recherche par établissement, ROR, nom et pays, une référence des points d’accès publics et des liens d’essai. Il s’adresse aux personnes qui doivent interroger la source avec un outil technique.
+
+Choisissez l’exemple adapté, vérifiez ses paramètres et remplacez les valeurs de démonstration avant de l’exécuter dans votre environnement. Les requêtes récupèrent les données visibles publiquement.
+
+Ce guide explique comment lire ORCID. Il ne synchronise pas tout votre établissement et ne donne pas accès aux dossiers privés.
+
+![FIGURE 21. Guide de consultation de l’API publique ORCID.](assets/screenshots/fr/read-api.png)
+
+FIGURE 21. Guide de consultation de l’API publique ORCID.
+
+## 6.2 Écrire dans ORCID
+
+Le guide d’écriture dans ORCID décrit un projet téléchargeable, ses prérequis, sa configuration, la structure CSV et le parcours d’autorisation. Il explique comment une intégration autorisée ajoute des informations à un dossier.
+
+Lisez les instructions du projet et coordonnez son utilisation avec l’équipe institutionnelle responsable d’ORCID. Un compte DATA ORCID CHILE ne remplace pas les identifiants et autorisations exigés par ORCID.
+
+L’écriture dans un dossier exige les identifiants appropriés et l’autorisation explicite du titulaire de l’ORCID iD. N’incluez pas de secrets, mots de passe ou jetons dans les feuilles de calcul ou demandes d’assistance.
+
+![FIGURE 22. Guide et projet de référence pour écrire dans ORCID.](assets/screenshots/fr/write-orcid.png)
+
+FIGURE 22. Guide et projet de référence pour écrire dans ORCID.
+
+## 6.3 Affiliation Manager
+
+Cette option enregistre dans votre compte le Client ID de l’application Affiliation Manager de l’établissement. La valeur commence généralement par APP- et aide à reconnaître les dossiers gérés par cette application.
+
+Vérifiez la valeur institutionnelle correcte avant de la modifier, saisissez-la dans le champ puis enregistrez. Ce n’est ni un mot de passe, ni un secret, ni une clé d’API.
+
+Cet identifiant aide à interpréter l’état des dossiers gérés. L’enregistrer ne donne pas, à lui seul, le droit d’écrire dans le dossier ORCID d’une personne.
+
+![FIGURE 23. Identifiant Affiliation Manager dans le compte.](assets/screenshots/fr/affiliation-manager.png)
+
+FIGURE 23. Identifiant Affiliation Manager dans le compte.
+
+> **IMPORTANT:** Modifiez cette valeur uniquement si vous connaissez le Client ID correct ou si vous avez reçu des instructions de l’équipe responsable d’ORCID.
+
+## 6.4 Ressources ORCID
+
+Les ressources ORCID figurent dans Assistance et regroupent des liens sur l’adhésion, les identifiants API, Affiliation Manager, les modèles CSV et les intégrations avec OJS, DSpace-CRIS, VIVO et Dataverse.
+
+Choisissez la ressource adaptée : comprendre une intégration, préparer un modèle ou consulter la documentation. Les liens externes s’ouvrent hors de DATA ORCID CHILE et peuvent avoir leurs propres conditions d’accès.
+
+Pour les fonctions de cette plateforme, commencez par le centre d’aide, dont le contenu s’adapte aux modules activés.
+
+![FIGURE 24. Ressources et documentation ORCID dans Assistance.](assets/screenshots/fr/resources.png)
+
+FIGURE 24. Ressources et documentation ORCID dans Assistance.
+
+## 6.5 Publication OAI-PMH
+
+La publication OAI-PMH permet de consulter le dépôt institutionnel depuis lequel d’autres systèmes moissonnent les métadonnées des articles sélectionnés. Les onglets regroupent la vue d’ensemble, les articles, la correspondance des métadonnées, les imports DOI et l’accès au moissonnage.
+
+Utilisateur consulte le contenu disponible. Utilisateur OAI peut aussi exposer ou exclure des articles, importer des décisions par DOI, annuler le dernier import actif, personnaliser le format dataorcid et gérer les URL privées de moissonnage.
+
+La vue d’ensemble indique les articles disponibles, validés par OpenAlex, exposés et non exposés. La validation exige une affiliation OpenAlex correspondant au ROR actif. La politique par défaut et les décisions manuelles déterminent la sélection effective.
+
+Si le fournisseur est désactivé ou non configuré, demandez son activation à l’équipe responsable. Un article sélectionné est accessible lorsque le fournisseur est activé et que l’URL utilisée autorise l’accès.
+
+![FIGURE 25. Vue d’ensemble OAI-PMH accessible au profil Utilisateur OAI.](assets/screenshots/fr/oai-overview.png)
+
+FIGURE 25. Vue d’ensemble OAI-PMH accessible au profil Utilisateur OAI.
+
+## 6.6 Sélection des articles OAI-PMH
+
+Le tableau propose recherche et filtres par état OAI, validation d’affiliation, type de document et origine de l’activation. Vous pouvez trier les colonnes disponibles et exporter la sélection filtrée pour l’examiner.
+
+Avec Utilisateur OAI, Exposer ou Exclure modifie un article. Pour agir sur plusieurs articles, cochez leurs lignes et utilisez les actions d’exposition ou d’exclusion de la sélection. La sélection de la page ne coche que les lignes de la page actuelle.
+
+Les décisions manuelles prévalent sur la politique automatique. Exclure un article d’OAI-PMH ne le supprime pas d’ORCID, d’OpenAlex ou du cache de consultation.
+
+![FIGURE 26. Sélection d’articles avec les actions du profil Utilisateur OAI.](assets/screenshots/fr/oai-articles.png)
+
+FIGURE 26. Sélection d’articles avec les actions du profil Utilisateur OAI.
+
+1. Filtrez et vérifiez DOI, titre et affiliations avant de sélectionner.
+2. Appliquez l’action aux lignes voulues et vérifiez leur nouvel état.
+3. Consultez le fournisseur activé pour examiner le résultat publié.
+
+## 6.7 Formats et correspondance des métadonnées
+
+Le fournisseur propose trois formats : oai_dc, oai_openaire et dataorcid. Les deux premiers conservent leur structure standard. L’éditeur personnalise uniquement le format dataorcid.
+
+Avec Utilisateur OAI, sélectionnez un champ du catalogue puis ajoutez-le. Vous pouvez changer son nom de destination ou le masquer. Le titre et l’identifiant sont obligatoires ; les champs masqués ne sont pas transmis.
+
+Enregistrer la correspondance applique les modifications. Restaurer les valeurs par défaut revient au profil initial lorsque le bouton est disponible. Utilisateur peut consulter la correspondance, mais pas la modifier.
+
+L’URL de base générée et les liens d’essai permettent d’examiner la réponse du fournisseur activé. Convenez du format requis avec le destinataire des métadonnées. La correspondance modifie la sortie publiée, pas les données ORCID d’origine.
+
+![FIGURE 27. Éditeur du format dataorcid pour Utilisateur OAI.](assets/screenshots/fr/oai-metadata.png)
+
+FIGURE 27. Éditeur du format dataorcid pour Utilisateur OAI.
+
+## 6.8 Activation en masse par DOI
+
+Utilisateur OAI peut activer les articles institutionnels à l’aide d’une feuille XLSX. Le système reconnaît les DOI appartenant déjà à des articles publics du périmètre institutionnel. L’import n’ajoute pas de publications externes et ne synchronise pas ORCID.
+
+Téléchargez le modèle et saisissez un DOI par ligne dans la colonne indiquée. Sélectionnez le fichier XLSX puis lancez la validation et l’activation. Examinez le résultat avant de considérer la tâche terminée.
+
+Les DOI invalides, répétés ou introuvables sont signalés sans modifier les articles hors périmètre. Chaque import conserve un historique avec le fichier, la date, les résultats de validation et les articles activés.
+
+![FIGURE 28. Envoi d’une feuille de DOI et historique des imports.](assets/screenshots/fr/oai-import.png)
+
+FIGURE 28. Envoi d’une feuille de DOI et historique des imports.
+
+> **IMPORTANT:** Un import DOI enregistre des décisions de publication OAI-PMH. Il ne certifie pas une affiliation absente d’OpenAlex et ne modifie pas le dossier public d’origine.
+
+## 6.9 Audit et annulation des imports
+
+Dans l’historique des imports, l’audit ouvre le détail du fichier pour examiner les articles activés et leur état précédent. Vous pouvez distinguer les imports appliqués, annulés et le dernier import actif réversible.
+
+Utilisateur OAI peut annuler le dernier import actif. Examinez le détail, choisissez l’annulation puis confirmez dans la plateforme. Pour annuler un import plus ancien, annulez d’abord les suivants.
+
+L’annulation rétablit les modifications attribuables à cet import tout en préservant les modifications manuelles ultérieures. Vérifiez le résultat et revenez au tableau des articles pour consulter leur état effectif.
+
+Utilisateur peut consulter l’historique et l’audit disponibles. Si une correction est nécessaire sans que vous disposiez du droit de modification OAI, demandez un examen à l’équipe responsable.
+
+![FIGURE 29. Audit d’un import DOI de démonstration.](assets/screenshots/fr/oai-audit.png)
+
+FIGURE 29. Audit d’un import DOI de démonstration.
+
+## 6.10 Accès au moissonnage
+
+Dans Accès au moissonnage, Utilisateur OAI peut enregistrer l’URI de chaque dépôt institutionnel et créer une URL privée pour son moissonneur. Utilisateur consulte les dépôts et leur état ; les clés et les commandes sont réservées aux comptes autorisés à modifier OAI.
+
+Saisissez l’adresse HTTP ou HTTPS du dépôt, sans identifiants, paramètres ni fragment, puis choisissez Générer une URL privée. Copiez l’adresse complète. L’URI identifie le destinataire ; la clé aléatoire de l’URL accorde l’accès indépendamment de l’adresse IP ou de Cloudflare.
+
+Dans DSpace-CRIS, configurez l’URL privée comme OAI Provider, choisissez Simple Dublin Core (oai_dc) et le moissonnage des métadonnées seules. Lancez ou programmez le moissonnage dans DSpace. Aucune connexion à DataORCID n’est requise.
+
+Après configuration du moissonneur, activez la restriction aux URL privées enregistrées et enregistrez le mode d’accès. L’URL générale cesse de fonctionner. Révoquer l’accès bloque une URL ; générer une nouvelle URL invalide l’ancienne et impose de mettre à jour le moissonneur.
+
+![FIGURE 30. Dépôt de démonstration et son URL privée de moissonnage.](assets/screenshots/fr/oai-access.png)
+
+FIGURE 30. Dépôt de démonstration et son URL privée de moissonnage.
+
+> **IMPORTANT:** Toute personne connaissant une URL privée peut lire le XML, y compris dans un navigateur. Gardez-la confidentielle. Révoquer toutes les URL maintient le blocage de l’URL générale tant que le mode restreint reste actif.
+
+## 7. Centre d’aide
+
+Le centre d’aide se trouve dans Assistance. Il propose une recherche instantanée et des rubriques sur les premiers pas, les sources, les flux de données, les indicateurs, les téléchargements, le dictionnaire, les permissions, les intégrations, le dépannage et les notes de version.
+
+Le contenu accompagne les parcours Utilisateur et Utilisateur OAI. Les rubriques et liens s’adaptent aux modules activés ; un module désactivé est également absent de l’aide active.
+
+Saisissez un terme comme DOI, exportation ou libre accès pour trouver des explications. Ouvrez la rubrique et utilisez ses liens pour retrouver la fonction concernée. Consultez cette aide avant de transmettre une question opérationnelle.
+
+![FIGURE 31. Recherche et rubriques du centre d’aide.](assets/screenshots/fr/help.png)
+
+FIGURE 31. Recherche et rubriques du centre d’aide.
+
+## 8. Compte et sécurité
+
+### 8.1 Mon profil
+
+Les options personnelles permettent de modifier prénom, nom, adresse électronique et fonction. Vérifiez les valeurs, apportez vos modifications puis enregistrez. L’adresse sert aux notifications et à la récupération du mot de passe.
+
+L’établissement, le ROR et le rôle ne se modifient pas sur cet écran. S’ils ne correspondent pas à votre situation, demandez leur vérification à l’équipe responsable.
+
+Le sélecteur de langue conserve l’interface dans la langue activée de votre choix. Les modifications du compte ne changent pas le dossier public ORCID d’un chercheur.
+
+![FIGURE 32. Modification des informations personnelles du compte fictif.](assets/screenshots/fr/profile.png)
+
+FIGURE 32. Modification des informations personnelles du compte fictif.
+
+## 8.2 Mot de passe et déconnexion
+
+Pour changer votre mot de passe, saisissez le mot de passe actuel, un nouveau d’au moins huit caractères et sa confirmation. Le système impose aussi une limite de 72 octets UTF-8 ; certains caractères occupent plusieurs octets.
+
+Enregistrez la modification et vérifiez la confirmation. Utilisez un mot de passe réservé à ce compte et ne le partagez pas. Si vous ne connaissez pas l’actuel, utilisez la récupération sur la page de connexion.
+
+La déconnexion se trouve en bas du menu latéral. Utilisez-la après votre travail, surtout sur un appareil partagé. Évitez d’inclure des identifiants de connexion ou des données personnelles privées dans les recherches, fichiers ou demandes d’assistance.
+
+![FIGURE 33. Modification du mot de passe du compte.](assets/screenshots/fr/password.png)
+
+FIGURE 33. Modification du mot de passe du compte.
+
+## 9. Sources, méthodes et bonnes pratiques
+
+### 9.1 Construction du périmètre institutionnel
+
+ROR est la clé institutionnelle principale. Les identifiants GRID ou Ringgold vérifiés complètent la recherche ORCID lorsqu’ils sont disponibles. Les résultats sont réunis et dédoublonnés par ORCID iD, en conservant les preuves de provenance.
+
+### 9.2 Relations entre ORCID, OpenAlex et OAI-PMH
+
+ORCID fournit les profils et enregistrements publics. OpenAlex ajoute des métadonnées analytiques aux articles admissibles ayant une correspondance acceptée. OAI-PMH publie les métadonnées de la sélection institutionnelle effective ; il ne télécharge pas le texte intégral et ne modifie pas ORCID.
+
+### 9.3 Bonnes pratiques
+
+1. Vérifiez la date de mise à jour, l’établissement et les filtres avant de citer un chiffre.
+2. Distinguez enregistrements ORCID, productions canoniques et articles enrichis.
+3. Consultez les définitions et méthodes via les boutons d’information.
+4. Conservez la date, les filtres et le périmètre avec chaque exportation.
+5. Traitez les doublons potentiels et lacunes de couverture comme des indices à examiner.
+6. Comparez des ensembles de périodes, dénominateurs et couvertures équivalents.
+7. Vérifiez la sélection OAI-PMH et le format avant de transmettre son URL au système destinataire.
+
+## 10. Glossaire
+
+| TERME | DESCRIPTION |
+| --- | --- |
+| ORCID iD | Identifiant pérenne d’un chercheur. |
+| ROR | Identifiant institutionnel principal utilisé par la plateforme. |
+| GRID et Ringgold | Identifiants institutionnels historiques vérifiés qui complètent la recherche sans remplacer ROR. |
+| Enregistrement ORCID | Donnée publique ajoutée à un profil, comme une œuvre ou un financement. |
+| Production canonique | Publication consolidée par DOI normalisé ou, avec prudence, par titre et année. |
+| Cache | Copie locale des informations récupérées. Sa date permet d’évaluer l’actualité des données. |
+| Couverture OpenAlex | Proportion des articles ORCID admissibles ayant une correspondance et des métadonnées OpenAlex. |
+| Citations | Nombre actuel de citations d’une publication selon les informations OpenAlex disponibles. |
+| FWCI | Impact des citations normalisé par champ, année et type de document. |
+| Libre accès diamant | Catégorie OpenAlex des articles de revues entièrement ouvertes sans frais de publication pour les auteurs. |
+| Libre accès vert | Catégorie OpenAlex de l’accès par une copie déposée dans un répertoire. |
+| AM | Affiliation Manager d’ORCID ; son Client ID aide à reconnaître les dossiers gérés. |
+
+## 10.1 Termes d’exportation et d’intégration
+
+| TERME | DESCRIPTION |
+| --- | --- |
+| Exportation en arrière-plan | Préparation d’un fichier pendant que vous continuez à utiliser la plateforme. |
+| Fichier valide | Exportation terminée encore téléchargeable et, le cas échéant, réutilisable. |
+| OAI-PMH | Protocole permettant à un système de collecter les métadonnées d’un autre. |
+| Fournisseur | Service exposant la sélection institutionnelle à travers une URL de base. |
+| Collecteur | Système destinataire qui interroge le fournisseur et intègre les métadonnées. |
+| Article exposé | Article retenu dans la sélection effective ; sa disponibilité publique exige aussi un fournisseur activé. |
+| Validation OpenAlex | Correspondance entre une affiliation de l’article et le ROR de l’établissement actif. |
+| Décision manuelle | Inclusion ou exclusion qui prévaut sur la politique automatique. |
+| oai_dc | Format de métadonnées Dublin Core du fournisseur. |
+| oai_openaire | Format OpenAIRE du fournisseur. |
+| dataorcid | Format dont Utilisateur OAI peut personnaliser les champs et noms de destination. |
+| Import DOI | Feuille XLSX activant des articles déjà présents dans le périmètre institutionnel, avec conservation d’un audit. |
+| Annulation d’import | Action annulant le dernier import actif tout en préservant les modifications manuelles ultérieures. |
+
+## 11. Dépannage
+
+### Aucune donnée n’apparaît
+
+Réinitialisez les filtres et vérifiez l’indicateur de mise à jour. Si le jeu de données institutionnel est indisponible, demandez à l’équipe responsable d’examiner son état.
+
+### Un chiffre diffère entre les modules
+
+Vérifiez s’il compte des enregistrements ORCID, des productions canoniques ou des articles OpenAlex. Examinez période, type, libre accès, affiliation et date de mise à jour.
+
+### Une exportation est vide, en attente ou expirée
+
+Vérifiez que la vue contient des résultats et retirez les filtres trop restrictifs. Consultez le centre flottant pour connaître l’état. Redemandez un fichier expiré ; si une tâche ne progresse pas, signalez la vue et l’heure de la demande.
+
+### Je ne peux pas modifier les articles ou correspondances OAI-PMH
+
+Utilisateur dispose d’un accès en consultation. La sélection, les imports DOI et la correspondance exigent Utilisateur OAI associé à l’établissement. Si votre travail nécessite ce droit, demandez sa vérification.
+
+### Un DOI n’est pas activé ou je ne peux pas annuler un import
+
+Vérifiez le modèle et le rapport des DOI invalides, répétés ou introuvables. L’import n’active que les articles du périmètre institutionnel. Seul le dernier import actif peut être annulé ; examinez l’historique et les modifications ultérieures.
+
+### Un module manque ou le fournisseur public échoue
+
+La disponibilité dépend des modules activés et de l’état du fournisseur. Consultez le centre d’aide et demandez un examen à l’équipe responsable. Indiquez la page, la date, les filtres et une capture sans informations sensibles.
+
+## COORDONNÉES
+
+Consorcio para el Acceso a la Información Científica Electrónica
+
+Moneda 1375, 13e étage · Santiago, Chili · +56 2 2365 4589
+
+[secretariaejecutiva@cincel.cl](mailto:secretariaejecutiva@cincel.cl) · [www.cincel.cl](https://www.cincel.cl)

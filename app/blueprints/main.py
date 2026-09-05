@@ -4,14 +4,13 @@ import os
 import io
 import datetime as dt
 import calendar
-import html
 import logging
 import math
 import re
 from email.headerregistry import Address
 import pandas as pd
 from flask import (
-    Blueprint, render_template, request, redirect, url_for,
+    abort, Blueprint, render_template, request, redirect, url_for,
     session, send_from_directory, current_app, send_file
 )
 from flask_babel import _, get_locale as get_babel_locale
@@ -29,6 +28,7 @@ from ..spreadsheet import excel_safe_dataframe
 from ..utils.flashes import flash_err, flash_ok
 from ..utils.session_helpers import get_active_ror_id
 from ..utils.emailer import send_email
+from ..services.transactional_email import render_contact_email, user_manual_path
 from ..services.orcid_service import (
     get_full_orcid_profile, 
     list_orcids_for_institution, 
@@ -399,6 +399,19 @@ def _valid_contact_email(value: str) -> bool:
     return True
 
 
+@bp_main.route('/manuals/user-guide/<language>.pdf')
+def user_manual(language: str):
+    """Download a published user guide without requiring a first sign-in."""
+    try:
+        path = user_manual_path(language)
+    except (OSError, ValueError):
+        abort(404)
+    return send_file(
+        path, mimetype="application/pdf", as_attachment=True,
+        download_name=path.name, conditional=True, max_age=0,
+    )
+
+
 @bp_main.route('/')
 def index():
     """Show the public overview to visitors and the dashboard to signed-in users."""
@@ -469,36 +482,12 @@ def contact():
         return _render_public_landing(form_data), 503
 
     recipient = _landing_contact_email()
-    safe_name = html.escape(form_data["name"])
-    safe_email = html.escape(form_data["email"])
-    safe_institution = html.escape(form_data["institution"] or _("Not provided"))
-    safe_topic = html.escape(topic_labels[form_data["topic"]])
-    safe_message = html.escape(form_data["message"]).replace("\n", "<br>")
-    email_html = f"""
-    <h2>{_("New inquiry from Data ORCID-Chile")}</h2>
-    <p><strong>{_("Name")}:</strong> {safe_name}</p>
-    <p><strong>{_("Email")}:</strong> {safe_email}</p>
-    <p><strong>{_("Institution")}:</strong> {safe_institution}</p>
-    <p><strong>{_("Inquiry type")}:</strong> {safe_topic}</p>
-    <p><strong>{_("Message")}:</strong><br>{safe_message}</p>
-    """
-    email_text = (
-        f"{_('New inquiry from Data ORCID-Chile')}\n\n"
-        f"{_('Name')}: {form_data['name']}\n"
-        f"{_('Email')}: {form_data['email']}\n"
-        f"{_('Institution')}: {form_data['institution'] or _('Not provided')}\n\n"
-        f"{_('Inquiry type')}: {topic_labels[form_data['topic']]}\n\n"
-        f"{_('Message')}:\n{form_data['message']}"
-    )
     delivered = False
     error = "Email notification is not configured."
     if current_app.config.get("MAIL_ENABLED") and recipient:
+        message = render_contact_email(inquiry, topic_labels[form_data["topic"]])
         delivered, error = send_email(
-            to_email=recipient,
-            subject=_("New inquiry from Data ORCID-Chile"),
-            html=email_html,
-            text=email_text,
-            reply_to=form_data["email"],
+            to_email=recipient, reply_to=form_data["email"], **message,
         )
 
     if delivered:

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Harvesting access') }} · OAI-PMH · Data ORCID-Chile{% endblock %}
+
+{% block header_title %}
+<span class="app-page-eyebrow">{{ _('OAI-PMH interoperability') }}</span>
+<h1>{{ _('Harvesting access') }}</h1>
+<p>{{ _('Register repositories and manage a private harvesting URL for each one.') }}</p>
+{% endblock %}
+
+{% block content %}
+{% include 'oai_pmh/_scope.html' %}
+{% include 'oai_pmh/_tabs.html' %}
+
+{% if not oai_config %}
+<div class="alert alert-info">{{ _('Ask the responsible team to configure this OAI-PMH provider before managing harvesting access.') }}</div>
+{% else %}
+<section class="card shadow-sm" aria-labelledby="oaiAccessModeTitle">
+  <div class="card-header oai-access-mode-header">
+    <h2 id="oaiAccessModeTitle" class="card-title text-bold">{{ _('Access mode') }}</h2>
+    <span class="badge badge-{{ 'info' if oai_config.harvester_access_restricted else 'secondary' }}">{{ _('Private URLs only') if oai_config.harvester_access_restricted else _('General URL allowed') }}</span>
+  </div>
+  <div class="card-body">
+    <p>{{ _('The repository URI identifies the recipient. The generated private URL grants access, including from a browser. Keep it confidential; it works independently of Cloudflare or the repository IP address.') }}</p>
+    {% if can_manage_content %}
+    <form method="post" action="{{ url_for('oai_pmh.save_harvesting_access') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="policy">
+      <div class="custom-control custom-checkbox mb-2">
+        <input class="custom-control-input" type="checkbox" name="restrict_access" id="oaiRestrictAccess" {% if oai_config.harvester_access_restricted %}checked{% endif %}>
+        <label class="custom-control-label" for="oaiRestrictAccess">{{ _('Allow harvesting only through registered private URLs') }}</label>
+      </div>
+      <p class="text-muted small">{{ _('Register a repository and configure its private URL in the harvester before enabling this option. The general institutional URL will stop working.') }}</p>
+      <button class="btn btn-primary" type="submit">{{ _('Save access mode') }}</button>
+    </form>
+    {% else %}
+    <p class="text-muted mb-0">{{ _('An OAI User assigned to this institution can register repositories and manage their private URLs.') }}</p>
+    {% endif %}
+  </div>
+</section>
+
+{% if can_manage_content %}
+<section class="card shadow-sm" aria-labelledby="oaiRegisterTitle">
+  <div class="card-header"><h2 id="oaiRegisterTitle" class="card-title text-bold">{{ _('Register repository') }}</h2></div>
+  <form class="card-body" method="post" action="{{ url_for('oai_pmh.save_harvesting_access') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="register">
+    <label for="oaiRepositoryUri">{{ _('Repository URI') }}</label>
+    <input id="oaiRepositoryUri" class="form-control mb-2" type="url" name="base_uri" maxlength="2048" placeholder="https://repository.example.edu" required aria-describedby="oaiRepositoryUriHelp">
+    <p id="oaiRepositoryUriHelp" class="text-muted small">{{ _('Use the repository HTTP or HTTPS address without credentials, query parameters, or a fragment. Up to 20 repositories per institution.') }}</p>
+    <button class="btn btn-primary" type="submit"><i class="fas fa-plus mr-1" aria-hidden="true"></i>{{ _('Generate private URL') }}</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="card shadow-sm" aria-labelledby="oaiRegisteredTitle">
+  <div class="card-header"><h2 id="oaiRegisteredTitle" class="card-title text-bold">{{ _('Registered repositories') }}</h2></div>
+  <div class="card-body">
+    {% for harvester in harvesters %}
+    <article class="oai-harvester {% if not loop.last %}border-bottom pb-3 mb-3{% endif %}">
+      <h3 class="h6 text-break">{{ harvester.base_uri }} <span class="badge badge-{{ 'success' if harvester.is_enabled else 'secondary' }}">{{ _('Enabled') if harvester.is_enabled else _('Revoked') }}</span></h3>
+      {% if can_manage_content %}
+      {% if harvester.is_enabled %}
+      <label for="oaiPrivateUrl{{ harvester.id }}">{{ _('Private harvesting URL') }}</label>
+      <div class="input-group mb-2">
+        <input id="oaiPrivateUrl{{ harvester.id }}" class="form-control" readonly value="{{ harvester_urls[harvester.id] }}" spellcheck="false">
+        <div class="input-group-append"><button class="btn btn-outline-secondary" type="button" data-copy-target="oaiPrivateUrl{{ harvester.id }}" aria-label="{{ _('Copy') }}"><i class="far fa-copy" aria-hidden="true"></i></button></div>
+      </div>
+      <div class="oai-example-links mb-3">
+        <a href="{{ harvester_urls[harvester.id] }}?verb=Identify" target="_blank" rel="noopener noreferrer">Identify</a>
+        {% for prefix in ['oai_dc', 'oai_openaire', 'dataorcid'] %}<a href="{{ harvester_urls[harvester.id] }}?verb=ListRecords&amp;metadataPrefix={{ prefix }}" target="_blank" rel="noopener noreferrer">{{ prefix }}</a>{% endfor %}
+      </div>
+      {% endif %}
+      {% if harvester.is_enabled %}<p class="text-muted small">{{ _('In DSpace-CRIS, use this private base URL as the OAI Provider, choose Simple Dublin Core (oai_dc), and harvest metadata only. Start or schedule harvesting in DSpace; no DataORCID sign-in is needed.') }}</p>{% endif %}
+      <div class="oai-harvester-actions">
+        {% for action, label in [('rotate', _('Generate new URL')), ('revoke', _('Revoke access')), ('delete', _('Remove repository'))] %}
+        {% if action != 'revoke' or harvester.is_enabled %}
+        <form method="post" action="{{ url_for('oai_pmh.update_harvester', harvester_id=harvester.id) }}" onsubmit='return confirm({{ _('The previous private URL will stop working. Continue?')|tojson }});'>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-{{ 'primary' if action == 'rotate' else 'danger' }}" type="submit" name="action" value="{{ action }}">{{ label }}</button>
+        </form>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </article>
+    {% else %}
+    <p class="text-muted mb-0">{{ _('No repositories registered yet.') }}</p>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.querySelectorAll('[data-copy-target]').forEach(function (button) {
+  button.addEventListener('click', function () {
+    const input = document.getElementById(button.dataset.copyTarget);
+    input.select();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(input.value).catch(function () { document.execCommand('copy'); });
+    } else {
+      document.execCommand('copy');
+    }
+  });
+});
+</script>
+{% endblock %}

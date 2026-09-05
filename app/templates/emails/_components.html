@@ -1,0 +1,16 @@
+{% macro button(label, target) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+  <tr><td bgcolor="#c14320" style="border-radius:5px;mso-padding-alt:14px 24px;text-align:center;">
+    <a href="{{ target }}" style="display:inline-block;padding:14px 24px;color:#ffffff;text-decoration:none;font-size:16px;line-height:22px;font-weight:bold;border:1px solid #c14320;border-radius:5px;">{{ label }}</a>
+  </td></tr>
+</table>
+<p style="margin:0 0 8px;font-size:12px;line-height:19px;color:#617084;">{{ _('If the button does not work, copy this link into your browser:') }}</p>
+<p style="margin:0 0 24px;font-size:12px;line-height:19px;word-break:break-all;overflow-wrap:anywhere;"><a href="{{ target }}" style="color:#0069b0;text-decoration:underline;word-break:break-all;">{{ target }}</a></p>
+{%- endmacro %}
+
+{% macro detail(label, value) -%}
+<tr><td style="padding:10px 16px;border-bottom:1px solid #e4eaf0;font-size:13px;line-height:20px;">
+  <div style="color:#617084;">{{ label }}</div>
+  <div style="color:#263341;font-size:15px;line-height:23px;font-weight:bold;word-break:break-word;overflow-wrap:anywhere;">{{ value }}</div>
+</td></tr>
+{%- endmacro %}

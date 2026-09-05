@@ -222,6 +222,15 @@ are stored durably in the private inbox at `/admin/contact-inquiries` even when
 SMTP is unavailable; email is an optional notification channel, not the system
 of record.
 
+Administrators choose **Default landing page language** in the same module
+panel and save with **Save module settings**. The supported choices are English,
+Spanish, French, Portuguese, and German, subject to the enabled language list.
+This applies to the anonymous homepage and contact form when no visitor language
+has been selected. URL, session, and account preferences retain priority. The
+value is stored in `system_module.default_locale`, takes effect across workers
+on the next request, and survives disabling and re-enabling the landing page.
+An unset or no-longer-enabled preference falls back to the application language.
+
 The authenticated Help center is available at `/help/` to every role. Its
 content deliberately covers only standard User and OAI User workflows; staff
 and system operations stay in this repository documentation. Help topics,
@@ -234,6 +243,42 @@ Compile localization catalogs during deployment with
 artifacts and are intentionally excluded from Git.
 
 
+## Transactional email
+
+Welcome/credential, password-recovery, and contact-notification messages share
+`app/templates/emails/base.html`: the site's charcoal header, DataORCID wordmark,
+orange actions, blue details, and a readable plain-text alternative. Layout and
+colors are inline and do not require remote images or stylesheets.
+
+Creating an account sends a welcome message with its credentials and a link to
+the PDF user manual. Credential resends include the link too. The account locale
+controls welcome and recovery messages, and each account receives the manual
+link in its own language: English, Spanish, French, Portuguese, or German.
+Deploy all five `manuals/dataorcid-chile-user-manual-v<APP_VERSION>-{en,es,fr,pt,de}.pdf` files.
+The public routes `/manuals/user-guide/{en,es,fr,pt,de}.pdf` serve only these five files,
+without requiring sign-in; downloads revalidate their cache and support ranges.
+Signed-in users can also download the guide from the compact, localized
+“User manual” link with a PDF icon beside their account options in the toolbar.
+The link follows the active interface
+language and remains available when optional modules such as Help are disabled.
+If the guide is unavailable, account email is not sent with a broken link. A failed welcome preserves
+the created account for retry, while a failed credential resend preserves its
+existing password. Contact notification failures continue to preserve inquiries.
+
+Use the configured SMTP service and a public `app.base_url` for working email
+links. `MAIL_REPLY_TO` is used for account messages; contact notifications retain
+the visitor's address as Reply-To. Samples contain demonstration credentials and
+nonfunctional reset links, and never create or change accounts:
+
+```bash
+python tools/preview_emails.py
+# Explicitly send four samples, including Spanish and English PDF links:
+python tools/preview_emails.py --send-to recipient@example.org --base-url https://dataorcid.example.org
+```
+
+HTML/text previews and the SMTP acceptance report are written to
+`/tmp/dataorcid-email-previews/`. SMTP acceptance does not confirm inbox delivery.
+
 ## Institutional OAI-PMH
 
 The **OAI-PMH** module makes DataORCID-Chile an institutional metadata
@@ -244,6 +289,8 @@ generated endpoint and receives only the articles authorized for that ROR.
 - Article selection and audit: `/oai-pmh/articles/`
 - Metadata formats and mapping: `/oai-pmh/metadata/`
 - Bulk DOI activation and upload history: `/oai-pmh/doi-import/`
+- Institutional harvesting access: `/oai-pmh/access/`
+- Private provider per registered repository: `/oai/<public_key>/<harvester_key>`
 - Administrator and manager inventory: `/admin/oai-pmh`
 - Public provider per institution: `/oai/<public_key>`
 - Published formats: unqualified Dublin Core (`oai_dc`), OpenAIRE 4
@@ -280,9 +327,47 @@ optional DataORCID and OpenAlex fields can be added, renamed, or hidden without
 changing the fixed `oai_dc` and `oai_openaire` schemas.
 
 The `oai-user` role inherits standard-user access and can manage metadata
-mapping, article selection, and DOI uploads within its assigned institution. Provider
+mapping, article selection, DOI uploads, and harvesting access within its assigned institution. Provider
 activation, global policy changes, and public-key rotation remain restricted
 to managers and administrators; both roles retain full OAI management access.
+
+At **Harvesting access**, OAI Users register up to 20 HTTP(S) repository URIs
+and copy a separate, randomly generated 192-bit private URL for each harvester.
+The URI labels the recipient; possession of the private URL authorizes a request.
+It does not prove domain ownership or prevent a holder from sharing the URL.
+There are no DNS, IP, Origin, or Referer checks, so Cloudflare proxy addresses
+have no bearing on this authorization. Standard Users see repository status,
+but cannot manage or view private credentials.
+
+Existing institutional URLs remain available by default. After updating clients,
+enable **Allow harvesting only through registered private URLs** to return HTTP
+403 on the general endpoint. Invalid, revoked, removed, or foreign credentials
+return HTTP 404 before metadata generation. Revoking the last credential keeps
+restricted mode closed. Replacing one private URL leaves other harvesters intact;
+rotating the institutional public key changes the parent path of every private URL.
+
+In DSpace-CRIS, set **OAI Provider** to the complete private base URL (without
+`?verb=...`), choose **Simple Dublin Core** (`oai_dc`) and **metadata only**, then
+start or schedule the harvest. No interactive DataORCID login is needed. Custom
+`dataorcid` and OpenAIRE formats require compatible ingestion mappings in the
+receiving system. See the [DSpace-CRIS import documentation](https://wiki.lyrasis.org/spaces/DSPACECRIS/pages/403767433/Import%2Bvia%2BOAI-PMH).
+
+Private URLs act as credentials, including in browsers. Serve them over HTTPS
+and keep them out of public pages. The application sends `private, no-store`
+and `Referrer-Policy: no-referrer`, and redacts OAI URL credentials in activity
+and error records. Reverse-proxy access logs need equivalent redaction. Configure
+any CDN cache overrides to bypass `/oai/*`, and purge previously cached provider
+responses when enabling restrictions, so cached XML cannot bypass revocation.
+Browser challenges on the provider path would interrupt server-to-server harvesting.
+
+A real HTTP integration check using the optional **Sickle 0.7.0** client is
+available in `tests/oai_harvester_smoke.py`. It creates an isolated SQLite fixture
+and loopback server, exercises all six verbs, GET/POST, pagination, tenant isolation,
+and revocation, and writes a report without credential URLs:
+
+```bash
+python tests/oai_harvester_smoke.py --report /tmp/oai-harvester-report.json
+```
 
 The `oai_openaire` format is available by default as a starting point for
 interoperability with ANID, Espacio Ciencia, and LA Referencia. It implements

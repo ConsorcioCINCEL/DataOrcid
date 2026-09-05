@@ -3,12 +3,15 @@
 import csv
 from datetime import timedelta
 from io import BytesIO, StringIO
+from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 from xml.etree import ElementTree as ET
 
-from flask import Flask
+from babel.messages.mofile import write_mo
+from babel.messages.pofile import read_po
+from flask import Flask, session
 from lxml import etree
 from openpyxl import Workbook, load_workbook
 
@@ -22,6 +25,7 @@ from app.models import (
     OaiPmhDoiImportBatch,
     OaiPmhDoiImportChange,
     OaiPmhInstitutionConfig,
+    OaiPmhHarvester,
     OaiPmhWorkSelection,
     OpenAlexInstitutionWorkFact,
     OpenAlexWorkInstitution,
@@ -38,7 +42,9 @@ from app.services.background_jobs import run_queued_job
 class OaiPmhModuleTest(unittest.TestCase):
     def setUp(self):
         self.export_root = tempfile.TemporaryDirectory()
-        self.app = Flask(__name__)
+        self.app = Flask(
+            __name__, template_folder=str(Path(__file__).resolve().parents[1] / "app/templates"),
+        )
         self.app.config.update(
             SECRET_KEY="test-key",
             SQLALCHEMY_DATABASE_URI="sqlite://",
@@ -904,16 +910,49 @@ class OaiPmhModuleTest(unittest.TestCase):
         self.assertIn(b'code="badResumptionToken"', empty_token.data)
 
     def test_provider_xml_has_a_valid_browser_presentation(self):
-        response = self.client.get(f"/oai/{'a' * 48}?verb=Identify")
-        self.assertIn(b'xml-stylesheet type="text/xsl"', response.data)
+        translations = Path(self.export_root.name) / "translations"
+        for language in ("en", "es", "fr", "pt", "de"):
+            source = Path(__file__).resolve().parents[1] / f"app/translations/{language}/LC_MESSAGES/messages.po"
+            target = translations / language / "LC_MESSAGES/messages.mo"
+            target.parent.mkdir(parents=True)
+            with source.open("rb") as handle, target.open("wb") as output:
+                write_mo(output, read_po(handle, locale=language))
+        self.app.config["BABEL_TRANSLATION_DIRECTORIES"] = str(translations)
+        babel.init_app(self.app, locale_selector=lambda: session.get("locale", "en"))
 
-        xml_document = etree.fromstring(response.data)
-        stylesheet = etree.parse("app/static/xsl/oai-pmh.xsl")
-        html_document = etree.XSLT(stylesheet)(xml_document)
-        rendered = str(html_document)
-        self.assertIn("Data ORCID-Chile", rendered)
-        self.assertIn("DataORCID — University A", rendered)
-        self.assertIn("Identidad del repositorio", rendered)
+        headings = {
+            "en": "Repository identity", "es": "Identidad del repositorio",
+            "fr": "Identité du dépôt", "pt": "Identidade do repositório",
+            "de": "Repository-Identität",
+        }
+        for language, heading in headings.items():
+            with self.subTest(language=language):
+                with self.client.session_transaction() as client_session:
+                    client_session["locale"] = language
+                response = self.client.get(f"/oai/{'a' * 48}?verb=Identify")
+                path = f"/oai-pmh/stylesheet/{language}.xsl"
+                self.assertIn(f'href="{path}"'.encode(), response.data)
+                stylesheet_response = self.client.get(path)
+                self.assertEqual(200, stylesheet_response.status_code)
+                self.assertEqual("text/xsl", stylesheet_response.mimetype)
+                stylesheet = etree.fromstring(stylesheet_response.data)
+                transform = etree.XSLT(stylesheet)
+                html_document = transform(etree.fromstring(response.data))
+                self.assertEqual(language, html_document.getroot().get("lang"))
+                rendered = str(html_document)
+                self.assertIn("Data ORCID-Chile", rendered)
+                self.assertIn("DataORCID — University A", rendered)
+                self.assertIn(heading, rendered)
+                # The localized presentation leaves protocol operations and data intact.
+                for verb in ("ListMetadataFormats", "ListSets", "ListIdentifiers", "ListRecords"):
+                    params = {"verb": verb}
+                    if verb in {"ListIdentifiers", "ListRecords"}:
+                        params["metadataPrefix"] = "oai_dc"
+                    records = self.client.get(f"/oai/{'a' * 48}", query_string=params)
+                    document = etree.fromstring(records.data)
+                    self.assertIsNotNone(document.find(f"{{{OAI_NS}}}{verb}"))
+                    self.assertIn("Data ORCID-Chile", str(transform(document)))
+        self.assertEqual(404, self.client.get("/oai-pmh/stylesheet/it.xsl").status_code)
 
     def test_provider_supports_form_encoded_post_requests_without_csrf(self):
         response = self.client.post(f"/oai/{'a' * 48}", data={"verb": "Identify"})
@@ -1110,6 +1149,192 @@ class OaiPmhModuleTest(unittest.TestCase):
         self.assertTrue(response.location.endswith("/oai-pmh/"))
         with self.client.session_transaction() as client_session:
             self.assertEqual("01aaa1111", client_session["admin_selected_ror"])
+
+    def _register_harvester(self, uri="https://repository.example.edu"):
+        self._login(self.oai_editor_id, is_oai_user=True)
+        response = self.client.post("/oai-pmh/access/", data={"action": "register", "base_uri": uri})
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            harvester = OaiPmhHarvester.query.order_by(OaiPmhHarvester.id.desc()).first()
+            return harvester.id, harvester.access_key
+
+    def test_harvesting_registration_normalizes_uri_and_preserves_other_settings(self):
+        harvester_id, key = self._register_harvester("HTTPS://Repository.Example.EDU:443/")
+        self.assertRegex(key, r"^[0-9a-f]{48}$")
+        self.client.post("/oai-pmh/access/", data={"action": "register", "base_uri": "https://repository.example.edu"})
+        with self.app.app_context():
+            self.assertEqual(1, OaiPmhHarvester.query.count())
+            item = db.session.get(OaiPmhHarvester, harvester_id)
+            self.assertEqual("https://repository.example.edu", item.base_uri)
+            config = db.session.get(OaiPmhInstitutionConfig, item.config_id)
+            self.assertEqual("01aaa1111", config.ror_id)
+            self.assertEqual("validated", config.publication_policy)
+            self.assertTrue(config.provider_enabled)
+            self.assertFalse(config.harvester_access_restricted)
+            self.assertEqual(self.oai_editor_id, item.created_by_user_id)
+
+    def test_harvesting_management_requires_current_oai_permission(self):
+        harvester_id, _ = self._register_harvester()
+        self._login(self.standard_id)
+        for path, data in [
+            ("/oai-pmh/access/", {"action": "register", "base_uri": "https://unauthorized.example"}),
+            ("/oai-pmh/access/", {"action": "policy", "restrict_access": "on"}),
+            (f"/oai-pmh/access/{harvester_id}/", {"action": "revoke"}),
+        ]:
+            response = self.client.post(path, data=data)
+            self.assertIn(response.status_code, (302, 403))
+        with patch("app.blueprints.oai_pmh.render_template", return_value="access") as render:
+            response = self.client.get("/oai-pmh/access/")
+            self.assertEqual(200, response.status_code)
+            self.assertFalse(render.call_args.kwargs["can_manage_content"])
+            self.assertEqual({}, render.call_args.kwargs["harvester_urls"])
+            self.assertIn("no-store", response.headers["Cache-Control"])
+        self._login(self.oai_editor_id, is_oai_user=True)
+        with self.app.app_context():
+            db.session.get(User, self.oai_editor_id).is_oai_user = False
+            db.session.commit()
+        self.client.post(f"/oai-pmh/access/{harvester_id}/", data={"action": "revoke"})
+        with self.app.app_context():
+            self.assertTrue(db.session.get(OaiPmhHarvester, harvester_id).is_enabled)
+            self.assertEqual(1, OaiPmhHarvester.query.count())
+            self.assertFalse(OaiPmhInstitutionConfig.query.filter_by(ror_id="01aaa1111").one().harvester_access_restricted)
+
+    def test_harvesting_credentials_cannot_cross_institutions(self):
+        _, key = self._register_harvester()
+        with self.app.app_context():
+            config = OaiPmhInstitutionConfig.query.filter_by(ror_id="02bbb2222").one()
+            other = OaiPmhHarvester(config_id=config.id, base_uri="https://other.example.edu")
+            db.session.add(other)
+            db.session.commit()
+            other_id, other_key = other.id, other.access_key
+        for action in ("rotate", "revoke", "delete"):
+            response = self.client.post(f"/oai-pmh/access/{other_id}/", data={"action": action})
+            self.assertEqual(404, response.status_code)
+        self.assertEqual(404, self.client.get(f"/oai/{'b'*48}/{key}?verb=Identify").status_code)
+        self.assertEqual(404, self.client.get(f"/oai/{'a'*48}/{other_key}?verb=Identify").status_code)
+        with patch("app.blueprints.oai_pmh.render_template", return_value="access") as render:
+            self.client.get("/oai-pmh/access/")
+            self.assertEqual(1, len(render.call_args.kwargs["harvesters"]))
+
+    def test_restricted_provider_requires_key_before_building_metadata(self):
+        self._register_harvester()
+        self.client.post("/oai-pmh/access/", data={"action": "policy", "restrict_access": "on"})
+        with patch("app.blueprints.oai_pmh.build_oai_response") as build:
+            for method in (self.client.get, self.client.post):
+                response = method(f"/oai/{'a'*48}?verb=Identify", headers={
+                    "Origin": "https://repository.example.edu",
+                    "Referer": "https://repository.example.edu",
+                    "CF-Connecting-IP": "203.0.113.1",
+                })
+                self.assertEqual(403, response.status_code)
+                self.assertIn("no-store", response.headers["Cache-Control"])
+                self.assertEqual(404, method(f"/oai/{'a'*48}/wrong?verb=Identify").status_code)
+            build.assert_not_called()
+        self.assertEqual(200, self.client.get(f"/oai/{'b'*48}?verb=Identify").status_code)
+
+    def test_private_provider_supports_get_post_and_keeps_private_base_url(self):
+        _, key = self._register_harvester()
+        self.client.post("/oai-pmh/access/", data={"action": "policy", "restrict_access": "on"})
+        self.app.config["APP_BASE_URL"] = "https://dataorcid.example.edu"
+        path = f"/oai/{'a'*48}/{key}"
+        # The transport address and browser headers do not identify a repository.
+        with self.client.session_transaction() as client_session:
+            client_session.clear()
+        for method in ("get", "post"):
+            options = {"query_string" if method == "get" else "data": {"verb": "Identify"}}
+            response = getattr(self.client, method)(path, environ_overrides={"REMOTE_ADDR": "198.51.100.9"}, **options)
+            self.assertEqual(200, response.status_code)
+            root = ET.fromstring(response.data)
+            for tag in (f"{{{OAI_NS}}}request", f"{{{OAI_NS}}}Identify/{{{OAI_NS}}}baseURL"):
+                self.assertEqual("https://dataorcid.example.edu" + path, root.find(tag).text)
+            self.assertEqual("no-referrer", response.headers["Referrer-Policy"])
+            self.assertIn("no-store", response.headers["Cache-Control"])
+        for prefix in ("oai_dc", "oai_openaire", "dataorcid"):
+            response = self.client.get(path, query_string={"verb": "ListRecords", "metadataPrefix": prefix})
+            self.assertEqual(200, response.status_code)
+            self.assertIn(b"Article A", response.data)
+            self.assertNotIn(b"Article B", response.data)
+
+    def test_private_harvest_pagination_and_revocation_between_pages(self):
+        harvester_id, key = self._register_harvester()
+        with self.app.app_context():
+            config = OaiPmhInstitutionConfig.query.filter_by(ror_id="01aaa1111").one()
+            config.publication_policy = "all"
+            config.harvester_access_restricted = True
+            db.session.commit()
+        path = f"/oai/{'a'*48}/{key}"
+        response = self.client.get(path, query_string={"verb": "ListRecords", "metadataPrefix": "oai_dc"})
+        token = ET.fromstring(response.data).find(f"{{{OAI_NS}}}ListRecords/{{{OAI_NS}}}resumptionToken").text
+        response = self.client.get(path, query_string={"verb": "ListRecords", "resumptionToken": token})
+        self.assertIn(b"Article A2", response.data)
+        self.client.post(f"/oai-pmh/access/{harvester_id}/", data={"action": "revoke"})
+        self.assertEqual(404, self.client.get(path, query_string={"verb": "ListRecords", "resumptionToken": token}).status_code)
+        self.assertEqual(403, self.client.get(f"/oai/{'a'*48}?verb=Identify").status_code)
+
+    def test_private_url_rotation_and_removal_invalidate_only_that_repository(self):
+        harvester_id, key = self._register_harvester()
+        _, second_key = self._register_harvester("https://second.example.edu")
+        self.client.post(f"/oai-pmh/access/{harvester_id}/", data={"action": "rotate"})
+        with self.app.app_context():
+            new_key = db.session.get(OaiPmhHarvester, harvester_id).access_key
+        self.assertNotEqual(key, new_key)
+        self.assertEqual(404, self.client.get(f"/oai/{'a'*48}/{key}?verb=Identify").status_code)
+        self.assertEqual(200, self.client.get(f"/oai/{'a'*48}/{new_key}?verb=Identify").status_code)
+        self.client.post(f"/oai-pmh/access/{harvester_id}/", data={"action": "delete"})
+        self.assertEqual(404, self.client.get(f"/oai/{'a'*48}/{new_key}?verb=Identify").status_code)
+        self.assertEqual(200, self.client.get(f"/oai/{'a'*48}/{second_key}?verb=Identify").status_code)
+        self.assertEqual(200, self.client.get(f"/oai/{'a'*48}?verb=Identify").status_code)
+
+    def test_restricted_policy_needs_a_registered_repository_and_can_be_disabled(self):
+        self._login(self.oai_editor_id, is_oai_user=True)
+        self.client.post("/oai-pmh/access/", data={"action": "policy", "restrict_access": "on"})
+        self.assertEqual(200, self.client.get(f"/oai/{'a'*48}?verb=Identify").status_code)
+        self._register_harvester()
+        self.client.post("/oai-pmh/access/", data={"action": "policy", "restrict_access": "on"})
+        self.assertEqual(403, self.client.get(f"/oai/{'a'*48}?verb=Identify").status_code)
+        self.client.post("/oai-pmh/access/", data={"action": "policy"})
+        self.assertEqual(200, self.client.get(f"/oai/{'a'*48}?verb=Identify").status_code)
+
+    def test_private_urls_cannot_bypass_disabled_provider_or_rotated_parent(self):
+        _, key = self._register_harvester()
+        path = f"/oai/{'a'*48}/{key}?verb=Identify"
+        with self.app.app_context():
+            config = OaiPmhInstitutionConfig.query.filter_by(ror_id="01aaa1111").one()
+            config.provider_enabled = False
+            db.session.commit()
+        self.assertEqual(404, self.client.get(path).status_code)
+        self._login(self.manager_id, is_manager=True)
+        self.client.post("/oai-pmh/access-key/rotate")
+        self.assertEqual(404, self.client.get(path).status_code)
+
+    def test_harvester_management_requires_csrf(self):
+        harvester_id, _ = self._register_harvester()
+        self.app.config["WTF_CSRF_ENABLED"] = True
+        self.assertEqual(400, self.client.post("/oai-pmh/access/", data={"action": "policy"}).status_code)
+        self.assertEqual(400, self.client.post(f"/oai-pmh/access/{harvester_id}/", data={"action": "revoke"}).status_code)
+
+    def test_harvester_registration_limit(self):
+        self._login(self.oai_editor_id, is_oai_user=True)
+        with self.app.app_context():
+            config = OaiPmhInstitutionConfig.query.filter_by(ror_id="01aaa1111").one()
+            for index in range(20):
+                db.session.add(OaiPmhHarvester(config_id=config.id, base_uri=f"https://repo{index}.example.edu"))
+            db.session.commit()
+        self.client.post("/oai-pmh/access/", data={"action": "register", "base_uri": "https://extra.example.edu"})
+        with self.app.app_context():
+            self.assertEqual(20, OaiPmhHarvester.query.count())
+
+    def test_repository_uri_validation_never_uses_dns(self):
+        from app.services.oai_access import normalize_harvester_uri
+        with self.app.app_context(), patch("socket.getaddrinfo", side_effect=AssertionError("No DNS lookup")):
+            for value in ("javascript:alert(1)", "ftp://repo.example", "https://user:secret@repo.example",
+                          "https://repo.example?key=value", "https://repo.example/#part", "https://bad host.example",
+                          "https://repo.example:99999", "https://repo.example:0", "https://bad_host.example",
+                          "https://repo.example/" + "é" * 1100, "https://repo.example/\\foo"):
+                with self.subTest(value=value[:50]), self.assertRaises(ValueError):
+                    normalize_harvester_uri(value)
+            self.assertEqual("https://[2001:db8::1]/oai", normalize_harvester_uri("https://[2001:db8::1]:443/oai/"))
+            self.assertEqual("https://xn--bcher-kva.example", normalize_harvester_uri("https://bücher.example/"))
 
 
 if __name__ == "__main__":

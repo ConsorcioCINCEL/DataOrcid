@@ -1,0 +1,1122 @@
+[
+  {
+    "language": "es",
+    "name": "login",
+    "path": "/auth/login",
+    "title": "Iniciar sesión · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "overview",
+    "path": "/",
+    "title": "Resumen institucional · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "directory",
+    "path": "/researcher-list",
+    "title": "Directorio de Investigadores · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "portfolio",
+    "path": "/orcid-profile/0000-0000-0000-0001",
+    "title": "Perfil de Investigador · 0000-0000-0000-0001 · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "orcid-overview",
+    "path": "/metrics-panel",
+    "title": "Métricas Institucionales · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "orcid-publications",
+    "path": "/metrics-panel?section=publications",
+    "title": "Métricas Institucionales · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "orcid-funding",
+    "path": "/metrics-panel?section=funding",
+    "title": "Métricas Institucionales · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "orcid-researchers",
+    "path": "/metrics-panel?section=researchers",
+    "title": "Métricas Institucionales · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "downloads",
+    "path": "/cache/works/status",
+    "title": "Sincronización de datos · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "exports",
+    "path": "/researcher-list",
+    "title": "Directorio de Investigadores · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "quality",
+    "path": "/data-quality",
+    "title": "Calidad de datos · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "duplicates",
+    "path": "/duplicates/",
+    "title": "Perfiles duplicados · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "enrichment",
+    "path": "/openalex/works",
+    "title": "Enriquecimiento OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "openalex-overview",
+    "path": "/openalex/analytics",
+    "title": "Analítica OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "openalex-oa",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "Analítica OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "openalex-oa-tables",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "Analítica OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "openalex-collaboration",
+    "path": "/openalex/analytics?section=collaboration",
+    "title": "Analítica OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "openalex-topics",
+    "path": "/openalex/analytics?section=topics",
+    "title": "Analítica OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "openalex-impact",
+    "path": "/openalex/analytics?section=impact",
+    "title": "Analítica OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "read-api",
+    "path": "/integration-orcid/pull",
+    "title": "Lectura (Pull) · API pública ORCID · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "write-orcid",
+    "path": "/integration_guide",
+    "title": "Guía de Integración de Escritura (Push) · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "affiliation-manager",
+    "path": "/auth/am-settings",
+    "title": "Identificador de Affiliation Manager · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "resources",
+    "path": "/resources",
+    "title": "Recursos e integraciones · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "help",
+    "path": "/help/",
+    "title": "Centro de ayuda · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "profile",
+    "path": "/auth/profile",
+    "title": "Mi perfil · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "password",
+    "path": "/auth/change-password",
+    "title": "Cambiar contraseña · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "oai-overview",
+    "path": "/oai-pmh/",
+    "title": "Proveedor OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "oai-articles",
+    "path": "/oai-pmh/articles/",
+    "title": "Selección de artículos · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "oai-metadata",
+    "path": "/oai-pmh/metadata/",
+    "title": "Mapeo de metadatos · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "oai-import",
+    "path": "/oai-pmh/doi-import/",
+    "title": "Activación masiva por DOI · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "oai-audit",
+    "path": "/oai-pmh/doi-import/2/",
+    "title": "Auditoría de carga DOI · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "es",
+    "name": "oai-access",
+    "path": "/oai-pmh/access/",
+    "title": "Acceso de recolección · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "login",
+    "path": "/auth/login",
+    "title": "Login · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "overview",
+    "path": "/",
+    "title": "Institutional overview · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "directory",
+    "path": "/researcher-list",
+    "title": "Researcher Directory · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "portfolio",
+    "path": "/orcid-profile/0000-0000-0000-0001",
+    "title": "Researcher Profile · 0000-0000-0000-0001 · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "orcid-overview",
+    "path": "/metrics-panel",
+    "title": "Institutional Metrics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "orcid-publications",
+    "path": "/metrics-panel?section=publications",
+    "title": "Institutional Metrics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "orcid-funding",
+    "path": "/metrics-panel?section=funding",
+    "title": "Institutional Metrics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "orcid-researchers",
+    "path": "/metrics-panel?section=researchers",
+    "title": "Institutional Metrics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "downloads",
+    "path": "/cache/works/status",
+    "title": "Data Synchronization · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "exports",
+    "path": "/researcher-list",
+    "title": "Researcher Directory · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "quality",
+    "path": "/data-quality",
+    "title": "Data Quality · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "duplicates",
+    "path": "/duplicates/",
+    "title": "Duplicate Profiles · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "enrichment",
+    "path": "/openalex/works",
+    "title": "OpenAlex Enrichment · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "openalex-overview",
+    "path": "/openalex/analytics",
+    "title": "OpenAlex analytics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "openalex-oa",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "OpenAlex analytics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "openalex-oa-tables",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "OpenAlex analytics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "openalex-collaboration",
+    "path": "/openalex/analytics?section=collaboration",
+    "title": "OpenAlex analytics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "openalex-topics",
+    "path": "/openalex/analytics?section=topics",
+    "title": "OpenAlex analytics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "openalex-impact",
+    "path": "/openalex/analytics?section=impact",
+    "title": "OpenAlex analytics · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "read-api",
+    "path": "/integration-orcid/pull",
+    "title": "Read (Pull) · ORCID Public API · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "write-orcid",
+    "path": "/integration_guide",
+    "title": "Write (Push) Integration Guide · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "affiliation-manager",
+    "path": "/auth/am-settings",
+    "title": "Affiliation Manager identifier · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "resources",
+    "path": "/resources",
+    "title": "Resources and Integrations · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "help",
+    "path": "/help/",
+    "title": "Help center · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "profile",
+    "path": "/auth/profile",
+    "title": "My Profile · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "password",
+    "path": "/auth/change-password",
+    "title": "Change Password · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "oai-overview",
+    "path": "/oai-pmh/",
+    "title": "OAI-PMH provider · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "oai-articles",
+    "path": "/oai-pmh/articles/",
+    "title": "Article selection · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "oai-metadata",
+    "path": "/oai-pmh/metadata/",
+    "title": "Metadata mapping · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "oai-import",
+    "path": "/oai-pmh/doi-import/",
+    "title": "Bulk DOI activation · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "oai-audit",
+    "path": "/oai-pmh/doi-import/1/",
+    "title": "DOI import audit · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "en",
+    "name": "oai-access",
+    "path": "/oai-pmh/access/",
+    "title": "Harvesting access · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "login",
+    "path": "/auth/login",
+    "title": "Connexion · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "overview",
+    "path": "/",
+    "title": "Vue d’ensemble institutionnelle · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "directory",
+    "path": "/researcher-list",
+    "title": "Répertoire des chercheurs · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "portfolio",
+    "path": "/orcid-profile/0000-0000-0000-0001",
+    "title": "Profil des chercheurs · 0000-0000-0000-0001 · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "orcid-overview",
+    "path": "/metrics-panel",
+    "title": "Métriques institutionnelles · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "orcid-publications",
+    "path": "/metrics-panel?section=publications",
+    "title": "Métriques institutionnelles · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "orcid-funding",
+    "path": "/metrics-panel?section=funding",
+    "title": "Métriques institutionnelles · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "orcid-researchers",
+    "path": "/metrics-panel?section=researchers",
+    "title": "Métriques institutionnelles · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "downloads",
+    "path": "/cache/works/status",
+    "title": "Synchronisation des données · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "exports",
+    "path": "/researcher-list",
+    "title": "Répertoire des chercheurs · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "quality",
+    "path": "/data-quality",
+    "title": "Qualité des données · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "duplicates",
+    "path": "/duplicates/",
+    "title": "Profils en double · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "enrichment",
+    "path": "/openalex/works",
+    "title": "Enrichissement OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "openalex-overview",
+    "path": "/openalex/analytics",
+    "title": "Analyses OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "openalex-oa",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "Analyses OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "openalex-oa-tables",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "Analyses OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "openalex-collaboration",
+    "path": "/openalex/analytics?section=collaboration",
+    "title": "Analyses OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "openalex-topics",
+    "path": "/openalex/analytics?section=topics",
+    "title": "Analyses OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "openalex-impact",
+    "path": "/openalex/analytics?section=impact",
+    "title": "Analyses OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "read-api",
+    "path": "/integration-orcid/pull",
+    "title": "Lecture (Pull) · API publique ORCID · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "write-orcid",
+    "path": "/integration_guide",
+    "title": "Guide d’intégration en écriture (Push) · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "affiliation-manager",
+    "path": "/auth/am-settings",
+    "title": "Identifiant Affiliation Manager · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "resources",
+    "path": "/resources",
+    "title": "Ressources et intégrations · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "help",
+    "path": "/help/",
+    "title": "Centre d’aide · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "profile",
+    "path": "/auth/profile",
+    "title": "Mon profil · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "password",
+    "path": "/auth/change-password",
+    "title": "Modifier le mot de passe · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "oai-overview",
+    "path": "/oai-pmh/",
+    "title": "Fournisseur OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "oai-articles",
+    "path": "/oai-pmh/articles/",
+    "title": "Sélection des articles · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "oai-metadata",
+    "path": "/oai-pmh/metadata/",
+    "title": "Correspondance des métadonnées · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "oai-import",
+    "path": "/oai-pmh/doi-import/",
+    "title": "Activation en masse par DOI · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "oai-audit",
+    "path": "/oai-pmh/doi-import/3/",
+    "title": "Audit de l’import DOI · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "fr",
+    "name": "oai-access",
+    "path": "/oai-pmh/access/",
+    "title": "Accès au moissonnage · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "login",
+    "path": "/auth/login",
+    "title": "Entrar · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "overview",
+    "path": "/",
+    "title": "Visão geral institucional · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "directory",
+    "path": "/researcher-list",
+    "title": "Diretório de Pesquisadores · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "portfolio",
+    "path": "/orcid-profile/0000-0000-0000-0001",
+    "title": "Perfil do Pesquisador · 0000-0000-0000-0001 · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "orcid-overview",
+    "path": "/metrics-panel",
+    "title": "Métricas Institucionais · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "orcid-publications",
+    "path": "/metrics-panel?section=publications",
+    "title": "Métricas Institucionais · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "orcid-funding",
+    "path": "/metrics-panel?section=funding",
+    "title": "Métricas Institucionais · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "orcid-researchers",
+    "path": "/metrics-panel?section=researchers",
+    "title": "Métricas Institucionais · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "downloads",
+    "path": "/cache/works/status",
+    "title": "Sincronização de dados · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "exports",
+    "path": "/researcher-list",
+    "title": "Diretório de Pesquisadores · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "quality",
+    "path": "/data-quality",
+    "title": "Qualidade de dados · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "duplicates",
+    "path": "/duplicates/",
+    "title": "Perfis duplicados · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "enrichment",
+    "path": "/openalex/works",
+    "title": "Enriquecimento OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "openalex-overview",
+    "path": "/openalex/analytics",
+    "title": "Análise OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "openalex-oa",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "Análise OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "openalex-oa-tables",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "Análise OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "openalex-collaboration",
+    "path": "/openalex/analytics?section=collaboration",
+    "title": "Análise OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "openalex-topics",
+    "path": "/openalex/analytics?section=topics",
+    "title": "Análise OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "openalex-impact",
+    "path": "/openalex/analytics?section=impact",
+    "title": "Análise OpenAlex · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "read-api",
+    "path": "/integration-orcid/pull",
+    "title": "Leitura (Pull) · API pública ORCID · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "write-orcid",
+    "path": "/integration_guide",
+    "title": "Guia de integração de gravação (push) · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "affiliation-manager",
+    "path": "/auth/am-settings",
+    "title": "Identificador Affiliation Manager · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "resources",
+    "path": "/resources",
+    "title": "Recursos e Integrações · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "help",
+    "path": "/help/",
+    "title": "Central de ajuda · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "profile",
+    "path": "/auth/profile",
+    "title": "Meu Perfil · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "password",
+    "path": "/auth/change-password",
+    "title": "Alterar senha · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "oai-overview",
+    "path": "/oai-pmh/",
+    "title": "Provedor OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "oai-articles",
+    "path": "/oai-pmh/articles/",
+    "title": "Seleção de artigos · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "oai-metadata",
+    "path": "/oai-pmh/metadata/",
+    "title": "Mapeamento de metadados · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "oai-import",
+    "path": "/oai-pmh/doi-import/",
+    "title": "Ativação em massa de DOI · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "oai-audit",
+    "path": "/oai-pmh/doi-import/4/",
+    "title": "Auditoria de importação DOI · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "pt",
+    "name": "oai-access",
+    "path": "/oai-pmh/access/",
+    "title": "Acesso de coleta · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "login",
+    "path": "/auth/login",
+    "title": "Anmelden · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "overview",
+    "path": "/",
+    "title": "Institutionelle Übersicht · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "directory",
+    "path": "/researcher-list",
+    "title": "Forscherverzeichnis · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "portfolio",
+    "path": "/orcid-profile/0000-0000-0000-0001",
+    "title": "Forscherprofil · 0000-0000-0000-0001 · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "orcid-overview",
+    "path": "/metrics-panel",
+    "title": "Institutionelle Kennzahlen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "orcid-publications",
+    "path": "/metrics-panel?section=publications",
+    "title": "Institutionelle Kennzahlen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "orcid-funding",
+    "path": "/metrics-panel?section=funding",
+    "title": "Institutionelle Kennzahlen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "orcid-researchers",
+    "path": "/metrics-panel?section=researchers",
+    "title": "Institutionelle Kennzahlen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "downloads",
+    "path": "/cache/works/status",
+    "title": "Datensynchronisation · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "exports",
+    "path": "/researcher-list",
+    "title": "Forscherverzeichnis · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "quality",
+    "path": "/data-quality",
+    "title": "Datenqualität · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "duplicates",
+    "path": "/duplicates/",
+    "title": "Doppelte Profile · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "enrichment",
+    "path": "/openalex/works",
+    "title": "OpenAlex-Anreicherung · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "openalex-overview",
+    "path": "/openalex/analytics",
+    "title": "OpenAlex-Analysen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "openalex-oa",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "OpenAlex-Analysen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "openalex-oa-tables",
+    "path": "/openalex/analytics?section=open_access",
+    "title": "OpenAlex-Analysen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "openalex-collaboration",
+    "path": "/openalex/analytics?section=collaboration",
+    "title": "OpenAlex-Analysen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "openalex-topics",
+    "path": "/openalex/analytics?section=topics",
+    "title": "OpenAlex-Analysen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "openalex-impact",
+    "path": "/openalex/analytics?section=impact",
+    "title": "OpenAlex-Analysen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "read-api",
+    "path": "/integration-orcid/pull",
+    "title": "Lesen (Pull) · Öffentliche ORCID-API · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "write-orcid",
+    "path": "/integration_guide",
+    "title": "Integrationsanleitung zum Schreiben (Push) · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "affiliation-manager",
+    "path": "/auth/am-settings",
+    "title": "Affiliation-Manager-Kennung · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "resources",
+    "path": "/resources",
+    "title": "Ressourcen und Integrationen · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "help",
+    "path": "/help/",
+    "title": "Hilfezentrum · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "profile",
+    "path": "/auth/profile",
+    "title": "Mein Profil · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "password",
+    "path": "/auth/change-password",
+    "title": "Passwort ändern · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "oai-overview",
+    "path": "/oai-pmh/",
+    "title": "OAI-PMH-Anbieter · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "oai-articles",
+    "path": "/oai-pmh/articles/",
+    "title": "Artikelauswahl · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "oai-metadata",
+    "path": "/oai-pmh/metadata/",
+    "title": "Metadatenzuordnung · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "oai-import",
+    "path": "/oai-pmh/doi-import/",
+    "title": "Massenaktivierung per DOI · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "oai-audit",
+    "path": "/oai-pmh/doi-import/5/",
+    "title": "Prüfprotokoll des DOI-Imports · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  },
+  {
+    "language": "de",
+    "name": "oai-access",
+    "path": "/oai-pmh/access/",
+    "title": "Zugriff für die Metadatenernte · OAI-PMH · Data ORCID-Chile",
+    "status": 200
+  }
+]

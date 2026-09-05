@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f2f5f9;color:#263341;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f2f5f9;mso-hide:all;">{% block preheader %}{{ subject }}{% endblock %}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2f5f9;">
+    <tr><td align="center" style="padding:28px 12px;">
+      <!--[if mso]><table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background-color:#ffffff;border:1px solid #dfe5ec;border-radius:10px;">
+        <tr><td style="padding:28px 32px 24px;background-color:#1f2631;border-bottom:4px solid #c14320;border-radius:10px 10px 0 0;">
+          <div style="font-size:30px;line-height:36px;letter-spacing:-1px;color:#ffffff;"><span style="font-weight:400;">DATA</span><strong style="font-weight:700;">ORCID</strong></div>
+          <div style="font-size:14px;line-height:22px;color:#f58a63;font-weight:bold;letter-spacing:1px;">Chile</div>
+        </td></tr>
+        {% if preview %}<tr><td style="padding:14px 32px;background-color:#fff1e9;color:#993817;font-size:13px;line-height:20px;">{{ _('Test email — demonstration data. No account has been created or changed.') }}</td></tr>{% endif %}
+        <tr><td style="padding:30px 32px 32px;font-size:16px;line-height:25px;">
+          {% block content %}{% endblock %}
+        </td></tr>
+        <tr><td style="padding:22px 32px;background-color:#f8fafc;border-top:1px solid #dfe5ec;border-radius:0 0 10px 10px;">
+          <div style="font-size:14px;line-height:22px;font-weight:bold;color:#1f2631;">Data ORCID-Chile <span style="color:#c14320;">·</span> CINCEL</div>
+          <div style="margin-top:5px;font-size:12px;line-height:19px;color:#617084;">{{ _('Institutional research information') }}</div>
+          <div style="margin-top:8px;font-size:11px;line-height:18px;color:#617084;">© {{ year }} Data ORCID-Chile</div>
+        </td></tr>
+      </table>
+      <!--[if mso]></td></tr></table><![endif]-->
+    </td></tr>
+  </table>
+</body>
+</html>

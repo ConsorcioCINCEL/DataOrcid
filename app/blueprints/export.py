@@ -82,7 +82,7 @@ def download_section_excel(section: str):
     fmt = request.args.get('format', 'xlsx').lower()
     
     if not orcid_id:
-        abort(400, description="Missing required parameter: orcid_id")
+        abort(400, description=_("Missing required parameter: orcid_id"))
 
     from ..helpers import build_excel_for_section
 

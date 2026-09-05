@@ -1,6 +1,7 @@
 """Regression tests for authenticated self-service profile editing."""
 
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from flask import Flask
@@ -12,12 +13,14 @@ from app.models import User
 
 class AuthProfileTest(unittest.TestCase):
     def setUp(self):
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, template_folder=str(Path(__file__).resolve().parents[1] / "app/templates"))
         self.app.config.update(
             SECRET_KEY="test-key",
             SQLALCHEMY_DATABASE_URI="sqlite://",
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             TESTING=True,
+            MAIL_ENABLED=False,
+            BABEL_TRANSLATION_DIRECTORIES=str(Path(__file__).resolve().parents[1] / "app/translations"),
         )
         db.init_app(self.app)
         babel.init_app(self.app)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flask import Response, g, jsonify, render_template, request
+from flask import Response, current_app, g, jsonify, render_template, request
 from flask_babel import _
 
 from ..models import SystemModule
@@ -258,6 +258,20 @@ def is_module_enabled(module_key: str | None) -> bool:
     return not module_key or module_key not in disabled_module_keys()
 
 
+def get_landing_default_locale() -> str:
+    """Read the shared landing preference without overriding visitor choices."""
+    from .. import DEFAULT_LANGUAGES
+
+    supported = current_app.config.get("LANGUAGES", DEFAULT_LANGUAGES)
+    configured = SystemModule.query.with_entities(SystemModule.default_locale).filter_by(
+        key="landing_page",
+    ).scalar()
+    if configured in supported:
+        return configured
+    fallback = current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
+    return fallback if fallback in supported else next(iter(supported), "en")
+
+
 def module_for_export_kind(kind: str | None) -> str | None:
     return _EXPORT_KIND_MODULES.get(kind or "")
 
@@ -292,7 +306,7 @@ def module_disabled_response(module_key: str):
     label = definition["label"]
     if request.endpoint == "oai_pmh.provider":
         return Response(
-            "This repository module is currently unavailable.",
+            _("This repository module is currently unavailable."),
             status=403,
             mimetype="text/plain",
         )

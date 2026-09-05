@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+{% autoescape true %}
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:oai="http://www.openarchives.org/OAI/2.0/"
@@ -12,7 +13,7 @@
   <xsl:variable name="base" select="normalize-space(/oai:OAI-PMH/oai:request)"/>
 
   <xsl:template match="/">
-    <html lang="es">
+    <html lang="{{ language }}">
       <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -23,20 +24,20 @@
         </style>
       </head>
       <body>
-        <header class="brandbar"><div class="brandbar-inner"><div class="brand"><span class="brand-mark">DO</span><span><strong>Data ORCID-Chile</strong><small>Interoperabilidad académica institucional</small></span></div><span class="protocol-badge">OAI-PMH 2.0 · oai_dc</span></div></header>
+        <header class="brandbar"><div class="brandbar-inner"><div class="brand"><span class="brand-mark">DO</span><span><strong>Data ORCID-Chile</strong><small>{{ _('Institutional research interoperability') }}</small></span></div><span class="protocol-badge">OAI-PMH 2.0 · oai_dc</span></div></header>
         <main class="shell">
           <section class="hero">
-            <div><span class="eyebrow">Repositorio para cosecha externa</span><h1><xsl:choose><xsl:when test="//oai:repositoryName"><xsl:value-of select="//oai:repositoryName"/></xsl:when><xsl:otherwise>Proveedor OAI-PMH</xsl:otherwise></xsl:choose></h1><p>Metadatos publicados por DataORCID-Chile para DSpace y otros recolectores compatibles.</p></div>
-            <div class="request-card"><b>Solicitud actual</b><xsl:value-of select="/oai:OAI-PMH/oai:request"/></div>
+            <div><span class="eyebrow">{{ _('Repository for external harvesting') }}</span><h1><xsl:choose><xsl:when test="//oai:repositoryName"><xsl:value-of select="//oai:repositoryName"/></xsl:when><xsl:otherwise>{{ _('OAI-PMH provider') }}</xsl:otherwise></xsl:choose></h1><p>{{ _('Metadata published by DataORCID-Chile for DSpace and other compatible harvesters.') }}</p></div>
+            <div class="request-card"><b>{{ _('Current request') }}</b><xsl:value-of select="/oai:OAI-PMH/oai:request"/></div>
           </section>
-          <nav class="nav" aria-label="Operaciones OAI-PMH">
+          <nav class="nav" aria-label="{{ _('OAI-PMH operations') }}">
             <a href="{$base}?verb=Identify">Identify</a>
             <a href="{$base}?verb=ListMetadataFormats">ListMetadataFormats</a>
             <a href="{$base}?verb=ListSets">ListSets</a>
             <a href="{$base}?verb=ListIdentifiers&amp;metadataPrefix=oai_dc">ListIdentifiers</a>
-            <a href="{$base}?verb=ListRecords&amp;metadataPrefix=oai_dc">Records · DC</a>
-            <a href="{$base}?verb=ListRecords&amp;metadataPrefix=oai_openaire">Records · OpenAIRE</a>
-            <a href="{$base}?verb=ListRecords&amp;metadataPrefix=dataorcid">Records · Mapeado</a>
+            <a href="{$base}?verb=ListRecords&amp;metadataPrefix=oai_dc">{{ _('Records · DC') }}</a>
+            <a href="{$base}?verb=ListRecords&amp;metadataPrefix=oai_openaire">{{ _('Records · OpenAIRE') }}</a>
+            <a href="{$base}?verb=ListRecords&amp;metadataPrefix=dataorcid">{{ _('Records · Mapped') }}</a>
           </nav>
 
           <xsl:apply-templates select="/oai:OAI-PMH/oai:error"/>
@@ -47,45 +48,45 @@
           <xsl:apply-templates select="/oai:OAI-PMH/oai:ListIdentifiers"/>
           <xsl:apply-templates select="/oai:OAI-PMH/oai:ListRecords"/>
 
-          <p class="raw-note">Esta presentación se genera desde el XML OAI-PMH original mediante <code>oai-pmh.xsl</code>. Los cosechadores reciben los mismos metadatos estructurados.</p>
+          <p class="raw-note">{{ _('This view is generated from the original OAI-PMH XML. Harvesters receive the same structured metadata.') }}</p>
         </main>
       </body>
     </html>
   </xsl:template>
 
   <xsl:template match="oai:error">
-    <div class="notice error"><strong>Error OAI-PMH · <xsl:value-of select="@code"/></strong><xsl:value-of select="."/></div>
+    <div class="notice error"><strong>{{ _('OAI-PMH error') }} · <xsl:value-of select="@code"/></strong><xsl:value-of select="."/></div>
   </xsl:template>
 
   <xsl:template match="oai:Identify">
-    <section class="panel"><div class="panel-head"><h2>Identidad del repositorio</h2><span>Respuesta Identify</span></div><div class="identify-grid">
-      <div class="fact primary"><label>Repositorio</label><strong><xsl:value-of select="oai:repositoryName"/></strong></div>
-      <div class="fact"><label>Versión del protocolo</label><strong><xsl:value-of select="oai:protocolVersion"/></strong></div>
-      <div class="fact good"><label>Registros eliminados</label><strong><xsl:value-of select="oai:deletedRecord"/></strong></div>
-      <div class="fact"><label>URL base</label><code><xsl:value-of select="oai:baseURL"/></code></div>
-      <div class="fact"><label>Contacto administrativo</label><strong><xsl:value-of select="oai:adminEmail"/></strong></div>
-      <div class="fact"><label>Primer registro / granularidad</label><strong><xsl:value-of select="oai:earliestDatestamp"/></strong><code><xsl:value-of select="oai:granularity"/></code></div>
+    <section class="panel"><div class="panel-head"><h2>{{ _('Repository identity') }}</h2><span>{{ _('Identify response') }}</span></div><div class="identify-grid">
+      <div class="fact primary"><label>{{ _('Repository') }}</label><strong><xsl:value-of select="oai:repositoryName"/></strong></div>
+      <div class="fact"><label>{{ _('Protocol version') }}</label><strong><xsl:value-of select="oai:protocolVersion"/></strong></div>
+      <div class="fact good"><label>{{ _('Deleted records') }}</label><strong><xsl:value-of select="oai:deletedRecord"/></strong></div>
+      <div class="fact"><label>{{ _('Base URL') }}</label><code><xsl:value-of select="oai:baseURL"/></code></div>
+      <div class="fact"><label>{{ _('Administrative contact') }}</label><strong><xsl:value-of select="oai:adminEmail"/></strong></div>
+      <div class="fact"><label>{{ _('Earliest record / granularity') }}</label><strong><xsl:value-of select="oai:earliestDatestamp"/></strong><code><xsl:value-of select="oai:granularity"/></code></div>
     </div></section>
   </xsl:template>
 
   <xsl:template match="oai:ListMetadataFormats">
-    <section class="panel"><div class="panel-head"><h2>Formatos de metadatos</h2><span>ListMetadataFormats</span></div><div class="panel-body simple-list"><xsl:for-each select="oai:metadataFormat"><div class="simple-item"><strong><xsl:value-of select="oai:metadataPrefix"/></strong><div><div><xsl:value-of select="oai:metadataNamespace"/></div><small><a href="{oai:schema}"><xsl:value-of select="oai:schema"/></a></small></div></div></xsl:for-each></div></section>
+    <section class="panel"><div class="panel-head"><h2>{{ _('Metadata formats') }}</h2><span>ListMetadataFormats</span></div><div class="panel-body simple-list"><xsl:for-each select="oai:metadataFormat"><div class="simple-item"><strong><xsl:value-of select="oai:metadataPrefix"/></strong><div><div><xsl:value-of select="oai:metadataNamespace"/></div><small><a href="{oai:schema}"><xsl:value-of select="oai:schema"/></a></small></div></div></xsl:for-each></div></section>
   </xsl:template>
 
   <xsl:template match="oai:ListSets">
-    <section class="panel"><div class="panel-head"><h2>Conjuntos institucionales</h2><span>ListSets</span></div><div class="panel-body simple-list"><xsl:for-each select="oai:set"><div class="simple-item"><code><xsl:value-of select="oai:setSpec"/></code><strong><xsl:value-of select="oai:setName"/></strong></div></xsl:for-each></div></section>
+    <section class="panel"><div class="panel-head"><h2>{{ _('Institutional sets') }}</h2><span>ListSets</span></div><div class="panel-body simple-list"><xsl:for-each select="oai:set"><div class="simple-item"><code><xsl:value-of select="oai:setSpec"/></code><strong><xsl:value-of select="oai:setName"/></strong></div></xsl:for-each></div></section>
   </xsl:template>
 
   <xsl:template match="oai:GetRecord">
-    <section class="panel"><div class="panel-head"><h2>Registro solicitado</h2><span>GetRecord</span></div><div class="panel-body"><xsl:apply-templates select="oai:record"/></div></section>
+    <section class="panel"><div class="panel-head"><h2>{{ _('Requested record') }}</h2><span>GetRecord</span></div><div class="panel-body"><xsl:apply-templates select="oai:record"/></div></section>
   </xsl:template>
 
   <xsl:template match="oai:ListRecords">
-    <section class="panel"><div class="panel-head"><h2>Artículos expuestos</h2><span><xsl:value-of select="count(oai:record)"/> registros en esta página</span></div><div class="panel-body"><xsl:apply-templates select="oai:record"/><xsl:apply-templates select="oai:resumptionToken"/></div></section>
+    <section class="panel"><div class="panel-head"><h2>{{ _('Exposed articles') }}</h2><span>{{ _('Records on this page') }}: <xsl:value-of select="count(oai:record)"/></span></div><div class="panel-body"><xsl:apply-templates select="oai:record"/><xsl:apply-templates select="oai:resumptionToken"/></div></section>
   </xsl:template>
 
   <xsl:template match="oai:ListIdentifiers">
-    <section class="panel"><div class="panel-head"><h2>Identificadores publicados</h2><span><xsl:value-of select="count(oai:header)"/> encabezados en esta página</span></div><div class="panel-body"><xsl:for-each select="oai:header"><div class="record"><xsl:call-template name="header"/></div></xsl:for-each><xsl:apply-templates select="oai:resumptionToken"/></div></section>
+    <section class="panel"><div class="panel-head"><h2>{{ _('Published identifiers') }}</h2><span>{{ _('Headers on this page') }}: <xsl:value-of select="count(oai:header)"/></span></div><div class="panel-body"><xsl:for-each select="oai:header"><div class="record"><xsl:call-template name="header"/></div></xsl:for-each><xsl:apply-templates select="oai:resumptionToken"/></div></section>
   </xsl:template>
 
   <xsl:template match="oai:record">
@@ -109,10 +110,12 @@
   </xsl:template>
 
   <xsl:template name="header">
-    <div><xsl:attribute name="class"><xsl:text>record-head</xsl:text><xsl:if test="@status='deleted'"><xsl:text> deleted</xsl:text></xsl:if></xsl:attribute><div class="identifier"><xsl:value-of select="oai:identifier"/></div><div class="record-meta"><span><xsl:value-of select="oai:datestamp"/></span><xsl:for-each select="oai:setSpec"><span><xsl:value-of select="."/></span></xsl:for-each><xsl:choose><xsl:when test="@status='deleted'"><span class="pill deleted">No expuesto</span></xsl:when><xsl:otherwise><span class="pill">Expuesto</span></xsl:otherwise></xsl:choose></div></div>
+    <div><xsl:attribute name="class"><xsl:text>record-head</xsl:text><xsl:if test="@status='deleted'"><xsl:text> deleted</xsl:text></xsl:if></xsl:attribute><div class="identifier"><xsl:value-of select="oai:identifier"/></div><div class="record-meta"><span><xsl:value-of select="oai:datestamp"/></span><xsl:for-each select="oai:setSpec"><span><xsl:value-of select="."/></span></xsl:for-each><xsl:choose><xsl:when test="@status='deleted'"><span class="pill deleted">{{ _('Not exposed') }}</span></xsl:when><xsl:otherwise><span class="pill">{{ _('Exposed') }}</span></xsl:otherwise></xsl:choose></div></div>
   </xsl:template>
 
   <xsl:template match="oai:resumptionToken">
-    <xsl:if test="normalize-space(.)"><div class="token"><div><strong>Hay más resultados</strong><small>Use el token de reanudación para continuar la cosecha.</small></div><a class="button"><xsl:attribute name="href"><xsl:value-of select="$base"/><xsl:text>?verb=</xsl:text><xsl:value-of select="local-name(..)"/><xsl:text>&amp;resumptionToken=</xsl:text><xsl:value-of select="."/></xsl:attribute>Siguiente página</a></div></xsl:if>
+    <xsl:if test="normalize-space(.)"><div class="token"><div><strong>{{ _('More results available') }}</strong><small>{{ _('Use the resumption token to continue harvesting.') }}</small></div><a class="button"><xsl:attribute name="href"><xsl:value-of select="$base"/><xsl:text>?verb=</xsl:text><xsl:value-of select="local-name(..)"/><xsl:text>&amp;resumptionToken=</xsl:text><xsl:value-of select="."/></xsl:attribute>{{ _('Next page') }}</a></div></xsl:if>
   </xsl:template>
 </xsl:stylesheet>
+
+{% endautoescape %}

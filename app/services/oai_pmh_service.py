@@ -434,7 +434,10 @@ def attach_institutional_affiliations(
             ]
 
 
-def build_oai_response(config: OaiPmhInstitutionConfig, params, base_url: str) -> bytes:
+def build_oai_response(
+    config: OaiPmhInstitutionConfig, params, base_url: str,
+    *, stylesheet_url: str = "/oai-pmh/stylesheet/en.xsl",
+) -> bytes:
     """Build a complete OAI-PMH response for one institutional provider."""
     root = ET.Element(_oai("OAI-PMH"), {_xsi("schemaLocation"): f"{OAI_NS} {OAI_SCHEMA}"})
     ET.SubElement(root, _oai("responseDate")).text = _format_datestamp(
@@ -462,7 +465,7 @@ def build_oai_response(config: OaiPmhInstitutionConfig, params, base_url: str) -
 
     payload = ET.tostring(root, encoding="utf-8", xml_declaration=True)
     declaration_end = payload.find(b"?>") + 2
-    stylesheet = b'\n<?xml-stylesheet type="text/xsl" href="/static/xsl/oai-pmh.xsl"?>'
+    stylesheet = f'\n<?xml-stylesheet type="text/xsl" href="{stylesheet_url}"?>'.encode("utf-8")
     return payload[:declaration_end] + stylesheet + payload[declaration_end:]
 
 

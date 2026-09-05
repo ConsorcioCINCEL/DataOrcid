@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from app import create_app, db
 from app.models import ContactInquiry, SystemModule, User
+from app.services.module_access import MODULE_KEYS
 
 
 class LandingPageTest(unittest.TestCase):
@@ -107,6 +108,135 @@ class LandingPageTest(unittest.TestCase):
         self.assertEqual(200, response.status_code)
         self.assertIn("app-sidebar", html)
         self.assertNotIn("Construye una base de evidencia institucional", html)
+
+    def _set_landing_locale(self, language):
+        with self.app.app_context():
+            row = db.session.get(SystemModule, "landing_page")
+            if row is None:
+                row = SystemModule(key="landing_page", is_enabled=True)
+                db.session.add(row)
+            row.default_locale = language
+            db.session.commit()
+
+    def test_admin_default_is_persisted_and_applies_to_visitors_without_a_choice(self):
+        admin = self.app.test_client()
+        self._login(admin, self.admin_id, "landing-admin@example.test", is_admin=True)
+        visitor = self.app.test_client()
+
+        for language in ("fr", "pt", "de", "es", "en"):
+            with self.subTest(language=language):
+                response = admin.post("/admin/modules", data={
+                    "enabled": sorted(MODULE_KEYS), "landing_default_locale": language,
+                })
+                self.assertEqual(302, response.status_code)
+                with self.app.app_context():
+                    setting = db.session.get(SystemModule, "landing_page")
+                    self.assertEqual(language, setting.default_locale)
+                    self.assertTrue(setting.is_enabled)
+                    self.assertEqual(self.admin_id, setting.updated_by_user_id)
+                    self.assertEqual("landing-admin@example.test", setting.updated_by_username)
+                    self.assertEqual("es", db.session.get(User, self.admin_id).locale)
+
+                html = visitor.get("/").get_data(as_text=True)
+                self.assertIn(f'<html lang="{language}">', html)
+                with visitor.session_transaction() as saved_session:
+                    self.assertNotIn("locale", saved_session)
+                settings = admin.get("/admin/modules").get_data(as_text=True)
+                self.assertIn(f'<option value="{language}" selected>', settings)
+        self.assertEqual("en", self.app.config["BABEL_DEFAULT_LOCALE"])
+
+    def test_visitor_selection_and_account_locale_take_priority_over_landing_default(self):
+        self._set_landing_locale("fr")
+        visitor = self.app.test_client()
+        self.assertIn('<html lang="pt">', visitor.get("/?lang=pt").get_data(as_text=True))
+        self._set_landing_locale("de")
+        self.assertIn('<html lang="pt">', visitor.get("/").get_data(as_text=True))
+        self.assertIn('<html lang="pt">', visitor.get("/?lang=invalid").get_data(as_text=True))
+        self.assertIn('<html lang="de">', self.app.test_client().get("/").get_data(as_text=True))
+
+        account = self.app.test_client()
+        self._login(account, self.user_id, "landing-user@example.test")
+        with account.session_transaction() as saved_session:
+            saved_session.pop("locale", None)
+        html = account.get("/").get_data(as_text=True)
+        self.assertIn('<html lang="es">', html)
+        self.assertIn("app-sidebar", html)
+
+    def test_contact_validation_uses_the_landing_default_language(self):
+        self._set_landing_locale("fr")
+        with patch("app.blueprints.main.is_rate_limited", return_value=False), patch(
+            "app.blueprints.main.send_email"
+        ) as sender:
+            response = self.app.test_client().post("/contact", data=self._valid_contact_data(email="invalid"))
+        self.assertEqual(422, response.status_code)
+        self.assertIn('<html lang="fr">', response.get_data(as_text=True))
+        sender.assert_not_called()
+
+    def test_invalid_default_does_not_change_language_or_module_availability(self):
+        self._set_landing_locale("fr")
+        admin = self.app.test_client()
+        self._login(admin, self.admin_id, "landing-admin@example.test", is_admin=True)
+        for language in ("it", "", "<script>", "FR", "fr-CA"):
+            with self.subTest(language=language):
+                response = admin.post("/admin/modules", data={
+                    "mode": "disable_all", "landing_default_locale": language,
+                })
+                self.assertEqual(302, response.status_code)
+                with self.app.app_context():
+                    setting = db.session.get(SystemModule, "landing_page")
+                    self.assertEqual("fr", setting.default_locale)
+                    self.assertTrue(setting.is_enabled)
+                    self.assertEqual(1, SystemModule.query.count())
+
+    def test_removed_language_falls_back_and_cannot_be_selected_by_admin(self):
+        self._set_landing_locale("de")
+        self.app.config.update(LANGUAGES=["en", "es"], BABEL_DEFAULT_LOCALE="es")
+        html = self.app.test_client().get("/?lang=unknown").get_data(as_text=True)
+        self.assertIn('<html lang="es">', html)
+        self.assertNotIn('lang="de"', html)
+        admin = self.app.test_client()
+        self._login(admin, self.admin_id, "landing-admin@example.test", is_admin=True)
+        response = admin.post("/admin/modules", data={
+            "mode": "disable_all", "landing_default_locale": "de",
+        })
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            self.assertTrue(db.session.get(SystemModule, "landing_page").is_enabled)
+
+    def test_disabling_and_reenabling_the_landing_preserves_its_language(self):
+        self._set_landing_locale("pt")
+        admin = self.app.test_client()
+        self._login(admin, self.admin_id, "landing-admin@example.test", is_admin=True)
+        self.assertEqual(302, admin.post("/admin/modules", data={"mode": "disable_all"}).status_code)
+        visitor = self.app.test_client()
+        self.assertTrue(visitor.get("/").headers["Location"].endswith("/auth/login"))
+        settings = admin.get("/admin/modules").get_data(as_text=True)
+        self.assertIn('<option value="pt" selected>', settings)
+        self.assertEqual(302, admin.post("/admin/modules", data={"mode": "enable_all"}).status_code)
+        self.assertIn('<html lang="pt">', visitor.get("/").get_data(as_text=True))
+
+    def test_only_database_admins_can_change_the_landing_default(self):
+        self._set_landing_locale("fr")
+        anonymous = self.app.test_client().post("/admin/modules", data={"landing_default_locale": "es"})
+        self.assertEqual(302, anonymous.status_code)
+        self.assertTrue(anonymous.headers["Location"].endswith("/auth/login"))
+        for role in ("user", "is_manager", "is_oai_user"):
+            with self.subTest(role=role):
+                with self.app.app_context():
+                    account = db.session.get(User, self.user_id)
+                    account.is_manager = role == "is_manager"
+                    account.is_oai_user = role == "is_oai_user"
+                    db.session.commit()
+                client = self.app.test_client()
+                self._login(client, self.user_id, "landing-user@example.test", is_admin=True)
+                with client.session_transaction() as saved_session:
+                    saved_session[role] = True
+                response = client.post("/admin/modules", data={
+                    "enabled": sorted(MODULE_KEYS), "landing_default_locale": "es",
+                })
+                self.assertEqual(302, response.status_code)
+                with self.app.app_context():
+                    self.assertEqual("fr", db.session.get(SystemModule, "landing_page").default_locale)
 
     def test_admin_switch_can_disable_public_page_and_contact_endpoint(self):
         admin = self.app.test_client()

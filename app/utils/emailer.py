@@ -3,6 +3,7 @@
 import smtplib
 import logging
 from email.message import EmailMessage
+from email.utils import formataddr, formatdate, make_msgid
 from typing import Tuple, Optional
 from flask import current_app
 
@@ -17,7 +18,7 @@ def send_email(
     reply_to: Optional[str] = None,
 ) -> Tuple[bool, Optional[str]]:
     """
-    Send an HTML email with a plain-text fallback.
+    Send an HTML email with a plain-text fallback for transactional messages.
 
     Returns `(success, error_message)` so routes can show user-friendly feedback.
     """
@@ -64,8 +65,11 @@ def send_email(
 
         msg = EmailMessage()
         msg["Subject"] = subject
-        msg["From"] = f"{from_name} <{from_email}>"
+        msg["From"] = formataddr((from_name, from_email))
         msg["To"] = to_email
+        msg["Date"] = formatdate(localtime=False)
+        msg["Message-ID"] = make_msgid()
+        reply_to = reply_to or current_app.config.get("MAIL_REPLY_TO")
         if reply_to:
             msg["Reply-To"] = reply_to
 
@@ -89,7 +93,9 @@ def send_email(
                 server.starttls()
 
             server.login(user, pwd)
-            server.send_message(msg)
+            refused = server.send_message(msg)
+            if refused:
+                raise smtplib.SMTPRecipientsRefused(refused)
             
             logger.info("Email successfully dispatched to %s. Subject: '%s'", to_email, subject)
 

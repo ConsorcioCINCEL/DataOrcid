@@ -301,6 +301,16 @@ guardan de forma durable en la bandeja privada `/admin/contact-inquiries`
 incluso si SMTP no está disponible; el correo es sólo un canal de aviso
 opcional y no el registro principal.
 
+El administrador puede elegir **Idioma predeterminado de la página de
+presentación** en ese mismo panel y pulsar **Guardar configuración de módulos**.
+Puede seleccionar inglés, español, francés, portugués o alemán entre los idiomas
+habilitados. Se aplica a la portada anónima y al formulario de contacto cuando el
+visitante todavía no eligió un idioma. Las preferencias de URL, sesión y cuenta
+tienen prioridad. El valor se guarda en `system_module.default_locale`, se aplica
+en todos los procesos desde la siguiente solicitud y se conserva al deshabilitar
+y volver a habilitar la landing. Si no está definido o el idioma deja de estar
+habilitado, se usa el idioma predeterminado de la aplicación.
+
 El Centro de ayuda autenticado está disponible en `/help/` para todos los
 roles. Su contenido describe intencionalmente sólo los flujos de Usuario y
 Usuario OAI; la operación técnica y de personal permanece documentada en este
@@ -318,6 +328,38 @@ credenciales admiten `SECRET_KEY`, `SECURITY_PASSWORD_SALT`, `ORCID_CLIENT_ID`,
 secretos en TOML.
 
 ---
+
+## Correos transaccionales
+
+Los mensajes de bienvenida, credenciales, recuperación de contraseña y avisos de
+contacto comparten el diseño de DataORCID: cabecera oscura, marca, botones naranja,
+detalles azules y alternativa de texto plano. No dependen de imágenes remotas.
+
+Al crear una cuenta se envían las credenciales y un enlace al manual PDF. El reenvío
+de credenciales también incluye el enlace. Los correos de acceso y recuperación
+respetan el idioma de la cuenta y enlazan el manual correspondiente en inglés,
+español, francés, portugués o alemán. Incluye los cinco PDF de
+`manuals/` correspondientes a `APP_VERSION` en el despliegue. Las rutas públicas
+`/manuals/user-guide/{en,es,fr,pt,de}.pdf` permiten descargar únicamente estos PDF sin
+iniciar sesión, con revalidación de caché. Si falta el manual,
+no se envían las credenciales. Si falla la bienvenida, la cuenta se conserva para
+reintentar; si falla un reenvío, la contraseña anterior sigue siendo válida.
+
+Las cuentas autenticadas también pueden descargar el manual desde el enlace
+discreto «Manual de usuario», con icono PDF junto a las opciones de su cuenta en
+la barra superior. Tanto el texto como el PDF usan el idioma activo
+de la interfaz y permanece disponible aunque se deshabilite el Centro de ayuda.
+
+Configura SMTP y `app.base_url` con la dirección pública para que los enlaces
+sean utilizables. Las pruebas usan datos ficticios y no modifican cuentas:
+
+```bash
+python tools/preview_emails.py
+python tools/preview_emails.py --send-to destinatario@example.org --base-url https://dataorcid.example.org
+```
+
+Las vistas previas y el informe quedan en `/tmp/dataorcid-email-previews/`.
+La aceptación SMTP confirma el envío al servidor, no la llegada a la bandeja.
 
 ## 📡 OAI-PMH institucional
 
@@ -362,10 +404,45 @@ universidad el estado del proveedor, los artículos asociados y expuestos, la
 validación OpenAlex y las decisiones manuales.
 
 El rol `oai-user` hereda el acceso de un usuario estándar y puede gestionar el
-mapeo de metadatos, la selección de artículos y las cargas DOI dentro de su institución. No
-puede habilitar el proveedor, cambiar su política general ni rotar la URL;
+mapeo de metadatos, la selección de artículos, las cargas DOI y el acceso de recolección
+dentro de su institución. No puede habilitar el proveedor, cambiar la política
+de publicación ni rotar la clave institucional;
 estas operaciones permanecen reservadas a gestores y administradores, quienes
 también conservan todos los permisos de gestión OAI.
+
+En **Acceso de recolección** (`/oai-pmh/access/`), Usuario OAI puede registrar
+hasta 20 URI HTTP(S) de repositorios y generar una URL privada con clave aleatoria
+de 192 bits para cada recolector. La URI identifica al destinatario; la URL
+privada otorga acceso. No acredita propiedad del dominio ni impide compartirla.
+El acceso no depende de DNS, IP, Origin ni Referer, por lo que es independiente
+del proxy de Cloudflare. Usuario consulta el estado sin ver ni modificar claves.
+
+Las URL institucionales existentes siguen disponibles por defecto. Tras configurar
+los recolectores, activa **Permitir recolección solo mediante URL privadas registradas**:
+la URL general responderá HTTP 403. Una clave incorrecta, revocada, eliminada o
+de otra universidad devuelve HTTP 404 antes de generar metadatos. Revocar la
+última clave conserva el bloqueo. Regenerar una URL privada afecta solo a ese
+repositorio; rotar la clave institucional cambia la ruta de todas sus URL privadas.
+
+En DSpace-CRIS, configura la URL privada completa como **OAI Provider**, sin
+`?verb=...`, selecciona **Simple Dublin Core** (`oai_dc`) y **solo metadatos**.
+Inicia o programa la cosecha en DSpace; no requiere una sesión de DataORCID.
+Los formatos personalizados y OpenAIRE necesitan un mapeo de importación compatible
+en el receptor. Consulta la [documentación de DSpace-CRIS](https://wiki.lyrasis.org/spaces/DSPACECRIS/pages/403767433/Import%2Bvia%2BOAI-PMH).
+
+Quien conozca la URL privada puede leer los metadatos, incluso en un navegador.
+Usa HTTPS y mantén la URL confidencial. La aplicación evita almacenar en caché
+las respuestas y oculta las claves en sus registros de actividad y errores.
+El proxy debe ocultarlas también en sus registros. Si existen reglas de caché
+del CDN, excluye `/oai/*` y purga respuestas anteriores al activar restricciones.
+Los desafíos de navegador en esa ruta impedirían la cosecha automática.
+
+La prueba HTTP con el cosechador opcional **Sickle 0.7.0** usa únicamente una base
+SQLite temporal, dos universidades y artículos ficticios:
+
+```bash
+python tests/oai_harvester_smoke.py --report /tmp/oai-harvester-report.json
+```
 
 El formato `oai_openaire` está disponible por defecto como punto de partida
 para la interoperabilidad con ANID, Espacio Ciencia y LA Referencia. Usa el

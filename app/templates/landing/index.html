@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{{ _('Data ORCID-Chile integrates public ORCID records with OpenAlex enrichment to support institution-scoped analysis, metadata quality assessment, export, and OAI-PMH dissemination.') }}">
-  <meta name="theme-color" content="#0f3d56">
+  <meta name="theme-color" content="#1f2631">
   <meta property="og:title" content="{{ _('Data ORCID-Chile · Institutional research metadata infrastructure') }}">
   <meta property="og:description" content="{{ _('An institution-scoped platform for discovering, documenting, analyzing, and disseminating public research metadata.') }}">
   <meta property="og:type" content="website">
@@ -14,7 +14,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@200;300;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css', v=config.get('APP_VERSION', '2.1')) }}">
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -48,7 +48,7 @@
     </div>
   </header>
 
-  <main id="main-content">
+  <main id="main-content" tabindex="-1">
     <section class="landing-hero" aria-labelledby="landingHeroTitle">
       <div class="landing-container landing-hero-grid">
         <div class="landing-hero-copy">
@@ -67,11 +67,10 @@
         </div>
 
         <div class="landing-product" aria-label="{{ _('Illustrative summary of the service data model') }}">
-          <div class="landing-product-glow" aria-hidden="true"></div>
           <div class="landing-window">
             <div class="landing-window-bar">
-              <span class="landing-window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span>{{ _('Institutional metadata overview') }}</span>
+              <span class="landing-window-brand" aria-hidden="true">D<strong>O</strong></span>
+              <span class="landing-window-title"><i class="fas fa-university" aria-hidden="true"></i> {{ _('Institutional metadata overview') }}</span>
               <span class="landing-live"><i></i> {{ _('Snapshot status recorded') }}</span>
             </div>
             <div class="landing-window-body">

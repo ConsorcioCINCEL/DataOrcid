@@ -1,0 +1,992 @@
+[
+  {
+    "file": "dataorcid-chile-user-manual-v2.1-en.pdf",
+    "language": "en",
+    "pages": 41,
+    "figures": 33,
+    "layout": [
+      {
+        "page": 3,
+        "key": "purpose",
+        "content_bottom_pt": 311.2
+      },
+      {
+        "page": 4,
+        "key": "login",
+        "content_bottom_pt": 110.67
+      },
+      {
+        "page": 5,
+        "key": "navigation",
+        "content_bottom_pt": 122.87
+      },
+      {
+        "page": 6,
+        "key": "overview",
+        "content_bottom_pt": 110.87
+      },
+      {
+        "page": 7,
+        "key": "directory",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 8,
+        "key": "portfolio",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 9,
+        "key": "orcid-overview",
+        "content_bottom_pt": 209.67
+      },
+      {
+        "page": 10,
+        "key": "orcid-publications",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 11,
+        "key": "orcid-funding",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 12,
+        "key": "orcid-researchers",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 13,
+        "key": "downloads",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 14,
+        "key": "exports",
+        "content_bottom_pt": 115.87
+      },
+      {
+        "page": 15,
+        "key": "quality",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 16,
+        "key": "duplicates",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 17,
+        "key": "enrichment",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 18,
+        "key": "openalex-overview",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 19,
+        "key": "openalex-oa",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 20,
+        "key": "openalex-oa-tables",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 21,
+        "key": "openalex-collaboration",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 22,
+        "key": "openalex-topics",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 23,
+        "key": "openalex-impact",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 24,
+        "key": "read-api",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 25,
+        "key": "write-orcid",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 26,
+        "key": "affiliation-manager",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 27,
+        "key": "resources",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 28,
+        "key": "oai-overview",
+        "content_bottom_pt": 147.47
+      },
+      {
+        "page": 29,
+        "key": "oai-articles",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 30,
+        "key": "oai-metadata",
+        "content_bottom_pt": 161.27
+      },
+      {
+        "page": 31,
+        "key": "oai-import",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 32,
+        "key": "oai-audit",
+        "content_bottom_pt": 161.27
+      },
+      {
+        "page": 33,
+        "key": "oai-access",
+        "content_bottom_pt": 68.0
+      },
+      {
+        "page": 34,
+        "key": "help",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 35,
+        "key": "profile",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 36,
+        "key": "password",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 37,
+        "key": "methodology",
+        "content_bottom_pt": 393.0
+      },
+      {
+        "page": 38,
+        "key": "glossary",
+        "content_bottom_pt": 345
+      },
+      {
+        "page": 39,
+        "key": "glossary-oai",
+        "content_bottom_pt": 309
+      },
+      {
+        "page": 40,
+        "key": "troubleshooting",
+        "content_bottom_pt": 339.4
+      }
+    ]
+  },
+  {
+    "file": "dataorcid-chile-user-manual-v2.1-es.pdf",
+    "language": "es",
+    "pages": 41,
+    "figures": 33,
+    "layout": [
+      {
+        "page": 3,
+        "key": "purpose",
+        "content_bottom_pt": 297.4
+      },
+      {
+        "page": 4,
+        "key": "login",
+        "content_bottom_pt": 110.67
+      },
+      {
+        "page": 5,
+        "key": "navigation",
+        "content_bottom_pt": 122.87
+      },
+      {
+        "page": 6,
+        "key": "overview",
+        "content_bottom_pt": 110.87
+      },
+      {
+        "page": 7,
+        "key": "directory",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 8,
+        "key": "portfolio",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 9,
+        "key": "orcid-overview",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 10,
+        "key": "orcid-publications",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 11,
+        "key": "orcid-funding",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 12,
+        "key": "orcid-researchers",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 13,
+        "key": "downloads",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 14,
+        "key": "exports",
+        "content_bottom_pt": 115.87
+      },
+      {
+        "page": 15,
+        "key": "quality",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 16,
+        "key": "duplicates",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 17,
+        "key": "enrichment",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 18,
+        "key": "openalex-overview",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 19,
+        "key": "openalex-oa",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 20,
+        "key": "openalex-oa-tables",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 21,
+        "key": "openalex-collaboration",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 22,
+        "key": "openalex-topics",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 23,
+        "key": "openalex-impact",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 24,
+        "key": "read-api",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 25,
+        "key": "write-orcid",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 26,
+        "key": "affiliation-manager",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 27,
+        "key": "resources",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 28,
+        "key": "oai-overview",
+        "content_bottom_pt": 119.87
+      },
+      {
+        "page": 29,
+        "key": "oai-articles",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 30,
+        "key": "oai-metadata",
+        "content_bottom_pt": 147.47
+      },
+      {
+        "page": 31,
+        "key": "oai-import",
+        "content_bottom_pt": 120.07
+      },
+      {
+        "page": 32,
+        "key": "oai-audit",
+        "content_bottom_pt": 161.27
+      },
+      {
+        "page": 33,
+        "key": "oai-access",
+        "content_bottom_pt": 68.0
+      },
+      {
+        "page": 34,
+        "key": "help",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 35,
+        "key": "profile",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 36,
+        "key": "password",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 37,
+        "key": "methodology",
+        "content_bottom_pt": 379.2
+      },
+      {
+        "page": 38,
+        "key": "glossary",
+        "content_bottom_pt": 309
+      },
+      {
+        "page": 39,
+        "key": "glossary-oai",
+        "content_bottom_pt": 309
+      },
+      {
+        "page": 40,
+        "key": "troubleshooting",
+        "content_bottom_pt": 325.6
+      }
+    ]
+  },
+  {
+    "file": "dataorcid-chile-user-manual-v2.1-fr.pdf",
+    "language": "fr",
+    "pages": 41,
+    "figures": 33,
+    "layout": [
+      {
+        "page": 3,
+        "key": "purpose",
+        "content_bottom_pt": 283.6
+      },
+      {
+        "page": 4,
+        "key": "login",
+        "content_bottom_pt": 96.87
+      },
+      {
+        "page": 5,
+        "key": "navigation",
+        "content_bottom_pt": 122.87
+      },
+      {
+        "page": 6,
+        "key": "overview",
+        "content_bottom_pt": 97.07
+      },
+      {
+        "page": 7,
+        "key": "directory",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 8,
+        "key": "portfolio",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 9,
+        "key": "orcid-overview",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 10,
+        "key": "orcid-publications",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 11,
+        "key": "orcid-funding",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 12,
+        "key": "orcid-researchers",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 13,
+        "key": "downloads",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 14,
+        "key": "exports",
+        "content_bottom_pt": 88.27
+      },
+      {
+        "page": 15,
+        "key": "quality",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 16,
+        "key": "duplicates",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 17,
+        "key": "enrichment",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 18,
+        "key": "openalex-overview",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 19,
+        "key": "openalex-oa",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 20,
+        "key": "openalex-oa-tables",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 21,
+        "key": "openalex-collaboration",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 22,
+        "key": "openalex-topics",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 23,
+        "key": "openalex-impact",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 24,
+        "key": "read-api",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 25,
+        "key": "write-orcid",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 26,
+        "key": "affiliation-manager",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 27,
+        "key": "resources",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 28,
+        "key": "oai-overview",
+        "content_bottom_pt": 119.87
+      },
+      {
+        "page": 29,
+        "key": "oai-articles",
+        "content_bottom_pt": 122.07
+      },
+      {
+        "page": 30,
+        "key": "oai-metadata",
+        "content_bottom_pt": 147.47
+      },
+      {
+        "page": 31,
+        "key": "oai-import",
+        "content_bottom_pt": 120.07
+      },
+      {
+        "page": 32,
+        "key": "oai-audit",
+        "content_bottom_pt": 161.27
+      },
+      {
+        "page": 33,
+        "key": "oai-access",
+        "content_bottom_pt": 68.0
+      },
+      {
+        "page": 34,
+        "key": "help",
+        "content_bottom_pt": 168.27
+      },
+      {
+        "page": 35,
+        "key": "profile",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 36,
+        "key": "password",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 37,
+        "key": "methodology",
+        "content_bottom_pt": 379.2
+      },
+      {
+        "page": 38,
+        "key": "glossary",
+        "content_bottom_pt": 309
+      },
+      {
+        "page": 39,
+        "key": "glossary-oai",
+        "content_bottom_pt": 297
+      },
+      {
+        "page": 40,
+        "key": "troubleshooting",
+        "content_bottom_pt": 325.6
+      }
+    ]
+  },
+  {
+    "file": "dataorcid-chile-user-manual-v2.1-pt.pdf",
+    "language": "pt",
+    "pages": 41,
+    "figures": 33,
+    "layout": [
+      {
+        "page": 3,
+        "key": "purpose",
+        "content_bottom_pt": 297.4
+      },
+      {
+        "page": 4,
+        "key": "login",
+        "content_bottom_pt": 110.67
+      },
+      {
+        "page": 5,
+        "key": "navigation",
+        "content_bottom_pt": 122.87
+      },
+      {
+        "page": 6,
+        "key": "overview",
+        "content_bottom_pt": 97.07
+      },
+      {
+        "page": 7,
+        "key": "directory",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 8,
+        "key": "portfolio",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 9,
+        "key": "orcid-overview",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 10,
+        "key": "orcid-publications",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 11,
+        "key": "orcid-funding",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 12,
+        "key": "orcid-researchers",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 13,
+        "key": "downloads",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 14,
+        "key": "exports",
+        "content_bottom_pt": 102.07
+      },
+      {
+        "page": 15,
+        "key": "quality",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 16,
+        "key": "duplicates",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 17,
+        "key": "enrichment",
+        "content_bottom_pt": 168.27
+      },
+      {
+        "page": 18,
+        "key": "openalex-overview",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 19,
+        "key": "openalex-oa",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 20,
+        "key": "openalex-oa-tables",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 21,
+        "key": "openalex-collaboration",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 22,
+        "key": "openalex-topics",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 23,
+        "key": "openalex-impact",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 24,
+        "key": "read-api",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 25,
+        "key": "write-orcid",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 26,
+        "key": "affiliation-manager",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 27,
+        "key": "resources",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 28,
+        "key": "oai-overview",
+        "content_bottom_pt": 133.67
+      },
+      {
+        "page": 29,
+        "key": "oai-articles",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 30,
+        "key": "oai-metadata",
+        "content_bottom_pt": 161.27
+      },
+      {
+        "page": 31,
+        "key": "oai-import",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 32,
+        "key": "oai-audit",
+        "content_bottom_pt": 161.27
+      },
+      {
+        "page": 33,
+        "key": "oai-access",
+        "content_bottom_pt": 68.0
+      },
+      {
+        "page": 34,
+        "key": "help",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 35,
+        "key": "profile",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 36,
+        "key": "password",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 37,
+        "key": "methodology",
+        "content_bottom_pt": 393.0
+      },
+      {
+        "page": 38,
+        "key": "glossary",
+        "content_bottom_pt": 297
+      },
+      {
+        "page": 39,
+        "key": "glossary-oai",
+        "content_bottom_pt": 309
+      },
+      {
+        "page": 40,
+        "key": "troubleshooting",
+        "content_bottom_pt": 325.6
+      }
+    ]
+  },
+  {
+    "file": "dataorcid-chile-user-manual-v2.1-de.pdf",
+    "language": "de",
+    "pages": 41,
+    "figures": 33,
+    "layout": [
+      {
+        "page": 3,
+        "key": "purpose",
+        "content_bottom_pt": 283.6
+      },
+      {
+        "page": 4,
+        "key": "login",
+        "content_bottom_pt": 96.87
+      },
+      {
+        "page": 5,
+        "key": "navigation",
+        "content_bottom_pt": 122.87
+      },
+      {
+        "page": 6,
+        "key": "overview",
+        "content_bottom_pt": 97.07
+      },
+      {
+        "page": 7,
+        "key": "directory",
+        "content_bottom_pt": 135.87
+      },
+      {
+        "page": 8,
+        "key": "portfolio",
+        "content_bottom_pt": 168.27
+      },
+      {
+        "page": 9,
+        "key": "orcid-overview",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 10,
+        "key": "orcid-publications",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 11,
+        "key": "orcid-funding",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 12,
+        "key": "orcid-researchers",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 13,
+        "key": "downloads",
+        "content_bottom_pt": 172.87
+      },
+      {
+        "page": 14,
+        "key": "exports",
+        "content_bottom_pt": 88.27
+      },
+      {
+        "page": 15,
+        "key": "quality",
+        "content_bottom_pt": 168.27
+      },
+      {
+        "page": 16,
+        "key": "duplicates",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 17,
+        "key": "enrichment",
+        "content_bottom_pt": 168.27
+      },
+      {
+        "page": 18,
+        "key": "openalex-overview",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 19,
+        "key": "openalex-oa",
+        "content_bottom_pt": 120.07
+      },
+      {
+        "page": 20,
+        "key": "openalex-oa-tables",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 21,
+        "key": "openalex-collaboration",
+        "content_bottom_pt": 168.27
+      },
+      {
+        "page": 22,
+        "key": "openalex-topics",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 23,
+        "key": "openalex-impact",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 24,
+        "key": "read-api",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 25,
+        "key": "write-orcid",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 26,
+        "key": "affiliation-manager",
+        "content_bottom_pt": 133.87
+      },
+      {
+        "page": 27,
+        "key": "resources",
+        "content_bottom_pt": 182.07
+      },
+      {
+        "page": 28,
+        "key": "oai-overview",
+        "content_bottom_pt": 119.87
+      },
+      {
+        "page": 29,
+        "key": "oai-articles",
+        "content_bottom_pt": 122.07
+      },
+      {
+        "page": 30,
+        "key": "oai-metadata",
+        "content_bottom_pt": 147.47
+      },
+      {
+        "page": 31,
+        "key": "oai-import",
+        "content_bottom_pt": 120.07
+      },
+      {
+        "page": 32,
+        "key": "oai-audit",
+        "content_bottom_pt": 147.47
+      },
+      {
+        "page": 33,
+        "key": "oai-access",
+        "content_bottom_pt": 68.0
+      },
+      {
+        "page": 34,
+        "key": "help",
+        "content_bottom_pt": 195.87
+      },
+      {
+        "page": 35,
+        "key": "profile",
+        "content_bottom_pt": 159.07
+      },
+      {
+        "page": 36,
+        "key": "password",
+        "content_bottom_pt": 154.47
+      },
+      {
+        "page": 37,
+        "key": "methodology",
+        "content_bottom_pt": 379.2
+      },
+      {
+        "page": 38,
+        "key": "glossary",
+        "content_bottom_pt": 309
+      },
+      {
+        "page": 39,
+        "key": "glossary-oai",
+        "content_bottom_pt": 285
+      },
+      {
+        "page": 40,
+        "key": "troubleshooting",
+        "content_bottom_pt": 298.0
+      }
+    ]
+  }
+]

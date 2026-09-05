@@ -188,6 +188,7 @@ class ModuleAccessTest(unittest.TestCase):
         core_endpoints = {
             "static",
             "main.index",
+            "main.user_manual",
             "admin.modules",
             "admin.set_ror",
             "auth.login",

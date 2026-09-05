@@ -37,12 +37,12 @@
           </a>
           <button class="dropdown-item user-confirm-action" type="button"
                   data-action-url="{{ url_for('admin.users_send_creds', user_id=user.id) }}"
-                  data-confirm-title="{{ _('Send password setup link') }}"
+                  data-confirm-title="{{ _('Send credentials and manual') }}"
                   data-confirm-message="{{ _('Generate a new temporary password and send it to %(email)s? The current password will stop working.', email=user.email or user.username) }}"
-                  data-confirm-label="{{ _('Send setup link') }}"
+                  data-confirm-label="{{ _('Send credentials and manual') }}"
                   data-confirm-variant="primary"
                   data-confirm-icon="fa-paper-plane">
-            <i class="fas fa-paper-plane text-info" aria-hidden="true"></i>{{ _('Send setup link') }}
+            <i class="fas fa-paper-plane text-info" aria-hidden="true"></i>{{ _('Send credentials and manual') }}
           </button>
           <button class="dropdown-item user-confirm-action" type="button"
                   data-action-url="{{ url_for('admin.users_reset_password', user_id=user.id) }}"

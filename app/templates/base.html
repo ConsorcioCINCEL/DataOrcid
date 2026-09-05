@@ -1,6 +1,7 @@
 {% from 'components/ui.html' import flash_messages %}
+{% set interface_locale = current_locale|default(session.get('locale') or config.get('BABEL_DEFAULT_LOCALE', 'en'), true) %}
 <!DOCTYPE html>
-<html lang="{{ session.get('locale') or 'en' }}">
+<html lang="{{ interface_locale }}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -83,13 +84,13 @@
       <li class="nav-item dropdown">
         <a class="nav-link app-topbar-language" data-toggle="dropdown" href="#" aria-label="{{ _('Change language') }}">
           <i class="fas fa-globe" aria-hidden="true"></i>
-          <span>{{ (session.get('locale') or 'en')|upper }}</span>
+          <span>{{ interface_locale|upper }}</span>
           <i class="fas fa-chevron-down app-dropdown-caret" aria-hidden="true"></i>
         </a>
         <div class="dropdown-menu dropdown-menu-right app-dropdown-menu">
           {% for language_code, language_label in language_options %}
           <a href="{{ locale_url(language_code) }}"
-             class="dropdown-item {% if (session.get('locale') or config.get('BABEL_DEFAULT_LOCALE', 'en')) == language_code %}active{% endif %}"
+             class="dropdown-item {% if interface_locale == language_code %}active{% endif %}"
              lang="{{ language_code }}">
              {{ language_label }}
           </a>
@@ -97,6 +98,14 @@
         </div>
       </li>
 
+      <li class="nav-item">
+        <a class="nav-link app-topbar-manual" href="{{ url_for('main.user_manual', language=interface_locale) }}"
+           download type="application/pdf" title="{{ _('Download user manual (PDF)') }}"
+           aria-label="{{ _('Download user manual (PDF)') }}">
+          <i class="far fa-file-pdf" aria-hidden="true"></i>
+          <span>{{ _('User manual') }}</span>
+        </a>
+      </li>
       <li class="nav-item dropdown">
         <a class="nav-link app-user-menu" data-toggle="dropdown" href="#" aria-label="{{ _('Open user menu') }}">
           <i class="far fa-user-circle app-user-icon" aria-hidden="true"></i>

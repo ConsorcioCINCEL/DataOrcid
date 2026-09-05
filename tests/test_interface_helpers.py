@@ -1,15 +1,32 @@
 """Regression tests for shared interface and authentication helpers."""
 
 import unittest
+import re
+from collections import Counter
+from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from babel.messages.extract import DEFAULT_KEYWORDS, extract_from_dir
+from babel.messages.frontend import parse_mapping_cfg
 from babel.messages.pofile import read_po
 from flask import render_template_string, session
 
 from app import DEFAULT_LANGUAGES, create_app, db, locale_url, plain_text
 from app.models import User
 from app.services import orcid_service
+
+
+class TranslationMarkup(HTMLParser):
+    """Collect formatting tags while allowing translated text to move."""
+
+    def __init__(self, value):
+        super().__init__()
+        self.tags = []
+        self.feed(value)
+
+    def handle_starttag(self, tag, attrs):
+        self.tags.append(tag)
 
 
 class InterfaceHelperTest(unittest.TestCase):
@@ -79,18 +96,35 @@ class InterfaceHelperTest(unittest.TestCase):
         with unknown_client.session_transaction() as client_session:
             self.assertNotIn("locale", client_session)
 
-    def test_new_language_catalogs_cover_every_source_message(self):
-        translations = Path(__file__).resolve().parents[1] / "app" / "translations"
-        with (translations / "fr" / "LC_MESSAGES" / "messages.po").open(
-            encoding="utf-8"
-        ) as handle:
-            source_catalog = read_po(handle, locale="fr")
-        source_ids = {message.id for message in source_catalog if message.id}
+    def test_language_catalogs_cover_current_source_without_pending_translations(self):
+        root = Path(__file__).resolve().parents[1]
+        translations = root / "app" / "translations"
+        with (root / "config" / "babel.cfg").open() as handle:
+            methods, options = parse_mapping_cfg(handle)
+        source_ids = {
+            message for _filename, _line, message, _comments, _context in extract_from_dir(
+                root, method_map=methods, options_map=options,
+                keywords={**DEFAULT_KEYWORDS, "lazy_gettext": None},
+            )
+        }
         expected_sign_in = {
+            "en": "Sign in",
+            "es": "Iniciar sesión",
             "fr": "Connexion",
             "pt": "Entrar",
             "de": "Anmelden",
         }
+        expected_manual = {
+            "en": "User manual", "es": "Manual de usuario",
+            "fr": "Manuel d’utilisation", "pt": "Manual do usuário",
+            "de": "Benutzerhandbuch",
+        }
+        # Field names and identifiers must remain usable in integration guides.
+        protected = re.compile(
+            r"\b(?:[a-z]+_[a-z_]+|ORCID|OAI-PMH|OpenAlex|"
+            r"DataORCID(?:-Chile)?|Data ORCID-Chile|ISSN(?:-L)?|"
+            r"PMID|ROR|GRID|DOI|XML|JSON|CSV|XLSX|FWCI)\b"
+        )
 
         self.assertEqual(("en", "es", "fr", "pt", "de"), DEFAULT_LANGUAGES)
         for locale, sign_in in expected_sign_in.items():
@@ -99,9 +133,31 @@ class InterfaceHelperTest(unittest.TestCase):
             ) as handle:
                 catalog = read_po(handle, locale=locale)
             messages = {message.id: message for message in catalog if message.id}
-            self.assertEqual(source_ids, set(messages))
-            self.assertTrue(all(message.string and not message.fuzzy for message in messages.values()))
+            self.assertFalse(source_ids - set(messages), locale)
+            self.assertTrue(all(
+                messages[key].string and not messages[key].fuzzy for key in source_ids
+            ), locale)
+            self.assertEqual([], list(catalog.check()), locale)
             self.assertEqual(sign_in, messages["Sign in"].string)
+            self.assertEqual(expected_manual[locale], messages["User manual"].string)
+            for key in source_ids:
+                message = messages[key]
+                originals = key if isinstance(key, tuple) else (key,)
+                translated = (
+                    message.string if isinstance(message.string, tuple)
+                    else (message.string,)
+                )
+                self.assertTrue(all(translated), (locale, key))
+                for original, value in zip(originals, translated):
+                    self.assertFalse(
+                        set(protected.findall(original)) - set(protected.findall(value)),
+                        (locale, key, value),
+                    )
+                    self.assertEqual(
+                        Counter(TranslationMarkup(original).tags),
+                        Counter(TranslationMarkup(value).tags),
+                        (locale, key, value),
+                    )
 
     def test_remember_me_marks_the_session_permanent(self):
         user = Mock(
@@ -190,7 +246,7 @@ class InterfaceHelperTest(unittest.TestCase):
             )
 
         self.assertIn("oai-workspace-navigation", html)
-        self.assertEqual(4, html.count('class="oai-workspace-tab '))
+        self.assertEqual(5, html.count('class="oai-workspace-tab '))
         self.assertEqual(1, html.count('aria-current="page">'))
         self.assertIn("Repository workspace", html)
         self.assertIn("Current section", html)

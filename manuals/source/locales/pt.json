@@ -55,7 +55,7 @@
     "paragraphs": [
       "2.1 Iniciar sessão",
       "Acesse www.orcid.cl com o nome de usuário ou e-mail institucional e a senha da sua conta. A opção de manter a sessão iniciada é adequada apenas em um dispositivo pessoal ou gerenciado pela instituição.",
-      "O e-mail de boas-vindas inclui suas credenciais e um link para este manual PDF, que pode ser baixado sem iniciar sessão. O link abre a edição no idioma da conta: inglês, espanhol, francês, português ou alemão. Altere a senha temporária ao entrar.",
+      "O e-mail de boas-vindas inclui um link para escolher sua senha e outro para baixar este manual em PDF no idioma da sua conta, sem fazer login. O link da senha expira em 24 horas e só pode ser usado uma vez. Se expirar, solicite outro pela recuperação de senha.",
       "Se esqueceu a senha, abra o link de recuperação, informe o e-mail da conta e siga o link recebido. A resposta na tela não revela se o endereço está cadastrado. Se a mensagem não chegar, verifique o spam e consulte a equipe responsável.",
       "O seletor oferece os idiomas habilitados: inglês, espanhol, francês, português e alemão. Uma escolha feita durante a sessão fica salva como preferência da conta."
     ],
@@ -84,7 +84,7 @@
       "Os números refletem as informações disponíveis na plataforma. Um pesquisador pode constar no diretório institucional sem ter obras ou financiamentos públicos no cache."
     ],
     "captions": "Indicadores gerais da instituição de demonstração.",
-    "note": "Os registros ORCID contam ocorrências na fonte. As produções canônicas consolidam possíveis repetições. Esses números podem ser diferentes sem que exista um erro."
+    "note": "Os registros ORCID contam ocorrências de origem. As publicações canônicas consolidam DOIs iguais ou agrupamentos revisados. Correspondências sem DOI exigem revisão. Esses números podem diferir sem indicar um erro."
   },
   "directory": {
     "titles": "3.2 Diretório de pesquisadores",
@@ -151,7 +151,7 @@
       "4.1 Sincronização e transferências",
       "Para Usuário e Usuário OAI, esta página funciona como monitor de estado e centro de transferências. Mostra a atualidade de obras, financiamentos, perfis e metadados OpenAlex, além da última execução disponível.",
       "As transferências institucionais incluem obras ORCID, financiamentos, pesquisadores e enriquecimento OpenAlex, conforme a disponibilidade de cada conjunto. Os arquivos refletem o estado do cache indicado na página.",
-      "Esses perfis consultam o estado e baixam os dados disponíveis. Se precisar de uma sincronização institucional ou houver uma execução com falha, solicite uma revisão à equipe responsável."
+      "A versão publicada permanece disponível durante uma atualização. Um resultado parcial indica que alguns perfis não foram atualizados e podem manter dados anteriores. Confira os resultados da última tentativa e peça à equipe responsável que analise as falhas."
     ],
     "captions": "Estado institucional e conjuntos disponíveis para baixar."
   },
@@ -306,7 +306,7 @@
     "paragraphs": [
       "A tabela permite buscar e filtrar por estado OAI, validação de afiliação, tipo documental e origem da ativação. É possível ordenar pelas colunas disponíveis e exportar a seleção filtrada para revisão.",
       "Com Usuário OAI, Expor ou Excluir altera um artigo. Para agir sobre vários, marque as linhas e use as ações de expor ou excluir os selecionados. A seleção da página marca apenas as linhas da página atual.",
-      "Decisões manuais prevalecem sobre a política automática. Excluir um artigo do OAI-PMH não o remove do ORCID, do OpenAlex ou do cache de consulta."
+      "As decisões manuais prevalecem sobre a política automática. A exclusão não remove o artigo do ORCID, do OpenAlex ou do cache. Se já estava publicado, o OAI mantém um aviso de retirada para coletores compatíveis. Uma coleta em andamento mantém sua versão; uma coleta posterior poderá receber a retirada."
     ],
     "captions": "Seleção de artigos com as ações do perfil Usuário OAI.",
     "steps": [

@@ -30,7 +30,7 @@ This edition covers background exports, OAI-PMH publishing, and help adapted to 
 
 Visit www.orcid.cl and sign in with your account username or institutional email and password. Remember me is appropriate only on a personal device or one managed by your institution.
 
-The welcome email includes your credentials and a link to this PDF manual, which you can download without signing in. The link opens the edition matching your account language: English, Spanish, French, Portuguese, or German. Change the temporary password when you sign in.
+The welcome email includes a link to choose your password and another to download this PDF manual in your account language without signing in. The password link expires in 24 hours and can be used only once. If it expires, request another through password recovery.
 
 If you have forgotten your password, open the recovery link, enter your account email, and follow the link you receive. The on-screen response does not disclose whether an address is registered. If no message arrives, check spam and contact the responsible support team.
 
@@ -69,7 +69,7 @@ Figures reflect information available in the platform. A researcher may appear i
 
 FIGURE 3. General indicators for the demonstration institution.
 
-> **IMPORTANT:** ORCID records count source occurrences. Canonical outputs consolidate possible repetitions. These figures can differ without indicating an error.
+> **IMPORTANT:** ORCID records count source occurrences. Canonical outputs consolidate matching DOIs or reviewed groupings. Matches without DOI require review. These figures can differ without indicating an error.
 
 ## 3.2 Researcher directory
 
@@ -155,7 +155,7 @@ For User and OAI User, this page is a status monitor and download center. It sho
 
 Institutional downloads include ORCID works, funding, researchers, and OpenAlex enrichment, according to dataset availability. Files reflect the cache state indicated on the page.
 
-These roles inspect status and download available data. If an institutional synchronization is needed or a failed run appears, ask the responsible team to review it.
+The published version remains available during an update. A partial result means some profiles were not refreshed and may retain previous data. Check the latest attempt counts and ask the responsible team to review any failures.
 
 ![FIGURE 10. Institutional status and downloadable datasets.](assets/screenshots/en/downloads.png)
 
@@ -362,7 +362,7 @@ The table supports search and filters for OAI status, affiliation validation, do
 
 With OAI User, Expose or Exclude changes an individual article. For multiple articles, mark their rows and use Expose selected or Exclude selected. Select this page marks only rows on the current page.
 
-Manual decisions override the automatic policy. Excluding an article from OAI-PMH does not delete it from ORCID, OpenAlex, or the browsing cache.
+Manual decisions override the automatic policy. Exclusion does not delete the article from ORCID, OpenAlex, or the cache. If it was already published, OAI retains a withdrawal notice for compatible harvesters. An ongoing harvest keeps its version; a subsequent harvest can receive the withdrawal.
 
 ![FIGURE 26. Article selection with OAI User actions.](assets/screenshots/en/oai-articles.png)
 

@@ -97,13 +97,17 @@ def _run_member_cache_rebuild(
     update_job_step(job_id, target, "running")
     try:
         if target == 'works':
-            count = build_works_cache_for_ror(ror_id, base_url, headers)
-            _log_run_web(WorkCacheRun, ror_id, 'success', count)
+            result = build_works_cache_for_ror(ror_id, base_url, headers, return_result=True)
+            model = WorkCacheRun
         elif target == 'fundings':
-            count = build_fundings_cache_for_ror(ror_id, base_url, headers)
-            _log_run_web(FundingCacheRun, ror_id, 'success', count)
+            result = build_fundings_cache_for_ror(ror_id, base_url, headers, return_result=True)
+            model = FundingCacheRun
+        count = result[target]
+        status = "partial" if result.get("errors") else "success"
+        _log_run_web(model, ror_id, status, count)
         update_job_progress(job_id, count, count, "records")
-        update_job_step(job_id, target, "success", records_count=count)
+        update_job_step(job_id, target, status, records_count=count)
+        return result
     except Exception as exc:
         db.session.rollback()
         logger.exception("Cache rebuild failed for target %s and ROR %s", target, ror_id)

@@ -39,6 +39,7 @@ def institution_data_health(ror_id: str | None) -> dict:
     association_count = association_query.count()
     verified_associations = association_query.filter_by(is_verified=True).count()
     inferred_associations = association_query.filter_by(is_verified=False).count()
+    failed_profiles = association_query.filter_by(profile_status="failed").count()
 
     work_success = _latest_run(WorkCacheRun, ror_id, "success")
     funding_success = _latest_run(FundingCacheRun, ror_id, "success")
@@ -95,6 +96,9 @@ def institution_data_health(ror_id: str | None) -> dict:
     if association_count and verified_associations == 0:
         missing_components.append("verified_affiliations")
 
+    if failed_profiles:
+        missing_components.append("profiles")
+
     if active_job:
         state = "running"
     elif not has_data:
@@ -110,6 +114,7 @@ def institution_data_health(ror_id: str | None) -> dict:
 
     return {
         "state": state,
+        "failed_profiles": failed_profiles,
         "has_data": has_data,
         "latest_update": latest_update,
         "oldest_update": oldest_update,

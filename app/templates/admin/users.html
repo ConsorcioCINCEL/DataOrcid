@@ -37,17 +37,17 @@
           </a>
           <button class="dropdown-item user-confirm-action" type="button"
                   data-action-url="{{ url_for('admin.users_send_creds', user_id=user.id) }}"
-                  data-confirm-title="{{ _('Send credentials and manual') }}"
-                  data-confirm-message="{{ _('Generate a new temporary password and send it to %(email)s? The current password will stop working.', email=user.email or user.username) }}"
-                  data-confirm-label="{{ _('Send credentials and manual') }}"
+                  data-confirm-title="{{ _('Send access link and manual') }}"
+                  data-confirm-message="{{ _('Send a password-setting link and the user manual to %(email)s? The current password remains valid until it is replaced.', email=user.email or user.username) }}"
+                  data-confirm-label="{{ _('Send access link and manual') }}"
                   data-confirm-variant="primary"
                   data-confirm-icon="fa-paper-plane">
-            <i class="fas fa-paper-plane text-info" aria-hidden="true"></i>{{ _('Send credentials and manual') }}
+            <i class="fas fa-paper-plane text-info" aria-hidden="true"></i>{{ _('Send access link and manual') }}
           </button>
           <button class="dropdown-item user-confirm-action" type="button"
                   data-action-url="{{ url_for('admin.users_reset_password', user_id=user.id) }}"
                   data-confirm-title="{{ _('Reset password') }}"
-                  data-confirm-message="{{ _('Reset the password for %(username)s? A new temporary password will be generated and the current password will stop working.', username=user.username) }}"
+                  data-confirm-message="{{ _('Send %(username)s a link to choose a new password?', username=user.username) }}"
                   data-confirm-label="{{ _('Reset password') }}"
                   data-confirm-variant="warning"
                   data-confirm-icon="fa-key">
@@ -263,6 +263,8 @@
               {% if user.email and user.email != user.username %}
                 <span class="user-account-meta"><i class="fas fa-envelope" aria-hidden="true"></i>{{ user.email }}</span>
               {% endif %}
+              {% set email_status = latest_email_by_user.get(user.id) %}
+              {% if email_status %}<span class="user-account-meta"><i class="fas fa-envelope" aria-hidden="true"></i>{{ _('Email') }}: {{ _('Sent') if email_status == 'sent' else _('Failed') if email_status == 'failed' else _('Cancelled') if email_status == 'cancelled' else _('Queued') }}</span>{% endif %}
               {% if user.position %}<span class="badge badge-light border mt-1">{{ user.position }}</span>{% endif %}
             </td>
             <td class="align-middle user-institution-cell">

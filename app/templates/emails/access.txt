@@ -4,16 +4,15 @@
 
 {{ _('Hello') }} {{ user.first_name or user.username }},
 
-{{ _('Your account is ready. Sign in to explore the information available to your institution.') if welcome else _('Your access credentials have been updated. Use these details the next time you sign in.') }}
+{{ _('Your account is ready. Use the link below to choose your password.') if welcome else _('Use the link below to choose a new password. Your current password remains valid until you replace it.') }}
 
 {{ _('Username') }}: {{ user.username }}
-{{ _('Temporary Password') }}: {{ password }}
 {% if user.institution_name %}{{ _('Institution') }}: {{ user.institution_name }}
-{% endif %}{{ _('Sign in') }}: {{ login_url }}
+{% endif %}{{ _('Set your password') }}: {{ access_url }}
 
 {{ manual_label }}: {{ manual_url }}
 {{ _('The guide covers User and OAI User workflows. Download the PDF and keep it handy for your first steps.') }}
 
-{{ _('For security reasons, please change your password upon login.') }}
+{{ _('This link expires in 24 hours and can be used only once. If it expires, request a new link from the sign-in page.') }}
 
 Data ORCID-Chile · CINCEL

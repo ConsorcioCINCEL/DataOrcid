@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import create_app
 from app.services.transactional_email import (
-    render_contact_email, render_credentials_email, render_password_reset_email,
+    render_contact_email, render_access_email, render_password_reset_email,
 )
 from app.utils.emailer import send_email
 
@@ -50,8 +50,8 @@ def main():
             institution_name="Demonstration University",
         )
         samples = [
-            ("01-welcome-es", render_credentials_email(spanish_user, "DEMO-No-es-una-clave-real", demo_base + "/auth/login", welcome=True, preview=True)),
-            ("02-welcome-en", render_credentials_email(english_user, "DEMO-Not-a-real-password", demo_base + "/auth/login", welcome=True, preview=True)),
+            ("01-welcome-es", render_access_email(spanish_user, demo_base + "/auth/reset-password/DEMO-NO-VALIDO", welcome=True, preview=True)),
+            ("02-welcome-en", render_access_email(english_user, demo_base + "/auth/reset-password/DEMO-NOT-VALID", welcome=True, preview=True)),
             ("03-password-reset-es", render_password_reset_email(spanish_user, demo_base + "/auth/reset-password/demonstration-only", preview=True)),
             ("04-contact-es", render_contact_email(SimpleNamespace(
                 name="Alex Demo", email="persona.demo@example.org", institution="Universidad de Demostración",

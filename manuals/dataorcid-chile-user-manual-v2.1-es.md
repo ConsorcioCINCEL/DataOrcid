@@ -30,7 +30,7 @@ Esta edición incorpora las exportaciones en segundo plano, la publicación OAI-
 
 Para ingresar en www.orcid.cl, utiliza el nombre de usuario o correo institucional y la contraseña de tu cuenta. Mantener sesión iniciada es adecuado solamente en un equipo personal o administrado por tu institución.
 
-El correo de bienvenida incluye tus credenciales y un enlace a este manual PDF, que puedes descargar sin iniciar sesión. El enlace abre la edición correspondiente al idioma de tu cuenta: inglés, español, francés, portugués o alemán. Cambia la contraseña temporal al ingresar.
+El correo de bienvenida incluye un enlace para elegir tu contraseña y otro para descargar este manual PDF en el idioma de tu cuenta, sin iniciar sesión. El enlace para establecer la contraseña caduca en 24 horas y solo puede usarse una vez. Si caduca, solicita otro desde la recuperación de contraseña.
 
 Si no recuerdas la contraseña, abre el enlace de recuperación, indica el correo de tu cuenta y sigue el enlace recibido. La respuesta de la pantalla no confirma si una dirección está registrada. Si no llega el mensaje, revisa el correo no deseado y consulta al equipo responsable.
 
@@ -69,7 +69,7 @@ Las cifras reflejan la información disponible en la plataforma. Un investigador
 
 FIGURA 3. Indicadores generales de la institución de demostración.
 
-> **IMPORTANTE:** Los registros ORCID cuentan apariciones de origen. Las salidas canónicas consolidan posibles repeticiones. Estas cifras pueden diferir sin que exista un error.
+> **IMPORTANTE:** Los registros ORCID cuentan apariciones de origen. Las salidas canónicas consolidan registros con el mismo DOI o agrupaciones revisadas. Las coincidencias sin DOI requieren revisión. Estas cifras pueden diferir sin que exista un error.
 
 ## 3.2 Directorio de investigadores
 
@@ -155,7 +155,7 @@ Para Usuario y Usuario OAI, esta página es un monitor y centro de descargas. In
 
 Las descargas institucionales incluyen obras ORCID, financiamientos, investigadores y enriquecimiento OpenAlex, según la disponibilidad de cada conjunto. Los archivos reflejan el estado de la caché indicado en la página.
 
-Estos perfiles consultan el estado y descargan los datos disponibles. Si necesitas una sincronización institucional o aparece una ejecución fallida, solicita su revisión al equipo responsable.
+Durante una actualización se mantiene disponible la versión publicada. Un resultado parcial indica que algunos perfiles no se actualizaron y pueden conservar datos anteriores. Consulta los recuentos del último intento y solicita al equipo responsable que revise los fallos.
 
 ![FIGURA 10. Estado institucional y conjuntos descargables.](assets/screenshots/es/downloads.png)
 
@@ -362,7 +362,7 @@ La tabla permite buscar y filtrar por estado OAI, validación de afiliación, ti
 
 Con Usuario OAI, Exponer o Excluir cambia un artículo. Para actuar sobre varios, marca las filas y utiliza Exponer seleccionados o Excluir seleccionados. Seleccionar esta página sólo marca las filas de la página actual.
 
-Las decisiones manuales prevalecen sobre la política automática. Excluir de OAI-PMH no elimina el artículo de ORCID, OpenAlex o la caché de consulta.
+Las decisiones manuales prevalecen sobre la política automática. Excluir no elimina el artículo de ORCID, OpenAlex o la caché. Si ya estaba publicado, OAI conserva un aviso de baja para los cosechadores compatibles. Una cosecha en curso mantiene su versión; la siguiente podrá recoger la baja.
 
 ![FIGURA 26. Selección de artículos con las acciones del perfil Usuario OAI.](assets/screenshots/es/oai-articles.png)
 

@@ -268,7 +268,7 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
     app.config["JOB_STALE_MINUTES"] = int(jobs_cfg.get("stale_minutes", 30))
     app.config["JOB_EXECUTION_MODE"] = str(
         os.environ.get("JOB_EXECUTION_MODE")
-        or jobs_cfg.get("execution_mode", "thread")
+        or jobs_cfg.get("execution_mode", "queue" if app.config["APP_ENVIRONMENT"] == "production" else "thread")
     ).strip().lower()
     if app.config["JOB_EXECUTION_MODE"] not in {"thread", "queue"}:
         raise RuntimeError("jobs.execution_mode must be either 'thread' or 'queue'.")

@@ -13,8 +13,6 @@ from .. import db
 from ..models import User, password_fits_bcrypt
 from ..utils.flashes import flash_err, flash_ok, flash_success
 from ..decorators import login_required
-from ..utils.emailer import send_email
-from ..services.transactional_email import render_password_reset_email
 from ..services.rate_limit import (
     client_ip as _client_ip,
     clear_rate_limit as _clear_rate_limit,
@@ -112,15 +110,13 @@ def forgot_password():
 
         if user:
             try:
-                reset_url = make_password_reset_url(user)
-
-                message = render_password_reset_email(user, reset_url)
-                success, error = send_email(to_email=user.email or user.username, **message)
-
-                if not success:
-                    logger.error("Email reset failed for user %s: %s", user.username, error)
+                from ..services.email_outbox import queue_account_email, wake_email_delivery
+                queue_account_email(user, kind="password_reset")
+                db.session.commit()
+                wake_email_delivery()
             except Exception as exc:
-                logger.exception("CRITICAL: Token generation error during password reset: %s", exc)
+                db.session.rollback()
+                logger.exception("Could not queue password recovery: %s", exc)
 
         # Always show success message to the user
         flash_ok(_("If the account exists, we will send instructions."))
@@ -143,7 +139,8 @@ def reset_password(token: str):
     try:
         # Validate signature and check expiration (86400 seconds = 24 hours)
         data = serializer.loads(token, max_age=86400)
-        user = db.session.get(User, data.get('uid'))
+        user = (User.query.filter_by(id=data.get('uid')).with_for_update().first()
+                if request.method == 'POST' else db.session.get(User, data.get('uid')))
         
         if not user:
             flash_err(_("Invalid or non-existent user."))

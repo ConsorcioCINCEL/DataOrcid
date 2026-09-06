@@ -10,7 +10,8 @@ from flask import Flask
 
 from app import babel, db
 from app.blueprints.admin import bp_admin
-from app.models import TrackingLog, User
+from app.models import EmailOutbox, TrackingLog, User
+from app.services.email_outbox import deliver_next_email
 
 
 class AdminUserUpdateTest(unittest.TestCase):
@@ -28,6 +29,7 @@ class AdminUserUpdateTest(unittest.TestCase):
         babel.init_app(self.app)
         self.app.register_blueprint(bp_admin)
         self.app.add_url_rule("/login", endpoint="auth.login", view_func=lambda: "login")
+        self.app.add_url_rule("/reset-password/<token>", endpoint="auth.reset_password", view_func=lambda token: "reset")
         self.app.add_url_rule("/manuals/user-guide/<language>.pdf", endpoint="main.user_manual", view_func=lambda language: "PDF")
 
         with self.app.app_context():
@@ -275,7 +277,7 @@ class AdminUserUpdateTest(unittest.TestCase):
         with self.app.app_context():
             before = db.session.get(User, self.second_id).password_hash
 
-        with patch("app.blueprints.admin.send_email", return_value=(False, "SMTP offline")):
+        with patch("app.services.email_outbox.send_email", return_value=(False, "SMTP offline")):
             response = self.client.post(f"/admin/users/{self.second_id}/send-creds")
 
         self.assertEqual(302, response.status_code)
@@ -284,12 +286,14 @@ class AdminUserUpdateTest(unittest.TestCase):
         self.assertEqual(before, after)
 
     def test_new_account_sends_welcome_and_manual_in_recipient_language(self):
-        with patch("app.blueprints.admin.send_email", return_value=(True, None)) as sender:
+        with patch("app.services.email_outbox.send_email", return_value=(True, None)) as sender:
             response = self.client.post("/admin/users/new", data={
                 "username": "new@example.org", "email": "new@example.org", "locale": "es",
                 "first_name": "Ana", "password": "temporary-test-password",
             })
         self.assertEqual(302, response.status_code)
+        with self.app.app_context(), patch("app.services.email_outbox.send_email", return_value=(True, None)) as sender:
+            deliver_next_email()
         sender.assert_called_once()
         message = sender.call_args.kwargs
         self.assertEqual("new@example.org", message["to_email"])
@@ -300,20 +304,23 @@ class AdminUserUpdateTest(unittest.TestCase):
             self.assertTrue(User.query.filter_by(username="new@example.org").one().check_password("temporary-test-password"))
 
     def test_failed_welcome_preserves_created_account_for_retry(self):
-        with patch("app.blueprints.admin.send_email", return_value=(False, "SMTP offline")):
+        with patch("app.services.email_outbox.send_email", return_value=(False, "SMTP offline")):
             response = self.client.post("/admin/users/new", data={"username": "retry@example.org"})
         self.assertEqual(302, response.status_code)
         with self.app.app_context():
             self.assertIsNotNone(User.query.filter_by(username="retry@example.org").first())
-        with self.client.session_transaction() as session:
-            self.assertTrue(any("welcome email could not be sent" in message for category, message in session["_flashes"]))
+        with self.app.app_context(), patch("app.services.email_outbox.send_email", return_value=(False, "SMTP offline")):
+            deliver_next_email()
+            item = EmailOutbox.query.one()
+            self.assertEqual("pending", item.status)
+            self.assertEqual(1, item.attempts)
 
     def test_missing_manual_keeps_password_and_does_not_send_credentials(self):
         with self.app.app_context():
             before = db.session.get(User, self.second_id).password_hash
         with tempfile.TemporaryDirectory() as folder:
             self.app.config["USER_MANUAL_DIRECTORY"] = folder
-            with patch("app.blueprints.admin.send_email") as sender:
+            with patch("app.services.email_outbox.send_email") as sender:
                 response = self.client.post(f"/admin/users/{self.second_id}/send-creds")
             sender.assert_not_called()
         self.assertEqual(302, response.status_code)
@@ -321,10 +328,14 @@ class AdminUserUpdateTest(unittest.TestCase):
             self.assertEqual(before, db.session.get(User, self.second_id).password_hash)
 
     def test_successful_credential_resend_also_includes_manual(self):
-        with patch("app.blueprints.admin.send_email", return_value=(True, None)) as sender:
+        with patch("app.services.email_outbox.send_email", return_value=(True, None)) as sender:
             response = self.client.post(f"/admin/users/{self.second_id}/send-creds")
         self.assertEqual(302, response.status_code)
+        with self.app.app_context(), patch("app.services.email_outbox.send_email", return_value=(True, None)) as sender:
+            deliver_next_email()
         self.assertIn("/manuals/user-guide/en.pdf", sender.call_args.kwargs["text"])
+        self.assertIn("/reset-password/", sender.call_args.kwargs["text"])
+        self.assertNotIn("Temporary Password", sender.call_args.kwargs["text"])
 
 
 if __name__ == "__main__":

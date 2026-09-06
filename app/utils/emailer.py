@@ -16,6 +16,7 @@ def send_email(
     html: str,
     text: Optional[str] = None,
     reply_to: Optional[str] = None,
+    message_id: Optional[str] = None,
 ) -> Tuple[bool, Optional[str]]:
     """
     Send an HTML email with a plain-text fallback for transactional messages.
@@ -68,7 +69,7 @@ def send_email(
         msg["From"] = formataddr((from_name, from_email))
         msg["To"] = to_email
         msg["Date"] = formatdate(localtime=False)
-        msg["Message-ID"] = make_msgid()
+        msg["Message-ID"] = message_id or make_msgid()
         reply_to = reply_to or current_app.config.get("MAIL_REPLY_TO")
         if reply_to:
             msg["Reply-To"] = reply_to

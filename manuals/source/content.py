@@ -1,7 +1,7 @@
 """Parallel multilingual content for the Data ORCID-Chile 2.1 manuals.
 
 The audience is limited to User and OAI User. Product behavior is checked
-against the application based on commit d216e4d and its harvesting-access update; the supplied v1 PDF defines style.
+against the version 2.1 application, including atomic publication and account-access links; the supplied v1 PDF defines style.
 """
 
 import json
@@ -56,11 +56,11 @@ page("purpose", ("1. Propósito y alcance", "1. Purpose and scope"), (
 
 page("login", ("2. Acceso y navegación", "2. Access and navigation"), (
     ["2.1 Inicio de sesión", "Para ingresar en www.orcid.cl, utiliza el nombre de usuario o correo institucional y la contraseña de tu cuenta. Mantener sesión iniciada es adecuado solamente en un equipo personal o administrado por tu institución.",
-     "El correo de bienvenida incluye tus credenciales y un enlace a este manual PDF, que puedes descargar sin iniciar sesión. El enlace abre la edición correspondiente al idioma de tu cuenta: inglés, español, francés, portugués o alemán. Cambia la contraseña temporal al ingresar.",
+     "El correo de bienvenida incluye un enlace para elegir tu contraseña y otro para descargar este manual PDF en el idioma de tu cuenta, sin iniciar sesión. El enlace para establecer la contraseña caduca en 24 horas y solo puede usarse una vez. Si caduca, solicita otro desde la recuperación de contraseña.",
      "Si no recuerdas la contraseña, abre el enlace de recuperación, indica el correo de tu cuenta y sigue el enlace recibido. La respuesta de la pantalla no confirma si una dirección está registrada. Si no llega el mensaje, revisa el correo no deseado y consulta al equipo responsable.",
      "El selector permite utilizar los idiomas habilitados: inglés, español, francés, portugués y alemán. La elección realizada durante una sesión queda asociada a tu preferencia de idioma."],
     ["2.1 Signing in", "Visit www.orcid.cl and sign in with your account username or institutional email and password. Remember me is appropriate only on a personal device or one managed by your institution.",
-     "The welcome email includes your credentials and a link to this PDF manual, which you can download without signing in. The link opens the edition matching your account language: English, Spanish, French, Portuguese, or German. Change the temporary password when you sign in.",
+     "The welcome email includes a link to choose your password and another to download this PDF manual in your account language without signing in. The password link expires in 24 hours and can be used only once. If it expires, request another through password recovery.",
      "If you have forgotten your password, open the recovery link, enter your account email, and follow the link you receive. The on-screen response does not disclose whether an address is registered. If no message arrives, check spam and contact the responsible support team.",
      "The selector offers the enabled languages: English, Spanish, French, Portuguese, and German. A language selected while signed in is saved as your account preference."]),
     image="login", captions=("Inicio de sesión y selección de idioma.", "Sign-in and language selection."), chapter=2)
@@ -93,8 +93,8 @@ page("overview", ("3. Explorar", "3. Explore"), (
      "Start here to check the overall state. Open the relevant analytics page to investigate a figure and use the quality shortcuts to understand information gaps.",
      "Figures reflect information available in the platform. A researcher may appear in the institutional directory without any public works or funding records in the cache."]),
     image="overview", captions=("Indicadores generales de la institución de demostración.", "General indicators for the demonstration institution."),
-    note=("Los registros ORCID cuentan apariciones de origen. Las salidas canónicas consolidan posibles repeticiones. Estas cifras pueden diferir sin que exista un error.",
-          "ORCID records count source occurrences. Canonical outputs consolidate possible repetitions. These figures can differ without indicating an error."), chapter=3)
+    note=("Los registros ORCID cuentan apariciones de origen. Las salidas canónicas consolidan registros con el mismo DOI o agrupaciones revisadas. Las coincidencias sin DOI requieren revisión. Estas cifras pueden diferir sin que exista un error.",
+          "ORCID records count source occurrences. Canonical outputs consolidate matching DOIs or reviewed groupings. Matches without DOI require review. These figures can differ without indicating an error."), chapter=3)
 
 page("directory", ("3.2 Directorio de investigadores", "3.2 Researcher directory"), (
     ["El Directorio permite buscar por nombre, ORCID iD o correo, filtrar por Affiliation Manager y por evidencia de relación institucional, y ordenar los resultados. Puedes elegir 10, 25 o 50 filas por página.",
@@ -156,11 +156,11 @@ page("downloads", ("4. Gestionar datos", "4. Manage data"), (
     ["4.1 Sincronización y descargas",
      "Para Usuario y Usuario OAI, esta página es un monitor y centro de descargas. Informa la vigencia de obras, financiamientos, perfiles y metadatos OpenAlex, junto con la última ejecución disponible.",
      "Las descargas institucionales incluyen obras ORCID, financiamientos, investigadores y enriquecimiento OpenAlex, según la disponibilidad de cada conjunto. Los archivos reflejan el estado de la caché indicado en la página.",
-     "Estos perfiles consultan el estado y descargan los datos disponibles. Si necesitas una sincronización institucional o aparece una ejecución fallida, solicita su revisión al equipo responsable."],
+     "Durante una actualización se mantiene disponible la versión publicada. Un resultado parcial indica que algunos perfiles no se actualizaron y pueden conservar datos anteriores. Consulta los recuentos del último intento y solicita al equipo responsable que revise los fallos."],
     ["4.1 Synchronization and downloads",
      "For User and OAI User, this page is a status monitor and download center. It shows the freshness of works, funding, profiles, and OpenAlex metadata, together with the latest available run.",
      "Institutional downloads include ORCID works, funding, researchers, and OpenAlex enrichment, according to dataset availability. Files reflect the cache state indicated on the page.",
-     "These roles inspect status and download available data. If an institutional synchronization is needed or a failed run appears, ask the responsible team to review it."]),
+     "The published version remains available during an update. A partial result means some profiles were not refreshed and may retain previous data. Check the latest attempt counts and ask the responsible team to review any failures."]),
     image="downloads", captions=("Estado institucional y conjuntos descargables.", "Institutional status and downloadable datasets."), chapter=4)
 
 page("exports", ("4.2 Exportaciones en segundo plano", "4.2 Background exports"), (
@@ -313,10 +313,10 @@ page("oai-overview", ("6.5 Publicación OAI-PMH", "6.5 OAI-PMH publishing"), (
 page("oai-articles", ("6.6 Selección de artículos OAI-PMH", "6.6 OAI-PMH article selection"), (
     ["La tabla permite buscar y filtrar por estado OAI, validación de afiliación, tipo documental y origen de activación. Puedes ordenar por las columnas disponibles y exportar la selección filtrada para su revisión.",
      "Con Usuario OAI, Exponer o Excluir cambia un artículo. Para actuar sobre varios, marca las filas y utiliza Exponer seleccionados o Excluir seleccionados. Seleccionar esta página sólo marca las filas de la página actual.",
-     "Las decisiones manuales prevalecen sobre la política automática. Excluir de OAI-PMH no elimina el artículo de ORCID, OpenAlex o la caché de consulta."],
+     "Las decisiones manuales prevalecen sobre la política automática. Excluir no elimina el artículo de ORCID, OpenAlex o la caché. Si ya estaba publicado, OAI conserva un aviso de baja para los cosechadores compatibles. Una cosecha en curso mantiene su versión; la siguiente podrá recoger la baja."],
     ["The table supports search and filters for OAI status, affiliation validation, document type, and activation origin. You can sort by the available columns and export the filtered selection for review.",
      "With OAI User, Expose or Exclude changes an individual article. For multiple articles, mark their rows and use Expose selected or Exclude selected. Select this page marks only rows on the current page.",
-     "Manual decisions override the automatic policy. Excluding an article from OAI-PMH does not delete it from ORCID, OpenAlex, or the browsing cache."]),
+     "Manual decisions override the automatic policy. Exclusion does not delete the article from ORCID, OpenAlex, or the cache. If it was already published, OAI retains a withdrawal notice for compatible harvesters. An ongoing harvest keeps its version; a subsequent harvest can receive the withdrawal."]),
     image="oai-articles", captions=("Selección de artículos con las acciones del perfil Usuario OAI.", "Article selection with OAI User actions."),
     steps=(["Filtra y revisa DOI, título y afiliaciones antes de seleccionar.", "Aplica la acción a las filas correctas y comprueba el nuevo estado.", "Consulta el proveedor habilitado para revisar el resultado publicado."],
            ["Filter and review DOI, title, and affiliations before selecting.", "Apply the action to the intended rows and check their new status.", "Inspect the enabled provider to review the published result."]))

@@ -86,6 +86,42 @@ def register_commands(app):
                 return
             time.sleep(poll_seconds)
 
+    @app.cli.command("run-email-worker")
+    @click.option("--once", is_flag=True, help="Process at most one due email and exit.")
+    @click.option("--poll-seconds", default=2.0, type=click.FloatRange(min=0.1))
+    @with_appcontext
+    def run_email_worker_command(once, poll_seconds):
+        """Deliver transactional account emails independently of long sync jobs."""
+        import time
+        from . import db
+        from .services.email_outbox import deliver_next_email
+        while True:
+            try:
+                email_id = deliver_next_email()
+                if email_id:
+                    click.echo(f"Processed email intent {email_id}.")
+            finally:
+                db.session.remove()
+            if once:
+                return
+            time.sleep(poll_seconds)
+
+    @app.cli.command("publish-oai-records")
+    @click.option("--ror", default=None, help="Publish one institution, or initialize all repositories.")
+    @with_appcontext
+    def publish_oai_records_command(ror):
+        """Initialize publication history before reopening upgraded repositories."""
+        from . import db
+        from .models import OaiPmhInstitutionConfig
+        from .services.oai_publication_service import refresh_oai_publication
+        query = OaiPmhInstitutionConfig.query
+        if ror:
+            query = query.filter_by(ror_id=ror)
+        for config in query.all():
+            refresh_oai_publication(config.ror_id)
+            db.session.commit()
+            click.echo(f"Published OAI records for {config.ror_id}.")
+
     @app.cli.command("rebuild-caches")
     @click.option("--ror", default=None, help="Target specific ROR ID. If omitted, scans all active institutions.")
     @click.option("--start-at", default=None, help="Resume an all-institution rebuild at this ROR ID.")
@@ -191,13 +227,14 @@ def register_commands(app):
                         headers=headers,
                         max_orcids=limit_orcids,
                     )
+                    status = "partial" if result.get("errors") else "success"
                     click.echo(
-                        "  > Success: "
+                        f"  > {status}: "
                         f"{result['researchers']} researchers, {result['works']} works, "
                         f"{result['fundings']} fundings, and {result['profiles']} profiles."
                     )
-                    _log_execution_run(WorkCacheRun, current_ror, 'success', result['works'])
-                    _log_execution_run(FundingCacheRun, current_ror, 'success', result['fundings'])
+                    _log_execution_run(WorkCacheRun, current_ror, status, result['works'])
+                    _log_execution_run(FundingCacheRun, current_ror, status, result['fundings'])
                 except Exception as exc:
                     db.session.rollback()
                     click.echo(f"  > Full metadata synchronization failed: {exc}")
@@ -208,14 +245,17 @@ def register_commands(app):
             if target == 'works':
                 try:
                     click.echo("  > Initializing Works synchronization...")
-                    count = build_works_cache_for_ror(
+                    result = build_works_cache_for_ror(
                         current_ror,
                         base_url=member_url,
                         headers=headers,
                         max_orcids=limit_orcids,
+                        return_result=True,
                     )
-                    click.echo(f"  > [Works] Success: {count} records synchronized.")
-                    _log_execution_run(WorkCacheRun, current_ror, 'success', count)
+                    count = result["works"]
+                    status = "partial" if result.get("errors") else "success"
+                    click.echo(f"  > [Works] {status}: {count} records synchronized.")
+                    _log_execution_run(WorkCacheRun, current_ror, status, count)
                 except Exception as exc:
                     db.session.rollback()
                     click.echo(f"  > [Works] Critical failure: {exc}")
@@ -224,15 +264,18 @@ def register_commands(app):
             if target == 'fundings':
                 try:
                     click.echo(f"  > Initializing Funding synchronization...")
-                    count = build_fundings_cache_for_ror(
+                    result = build_fundings_cache_for_ror(
                         current_ror,
                         base_url=member_url,
                         headers=headers,
                         max_orcids=limit_orcids,
+                        return_result=True,
                     )
                     
-                    click.echo(f"  > [Fundings] Success: {count} records synchronized.")
-                    _log_execution_run(FundingCacheRun, current_ror, 'success', count)
+                    count = result["fundings"]
+                    status = "partial" if result.get("errors") else "success"
+                    click.echo(f"  > [Fundings] {status}: {count} records synchronized.")
+                    _log_execution_run(FundingCacheRun, current_ror, status, count)
                 except Exception as exc:
                     db.session.rollback()
                     click.echo(f"  > [Fundings] Critical failure: {exc}")

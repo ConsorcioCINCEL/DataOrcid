@@ -25,6 +25,7 @@ from .institution_registry_service import (
 from .orcid_service import get_all_profiles_concurrently, list_orcids_for_institution
 from .ror_service import fetch_grid_from_ror
 from .data_trust_service import refresh_affiliation_evidence
+from .institution_lock import institutional_writer
 
 logger = logging.getLogger(__name__)
 ISSN_RE = re.compile(r"^\d{4}-?\d{3}[\dXx]$")
@@ -170,6 +171,7 @@ def discover_researchers_for_ror(
     ror_id: str,
     base_url: str | None = None,
     headers: dict | None = None,
+    *, persist: bool = True,
 ) -> tuple[list[dict], int]:
     """Search all institutional IDs and persist a complete association snapshot."""
     ensure_and_heal_grid_for_ror(ror_id)
@@ -182,11 +184,12 @@ def discover_researchers_for_ror(
         grid_ids=identifiers.get("grid", []),
         ringgold_ids=identifiers.get("ringgold", []),
     )
-    institution_id = _persist_discovered_researchers(ror_id, researchers)
+    institution_id = (_persist_discovered_researchers(ror_id, researchers) if persist
+                      else ensure_institution_registry(ror_id).id)
     return researchers, institution_id
 
 
-def _persist_discovered_researchers(ror_id: str, researchers: list[dict]) -> int:
+def _persist_discovered_researchers(ror_id: str, researchers: list[dict], *, commit: bool = True) -> int:
     """Store every search hit before any potentially failing profile download."""
     institution = ensure_institution_registry(ror_id)
     db.session.flush()
@@ -241,7 +244,9 @@ def _persist_discovered_researchers(ror_id: str, researchers: list[dict]) -> int
 
         _update_researcher_from_expanded(record, researcher_cache)
 
-    db.session.commit()
+    db.session.flush()
+    if commit:
+        db.session.commit()
     return institution.id
 
 
@@ -267,7 +272,8 @@ def build_works_cache_for_ror(
     base_url: str,
     headers: dict,
     max_orcids: int | None = None,
-) -> int:
+    *, return_result: bool = False,
+) -> int | dict:
     """Rebuild works while preserving every discovered researcher association."""
     result = _build_cache_for_ror(
         ror_id,
@@ -277,7 +283,7 @@ def build_works_cache_for_ror(
         include_fundings=False,
         max_orcids=max_orcids,
     )
-    return result["works"]
+    return result if return_result else result["works"]
 
 
 def build_fundings_cache_for_ror(
@@ -285,7 +291,8 @@ def build_fundings_cache_for_ror(
     base_url: str,
     headers: dict,
     max_orcids: int | None = None,
-) -> int:
+    *, return_result: bool = False,
+) -> int | dict:
     """Rebuild fundings while preserving every discovered researcher association."""
     result = _build_cache_for_ror(
         ror_id,
@@ -295,9 +302,10 @@ def build_fundings_cache_for_ror(
         include_fundings=True,
         max_orcids=max_orcids,
     )
-    return result["fundings"]
+    return result if return_result else result["fundings"]
 
 
+@institutional_writer
 def _build_cache_for_ror(
     ror_id: str,
     *,
@@ -306,170 +314,123 @@ def _build_cache_for_ror(
     include_works: bool,
     include_fundings: bool,
     max_orcids: int | None = None,
+    retry_failed: bool = False,
 ) -> dict:
-    researchers, institution_id = discover_researchers_for_ror(
-        ror_id,
-        base_url=base_url,
-        headers=headers,
-    )
-    result = {
-        "researchers": len(researchers),
-        "profiles": 0,
-        "works": 0,
-        "fundings": 0,
-    }
-    orcid_ids = [
-        record.get("orcid-id")
-        for record in researchers
-        if record.get("orcid-id")
-    ]
+    """Stage remote data, then publish source and derived tables atomically."""
+    from ..models import InstitutionSyncProfile
+    from .sync_version_service import prepare_sync_version, publish_sync_version, fail_sync_version
+    from .canonical_work_service import rebuild_canonical_works
+    from .analytics_service import refresh_openalex_facts
 
-    work_cleanup = WorkCache.query.filter_by(ror_id=ror_id)
-    funding_cleanup = FundingCache.query.filter_by(ror_id=ror_id)
-    status_cleanup = ResearcherStatus.query.filter_by(ror_id=ror_id)
-    if orcid_ids:
-        work_cleanup = work_cleanup.filter(WorkCache.orcid.notin_(orcid_ids))
-        funding_cleanup = funding_cleanup.filter(FundingCache.orcid.notin_(orcid_ids))
-        status_cleanup = status_cleanup.filter(ResearcherStatus.orcid.notin_(orcid_ids))
-
-    if include_works:
-        work_cleanup.delete(synchronize_session=False)
-    if include_fundings:
-        funding_cleanup.delete(synchronize_session=False)
-    status_cleanup.delete(synchronize_session=False)
-
-    if not researchers:
-        db.session.commit()
-        return result
-
-    if max_orcids:
-        logger.info(
-            "Cache build: limiting profile fetch to %d ORCID iDs for %s",
-            max_orcids,
-            ror_id,
+    if retry_failed:
+        institution_id = ensure_institution_registry(ror_id).id
+        researchers = [
+            {"orcid-id": row.orcid}
+            for row in InstitutionResearcher.query.filter_by(institution_id=institution_id, is_active=True).all()
+        ]
+        orcid_ids = [row.orcid for row in InstitutionResearcher.query.filter_by(
+            institution_id=institution_id, is_active=True, profile_status="failed",
+        ).all()]
+    else:
+        researchers, institution_id = discover_researchers_for_ror(
+            ror_id, base_url=base_url, headers=headers, persist=False,
         )
+        orcid_ids = list(dict.fromkeys(record["orcid-id"] for record in researchers if record.get("orcid-id")))
+    all_orcids = [record["orcid-id"] for record in researchers if record.get("orcid-id")]
+    if max_orcids:
         orcid_ids = orcid_ids[:max_orcids]
-
-    associations = {
-        row.orcid: row
-        for row in InstitutionResearcher.query.filter_by(
-            institution_id=institution_id,
-            is_active=True,
-        ).all()
+    result = {
+        "researchers": len(researchers), "profiles": 0, "works": 0, "fundings": 0,
+        "requested_profiles": len(orcid_ids), "failed_profiles": [], "retained_profiles": 0,
+        "errors": [],
     }
-    trusted_ids = _trusted_client_ids(ror_id)
-
+    version_id = prepare_sync_version(ror_id, researchers, orcid_ids, get_all_profiles_concurrently, PROFILE_BATCH_SIZE)
+    result["version_id"] = version_id
     try:
-        work_buffer = []
-        funding_buffer = []
-        status_buffer = []
-
+        if not retry_failed:
+            institution_id = _persist_discovered_researchers(ror_id, researchers, commit=False)
+            for model, enabled in ((WorkCache, include_works), (FundingCache, include_fundings), (ResearcherStatus, True)):
+                if enabled:
+                    cleanup = model.query.filter_by(ror_id=ror_id)
+                    if all_orcids:
+                        cleanup = cleanup.filter(model.orcid.notin_(all_orcids))
+                    cleanup.delete(synchronize_session=False)
+        associations = {row.orcid: row for row in InstitutionResearcher.query.filter_by(
+            institution_id=institution_id, is_active=True,
+        ).all()}
+        trusted_ids = _trusted_client_ids(ror_id)
+        cached_profiles = {
+            value for (value,) in db.session.query(WorkCache.orcid).filter_by(ror_id=ror_id).union(
+                db.session.query(FundingCache.orcid).filter_by(ror_id=ror_id),
+                db.session.query(ResearcherStatus.orcid).filter_by(ror_id=ror_id),
+            ).all()
+        }
         for batch in _chunks(orcid_ids, PROFILE_BATCH_SIZE):
-            profiles = get_all_profiles_concurrently(batch, max_workers=10)
+            profiles = {row.orcid: row.payload_json for row in InstitutionSyncProfile.query.filter(
+                InstitutionSyncProfile.version_id == version_id, InstitutionSyncProfile.orcid.in_(batch),
+            ).all()}
+            successful = [orcid for orcid in batch if profiles.get(orcid)]
+            for model, enabled in ((WorkCache, include_works), (FundingCache, include_fundings), (ResearcherStatus, True)):
+                if enabled and successful:
+                    model.query.filter(model.ror_id == ror_id, model.orcid.in_(successful)).delete(synchronize_session=False)
             researcher_cache = _load_researcher_cache(batch)
+            works, fundings, statuses = [], [], []
             now = _utc_now()
-            successful_orcids = [orcid for orcid in batch if profiles.get(orcid)]
-
-            if successful_orcids:
-                if include_works:
-                    WorkCache.query.filter(
-                        WorkCache.ror_id == ror_id,
-                        WorkCache.orcid.in_(successful_orcids),
-                    ).delete(synchronize_session=False)
-                if include_fundings:
-                    FundingCache.query.filter(
-                        FundingCache.ror_id == ror_id,
-                        FundingCache.orcid.in_(successful_orcids),
-                    ).delete(synchronize_session=False)
-                ResearcherStatus.query.filter(
-                    ResearcherStatus.ror_id == ror_id,
-                    ResearcherStatus.orcid.in_(successful_orcids),
-                ).delete(synchronize_session=False)
-
             for orcid in batch:
                 association = associations.get(orcid)
                 profile = profiles.get(orcid)
                 if not profile:
+                    result["failed_profiles"].append(orcid)
                     if association:
+                        if association.profile_updated_at or orcid in cached_profiles:
+                            result["retained_profiles"] += 1
                         association.profile_status = "failed"
                         association.profile_error = "No public ORCID profile data was returned."
                     continue
-
                 result["profiles"] += 1
                 if association:
                     association.profile_status = "success"
                     association.profile_error = None
                     association.profile_updated_at = now
-
                 _update_researcher_from_profile(orcid, profile, researcher_cache)
-                refresh_affiliation_evidence(
-                    institution_id,
-                    ror_id,
-                    orcid,
-                    profile,
-                )
-                status_buffer.append(
-                    _extract_status_from_profile(profile, ror_id, orcid, trusted_ids)
-                )
-
+                refresh_affiliation_evidence(institution_id, ror_id, orcid, profile)
+                statuses.append(_extract_status_from_profile(profile, ror_id, orcid, trusted_ids))
                 if include_works:
-                    rows = _work_rows_from_profile(ror_id, orcid, profile)
-                    work_buffer.extend(rows)
-                    result["works"] += len(rows)
+                    works.extend(_work_rows_from_profile(ror_id, orcid, profile))
                 if include_fundings:
-                    rows = _funding_rows_from_profile(ror_id, orcid, profile)
-                    funding_buffer.extend(rows)
-                    result["fundings"] += len(rows)
-
-            if len(work_buffer) >= 2000:
-                _flush_bulk(work_buffer, "WorkCache")
-            if len(funding_buffer) >= 2000:
-                _flush_bulk(funding_buffer, "FundingCache")
-            if len(status_buffer) >= 1000:
-                _flush_bulk(status_buffer, "ResearcherStatus")
-            db.session.flush()
-
-        _flush_bulk(work_buffer, "WorkCache")
-        _flush_bulk(funding_buffer, "FundingCache")
-        _flush_bulk(status_buffer, "ResearcherStatus")
-        db.session.commit()
-
+                    fundings.extend(_funding_rows_from_profile(ror_id, orcid, profile))
+            _flush_bulk(works, "WorkCache")
+            _flush_bulk(fundings, "FundingCache")
+            _flush_bulk(statuses, "ResearcherStatus")
         if include_works:
             result["works"] = WorkCache.query.filter_by(ror_id=ror_id).count()
+            result["unique_works"] = rebuild_canonical_works(ror_id, commit=False)["unique_outputs"]
+            result["analytics_rows"] = refresh_openalex_facts(ror_id, commit=False)["rows"]
+        else:
+            # Funding-only imports can also update the names used by OAI.
+            from .oai_publication_service import refresh_oai_publication
+            refresh_oai_publication(ror_id)
         if include_fundings:
             result["fundings"] = FundingCache.query.filter_by(ror_id=ror_id).count()
+        if result["failed_profiles"]:
+            result["errors"].append("Some ORCID profiles could not be refreshed.")
+        publish_sync_version(version_id, result)
     except Exception as exc:
-        db.session.rollback()
-        _mark_pending_associations_failed(institution_id, str(exc))
+        fail_sync_version(version_id, exc)
         raise
-
-    if include_works:
-        # The source cache is already committed at this point. A canonical-layer
-        # failure must fail the job, but must not relabel successfully refreshed
-        # ORCID profiles as failed.
-        from .canonical_work_service import rebuild_canonical_works
-        from .analytics_service import refresh_openalex_facts
-
-        canonical_summary = rebuild_canonical_works(ror_id)
-        result["unique_works"] = canonical_summary["unique_outputs"]
-        try:
-            result["analytics_rows"] = refresh_openalex_facts(ror_id)["rows"]
-        except Exception:
-            db.session.rollback()
-            logger.exception("Failed to refresh OpenAlex analytics facts for %s", ror_id)
-
-    logger.info(
-        "Finished cache build for %s: %d researchers, %d profiles, %d works, %d fundings.",
-        ror_id,
-        result["researchers"],
-        result["profiles"],
-        result["works"],
-        result["fundings"],
-    )
+    logger.info("Published institution version %s for %s: %d refreshed, %d failed profiles.",
+                version_id, ror_id, result["profiles"], len(result["failed_profiles"]))
     return result
 
 
-def build_researcher_names_cache(ror_id: str) -> int:
+def retry_failed_profiles_for_ror(ror_id: str, base_url: str, headers: dict, job_id=None) -> dict:
+    """Refresh only failed active profiles, preserving the rest of the snapshot."""
+    return _build_cache_for_ror(ror_id, base_url=base_url, headers=headers,
+                              include_works=True, include_fundings=True, retry_failed=True)
+
+
+@institutional_writer
+def build_researcher_names_cache(ror_id: str, *, return_result: bool = False) -> int | dict:
     """Refresh names for every active institutional researcher association."""
     institution = get_institution_by_ror(ror_id)
     all_orcids = []
@@ -496,9 +457,10 @@ def build_researcher_names_cache(ror_id: str) -> int:
         )
 
     if not all_orcids:
-        return 0
+        return {"profiles": 0, "failed_profiles": [], "errors": []} if return_result else 0
 
     updated_count = 0
+    failed_profiles = []
     for batch in _chunks(all_orcids, PROFILE_BATCH_SIZE):
         profiles = get_all_profiles_concurrently(batch, max_workers=10)
         researcher_cache = _load_researcher_cache(batch)
@@ -517,25 +479,28 @@ def build_researcher_names_cache(ror_id: str) -> int:
             profile = profiles.get(orcid)
             association = associations.get(orcid)
             if not profile:
+                failed_profiles.append(orcid)
                 if association:
                     association.profile_status = "failed"
                     association.profile_error = "No public ORCID profile data was returned."
                 continue
 
             _update_researcher_from_profile(orcid, profile, researcher_cache)
-            if association:
-                association.profile_status = "success"
-                association.profile_error = None
-                association.profile_updated_at = now
+            # A name-only refresh must not clear a failed full-profile import.
             updated_count += 1
         db.session.commit()
 
+    from .oai_publication_service import refresh_oai_publication
+    refresh_oai_publication(ror_id)
+    db.session.commit()
     logger.info(
-        "Successfully synchronized %d researcher profiles for ROR %s",
+        "Synchronized %d researcher profile names for ROR %s",
         updated_count,
         ror_id,
     )
-    return updated_count
+    result = {"profiles": updated_count, "failed_profiles": failed_profiles,
+              "errors": ["Some ORCID profile names could not be refreshed."] if failed_profiles else []}
+    return result if return_result else updated_count
 
 
 def _load_researcher_cache(orcid_ids: list[str]) -> dict[str, ResearcherCache]:

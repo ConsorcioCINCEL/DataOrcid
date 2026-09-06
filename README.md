@@ -172,7 +172,8 @@ values are neither truncated nor indexed as DOI keys, preventing failures and
 identifier collisions.
 
 Web-triggered long-running syncs keep the same request and result behavior in
-the default `jobs.execution_mode = "thread"`. For multi-worker production use
+`jobs.execution_mode = "thread"` during development. Production defaults to
+`queue` when the setting is omitted. For multi-worker production configure
 the durable database queue instead:
 
 ```toml
@@ -201,6 +202,48 @@ execution heartbeat, and requeues recoverable jobs after an interrupted process.
 available for manual recovery. Do not start the application before applying
 `flask db upgrade`; schema creation and seed data are intentionally no longer
 performed during web startup.
+
+Institutional writers share PostgreSQL locks across web workers, CLI tasks and
+transaction commits. Duplicate active jobs reuse one queue entry. ORCID profiles
+are downloaded into temporary version tables before the published cache changes;
+source rows, canonical links, analytics facts and OAI publication events are then
+promoted in one transaction. Failed derivation preserves the previous version.
+Partial profile downloads retain existing data and report failed/retained counts;
+staff can retry only failed profiles from synchronization controls.
+
+Without a DOI, a title/year match is a review candidate rather than an automatic
+merge. Staff can confirm or split groups under Data quality → Technical integrity.
+Decisions retain their source identifiers and review reasons across rebuilds.
+OAI publication selections are preserved during regrouping.
+
+OAI-PMH retains immutable publication events and persistent withdrawal headers.
+Resumption tokens pin a publication revision, so changes between pages do not
+alter an ongoing harvest. A later harvest sees withdrawals and real metadata
+changes. After upgrading an existing installation, initialize its publication
+history with `flask publish-oai-records` before reopening OAI access. Harvests
+using tokens issued before this upgrade must restart. Retain this
+history in database backups; it supplies deletion notices and stable harvests.
+
+Account creation and access requests queue email intents in the same transaction
+as the account operation. Messages contain a password-setting link and, for
+welcome/access messages, the localized PDF manual. They never contain a password.
+Links expire after 24 hours and stop working once the password changes. Supervise
+`flask run-email-worker` separately from the sync worker so long harvests cannot
+delay mail. Delivery retries up to five times with increasing delays; account
+lists show the latest email status, and the access action can queue a fresh
+attempt. SMTP delivery can be repeated after a worker interruption; retries use
+a stable Message-ID and never invalidate the existing password.
+
+User-service examples are provided in `config/systemd/`. Adjust their checkout
+and virtualenv paths if needed, configure the web service to use queue mode,
+then install and enable the workers:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp config/systemd/*.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now dataorcid-job-worker@1 dataorcid-job-worker@2 dataorcid-email-worker
+```
 
 Administrators can review sanitized runtime failures at `/admin/errors`.
 Events include the affected account and institution, endpoint, path, request or
@@ -250,8 +293,8 @@ Welcome/credential, password-recovery, and contact-notification messages share
 orange actions, blue details, and a readable plain-text alternative. Layout and
 colors are inline and do not require remote images or stylesheets.
 
-Creating an account sends a welcome message with its credentials and a link to
-the PDF user manual. Credential resends include the link too. The account locale
+Creating an account queues a welcome message with a password-setting link and
+the PDF user manual. Subsequent access emails include both links. The account locale
 controls welcome and recovery messages, and each account receives the manual
 link in its own language: English, Spanish, French, Portuguese, or German.
 Deploy all five `manuals/dataorcid-chile-user-manual-v<APP_VERSION>-{en,es,fr,pt,de}.pdf` files.
@@ -262,13 +305,13 @@ Signed-in users can also download the guide from the compact, localized
 The link follows the active interface
 language and remains available when optional modules such as Help are disabled.
 If the guide is unavailable, account email is not sent with a broken link. A failed welcome preserves
-the created account for retry, while a failed credential resend preserves its
-existing password. Contact notification failures continue to preserve inquiries.
+the created account for retry, and access-link requests preserve the existing
+password until the account holder chooses a replacement. Contact notification failures continue to preserve inquiries.
 
 Use the configured SMTP service and a public `app.base_url` for working email
 links. `MAIL_REPLY_TO` is used for account messages; contact notifications retain
-the visitor's address as Reply-To. Samples contain demonstration credentials and
-nonfunctional reset links, and never create or change accounts:
+the visitor's address as Reply-To. Samples contain fictional account details and
+nonfunctional password-setting links, and never create or change accounts:
 
 ```bash
 python tools/preview_emails.py
@@ -391,3 +434,13 @@ This project is licensed under the **MIT** License.
 
 **Developed by:** Gastón Olivares
 **Institution:** Chilean Consortium, Cincel.
+
+The PostgreSQL concurrency/publication checks require a disposable database:
+
+```bash
+DATABASE_URL=postgresql+psycopg://localhost/dataorcid_test_reliability flask db upgrade
+DATAORCID_TEST_POSTGRES_URI=postgresql+psycopg://localhost/dataorcid_test_reliability python -m pytest -q tests/test_postgres_reliability.py
+```
+
+These integration tests clear application tables and reject database names that
+do not start with `dataorcid_test_`. Ordinary tests use isolated SQLite databases.

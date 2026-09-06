@@ -30,7 +30,7 @@ Diese Ausgabe behandelt Exporte im Hintergrund, die Veröffentlichung über OAI-
 
 Rufen Sie www.orcid.cl auf und melden Sie sich mit Ihrem Benutzernamen oder Ihrer institutionellen E-Mail-Adresse und Ihrem Passwort an. Nutzen Sie die dauerhafte Anmeldung nur auf einem persönlichen oder von Ihrer Einrichtung verwalteten Gerät.
 
-Die Willkommens-E-Mail enthält Ihre Zugangsdaten und einen Link zu diesem PDF-Handbuch, das ohne Anmeldung heruntergeladen werden kann. Der Link öffnet die Ausgabe in Ihrer Kontosprache: Englisch, Spanisch, Französisch, Portugiesisch oder Deutsch. Ändern Sie bei der Anmeldung das vorläufige Passwort.
+Die Willkommens-E-Mail enthält einen Link zum Festlegen Ihres Passworts und einen weiteren zum Herunterladen dieses PDF-Handbuchs in Ihrer Kontosprache, ohne Anmeldung. Der Passwort-Link ist 24 Stunden gültig und nur einmal verwendbar. Fordern Sie nach Ablauf über die Passwortwiederherstellung einen neuen Link an.
 
 Falls Sie Ihr Passwort vergessen haben, öffnen Sie die Wiederherstellung, geben Sie Ihre Konto-E-Mail-Adresse ein und folgen Sie dem erhaltenen Link. Die Bildschirmmeldung verrät nicht, ob eine Adresse registriert ist. Prüfen Sie bei ausbleibender Nachricht den Spamordner und wenden Sie sich an das zuständige Team.
 
@@ -69,7 +69,7 @@ Die Zahlen spiegeln die in der Plattform verfügbaren Informationen wider. Eine 
 
 ABBILDUNG 3. Allgemeine Kennzahlen der Demonstrationseinrichtung.
 
-> **WICHTIG:** ORCID-Datensätze zählen Vorkommen in der Quelle. Kanonische Publikationen fassen mögliche Wiederholungen zusammen. Unterschiedliche Zahlen müssen daher keinen Fehler bedeuten.
+> **WICHTIG:** ORCID-Datensätze zählen Vorkommen in den Quellen. Kanonische Veröffentlichungen fassen übereinstimmende DOIs oder bestätigte Gruppierungen zusammen. Übereinstimmungen ohne DOI erfordern eine Prüfung. Abweichende Zahlen bedeuten daher nicht unbedingt einen Fehler.
 
 ## 3.2 Verzeichnis der Forschenden
 
@@ -155,7 +155,7 @@ Für Nutzer und OAI-Nutzer dient diese Seite der Statusanzeige und dem Download.
 
 Institutionelle Downloads umfassen je nach Verfügbarkeit ORCID-Werke, Förderungen, Forschende und OpenAlex-Anreicherungen. Die Dateien geben den auf der Seite angegebenen Stand des Caches wieder.
 
-Diese Rollen prüfen den Status und laden verfügbare Daten herunter. Falls eine institutionelle Synchronisierung nötig ist oder ein Lauf fehlgeschlagen ist, bitten Sie das zuständige Team um Prüfung.
+Die veröffentlichte Version bleibt während einer Aktualisierung verfügbar. Ein Teilergebnis bedeutet, dass einige Profile nicht aktualisiert wurden und möglicherweise bisherige Daten enthalten. Prüfen Sie die Ergebnisse des letzten Versuchs und bitten Sie das zuständige Team, Fehler zu untersuchen.
 
 ![ABBILDUNG 10. Institutioneller Status und herunterladbare Datensätze.](assets/screenshots/de/downloads.png)
 
@@ -362,7 +362,7 @@ Die Tabelle bietet Suche und Filter nach OAI-Status, Zugehörigkeitsvalidierung,
 
 Als OAI-Nutzer ändern Sie einen Artikel über Freigeben oder Ausschließen. Markieren Sie für mehrere Artikel die Zeilen und verwenden Sie die Freigabe- oder Ausschlussaktion für die Auswahl. Die Seitenauswahl markiert nur Zeilen der aktuellen Seite.
 
-Manuelle Entscheidungen haben Vorrang vor der automatischen Richtlinie. Der Ausschluss aus OAI-PMH löscht den Artikel weder aus ORCID noch aus OpenAlex oder dem Recherchecache.
+Manuelle Entscheidungen haben Vorrang vor der automatischen Richtlinie. Ein Ausschluss löscht den Artikel weder aus ORCID noch aus OpenAlex oder dem Cache. Für bereits veröffentlichte Artikel bewahrt OAI einen Löschvermerk für kompatible Harvester auf. Laufende Abrufe behalten ihre Version; spätere Abrufe können den Löschvermerk erhalten.
 
 ![ABBILDUNG 26. Artikelauswahl mit den Aktionen für OAI-Nutzer.](assets/screenshots/de/oai-articles.png)
 

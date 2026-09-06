@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 from app import create_app, db
 from app.models import SystemModule
 from app.services.transactional_email import (
-    render_contact_email, render_credentials_email, render_password_reset_email,
+    render_contact_email, render_access_email, render_password_reset_email,
 )
 from app.utils.emailer import send_email
 
@@ -42,7 +42,7 @@ class TransactionalEmailTest(unittest.TestCase):
         smtp.__enter__.return_value = smtp
         smtp.send_message.return_value = {}
         with self.app.test_request_context("/?lang=en"), patch("app.utils.emailer.smtplib.SMTP", return_value=smtp):
-            rendered = render_credentials_email(self.user, "test-only", "https://dataorcid.example/auth/login", welcome=True)
+            rendered = render_access_email(self.user, "https://dataorcid.example/auth/reset-password/test-only", welcome=True)
             success, error = send_email(to_email="recipient@example.test", **rendered)
         self.assertTrue(success, error)
         self.assertEqual("Bienvenido a Data ORCID-Chile", rendered["subject"])
@@ -64,7 +64,7 @@ class TransactionalEmailTest(unittest.TestCase):
                                        ("fr-CA", "fr"), ("it", "en")):
                 with self.subTest(language=language):
                     self.user.locale = language
-                    rendered = render_credentials_email(self.user, "test-only", "https://example.test/login")
+                    rendered = render_access_email(self.user, "https://example.test/reset-password/test-only")
                     self.assertIn(f'lang="{expected}"', rendered["html"])
                     self.assertIn(f"/manuals/user-guide/{expected}.pdf", rendered["text"])
                     self.assertIn(f'/manuals/user-guide/{expected}.pdf"', rendered["html"])
@@ -78,15 +78,15 @@ class TransactionalEmailTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             self.app.config["USER_MANUAL_DIRECTORY"] = folder
             with self.app.test_request_context(), self.assertRaises(FileNotFoundError):
-                render_credentials_email(self.user, "test-only", "https://example.test/login", welcome=True)
+                render_access_email(self.user, "https://example.test/reset-password/test-only", welcome=True)
 
     def test_account_and_contact_content_is_escaped_in_html(self):
         self.user.first_name = '<img src=x onerror="alert(1)">'
         with self.app.test_request_context():
-            rendered = render_credentials_email(self.user, "<temporary&password>", "https://example.test/login")
+            rendered = render_access_email(self.user, "https://example.test/reset-password/?value=<unsafe&value>")
             self.assertNotIn("<img src=x", rendered["html"])
             self.assertIn("&lt;img", rendered["html"])
-            self.assertIn("&lt;temporary&amp;password&gt;", rendered["html"])
+            self.assertIn("&lt;unsafe&amp;value&gt;", rendered["html"])
             inquiry = SimpleNamespace(name="<script>bad</script>", email="visitor@example.test",
                                       institution="A & B", message="First line\n<b>Second line</b>")
             rendered = render_contact_email(inquiry, "<a>Topic</a>")
@@ -122,7 +122,7 @@ class TransactionalEmailTest(unittest.TestCase):
     def test_manual_link_uses_configured_public_base_url(self):
         self.app.config["APP_BASE_URL"] = "https://dataorcid.example/subpath"
         with self.app.test_request_context(base_url="http://untrusted.example"):
-            rendered = render_credentials_email(self.user, "test-only", "https://dataorcid.example/auth/login")
+            rendered = render_access_email(self.user, "https://dataorcid.example/auth/reset-password/test-only")
             self.assertIn("https://dataorcid.example/subpath/manuals/user-guide/es.pdf", rendered["text"])
             self.assertNotIn("untrusted.example", rendered["html"])
 

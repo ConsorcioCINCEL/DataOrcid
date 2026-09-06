@@ -29,6 +29,8 @@ from ..models import (
 )
 from .doi_service import normalize_doi as _normalize_doi
 
+from .institution_lock import institutional_writer
+
 logger = logging.getLogger(__name__)
 DEFAULT_OPENALEX_WORKERS = 4
 DEFAULT_OPENALEX_TITLE_WORKERS = 2
@@ -1335,6 +1337,7 @@ def _collect_title_candidate_batch(
                 return
 
 
+@institutional_writer
 def sync_openalex_works(
     ror_id: str | None = None,
     limit: int | None = None,
@@ -1438,6 +1441,7 @@ def sync_openalex_works(
     return summary
 
 
+@institutional_writer
 def sync_openalex_title_matches(
     ror_id: str | None = None,
     limit: int | None = None,

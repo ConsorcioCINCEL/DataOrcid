@@ -279,6 +279,9 @@
       </div>
     </div>
 
+    {% if latest_version and latest_version.result_json %}
+    <p class="small text-muted mb-2">{{ _('Latest profile attempt: %(updated)s of %(requested)s updated; %(failed)s failed; %(retained)s retained their previous data.', updated=latest_version.result_json.profiles, requested=latest_version.result_json.requested_profiles, failed=latest_version.result_json.failed_profiles|length, retained=latest_version.result_json.retained_profiles) }}</p>
+    {% endif %}
     {% if session.get('is_admin') or session.get('is_manager') %}
     <div class="cache-sync-actions">
       <form id="formMasterSync" method="post" action="{{ url_for('works.cache_full_build') }}">
@@ -287,6 +290,13 @@
           <i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>{{ _('Sync active institution') }}
         </button>
       </form>
+
+      {% if cache_health.failed_profiles %}
+      <form method="post" action="{{ url_for('works.cache_retry_failed_profiles') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-primary"><i class="fas fa-redo mr-1" aria-hidden="true"></i>{{ _('Retry failed profiles (%(count)s)', count=cache_health.failed_profiles) }}</button>
+      </form>
+      {% endif %}
 
       <div class="dropdown">
         <button class="btn btn-outline-info dropdown-toggle" type="button" id="dropdownOpenAlexInstitution"

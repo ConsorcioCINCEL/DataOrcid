@@ -18,6 +18,7 @@ from sqlalchemy import func, text
 
 from .. import db
 from ..models import SyncJob, SyncJobStep, User, utc_now
+from .institution_lock import institution_write_lock
 
 logger = logging.getLogger(__name__)
 _EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="orcid-job")
@@ -78,7 +79,7 @@ def submit_background_job(
     ror_id: str | None = None,
     requested_by_user_id: int | None = None,
     steps: list[str] | None = None,
-    deduplicate: bool = False,
+    deduplicate: bool = True,
     **kwargs,
 ) -> str:
     """Persist and submit a callable to run under an application context."""
@@ -102,7 +103,7 @@ def submit_background_job(
                 should_submit = bool(
                     execution_mode == "thread"
                     and active_job.status == "queued"
-                    and active_job.claimed_by != f"thread-queued:{_PROCESS_ID}"
+                    and active_job.claimed_by is None
                 )
                 if should_submit:
                     active_job.claimed_by = f"thread-queued:{_PROCESS_ID}"
@@ -117,7 +118,7 @@ def submit_background_job(
                         func,
                         args,
                         kwargs,
-                        already_claimed=True,
+                        already_claimed=False,
                     )
                 return active_job.id
 
@@ -159,7 +160,7 @@ def submit_background_job(
             func,
             args,
             kwargs,
-            already_claimed=True,
+            already_claimed=False,
         )
     return job_id
 
@@ -247,7 +248,7 @@ def update_job_step(
     step.status = status
     if status == "running" and not step.started_at:
         step.started_at = now
-    terminal_statuses = {"success", "failed", "skipped", "interrupted"}
+    terminal_statuses = {"success", "partial", "failed", "skipped", "interrupted"}
     if status in terminal_statuses:
         step.finished_at = now
     if records_count is not None:
@@ -377,12 +378,12 @@ def run_queued_job(app, worker_id: str | None = None) -> str | None:
             )
             return job_id
 
-    _run_job(app, job_id, handler, args, kwargs, already_claimed=True)
+    _run_job(app, job_id, handler, args, kwargs, already_claimed=True, expected_claim=worker_id[:80])
     return job_id
 
 
 @contextmanager
-def _job_heartbeat(app, job_id: str):
+def _job_heartbeat(app, job_id: str, claim_token: str):
     """Refresh a running job lease while a handler performs long blocking work."""
     interval = max(int(app.config.get("JOB_HEARTBEAT_SECONDS", 30)), 1)
     stopped = Event()
@@ -391,7 +392,7 @@ def _job_heartbeat(app, job_id: str):
         while not stopped.wait(interval):
             with app.app_context():
                 try:
-                    SyncJob.query.filter_by(id=job_id, status="running").update(
+                    SyncJob.query.filter_by(id=job_id, status="running", claimed_by=claim_token).update(
                         {SyncJob.heartbeat_at: utc_now()},
                         synchronize_session=False,
                     )
@@ -427,11 +428,28 @@ def _run_job(
     kwargs: dict,
     *,
     already_claimed: bool = False,
+    expected_claim: str | None = None,
 ) -> None:
     with app.app_context():
         error_context = {"source": "background_job", "job_id": job_id}
+        claim_token = None
         try:
             job = db.session.get(SyncJob, job_id)
+            if not job:
+                return
+            if not already_claimed:
+                claim_token = f"thread:{uuid.uuid4().hex}"
+                claimed = SyncJob.query.filter_by(id=job_id, status="queued").update(
+                    {SyncJob.status: "running", SyncJob.claimed_by: claim_token,
+                     SyncJob.claimed_at: utc_now()}, synchronize_session=False,
+                )
+                db.session.commit()
+                if not claimed:
+                    return
+                db.session.refresh(job)
+            elif job.status != "running" or (expected_claim and job.claimed_by != expected_claim):
+                return
+            claim_token = job.claimed_by
             if job:
                 error_context.update({
                     "user_id": job.requested_by_user_id,
@@ -449,11 +467,7 @@ def _run_job(
                 status="running",
                 started_at=(job.started_at if job and job.started_at else utc_now()),
                 attempt_count=attempt_count,
-                claimed_by=(
-                    job.claimed_by
-                    if already_claimed and job and job.claimed_by
-                    else f"thread:{_PROCESS_ID}"
-                ),
+                claimed_by=claim_token,
                 claimed_at=(job.claimed_at if already_claimed and job else utc_now()),
                 message="Background job started.",
                 error=None,
@@ -473,8 +487,16 @@ def _run_job(
             call_kwargs = dict(kwargs)
             if "job_id" in inspect.signature(func).parameters and "job_id" not in call_kwargs:
                 call_kwargs["job_id"] = job_id
-            with _job_heartbeat(app, job_id):
+            write_job = not job.job_type.startswith("export") and job.job_type != "generic"
+            scope_lock = institution_write_lock(job.ror_id) if write_job else nullcontext()
+            with _job_heartbeat(app, job_id, claim_token), scope_lock:
+                db.session.refresh(job)
+                if job.status != "running" or job.claimed_by != claim_token:
+                    return
                 result = func(*args, **call_kwargs)
+            db.session.refresh(job)
+            if job.claimed_by != claim_token:
+                return
             open_steps = SyncJobStep.query.filter(
                 SyncJobStep.sync_job_id == job_id,
                 SyncJobStep.status.in_({"pending", "running"}),
@@ -507,6 +529,9 @@ def _run_job(
             )
         except Exception as exc:
             db.session.rollback()
+            current_job = db.session.get(SyncJob, job_id)
+            if claim_token and current_job and current_job.claimed_by != claim_token:
+                return
             logger.exception(
                 "Background job %s failed: %s",
                 job_id,

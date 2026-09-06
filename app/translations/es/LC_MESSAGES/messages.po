@@ -12638,3 +12638,164 @@ msgstr "Falta el parámetro obligatorio: orcid_id"
 
 msgid "User manual"
 msgstr "Manual de usuario"
+
+#: app/blueprints/admin.py:639
+#, python-format
+msgid ""
+"User \"%(u)s\" created%(r)s. The access link and manual are queued for "
+"delivery."
+msgstr ""
+"Usuario \"%(u)s\" creado%(r)s. El enlace de acceso y el manual están "
+"pendientes de envío."
+
+#: app/blueprints/admin.py:674
+msgid "Could not queue the access email. Please try again."
+msgstr ""
+"No se pudo registrar el correo de acceso para su envío. Inténtalo de "
+"nuevo."
+
+#: app/blueprints/admin.py:677
+#, python-format
+msgid "The access link and PDF manual are queued for delivery to %(r)s."
+msgstr "El enlace de acceso y el manual PDF están pendientes de envío a %(r)s."
+
+#: app/blueprints/works_sync.py:336
+#, python-format
+msgid "Failed profile retry queued. Job ID: %(job)s"
+msgstr ""
+"Se programó un nuevo intento para los perfiles que fallaron. ID de tarea:"
+" %(job)s"
+
+#: app/blueprints/works_sync.py:778
+msgid ""
+"Select valid records from this institution and provide a review reason. "
+"Records with different DOIs cannot be merged."
+msgstr ""
+"Selecciona registros válidos de esta institución e indica el motivo de la"
+" revisión. No se pueden agrupar registros con DOI distintos."
+
+#: app/blueprints/works_sync.py:780
+msgid ""
+"Publication grouping updated. The review decision will be preserved "
+"during synchronization."
+msgstr ""
+"Agrupación de publicaciones actualizada. La decisión de revisión se "
+"conservará durante la sincronización."
+
+#: app/services/transactional_email.py:83
+msgid "Your access link to Data ORCID-Chile"
+msgstr "Tu enlace de acceso a Data ORCID-Chile"
+
+#: app/templates/admin/users.html:40 app/templates/admin/users.html:42
+#: app/templates/admin/users.html:45
+msgid "Send access link and manual"
+msgstr "Enviar enlace de acceso y manual"
+
+#: app/templates/admin/users.html:41
+#, python-format
+msgid ""
+"Send a password-setting link and the user manual to %(email)s? The "
+"current password remains valid until it is replaced."
+msgstr ""
+"¿Enviar un enlace para establecer la contraseña y el manual de usuario a "
+"%(email)s? La contraseña actual seguirá siendo válida hasta que se "
+"cambie."
+
+#: app/templates/admin/users.html:50
+#, python-format
+msgid "Send %(username)s a link to choose a new password?"
+msgstr "¿Enviar a %(username)s un enlace para elegir una nueva contraseña?"
+
+#: app/templates/emails/access.html:6 app/templates/emails/access.html:13
+#: app/templates/emails/access.txt:11
+msgid "Set your password"
+msgstr "Establecer contraseña"
+
+#: app/templates/emails/access.html:8 app/templates/emails/access.txt:7
+msgid "Your account is ready. Use the link below to choose your password."
+msgstr ""
+"Tu cuenta está lista. Utiliza el siguiente enlace para elegir tu "
+"contraseña."
+
+#: app/templates/emails/access.html:8 app/templates/emails/access.txt:7
+msgid ""
+"Use the link below to choose a new password. Your current password "
+"remains valid until you replace it."
+msgstr ""
+"Utiliza el siguiente enlace para elegir una nueva contraseña. La "
+"contraseña actual seguirá siendo válida hasta que la cambies."
+
+#: app/templates/emails/access.html:22 app/templates/emails/access.txt:16
+msgid ""
+"This link expires in 24 hours and can be used only once. If it expires, "
+"request a new link from the sign-in page."
+msgstr ""
+"Este enlace caduca en 24 horas y solo puede utilizarse una vez. Si "
+"caduca, solicita uno nuevo desde la página de inicio de sesión."
+
+#: app/templates/works/cache_status.html:283
+#, python-format
+msgid ""
+"Latest profile attempt: %(updated)s of %(requested)s updated; %(failed)s "
+"failed; %(retained)s retained their previous data."
+msgstr ""
+"Último intento de actualización de perfiles: %(updated)s de %(requested)s"
+" actualizados; %(failed)s fallidos; %(retained)s conservaron sus datos "
+"anteriores."
+
+#: app/templates/works/cache_status.html:297
+#, python-format
+msgid "Retry failed profiles (%(count)s)"
+msgstr "Reintentar perfiles fallidos (%(count)s)"
+
+#: app/templates/works/data_quality.html:72
+msgid "Review publications without DOI"
+msgstr "Revisar publicaciones sin DOI"
+
+#: app/templates/works/data_quality.html:74
+msgid ""
+"Matching titles and years suggest a possible duplicate. Check the "
+"authors, publication venue and document type before confirming a merge. "
+"You can separate the records again at any time."
+msgstr ""
+"La coincidencia del título y el año indica un posible duplicado. Revisa "
+"los autores, el medio de publicación y el tipo de documento antes de "
+"confirmar la agrupación. Puedes volver a separar los registros en "
+"cualquier momento."
+
+#: app/templates/works/data_quality.html:82
+msgid "Review reason"
+msgstr "Motivo de la revisión"
+
+#: app/templates/works/data_quality.html:84
+msgid "Confirm selected records are the same publication"
+msgstr "Confirmar que los registros seleccionados son la misma publicación"
+
+#: app/templates/works/data_quality.html:85
+msgid "Keep selected records separate"
+msgstr "Mantener separados los registros seleccionados"
+
+#: app/templates/works/data_quality.html:87
+msgid "No publication candidates on this page."
+msgstr "No hay publicaciones candidatas en esta página."
+
+#: app/blueprints/admin.py:243
+msgid "ORCID profiles"
+msgstr "Perfiles ORCID"
+
+#: app/templates/admin/_user_modals.html:168
+msgid ""
+"The welcome email will include a link to set the password and download "
+"the PDF user manual. Check the email address and preferred language."
+msgstr ""
+"El correo de bienvenida incluirá enlaces para establecer la contraseña y "
+"descargar el manual de usuario en PDF. Revisa la dirección de correo y el"
+" idioma preferido."
+
+#: app/templates/admin/users.html:267
+msgid "Sent"
+msgstr "Enviado"
+
+#: app/templates/admin/users.html:267
+msgid "Cancelled"
+msgstr "Cancelado"

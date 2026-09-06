@@ -23,7 +23,7 @@ article selection, metadata mapping, DOI activation, import auditing and undo, p
 and help filtered by enabled modules. No administrator or institutional manager
 operating instructions are included.
 
-Account welcome emails and credential resends link to these published PDFs at
+Account welcome emails and password-setting link emails reference these PDFs at
 `/manuals/user-guide/<language>.pdf`, where the language is `en`, `es`, `fr`, `pt`,
 or `de`. Each account receives the link in its preferred language. Regional
 variants use their base language; unsupported preferences fall back to English.

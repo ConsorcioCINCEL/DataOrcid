@@ -68,7 +68,8 @@ stale_days = 30
 [jobs]
 # "thread" preserves the convenient single-process development behavior.
 # Use "queue" in multi-worker production and run `flask run-job-worker` as a
-# separate supervised process.
+# separate supervised process. Also supervise `flask run-email-worker` for
+# account-email delivery and retries, independently of long synchronization jobs.
 execution_mode = "thread"
 stale_minutes = 30
 max_attempts = 3

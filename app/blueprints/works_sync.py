@@ -192,12 +192,12 @@ def _run_full_sync_for_ror(
     try:
         cache_result = build_full_cache_for_ror(ror_id, base_url, headers)
         result.update(cache_result)
-        run_w.status = 'success'
+        run_w.status = 'partial' if result.get('failed_profiles') else 'success'
         run_w.rows_count = result["works"]
-        run_f.status = 'success'
+        run_f.status = 'partial' if result.get('failed_profiles') else 'success'
         run_f.rows_count = result["fundings"]
         update_job_step(job_id, "researchers", "success", records_count=result["researchers"])
-        update_job_step(job_id, "profiles", "success", records_count=result["profiles"])
+        update_job_step(job_id, "profiles", "partial" if result.get("failed_profiles") else "success", records_count=result["profiles"])
         update_job_step(job_id, "works", "success", records_count=result["works"])
         update_job_step(job_id, "fundings", "success", records_count=result["fundings"])
         update_job_step(
@@ -313,6 +313,27 @@ def cache_full_build():
         job=job_id,
     ))
 
+    return redirect(url_for('works.cache_works_status'))
+
+
+@bp_works.route('/cache/profiles/retry', methods=['POST'])
+@staff_required
+def cache_retry_failed_profiles():
+    from ..services.background_jobs import submit_background_job
+    from ..services.cache_service import retry_failed_profiles_for_ror
+
+    ror_id = get_active_ror_id()
+    if not ror_id:
+        flash_err(_('No active institution context found.'))
+        return redirect(url_for('works.cache_works_status'))
+    job_id = submit_background_job(
+        current_app._get_current_object(), f"retry-profiles-{ror_id}",
+        retry_failed_profiles_for_ror, ror_id,
+        current_app.config.get('ORCID_SEARCH_URL', 'https://pub.orcid.org/v3.0/'),
+        {'Accept': 'application/json'}, job_type="failed_profile_retry", ror_id=ror_id,
+        requested_by_user_id=session.get("user_id"),
+    )
+    flash_ok(_('Failed profile retry queued. Job ID: %(job)s', job=job_id))
     return redirect(url_for('works.cache_works_status'))
 
 
@@ -476,16 +497,18 @@ def _run_fundings_sync_for_ror(
     db.session.commit()
     update_job_step(job_id, "fundings", "running")
     try:
-        rows = build_fundings_cache_for_ror(
+        result = build_fundings_cache_for_ror(
             ror_id,
             base_url,
             {"Accept": "application/json"},
+            return_result=True,
         )
-        run.status = "success"
+        rows = result["fundings"]
+        run.status = "partial" if result.get("errors") else "success"
         run.rows_count = rows
         update_job_progress(job_id, rows, rows, "records")
-        update_job_step(job_id, "fundings", "success", records_count=rows)
-        return {"ror_id": ror_id, "fundings": rows}
+        update_job_step(job_id, "fundings", run.status, records_count=rows)
+        return dict(result, ror_id=ror_id)
     except Exception as exc:
         db.session.rollback()
         run.status = "failed"
@@ -505,10 +528,11 @@ def _run_profiles_sync_for_ror(ror_id: str, job_id: str | None = None) -> dict:
 
     update_job_step(job_id, "profiles", "running")
     try:
-        records = build_researcher_names_cache(ror_id)
+        result = build_researcher_names_cache(ror_id, return_result=True)
+        records = result["profiles"]
         update_job_progress(job_id, records, records, "records")
-        update_job_step(job_id, "profiles", "success", records_count=records)
-        return {"ror_id": ror_id, "profiles": records}
+        update_job_step(job_id, "profiles", "partial" if result.get("errors") else "success", records_count=records)
+        return dict(result, ror_id=ror_id)
     except Exception as exc:
         db.session.rollback()
         update_job_step(job_id, "profiles", "failed", error=str(exc))
@@ -682,8 +706,11 @@ def cache_works_status():
                 params[key] = value
         return url_for("works.cache_works_status", **params)
 
+    from ..models import InstitutionSyncVersion
+    latest_version = InstitutionSyncVersion.query.filter_by(ror_id=ror_id).order_by(InstitutionSyncVersion.created_at.desc()).first()
     return render_template(
         'works/cache_status.html',
+        latest_version=latest_version,
         has_cache_works=(w_count > 0),
         last_run_works=last_run_works,
         count_works=w_count,
@@ -721,12 +748,40 @@ def data_quality():
     section = (request.args.get("section") or "overview").strip().lower()
     if section not in {"overview", "researchers", "funding", "integrity"}:
         section = "overview"
+    from ..services.canonical_work_service import canonical_review_groups
+    review_page = max(request.args.get("page", 1, type=int), 1)
     return render_template(
         'works/data_quality.html',
+        review_groups=canonical_review_groups(ror_id, page=review_page) if section == "integrity" else [],
+        review_page=review_page,
         report=institution_quality_report(ror_id),
         section=section,
         can_manage=bool(session.get('is_admin') or session.get('is_manager')),
     )
+
+
+@bp_works.route('/data-quality/review-canonical', methods=['POST'])
+@staff_required
+def data_quality_review_canonical():
+    from ..services.canonical_work_service import review_canonical_records
+    ror_id = get_active_ror_id()
+    if not ror_id:
+        flash_err(_('No active institution context found.'))
+        return redirect(url_for('works.data_quality'))
+    try:
+        action = request.form.get("action")
+        if action not in {"merge", "split"}:
+            raise ValueError("Invalid review action.")
+        review_canonical_records(
+            ror_id, [int(value) for value in request.form.getlist("record_ids")],
+            merge=action == "merge", reason=request.form.get("reason", ""), user_id=session.get("user_id"),
+        )
+    except ValueError:
+        db.session.rollback()
+        flash_err(_('Select valid records from this institution and provide a review reason. Records with different DOIs cannot be merged.'))
+    else:
+        flash_ok(_('Publication grouping updated. The review decision will be preserved during synchronization.'))
+    return redirect(url_for('works.data_quality', section='integrity'))
 
 
 @bp_works.route('/data-quality/backfill-associations', methods=['POST'])

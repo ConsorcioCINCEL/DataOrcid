@@ -803,7 +803,7 @@ class OaiPmhModuleTest(unittest.TestCase):
         self.assertIn(b"Article A2", response.data)
         self.assertNotIn(b'status="deleted"', response.data)
 
-    def test_exclusion_removes_the_article_from_the_public_repository(self):
+    def test_exclusion_publishes_a_persistent_withdrawal_notice(self):
         self._login(self.manager_id, is_manager=True)
         response = self.client.post(
             "/oai-pmh/works/publication",
@@ -822,12 +822,13 @@ class OaiPmhModuleTest(unittest.TestCase):
         )
         root = ET.fromstring(record_response.data)
         error = root.find(f".//{{{OAI_NS}}}error")
-        self.assertEqual("idDoesNotExist", error.get("code"))
-        self.assertIsNone(root.find(f".//{{{OAI_NS}}}header"))
+        self.assertIsNone(error)
+        self.assertEqual("deleted", root.find(f".//{{{OAI_NS}}}header").get("status"))
+        self.assertIsNone(root.find(f".//{{{OAI_NS}}}metadata"))
 
         identify = self.client.get(f"/oai/{'a' * 48}?verb=Identify")
         identify_root = ET.fromstring(identify.data)
-        self.assertEqual("no", identify_root.findtext(f".//{{{OAI_NS}}}deletedRecord"))
+        self.assertEqual("persistent", identify_root.findtext(f".//{{{OAI_NS}}}deletedRecord"))
 
     def test_selected_only_policy_exposes_explicit_inclusions(self):
         self._set_policy("selected")
@@ -895,6 +896,40 @@ class OaiPmhModuleTest(unittest.TestCase):
             query_string={"verb": "ListIdentifiers", "resumptionToken": token},
         )
         self.assertIn(b'code="badResumptionToken"', wrong_scope.data)
+
+    def test_harvest_revision_survives_a_withdrawal_between_pages(self):
+        self._set_policy("all")
+        first = self.client.get(f"/oai/{'a' * 48}?verb=ListRecords&metadataPrefix=oai_dc")
+        root = ET.fromstring(first.data)
+        token = root.findtext(f".//{{{OAI_NS}}}resumptionToken")
+        first_identifier = root.findtext(f".//{{{OAI_NS}}}header/{{{OAI_NS}}}identifier")
+        self.assertTrue(token)
+        self._login(self.manager_id, is_manager=True)
+        self.client.post('/oai-pmh/works/publication', data={
+            'action': 'exclude', 'work_ids': [str(self.work_a_id), str(self.work_a2_id)],
+        })
+        second = self.client.get(f"/oai/{'a' * 48}", query_string={'verb': 'ListRecords', 'resumptionToken': token})
+        second_root = ET.fromstring(second.data)
+        self.assertIsNone(second_root.find(f".//{{{OAI_NS}}}error"))
+        header = second_root.find(f".//{{{OAI_NS}}}header")
+        self.assertIsNone(header.get('status'))
+        self.assertNotEqual(first_identifier, header.findtext(f"{{{OAI_NS}}}identifier"))
+        self.assertIsNotNone(second_root.find(f".//{{{OAI_NS}}}metadata"))
+        latest = self.client.get(f"/oai/{'a' * 48}?verb=ListRecords&metadataPrefix=oai_dc")
+        self.assertIn(b'status="deleted"', latest.data)
+        self.assertNotIn(b'<metadata>', latest.data)
+
+    def test_unchanged_rebuild_does_not_create_oai_modification_events(self):
+        from app.models import OaiPmhRecordVersion
+        from app.services.oai_publication_service import refresh_oai_publication
+        self.client.get(f"/oai/{'a' * 48}?verb=Identify")
+        with self.app.app_context():
+            before = [(item.id, item.datestamp) for item in OaiPmhRecordVersion.query.order_by(OaiPmhRecordVersion.id)]
+            for work in CanonicalWork.query.all():
+                work.updated_at = utc_now()
+            refresh_oai_publication('01aaa1111')
+            db.session.commit()
+            self.assertEqual(before, [(item.id, item.datestamp) for item in OaiPmhRecordVersion.query.order_by(OaiPmhRecordVersion.id)])
 
     def test_protocol_errors_remain_oai_responses(self):
         response = self.client.get(f"/oai/{'a' * 48}?verb=Unknown")

@@ -229,6 +229,23 @@ class AdminJobsDashboardTest(unittest.TestCase):
             ),
         )
 
+    def test_thread_submission_is_not_reassigned_to_another_web_process(self):
+        from app.services.background_jobs import submit_background_job, _run_job
+        from app.services.canonical_work_service import rebuild_canonical_works
+        with self.app.app_context(), patch('app.services.background_jobs._EXECUTOR') as executor:
+            with patch('app.services.background_jobs._PROCESS_ID', 'first-process'):
+                first = submit_background_job(self.app, 'same-institution-refresh', rebuild_canonical_works, 'empty-ror')
+            with patch('app.services.background_jobs._PROCESS_ID', 'second-process'):
+                second = submit_background_job(self.app, 'same-institution-refresh', rebuild_canonical_works, 'empty-ror')
+            self.assertEqual(first, second)
+            executor.submit.assert_called_once()
+        _run_job(self.app, first, rebuild_canonical_works, ('empty-ror',), {})
+        _run_job(self.app, first, rebuild_canonical_works, ('empty-ror',), {})
+        with self.app.app_context():
+            job = db.session.get(SyncJob, first)
+            self.assertEqual('success', job.status)
+            self.assertEqual(1, job.attempt_count)
+
     def test_stale_recovery_closes_running_steps(self):
         with self.app.app_context():
             recovered = recover_interrupted_jobs(stale_minutes=30)

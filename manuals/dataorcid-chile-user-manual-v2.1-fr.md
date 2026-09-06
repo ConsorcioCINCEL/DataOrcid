@@ -30,7 +30,7 @@ Cette édition présente les exportations en arrière-plan, la publication OAI-P
 
 Rendez-vous sur www.orcid.cl et connectez-vous avec votre nom d’utilisateur ou votre adresse institutionnelle et votre mot de passe. Réservez l’option de maintien de la connexion à un appareil personnel ou géré par votre établissement.
 
-Le message de bienvenue contient vos identifiants et un lien vers ce manuel PDF, téléchargeable sans connexion. Il ouvre l’édition correspondant à la langue du compte : anglais, espagnol, français, portugais ou allemand. Changez le mot de passe temporaire lors de la connexion.
+Le courriel de bienvenue contient un lien pour choisir votre mot de passe et un autre pour télécharger ce manuel PDF dans la langue de votre compte, sans connexion. Le lien du mot de passe expire dans 24 heures et ne peut être utilisé qu’une fois. S’il expire, demandez-en un autre via la récupération du mot de passe.
 
 Si vous avez oublié votre mot de passe, ouvrez le lien de récupération, saisissez l’adresse de votre compte et suivez le lien reçu. La réponse à l’écran ne révèle pas si l’adresse est enregistrée. En l’absence de message, vérifiez les indésirables et contactez l’équipe responsable.
 
@@ -69,7 +69,7 @@ Les chiffres reflètent les informations disponibles dans la plateforme. Un cher
 
 FIGURE 3. Indicateurs généraux de l’établissement de démonstration.
 
-> **IMPORTANT:** Les enregistrements ORCID comptent les occurrences dans la source. Les productions canoniques regroupent les répétitions possibles. Ces chiffres peuvent différer sans qu’il y ait d’erreur.
+> **IMPORTANT:** Les notices ORCID comptent les occurrences sources. Les publications canoniques regroupent les DOI identiques ou les notices dont le regroupement a été confirmé. Les correspondances sans DOI nécessitent une révision. Ces chiffres peuvent différer sans qu’il y ait d’erreur.
 
 ## 3.2 Annuaire des chercheurs
 
@@ -155,7 +155,7 @@ Pour Utilisateur et Utilisateur OAI, cette page sert de suivi et de centre de t�
 
 Les téléchargements institutionnels comprennent les œuvres ORCID, les financements, les chercheurs et l’enrichissement OpenAlex, selon les jeux de données disponibles. Les fichiers reflètent l’état du cache indiqué sur la page.
 
-Ces profils consultent l’état et téléchargent les données disponibles. Si une synchronisation institutionnelle est nécessaire ou si une exécution a échoué, demandez à l’équipe responsable de l’examiner.
+La version publiée reste disponible pendant une mise à jour. Un résultat partiel signifie que certains profils n’ont pas été actualisés et peuvent conserver leurs données précédentes. Consultez les résultats de la dernière tentative et demandez à l’équipe responsable d’examiner les échecs.
 
 ![FIGURE 10. État des données institutionnelles et jeux téléchargeables.](assets/screenshots/fr/downloads.png)
 
@@ -362,7 +362,7 @@ Le tableau propose recherche et filtres par état OAI, validation d’affiliatio
 
 Avec Utilisateur OAI, Exposer ou Exclure modifie un article. Pour agir sur plusieurs articles, cochez leurs lignes et utilisez les actions d’exposition ou d’exclusion de la sélection. La sélection de la page ne coche que les lignes de la page actuelle.
 
-Les décisions manuelles prévalent sur la politique automatique. Exclure un article d’OAI-PMH ne le supprime pas d’ORCID, d’OpenAlex ou du cache de consultation.
+Les décisions manuelles priment sur la politique automatique. L’exclusion ne supprime pas l’article d’ORCID, d’OpenAlex ni du cache. S’il était déjà publié, OAI conserve un avis de retrait pour les moissonneurs compatibles. Un moissonnage en cours garde sa version ; un moissonnage ultérieur pourra recevoir le retrait.
 
 ![FIGURE 26. Sélection d’articles avec les actions du profil Utilisateur OAI.](assets/screenshots/fr/oai-articles.png)
 

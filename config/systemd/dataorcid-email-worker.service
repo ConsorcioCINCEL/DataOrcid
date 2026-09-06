@@ -1,0 +1,17 @@
+[Unit]
+Description=DataOrcid-Chile account email worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/html/orcid-cincel
+Environment=PYTHONUNBUFFERED=1
+Environment=FLASK_APP=run.py
+Environment=JOB_EXECUTION_MODE=queue
+ExecStart=/var/www/html/orcid-cincel/venv/bin/flask run-email-worker
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

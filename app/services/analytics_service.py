@@ -16,6 +16,7 @@ from ..models import (
     utc_now,
 )
 from .doi_service import normalize_doi
+from .institution_lock import institutional_writer
 
 
 FACT_BATCH_SIZE = 4000
@@ -92,9 +93,10 @@ def openalex_fact_available(ror_id: str | None = None) -> bool:
     return bool(source_rors and fact_rors >= source_rors)
 
 
-def refresh_openalex_facts(ror_id: str | None = None) -> dict:
+@institutional_writer
+def refresh_openalex_facts(ror_id: str | None = None, *, commit: bool = True) -> dict:
     if ror_id:
-        return _refresh_institution_openalex_facts(ror_id, include_global=True)
+        return _refresh_institution_openalex_facts(ror_id, include_global=True, commit=commit)
 
     ror_ids = [
         value
@@ -112,11 +114,13 @@ def refresh_openalex_facts(ror_id: str | None = None) -> dict:
         summary = _refresh_institution_openalex_facts(
             institutional_ror,
             include_global=False,
+            commit=commit,
         )
         total_rows += summary["rows"]
 
     bump_analytics_data_versions(include_global=True)
-    db.session.commit()
+    if commit:
+        db.session.commit()
     return {
         "institutions": len(ror_ids),
         "rows": total_rows,
@@ -126,6 +130,7 @@ def refresh_openalex_facts(ror_id: str | None = None) -> dict:
 def _refresh_institution_openalex_facts(
     ror_id: str,
     include_global: bool,
+    commit: bool = True,
 ) -> dict:
     source_rows = (
         db.session.query(
@@ -234,7 +239,11 @@ def _refresh_institution_openalex_facts(
             db.session.flush()
 
     bump_analytics_data_versions([ror_id], include_global=include_global)
-    db.session.commit()
+    db.session.flush()
+    from .oai_publication_service import refresh_oai_publication
+    refresh_oai_publication(ror_id)
+    if commit:
+        db.session.commit()
     return {
         "ror_id": ror_id,
         "source_records": len(source_rows),

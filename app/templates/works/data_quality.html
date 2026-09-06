@@ -67,6 +67,30 @@
   {% endfor %}
 </nav>
 
+{% if section == 'integrity' and can_manage %}
+<section class="card quality-panel">
+  <div class="card-header"><h2 class="card-title">{{ _('Review publications without DOI') }}</h2></div>
+  <div class="card-body">
+    <p class="text-muted">{{ _('Matching titles and years suggest a possible duplicate. Check the authors, publication venue and document type before confirming a merge. You can separate the records again at any time.') }}</p>
+    {% for group in review_groups %}
+    <form method="post" action="{{ url_for('works.data_quality_review_canonical') }}" class="border rounded p-3 mb-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <h3 class="h6">{{ group.title }} · {{ group.year or '—' }}</h3>
+      {% for record in group.records %}
+      <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="record_ids" value="{{ record.id }}" id="reviewRecord{{ record.id }}"><label class="form-check-label" for="reviewRecord{{ record.id }}">{{ record.orcid }} · {{ record.journal or '—' }} · {{ record.type or '—' }}</label></div>
+      {% endfor %}
+      <label for="reviewReason{{ loop.index }}">{{ _('Review reason') }}</label>
+      <input class="form-control mb-2" id="reviewReason{{ loop.index }}" name="reason" required maxlength="2000">
+      <button class="btn btn-outline-primary btn-sm mr-2 mb-2" name="action" value="merge">{{ _('Confirm selected records are the same publication') }}</button>
+      <button class="btn btn-outline-secondary btn-sm mb-2" name="action" value="split">{{ _('Keep selected records separate') }}</button>
+    </form>
+    {% else %}<p>{{ _('No publication candidates on this page.') }}</p>{% endfor %}
+    {% if review_page > 1 %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('works.data_quality', section='integrity', page=review_page-1) }}">{{ _('Previous') }}</a>{% endif %}
+    {% if review_groups|length == 20 %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('works.data_quality', section='integrity', page=review_page+1) }}">{{ _('Next') }}</a>{% endif %}
+  </div>
+</section>
+{% endif %}
+
 {% if section == 'overview' %}
 <div class="quality-grid">
   <section class="card quality-panel" aria-labelledby="qualityWorksTitle">

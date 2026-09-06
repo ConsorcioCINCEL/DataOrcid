@@ -72,6 +72,25 @@ class User(db.Model):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or self.username
 
 
+class EmailOutbox(db.Model):
+    """Transactional account-email intent; never stores plaintext passwords."""
+    __tablename__ = "email_outbox"
+
+    id = db.Column(db.String(36), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    kind = db.Column(db.String(24), nullable=False)
+    base_url = db.Column(db.Text, nullable=False)
+    password_fingerprint = db.Column(db.String(64), nullable=False)
+    status = db.Column(db.String(16), nullable=False, default="pending", index=True)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    available_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    claimed_at = db.Column(db.DateTime, nullable=True)
+    claim_token = db.Column(db.String(36), nullable=True)
+    error = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=True)
+
+
 class WorkCache(db.Model):
     """Cached ORCID work summary scoped by institution ROR."""
     __tablename__ = "work_cache"
@@ -498,7 +517,7 @@ class OpenAlexInstitutionWorkFact(db.Model):
 
 
 class CanonicalWork(db.Model):
-    """Source-independent scholarly output keyed by DOI or title/year fallback."""
+    """Scholarly output keyed by DOI, source identity, or a reviewed grouping."""
     __tablename__ = "canonical_work"
     # Keep metadata aligned with the existing constraint and unique index.
     __table_args__ = (db.UniqueConstraint("canonical_key"),)
@@ -512,6 +531,21 @@ class CanonicalWork(db.Model):
     record_count = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class CanonicalWorkOverride(db.Model):
+    """Auditable, durable grouping decision for an institutional source record."""
+    __tablename__ = "canonical_work_override"
+    __table_args__ = (db.UniqueConstraint("ror_id", "orcid", "source_record_key"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    ror_id = db.Column(db.String(32), nullable=False, index=True)
+    orcid = db.Column(db.String(32), nullable=False)
+    source_record_key = db.Column(db.String(96), nullable=False)
+    canonical_key = db.Column(db.String(80), nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    updated_by_user_id = db.Column(db.Integer, nullable=True)
+    updated_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class WorkRecordLink(db.Model):
@@ -765,6 +799,29 @@ class ContactInquiry(db.Model):
     resolved_by_username = db.Column(db.String(80), nullable=True)
 
 
+class InstitutionSyncVersion(db.Model):
+    """Prepared ORCID generation, promoted with all derived data in one commit."""
+    __tablename__ = "institution_sync_version"
+
+    id = db.Column(db.String(36), primary_key=True)
+    ror_id = db.Column(db.String(32), nullable=False, index=True)
+    status = db.Column(db.String(16), nullable=False, default="preparing")
+    researchers_json = db.Column(db.JSON, nullable=False)
+    result_json = db.Column(db.JSON, nullable=True)
+    error = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    published_at = db.Column(db.DateTime, nullable=True)
+
+
+class InstitutionSyncProfile(db.Model):
+    """Temporary profile staging; removed after publication or a failed attempt."""
+    __tablename__ = "institution_sync_profile"
+
+    version_id = db.Column(db.String(36), db.ForeignKey("institution_sync_version.id", ondelete="CASCADE"), primary_key=True)
+    orcid = db.Column(db.String(32), primary_key=True)
+    payload_json = db.Column(db.JSON, nullable=True)
+
+
 class SyncJob(db.Model):
     """Durable status for a user-triggered background synchronization job."""
     __tablename__ = "sync_job"
@@ -837,11 +894,26 @@ class OaiPmhInstitutionConfig(db.Model):
     publication_policy = db.Column(db.String(16), default="validated", nullable=False)
     metadata_mapping = db.Column(db.JSON, nullable=True)
     harvester_access_restricted = db.Column(db.Boolean, default=False, nullable=False)
+    publication_initialized_at = db.Column(db.DateTime, nullable=True)
     policy_updated_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     created_by_user_id = db.Column(db.Integer, nullable=True, index=True)
     updated_by_user_id = db.Column(db.Integer, nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+
+class OaiPmhRecordVersion(db.Model):
+    """Immutable publication events, including persistent withdrawal notices."""
+    __tablename__ = "oai_pmh_record_version"
+    __table_args__ = (db.Index("ix_oai_record_ror_key_revision", "ror_id", "canonical_key", "id"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    ror_id = db.Column(db.String(32), nullable=False, index=True)
+    canonical_key = db.Column(db.String(80), nullable=False)
+    datestamp = db.Column(db.DateTime, nullable=False, index=True)
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    content_hash = db.Column(db.String(64), nullable=False)
+    payload_json = db.Column(db.JSON, nullable=False)
 
 
 class OaiPmhHarvester(db.Model):

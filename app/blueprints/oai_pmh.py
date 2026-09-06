@@ -29,6 +29,8 @@ from werkzeug.datastructures import CombinedMultiDict
 from werkzeug.utils import secure_filename
 
 from .. import DEFAULT_LANGUAGES, csrf, db
+from ..services.oai_publication_service import refresh_oai_publication
+from ..services.institution_lock import institutional_request_writer
 from ..decorators import institution_required, oai_editor_required, staff_required
 from ..models import (
     CanonicalWork,
@@ -450,6 +452,7 @@ def update_harvester(harvester_id: int):
 @bp_oai_pmh.route("/oai-pmh/settings", methods=["POST"])
 @staff_required
 @institution_required
+@institutional_request_writer
 def save_settings():
     """Save provider identity and the default publication policy for one ROR."""
     ror_id = g.institution_ror_id
@@ -496,6 +499,7 @@ def save_settings():
     config.updated_by_user_id = session.get("user_id")
     config.updated_at = now
     try:
+        refresh_oai_publication(g.institution_ror_id)
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
@@ -529,6 +533,7 @@ def rotate_access_key():
 @bp_oai_pmh.route("/oai-pmh/metadata-mapping", methods=["POST"])
 @oai_editor_required
 @institution_required
+@institutional_request_writer
 def save_metadata_mapping():
     """Save aliases used by the institution-specific DataORCID metadata format."""
     config = OaiPmhInstitutionConfig.query.filter_by(ror_id=g.institution_ror_id).first()
@@ -575,6 +580,7 @@ def save_metadata_mapping():
     config.updated_by_user_id = session.get("user_id")
     config.policy_updated_at = now
     config.updated_at = now
+    refresh_oai_publication(g.institution_ror_id)
     db.session.commit()
     flash_ok(success_message)
     return redirect(url_for("oai_pmh.metadata_mapping"))
@@ -583,6 +589,7 @@ def save_metadata_mapping():
 @bp_oai_pmh.route("/oai-pmh/works/publication", methods=["POST"])
 @oai_editor_required
 @institution_required
+@institutional_request_writer
 def update_publication():
     """Include or exclude selected DataORCID works inside the active ROR."""
     ror_id = g.institution_ror_id
@@ -638,6 +645,7 @@ def update_publication():
         selection.doi_import_batch_id = None
         selection.updated_by_user_id = session.get("user_id")
         selection.updated_at = now
+    refresh_oai_publication(g.institution_ror_id)
     db.session.commit()
 
     if len(allowed_ids) != len(work_ids):
@@ -830,6 +838,7 @@ def export_article_listing():
 @bp_oai_pmh.route("/oai-pmh/works/doi-import", methods=["POST"])
 @oai_editor_required
 @institution_required
+@institutional_request_writer
 def import_doi_publication():
     """Activate institutional OAI articles listed by DOI in an XLSX file."""
     upload = request.files.get("doi_file")
@@ -924,6 +933,7 @@ def import_doi_publication():
             selection.updated_at = now
 
     try:
+        refresh_oai_publication(g.institution_ror_id)
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
@@ -964,6 +974,7 @@ def import_doi_publication():
 )
 @oai_editor_required
 @institution_required
+@institutional_request_writer
 def undo_last_doi_import(batch_id: int | None):
     """Restore selections changed by the latest reversible DOI import batch."""
     batch = (
@@ -1009,6 +1020,7 @@ def undo_last_doi_import(batch_id: int | None):
     batch.undone_at = now
     batch.undone_by_user_id = session.get("user_id")
     try:
+        refresh_oai_publication(g.institution_ror_id)
         db.session.commit()
     except Exception as exc:
         db.session.rollback()

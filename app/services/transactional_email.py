@@ -49,24 +49,21 @@ def _render(kind: str, subject: str, *, preview: bool = False, **context) -> dic
     }
 
 
-def render_credentials_email(user, password: str, login_url: str, *, welcome: bool = False, preview: bool = False) -> dict:
-    """Build welcome/resend content with a language-matched public guide link."""
+def render_access_email(user, access_url: str, *, welcome: bool = False, preview: bool = False) -> dict:
+    """Render an activation/reset link with the recipient's PDF manual."""
     language = email_locale(user.locale)
     manual_url = user_manual_url(language)
     with force_locale(language):
-        subject = _("Welcome to Data ORCID-Chile") if welcome else _("Access to Data ORCID-Chile (credentials)")
-        manual_labels = {
+        labels = {
             "en": _("User manual (English)"), "es": _("User manual (Spanish)"),
             "fr": _("User manual (French)"), "pt": _("User manual (Portuguese)"),
             "de": _("User manual (German)"),
         }
-        result = _render(
-            "credentials", subject, user=user, password=password, login_url=login_url,
-            welcome=welcome, preview=preview,
-            manual_label=manual_labels[language],
-            manual_url=manual_url,
+        return _render(
+            "access", _("Welcome to Data ORCID-Chile") if welcome else _("Your access link to Data ORCID-Chile"),
+            user=user, access_url=access_url, welcome=welcome, preview=preview,
+            manual_label=labels[language], manual_url=manual_url,
         )
-    return result
 
 
 def render_password_reset_email(user, reset_url: str, *, preview: bool = False) -> dict:

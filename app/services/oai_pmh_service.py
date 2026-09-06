@@ -181,6 +181,8 @@ class InstitutionalWork:
     metadata_json: dict[str, list[str]]
     metadata_mapping: dict[str, str]
     affiliations: list[dict]
+    is_deleted: bool = False
+    event_id: int = 0
 
     @property
     def displayed_affiliations(self) -> list[dict]:
@@ -439,6 +441,9 @@ def build_oai_response(
     *, stylesheet_url: str = "/oai-pmh/stylesheet/en.xsl",
 ) -> bytes:
     """Build a complete OAI-PMH response for one institutional provider."""
+    from .oai_publication_service import ensure_oai_publication, lock_oai_publication
+    ensure_oai_publication(config)
+    lock_oai_publication(config.ror_id, shared=True)
     root = ET.Element(_oai("OAI-PMH"), {_xsi("schemaLocation"): f"{OAI_NS} {OAI_SCHEMA}"})
     ET.SubElement(root, _oai("responseDate")).text = _format_datestamp(
         utc_now(), SECOND_GRANULARITY
@@ -618,13 +623,14 @@ def _build_identify(root, config, base_url) -> None:
     ET.SubElement(identify, _oai("adminEmail")).text = _xml_text(
         config.admin_email or "noreply@localhost"
     )
-    query, included_expr, datestamp_expr = institutional_work_query(config)
-    query = query.filter(included_expr.is_(True))
-    earliest = query.with_entities(func.min(datestamp_expr)).scalar() or config.created_at or utc_now()
+    from .oai_publication_service import ensure_oai_publication, published_record_query
+    from ..models import OaiPmhRecordVersion
+    ensure_oai_publication(config)
+    earliest = published_record_query(config.ror_id).with_entities(func.min(OaiPmhRecordVersion.datestamp)).scalar() or config.created_at or utc_now()
     ET.SubElement(identify, _oai("earliestDatestamp")).text = _format_datestamp(
         earliest, SECOND_GRANULARITY
     )
-    ET.SubElement(identify, _oai("deletedRecord")).text = "no"
+    ET.SubElement(identify, _oai("deletedRecord")).text = "persistent"
     ET.SubElement(identify, _oai("granularity")).text = SECOND_GRANULARITY
 
 
@@ -675,6 +681,9 @@ def _build_get_record(root, config, params) -> None:
 
 
 def _build_record_list(root, config, params, verb: str) -> None:
+    from ..models import OaiPmhRecordVersion
+    from .oai_publication_service import ensure_oai_publication, published_record_query, record_from_publication
+    ensure_oai_publication(config)
     token_present = "resumptionToken" in params
     token_value = params.get("resumptionToken")
     if token_present:
@@ -717,12 +726,15 @@ def _build_record_list(root, config, params, verb: str) -> None:
             "after_id": 0,
             "cursor": 0,
             "total": None,
+            "revision": db.session.query(func.max(OaiPmhRecordVersion.id)).filter_by(ror_id=config.ror_id).scalar() or 0,
         }
 
     from_dt = _optional_datestamp(state.get("from"), lower=True)[0]
     until_dt = _optional_datestamp(state.get("until"), lower=False)[0]
-    query, included_expr, datestamp_expr = institutional_work_query(config)
-    query = query.filter(included_expr.is_(True))
+    if "revision" not in state:
+        raise OaiProtocolError("badResumptionToken", "Restart harvesting to use publication revisions.")
+    query = published_record_query(config.ror_id, state["revision"])
+    datestamp_expr = OaiPmhRecordVersion.datestamp
     if from_dt:
         query = query.filter(datestamp_expr >= from_dt)
     if until_dt:
@@ -737,13 +749,13 @@ def _build_record_list(root, config, params, verb: str) -> None:
             raise OaiProtocolError("badResumptionToken", "The resumption token contains an invalid cursor.") from exc
         query = query.filter(or_(
             datestamp_expr > after_dt,
-            and_(datestamp_expr == after_dt, CanonicalWork.id > after_id),
+            and_(datestamp_expr == after_dt, OaiPmhRecordVersion.id > after_id),
         ))
 
     total = state.get("total")
     if total is None:
-        total_query, total_included, total_datestamp = institutional_work_query(config)
-        total_query = total_query.filter(total_included.is_(True))
+        total_query = published_record_query(config.ror_id, state["revision"])
+        total_datestamp = OaiPmhRecordVersion.datestamp
         if from_dt:
             total_query = total_query.filter(total_datestamp >= from_dt)
         if until_dt:
@@ -753,7 +765,7 @@ def _build_record_list(root, config, params, verb: str) -> None:
         raise OaiProtocolError("noRecordsMatch", "No records match the requested criteria.")
 
     page_size = max(min(int(current_app.config.get("OAI_PROVIDER_PAGE_SIZE", 100)), 500), 1)
-    rows = query.order_by(datestamp_expr.asc(), CanonicalWork.id.asc()).limit(page_size + 1).all()
+    rows = query.order_by(datestamp_expr.asc(), OaiPmhRecordVersion.id.asc()).limit(page_size + 1).all()
     page_rows = rows[:page_size]
     has_more = len(rows) > page_size
     if not page_rows:
@@ -761,7 +773,7 @@ def _build_record_list(root, config, params, verb: str) -> None:
             raise OaiProtocolError("badResumptionToken", "The resumption token no longer identifies a record page.")
         raise OaiProtocolError("noRecordsMatch", "No records match the requested criteria.")
 
-    page = [work_from_query_row(row, config) for row in page_rows]
+    page = [record_from_publication(row, config) for row in page_rows]
     metadata_prefix = state.get("metadata_prefix") or "oai_dc"
     container = ET.SubElement(root, _oai(verb))
     for record in page:
@@ -787,7 +799,7 @@ def _build_record_list(root, config, params, verb: str) -> None:
             next_state = dict(state)
             next_state.update({
                 "after_datestamp": last.datestamp.isoformat(timespec="microseconds"),
-                "after_id": last.canonical_work_id,
+                "after_id": last.event_id,
                 "cursor": int(state.get("cursor") or 0) + len(page),
                 "total": total,
             })
@@ -797,6 +809,8 @@ def _build_record_list(root, config, params, verb: str) -> None:
 def _append_record(parent, record: InstitutionalWork, metadata_prefix: str) -> None:
     record_element = ET.SubElement(parent, _oai("record"))
     _append_header(record_element, record)
+    if record.is_deleted:
+        return
     metadata_element = ET.SubElement(record_element, _oai("metadata"))
     if metadata_prefix == "oai_dc":
         _append_oai_dc_metadata(metadata_element, record)
@@ -930,7 +944,7 @@ def _append_mapped_metadata(parent, record: InstitutionalWork) -> None:
 
 
 def _append_header(parent, record: InstitutionalWork) -> None:
-    header = ET.SubElement(parent, _oai("header"))
+    header = ET.SubElement(parent, _oai("header"), {"status": "deleted"} if record.is_deleted else {})
     ET.SubElement(header, _oai("identifier")).text = provider_identifier(record)
     ET.SubElement(header, _oai("datestamp")).text = _format_datestamp(
         record.datestamp, SECOND_GRANULARITY
@@ -946,14 +960,13 @@ def _provider_record(config, identifier: str) -> InstitutionalWork:
     canonical_key = identifier[len(prefix):]
     if not CANONICAL_KEY_RE.fullmatch(canonical_key):
         raise OaiProtocolError("idDoesNotExist", "The requested identifier does not exist.")
-    query, included_expr, _datestamp_expr = institutional_work_query(config)
-    row = query.filter(
-        CanonicalWork.canonical_key == canonical_key,
-        included_expr.is_(True),
-    ).first()
+    from .oai_publication_service import ensure_oai_publication, published_record_query, record_from_publication
+    from ..models import OaiPmhRecordVersion
+    ensure_oai_publication(config)
+    row = published_record_query(config.ror_id).filter(OaiPmhRecordVersion.canonical_key == canonical_key).first()
     if not row:
         raise OaiProtocolError("idDoesNotExist", "The requested identifier does not exist.")
-    return work_from_query_row(row, config)
+    return record_from_publication(row, config)
 
 
 def _openaire_resource_type(document_type: str | None) -> tuple[str, str, str]:

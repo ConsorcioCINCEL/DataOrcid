@@ -154,14 +154,49 @@ class AuthProfileTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "72 UTF-8 bytes"):
                 user.set_password("x" * 73)
 
+    def test_password_setting_link_stops_working_after_use(self):
+        from app.blueprints.auth import make_password_reset_token
+        with self.app.app_context():
+            token = make_password_reset_token(db.session.get(User, self.user_id))
+        first = self.client.post('/auth/reset-password/' + token, data={
+            'new_password': 'new-password-one', 'confirm_password': 'new-password-one',
+        })
+        second = self.client.post('/auth/reset-password/' + token, data={
+            'new_password': 'new-password-two', 'confirm_password': 'new-password-two',
+        })
+        self.assertEqual(302, first.status_code)
+        self.assertEqual(302, second.status_code)
+        with self.app.app_context():
+            user = db.session.get(User, self.user_id)
+            self.assertTrue(user.check_password('new-password-one'))
+            self.assertFalse(user.check_password('new-password-two'))
+
+    def test_password_setting_link_expires_after_twenty_four_hours(self):
+        import time
+        from app.blueprints.auth import make_password_reset_token
+        old_time = time.time() - 86500
+        with self.app.app_context(), patch('itsdangerous.timed.time.time', return_value=old_time):
+            token = make_password_reset_token(db.session.get(User, self.user_id))
+        response = self.client.post('/auth/reset-password/' + token, data={
+            'new_password': 'expired-link-password', 'confirm_password': 'expired-link-password',
+        })
+        self.assertEqual(302, response.status_code)
+        with self.app.app_context():
+            self.assertTrue(db.session.get(User, self.user_id).check_password('test-password'))
+
     def test_password_recovery_does_not_reveal_email_delivery_failure(self):
-        with patch("app.blueprints.auth.send_email", return_value=(False, "SMTP offline")):
+        with patch("app.services.email_outbox.send_email", return_value=(False, "SMTP offline")):
             response = self.client.post(
                 "/auth/forgot-password",
                 data={"email": "old@example.org"},
             )
 
         self.assertEqual(302, response.status_code)
+        from app.models import EmailOutbox
+        from app.services.email_outbox import deliver_next_email
+        with self.app.app_context(), patch("app.services.email_outbox.send_email", return_value=(False, "SMTP offline")):
+            deliver_next_email()
+            self.assertEqual("pending", EmailOutbox.query.one().status)
         with self.client.session_transaction() as client_session:
             flashes = client_session.get("_flashes", [])
         self.assertEqual(1, len(flashes))

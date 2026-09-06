@@ -30,8 +30,7 @@ from ..decorators import (
     normalize_ror_id
 )
 from ..utils.flashes import flash_err, flash_ok, flash_info
-from ..utils.emailer import send_email
-from ..services.transactional_email import render_credentials_email
+from ..services.email_outbox import queue_account_email, wake_email_delivery
 from ..services.ror_service import fetch_grid_from_ror
 from ..services.institution_registry_service import get_institution_by_ror, get_institution_options
 from ..services.oai_pmh_service import oai_repository_summaries
@@ -241,6 +240,7 @@ def _format_job_duration(seconds: int | float | None) -> str:
 def _job_type_label(job_type: str | None) -> str:
     labels = {
         "full_institution_sync": _("Full institutional synchronization"),
+        "failed_profile_retry": _("ORCID profiles"),
         "full_system_sync": _("All-institution synchronization"),
         "openalex_institution_sync": _("Institutional OpenAlex synchronization"),
         "openalex_system_sync": _("System-wide OpenAlex synchronization"),
@@ -528,9 +528,19 @@ def users_list():
         }
         return url_for('admin.users_list', **clean_params)
     
+    from ..models import EmailOutbox
+    latest_email_by_user = {}
+    if is_admin and users:
+        ranked = db.session.query(
+            EmailOutbox.user_id, EmailOutbox.status,
+            func.row_number().over(partition_by=EmailOutbox.user_id,
+                                   order_by=EmailOutbox.created_at.desc()).label("position"),
+        ).filter(EmailOutbox.user_id.in_([user.id for user in users])).subquery()
+        latest_email_by_user = dict(db.session.query(ranked.c.user_id, ranked.c.status).filter(ranked.c.position == 1).all())
     return render_template(
         'admin/users.html',
         users=users,
+        latest_email_by_user=latest_email_by_user,
         pagination=pagination,
         q=query_param,
         selected_role=selected_role,
@@ -602,6 +612,10 @@ def users_new():
         flash_err(_('A user with username "%(u)s" already exists.', u=username))
         return redirect(_users_return_url())
 
+    if '@' not in (email or username or ''):
+        flash_err(_("User does not have a valid email."))
+        return redirect(_users_return_url())
+
     # Credential Generation
     temp_password = (request.form.get('password') or '').strip() or generate_temp_password()
     
@@ -624,6 +638,8 @@ def users_new():
     try:
         new_user.set_password(temp_password)
         db.session.add(new_user)
+        db.session.flush()
+        queue_account_email(new_user, kind="welcome")
         db.session.commit()
         
         assigned_roles = []
@@ -634,19 +650,15 @@ def users_new():
         if is_oai_user:
             assigned_roles.append(_("OAI user"))
         role_label = f" ({', '.join(assigned_roles)})" if assigned_roles else ""
-        flash_ok(_('User "%(u)s" created%(r)s. Password: %(p)s', 
-                 u=username, r=role_label, p=temp_password))
+        flash_ok(_('User "%(u)s" created%(r)s. The access link and manual are queued for delivery.',
+                 u=username, r=role_label))
     except Exception as exc:
         db.session.rollback()
         logger.exception("CRITICAL: Failed to create user: %s", exc)
         flash_err(_('Could not create user. Check logs.'))
         return redirect(_users_return_url())
 
-    delivered, _error = _send_account_email(new_user, temp_password, welcome=True)
-    if delivered:
-        flash_ok(_("Welcome email and PDF manual link sent to %(r)s.", r=new_user.email or new_user.username))
-    else:
-        flash_err(_("The account was created, but its welcome email could not be sent. Retry from the account actions."))
+    wake_email_delivery()
 
     return redirect(_users_return_url())
 
@@ -656,78 +668,36 @@ def users_new():
 @admin_required
 def users_reset_password(user_id: int):
     """
-    Resets the password for a specific user to a randomly generated one.
-    This action is logged via standard application logs.
+    Queue a password-setting link without changing the current password.
     
     Args:
         user_id (int): The primary key of the user to reset.
     """
+    return _queue_user_access(user_id)
+
+
+def _queue_user_access(user_id):
+    """Commit a recoverable email intent while preserving the current password."""
     user = db.get_or_404(User, user_id)
-    new_pwd = generate_temp_password()
-
     try:
-        user.set_password(new_pwd)
+        queue_account_email(user)
         db.session.commit()
-        flash_ok(_('Password reset for %(u)s. New temporary: %(p)s', u=user.username, p=new_pwd))
-    except Exception as exc:
-        db.session.rollback()
-        logger.exception("Error resetting password for %s: %s", user.username, exc)
-        flash_err(_("Could not reset password."))
-
-    return redirect(_users_return_url())
-
-
-def _send_account_email(user, password: str, *, welcome: bool = False):
-    """Deliver account access with a guide link, or report a recoverable failure."""
-    recipient = user.email or user.username
-    if not recipient or '@' not in recipient:
-        return False, "The account has no valid email recipient."
-    base_url = (current_app.config.get('APP_BASE_URL') or '').rstrip('/')
-    login_url = f"{base_url}{url_for('auth.login')}" if base_url else url_for('auth.login', _external=True)
-    try:
-        message = render_credentials_email(user, password, login_url, welcome=welcome)
     except Exception:
-        logger.exception("Could not prepare account email with its required PDF manual link for user %s.", user.id)
-        return False, "Could not prepare the account email or its required PDF manual link."
-    return send_email(to_email=recipient, **message)
+        db.session.rollback()
+        logger.exception("Could not queue an access email for user %s.", user_id)
+        flash_err(_("Could not queue the access email. Please try again."))
+    else:
+        wake_email_delivery()
+        flash_ok(_("The access link and PDF manual are queued for delivery to %(r)s.", r=user.email or user.username))
+    return redirect(_users_return_url())
 
 
 @bp_admin.route('/users/<int:user_id>/send-creds', methods=['POST'])
 @login_required
 @admin_required
 def users_send_creds(user_id: int):
-    """
-    Resets user password and sends the new credentials via email.
-    The recipient language controls the message and PDF manual link.
-    """
-    user = db.get_or_404(User, user_id)
-    recipient = (user.email or user.username)
-
-    if not recipient or '@' not in recipient:
-        flash_err(_("User does not have a valid email."))
-        return redirect(_users_return_url())
-
-    temp_pwd = generate_temp_password()
-    user.set_password(temp_pwd)
-
-    success, error = _send_account_email(user, temp_pwd)
-
-    if success:
-        try:
-            db.session.commit()
-            flash_ok(_("Credentials sent to %(r)s.", r=recipient))
-        except Exception as exc:
-            db.session.rollback()
-            logger.exception("Could not save the new password for %s: %s", user.username, exc)
-            flash_err(_("Could not update credentials."))
-    else:
-        # The password change and email delivery form one logical operation.
-        # Do not lock the account behind a credential the user never received.
-        db.session.rollback()
-        logger.error("Email Delivery Failed to %s: %s", recipient, error)
-        flash_err(_("Could not send email."))
-
-    return redirect(_users_return_url())
+    """Send a password-setting link without invalidating existing credentials."""
+    return _queue_user_access(user_id)
 
 
 @bp_admin.route('/users/<int:user_id>/update', methods=['POST'])

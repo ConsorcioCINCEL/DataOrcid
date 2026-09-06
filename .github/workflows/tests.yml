@@ -17,7 +17,7 @@ jobs:
         env:
           POSTGRES_USER: dataorcid
           POSTGRES_PASSWORD: dataorcid
-          POSTGRES_DB: dataorcid_test
+          POSTGRES_DB: dataorcid_test_reliability
         ports:
           - 5432:5432
         options: >-
@@ -41,9 +41,14 @@ jobs:
         env:
           FLASK_APP: run.py
           ORCID_APP_CONFIG: config/config.toml.example
-          ORCID_DATABASE_URI: postgresql+psycopg://dataorcid:dataorcid@127.0.0.1:5432/dataorcid_test
+          ORCID_DATABASE_URI: postgresql+psycopg://dataorcid:dataorcid@127.0.0.1:5432/dataorcid_test_reliability
         run: |
           flask db upgrade
           flask db check
+      - name: Verify PostgreSQL concurrency and publication
+        env:
+          ORCID_APP_CONFIG: config/config.toml.example
+          DATAORCID_TEST_POSTGRES_URI: postgresql+psycopg://dataorcid:dataorcid@127.0.0.1:5432/dataorcid_test_reliability
+        run: pytest -q tests/test_postgres_reliability.py
       - name: Run test suite
         run: pytest -q

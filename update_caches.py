@@ -1,74 +1,144 @@
-"""Scheduled maintenance wrapper for ORCID cache refresh commands."""
+"""Scheduled end-to-end refresh for ORCID and OpenAlex production data."""
 
-import os
-import sys
-import subprocess
+from __future__ import annotations
+
+import argparse
+import fcntl
 import logging
+import os
+from pathlib import Path
+import subprocess
+import sys
+
 
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
+LOCK_PATH = Path(
+    os.environ.get(
+        "ORCID_REFRESH_LOCK",
+        str(
+            Path(__file__).resolve().parent
+            / "instance"
+            / "cache-refresh.lock"
+        ),
+    )
+)
 
-def main():
-    """Run cache rebuild and profile-name sync through the Flask CLI."""
-    logger.info("Starting automated ORCID synchronization sequence...")
+TASKS = (
+    (
+        "ORCID institutional caches",
+        ("rebuild-caches", "--target", "both"),
+    ),
+    (
+        "OpenAlex works",
+        (
+            "sync-openalex-works",
+            "--system",
+            "--include-all-types",
+        ),
+    ),
+    (
+        "OpenAlex integrity and analytics",
+        ("repair-openalex-integrity",),
+    ),
+)
 
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    venv_python = os.path.join(project_root, "venv", "bin", "python")
-    if not os.path.exists(venv_python):
-        venv_python = os.path.join(project_root, "venv", "Scripts", "python.exe")
-    
-    if not os.path.exists(venv_python):
-        venv_python = sys.executable
-        logger.warning("Virtual Environment not found at expected path. Using: %s", venv_python)
+
+def _python_executable(project_root: Path) -> tuple[Path, bool]:
+    candidates = (
+        project_root / "venv" / "bin" / "python",
+        project_root / "venv" / "Scripts" / "python.exe",
+    )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate, False
+    return Path(sys.executable), True
+
+
+def _acquire_lock():
+    LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    lock_handle = LOCK_PATH.open("a+", encoding="utf-8")
+    try:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        lock_handle.close()
+        return None
+    lock_handle.seek(0)
+    lock_handle.truncate()
+    lock_handle.write(f"{os.getpid()}\n")
+    lock_handle.flush()
+    return lock_handle
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the production refresh, or validate its commands without fetching data."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check", action="store_true",
+        help="Load and validate the scheduled Flask commands without refreshing data.",
+    )
+    options = parser.parse_args(argv)
+    lock_handle = _acquire_lock()
+    if lock_handle is None:
+        logger.warning(
+            "Another ORCID/OpenAlex refresh owns %s; this run will exit.",
+            LOCK_PATH,
+        )
+        return 75
+
+    project_root = Path(__file__).resolve().parent
+    python, using_fallback = _python_executable(project_root)
+    if using_fallback:
+        logger.warning(
+            "Virtual environment not found at the expected path; using %s.",
+            python,
+        )
 
     os.chdir(project_root)
+    environment = os.environ.copy()
+    environment["FLASK_APP"] = "run.py"
+    environment["PYTHONUNBUFFERED"] = "1"
 
-    env_context = os.environ.copy()
-    env_context["FLASK_APP"] = "run.py"
-
-    tasks = [
-        ["rebuild-caches", "--target", "both"],
-        ["sync-researcher-names"]
-    ]
-
-    for task_args in tasks:
-        cmd = [venv_python, "-m", "flask"] + task_args
-        
-        if task_args[0] == "rebuild-caches" and len(sys.argv) > 1:
-            cmd.extend(sys.argv[1:])
-            
-        logger.info("Running command: %s", " ".join(cmd))
-
-        try:
+    logger.info("Checking scheduled commands." if options.check else "Starting automated ORCID → OpenAlex synchronization.")
+    try:
+        for task_name, task_arguments in TASKS:
+            command = [
+                str(python),
+                "-m",
+                "flask",
+                "--app",
+                "run.py",
+                *task_arguments,
+            ]
+            if options.check:
+                command.append("--help")
+            logger.info("Checking task: %s" if options.check else "Starting task: %s", task_name)
             result = subprocess.run(
-                cmd, 
+                command,
                 check=False,
-                capture_output=True,
-                text=True,
-                env=env_context
+                cwd=project_root,
+                env=environment,
             )
+            if result.returncode != 0:
+                logger.error(
+                    "Task %s failed with exit code %d; later tasks were skipped.",
+                    task_name,
+                    result.returncode,
+                )
+                return result.returncode
+            logger.info("Completed task: %s", task_name)
+    finally:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+        lock_handle.close()
 
-            if result.stdout:
-                print(f"\n--- Output of {task_args[0]} ---\n{result.stdout}")
-            
-            if result.stderr:
-                logger.warning("%s generated error output:\n%s", task_args[0], result.stderr)
-
-            if result.returncode == 0:
-                logger.info("Successfully completed task: %s", task_args[0])
-            else:
-                logger.error("Task %s failed with exit code %d.", task_args[0], result.returncode)
-
-        except Exception as exc:
-            logger.exception("A critical exception occurred during %s: %s", task_args[0], exc)
-
-    logger.info("Automated synchronization sequence finished.")
+    logger.info("Scheduled command checks passed; no data refreshed." if options.check else "Automated ORCID → OpenAlex synchronization finished.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

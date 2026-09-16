@@ -2,6 +2,12 @@
   "source": "ROR API v2",
   "source_query": "locations.geonames_details.country_code:CL AND types:education",
   "generated_at": "2026-05-05",
+  "updated_at": "2026-09-16",
+  "coverage_review": {
+    "source": "https://ayudamineduc.cl/sites/default/files/ies_vig_may_26.xlsx",
+    "reviewed_at": "2026-09-16",
+    "note": "Added UFRO, UBO, UDLA and UNIACC after comparison with the MINEDUC directory. ROR and GRID verified against ROR API v2. Empty Ringgold values have not been verified and must not be seeded."
+  },
   "selection_note": "Active Chilean ROR education records whose Spanish or display name identifies a university.",
   "ringgold_validation": {
     "source": "ORCID Public API v3.0 affiliation records",
@@ -9,6 +15,10 @@
     "method": "Each Ringgold ID was matched to a public ORCID affiliation whose disambiguation source is RINGGOLD, then its organization name was checked against the corresponding ROR record and aliases."
   },
   "institutions": [
+    {"name": "Universidad de La Frontera", "display_name_en": "University of La Frontera", "ror_id": "04v0snf24", "grid_id": "grid.412163.3", "ringgold_id": "", "country_code": "CL", "institution_type": "university", "source": "ror"},
+    {"name": "Universidad Bernardo O'Higgins", "display_name_en": "Universidad Bernardo O'Higgins", "ror_id": "00x0xhn70", "grid_id": "grid.440625.1", "ringgold_id": "", "country_code": "CL", "institution_type": "university", "source": "ror"},
+    {"name": "Universidad de Las Américas", "display_name_en": "University of the Americas", "ror_id": "0166e9x11", "grid_id": "grid.441811.9", "ringgold_id": "", "country_code": "CL", "institution_type": "university", "source": "ror"},
+    {"name": "Universidad UNIACC", "display_name_en": "Universidad UNIACC", "ror_id": "01dkyny41", "grid_id": "grid.484659.2", "ringgold_id": "", "country_code": "CL", "institution_type": "university", "source": "ror"},
     {"name": "Pontificia Universidad Católica de Chile", "display_name_en": "Pontificia Universidad Católica de Chile", "ror_id": "04teye511", "grid_id": "grid.7870.8", "ringgold_id": "28033", "country_code": "CL", "institution_type": "university", "source": "ror"},
     {"name": "Pontificia Universidad Católica de Valparaíso", "display_name_en": "Pontificia Universidad Católica de Valparaíso", "ror_id": "02cafbr77", "grid_id": "grid.8170.e", "ringgold_id": "28047", "country_code": "CL", "institution_type": "university", "source": "ror"},
     {"name": "Universidad Academia de Humanismo Cristiano", "display_name_en": "Academy of Christian Humanism University", "ror_id": "03x7msx65", "grid_id": "grid.441788.6", "ringgold_id": "28036", "country_code": "CL", "institution_type": "university", "source": "ror"},

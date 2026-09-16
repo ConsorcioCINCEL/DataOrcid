@@ -40,12 +40,14 @@ class _JsonResponse:
 
 
 class RinggoldDatasetTest(unittest.TestCase):
-    def test_all_bundled_universities_have_unique_validated_ringgold_ids(self):
+    def test_verified_ringgold_ids_remain_unique_when_universities_are_added(self):
         payload = json.loads(DATASET_PATH.read_text(encoding="utf-8"))
         institutions = payload["institutions"]
-        ringgold_ids = [item["ringgold_id"] for item in institutions]
+        ringgold_ids = [item["ringgold_id"] for item in institutions if item["ringgold_id"]]
 
-        self.assertEqual(56, len(institutions))
+        self.assertEqual(60, len(institutions))
+        self.assertEqual(60, len({item["ror_id"] for item in institutions}))
+        self.assertEqual(56, len(ringgold_ids))
         self.assertEqual(56, len(set(ringgold_ids)))
         self.assertEqual("2026-07-14", payload["ringgold_validation"]["validated_at"])
 
@@ -184,7 +186,7 @@ class InstitutionPersistenceTest(unittest.TestCase):
 
     def test_dataset_seed_persists_ringgold_as_verified_identifier(self):
         with self.app.app_context():
-            self.assertEqual(56, seed_chilean_universities())
+            self.assertEqual(60, seed_chilean_universities())
             university = InstitutionRegistry.query.filter_by(ror_id="047gc3g35").one()
             ringgold = InstitutionIdentifier.query.filter_by(
                 institution_id=university.id,
@@ -194,6 +196,24 @@ class InstitutionPersistenceTest(unittest.TestCase):
             self.assertEqual("14655", ringgold.value)
             self.assertTrue(ringgold.is_verified)
             self.assertEqual("orcid-public-api", ringgold.source)
+
+    def test_new_universities_seed_idempotently_without_unverified_ringgold(self):
+        with self.app.app_context():
+            seed_chilean_universities()
+            seed_chilean_universities()
+            for ror, grid in {
+                "04v0snf24": "grid.412163.3",
+                "00x0xhn70": "grid.440625.1",
+                "0166e9x11": "grid.441811.9",
+                "01dkyny41": "grid.484659.2",
+            }.items():
+                institution = InstitutionRegistry.query.filter_by(ror_id=ror).one()
+                self.assertTrue(institution.is_active)
+                identifiers = InstitutionIdentifier.query.filter_by(institution_id=institution.id).all()
+                self.assertEqual({("ror", ror), ("grid", grid)}, {
+                    (item.scheme, item.value) for item in identifiers
+                })
+                self.assertTrue(all(item.is_verified for item in identifiers))
 
     def test_additional_ringgold_seed_only_updates_existing_registry_rows(self):
         with self.app.app_context():

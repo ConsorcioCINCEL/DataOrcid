@@ -22,7 +22,7 @@ migrate = Migrate()
 babel = Babel()
 csrf = CSRFProtect()
 CHILE_TIMEZONE = ZoneInfo("America/Santiago")
-APP_VERSION = "2.1"
+APP_VERSION = "2.2"
 DEFAULT_LANGUAGES = ("en", "es", "fr", "pt", "de")
 LANGUAGE_LABELS = {
     "en": "English",

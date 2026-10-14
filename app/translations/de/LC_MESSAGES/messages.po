@@ -12934,3 +12934,56 @@ msgstr "Gesendet"
 #: app/templates/admin/users.html:267
 msgid "Cancelled"
 msgstr "Abgebrochen"
+
+#: app/templates/oai_pmh/_format_cards.html
+msgid "OAI-ORE resource maps let compatible harvesters download one reusable, openly available PDF per article. Files remain on their source servers."
+msgstr "OAI-ORE-Ressourcenbeschreibungen ermöglichen kompatiblen Harvestern, pro Artikel eine frei zugängliche und nachnutzbare PDF-Datei herunterzuladen. Die Dateien verbleiben auf ihren ursprünglichen Servern."
+
+#: app/templates/help/index.html
+#, python-format
+msgid "Version %(version)s"
+msgstr "Version %(version)s"
+
+#: app/templates/oai_pmh/harvesting_access.html
+msgid "In DSpace-CRIS, use this private base URL as the OAI Provider and choose Simple Dublin Core (oai_dc). Harvest metadata only, or metadata and bitstreams to retrieve eligible PDFs through ore. Start or schedule harvesting in DSpace; no DataORCID sign-in is needed."
+msgstr "Verwenden Sie in DSpace-CRIS diese private Basis-URL als OAI Provider und wählen Sie Simple Dublin Core (oai_dc). Ernten Sie nur Metadaten oder Metadaten und Dateien, um geeignete PDFs über ore abzurufen. Starten oder planen Sie die Ernte in DSpace; eine DataORCID-Anmeldung ist nicht erforderlich."
+
+#: app/templates/help/index.html
+msgid "PDF harvesting with OAI-ORE"
+msgstr "PDF-Harvesting mit OAI-ORE"
+
+#: app/templates/help/index.html
+msgid "The ore format describes up to one openly available, reusable PDF per article. Compatible harvesters download it from its source; files are not embedded in the OAI-PMH XML or hosted by Data ORCID-Chile."
+msgstr "Das Format ore beschreibt höchstens eine frei zugängliche, nachnutzbare PDF-Datei pro Artikel. Kompatible Harvester laden sie von ihrer Quelle herunter; Dateien werden weder in das OAI-PMH-XML eingebettet noch von Data ORCID-Chile gehostet."
+
+#: app/templates/help/index.html
+msgid "In DSpace-CRIS, keep Simple Dublin Core as the descriptive format and choose metadata and bitstream harvesting. DSpace discovers ore automatically from the same provider URL and institutional set."
+msgstr "Behalten Sie in DSpace-CRIS Simple Dublin Core als beschreibendes Format bei und wählen Sie das Harvesting von Metadaten und Dateien. DSpace erkennt ore automatisch über dieselbe Anbieter-URL und dasselbe institutionelle Set."
+
+#: app/templates/help/index.html
+msgid "Only copies marked as open access with a declared cc-by, cc-by-sa, cc0, or public-domain license are offered. Articles without an eligible PDF remain available as metadata; a remote download can still fail."
+msgstr "Es werden nur als Open Access gekennzeichnete Kopien mit einer angegebenen Lizenz cc-by, cc-by-sa, cc0 oder public-domain angeboten. Artikel ohne geeignete PDF-Datei bleiben als Metadaten verfügbar; ein externer Download kann dennoch fehlschlagen."
+
+#: app/templates/help/index.html
+msgid "An Atom resource map listing document URLs, file types, and licenses for compatible harvesters."
+msgstr "Eine Atom-Ressourcenbeschreibung, die Dokument-URLs, Dateitypen und Lizenzen für kompatible Harvester auflistet."
+
+#: app/templates/help/index.html
+msgid "PDF availability and reuse rights depend on the selected source copy."
+msgstr "Die Verfügbarkeit der PDF-Datei und die Nachnutzungsrechte hängen von der ausgewählten Quellkopie ab."
+
+#: app/templates/help/index.html
+msgid "DSpace imports metadata but no PDF"
+msgstr "DSpace importiert Metadaten, aber keine PDF-Datei"
+
+#: app/templates/help/index.html
+msgid "Check that DSpace is configured to harvest metadata and bitstreams and that the ore response contains a PDF link. Articles without an eligible file remain metadata-only; source servers can also reject or interrupt downloads."
+msgstr "Prüfen Sie, ob DSpace für das Harvesting von Metadaten und Dateien konfiguriert ist und die ore-Antwort einen PDF-Link enthält. Artikel ohne geeignete Datei bleiben reine Metadatensätze; Quellserver können Downloads auch ablehnen oder unterbrechen."
+
+#: app/templates/help/index.html
+msgid "OAI-ORE adds resource maps for harvesting reusable, openly available PDFs while preserving metadata-only records when no eligible file exists."
+msgstr "OAI-ORE ergänzt Ressourcenbeschreibungen für das Harvesting frei zugänglicher, nachnutzbarer PDFs und erhält reine Metadatensätze, wenn keine geeignete Datei vorhanden ist."
+
+#: app/templates/help/index.html
+msgid "The OAI-PMH format requested by a harvester, such as oai_dc, oai_openaire, dataorcid, or ore."
+msgstr "Das von einem Harvester angeforderte OAI-PMH-Format, etwa oai_dc, oai_openaire, dataorcid oder ore."

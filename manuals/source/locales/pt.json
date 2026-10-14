@@ -48,7 +48,7 @@
         "Disponível"
       ]
     ],
-    "note": "As capturas mostram a interface da versão 2.1 com dados fictícios de demonstração. Nomes, ORCID iD, DOI, ROR e endereços de exemplo não devem ser usados como registros reais."
+    "note": "As capturas mostram a interface da versão 2.2 com dados fictícios de demonstração. Nomes, ORCID iD, DOI, ROR e endereços de exemplo não devem ser usados como registros reais."
   },
   "login": {
     "titles": "2. Acesso e navegação",
@@ -318,7 +318,7 @@
   "oai-metadata": {
     "titles": "6.7 Formatos e mapeamento de metadados",
     "paragraphs": [
-      "O provedor oferece três formatos: oai_dc, oai_openaire e dataorcid. Os dois primeiros mantêm a estrutura padrão. O editor personaliza apenas o formato dataorcid.",
+      "O provedor oferece oai_dc, oai_openaire, dataorcid e ore. Apenas dataorcid é editável. ORE descreve PDFs abertos e reutilizáveis para coletores compatíveis; não incorpora arquivos no XML.",
       "Com Usuário OAI, selecione um campo do catálogo e adicione-o. Você pode alterar seu nome de destino ou ocultá-lo. Título e identificador são obrigatórios; campos ocultos não são emitidos.",
       "Salvar mapeamento aplica as alterações. Restaurar padrões retorna ao perfil inicial quando o controle está disponível. Usuário pode consultar o mapeamento, mas não editá-lo.",
       "A URL base gerada e os links de teste permitem examinar a resposta do provedor habilitado. Combine o formato necessário com quem recebe os metadados. O mapeamento altera a saída publicada, não os dados originais do ORCID."
@@ -350,7 +350,7 @@
     "paragraphs": [
       "Em Acesso de coleta, Usuário OAI pode cadastrar a URI de cada repositório institucional e gerar uma URL privada para o coletor. Usuário consulta os repositórios e seu estado; as chaves e os controles ficam reservados às contas com permissão de edição OAI.",
       "Digite o endereço HTTP ou HTTPS do repositório sem credenciais, parâmetros de consulta ou fragmento e selecione Gerar URL privada. Copie o endereço completo. A URI identifica o destinatário; a chave aleatória da URL concede acesso independentemente do IP ou do Cloudflare.",
-      "No DSpace-CRIS, configure a URL privada como OAI Provider, escolha Simple Dublin Core (oai_dc) e coleta apenas de metadados. Inicie ou agende a coleta no DSpace. Não é necessário iniciar sessão no DataORCID.",
+      "No DSpace-CRIS, use a URL privada como OAI Provider e Simple Dublin Core (oai_dc). Escolha apenas metadados, ou metadados e arquivos para baixar os PDFs elegíveis por ore. Inicie ou agende a coleta no DSpace.",
       "Após configurar o coletor, ative a restrição a URLs privadas cadastradas e salve o modo de acesso. A URL geral deixará de funcionar. Revogar acesso bloqueia uma URL; gerar uma nova URL invalida a anterior e exige atualizar o coletor."
     ],
     "captions": "Repositório de demonstração e sua URL privada de coleta.",
@@ -360,7 +360,7 @@
     "titles": "7. Central de ajuda",
     "paragraphs": [
       "A central de ajuda fica em Suporte. Inclui busca instantânea e temas sobre primeiros passos, fontes, fluxo de dados, métricas, transferências, dicionário de dados, permissões, integrações, solução de problemas e notas de versão.",
-      "O conteúdo acompanha os fluxos de Usuário e Usuário OAI. Temas e links se ajustam aos módulos habilitados; um módulo desabilitado também não aparece na ajuda ativa.",
+      "As notas da versão 2.2 explicam a coleta de PDFs por OAI-ORE e seus limites de disponibilidade e licença. A ajuda acompanha Usuário e Usuário OAI e mostra apenas temas dos módulos habilitados.",
       "Digite um termo como DOI, exportação ou acesso aberto para localizar explicações. Abra o tema e use os links para voltar à função correspondente. Consulte essa ajuda antes de encaminhar uma dúvida operacional."
     ],
     "captions": "Busca e temas da central de ajuda."

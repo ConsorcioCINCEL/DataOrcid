@@ -77,7 +77,7 @@ class LandingPageTest(unittest.TestCase):
         self.assertIn('lang="fr"', html)
         self.assertIn('lang="pt"', html)
         self.assertIn('lang="de"', html)
-        self.assertIn("landing.css?v=2.1", html)
+        self.assertIn(f"landing.css?v={self.app.config['APP_VERSION']}", html)
         self.assertNotIn("app-sidebar", html)
 
     def test_public_page_is_translated_in_every_supported_language(self):

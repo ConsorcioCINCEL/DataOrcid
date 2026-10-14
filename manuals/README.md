@@ -1,16 +1,16 @@
 # Data ORCID-Chile user manuals
 
-These matching English, Spanish, French, Portuguese, and German editions document **Data ORCID-Chile 2.1**
+These matching English, Spanish, French, Portuguese, and German editions document **Data ORCID-Chile 2.2**
 for **User** and **OAI User** accounts only. Each PDF has 41 US Letter pages,
 33 numbered figures, a linked contents page, and PDF bookmarks.
 
 | Language | Published PDF | Editable text |
 | --- | --- | --- |
-| English | [User manual](dataorcid-chile-user-manual-v2.1-en.pdf) | [Markdown](dataorcid-chile-user-manual-v2.1-en.md) |
-| Español | [Manual de usuario](dataorcid-chile-user-manual-v2.1-es.pdf) | [Markdown](dataorcid-chile-user-manual-v2.1-es.md) |
-| Français | [Manuel d’utilisation](dataorcid-chile-user-manual-v2.1-fr.pdf) | [Markdown](dataorcid-chile-user-manual-v2.1-fr.md) |
-| Português | [Manual do usuário](dataorcid-chile-user-manual-v2.1-pt.pdf) | [Markdown](dataorcid-chile-user-manual-v2.1-pt.md) |
-| Deutsch | [Benutzerhandbuch](dataorcid-chile-user-manual-v2.1-de.pdf) | [Markdown](dataorcid-chile-user-manual-v2.1-de.md) |
+| English | [User manual](dataorcid-chile-user-manual-v2.2-en.pdf) | [Markdown](dataorcid-chile-user-manual-v2.2-en.md) |
+| Español | [Manual de usuario](dataorcid-chile-user-manual-v2.2-es.pdf) | [Markdown](dataorcid-chile-user-manual-v2.2-es.md) |
+| Français | [Manuel d’utilisation](dataorcid-chile-user-manual-v2.2-fr.pdf) | [Markdown](dataorcid-chile-user-manual-v2.2-fr.md) |
+| Português | [Manual do usuário](dataorcid-chile-user-manual-v2.2-pt.pdf) | [Markdown](dataorcid-chile-user-manual-v2.2-pt.md) |
+| Deutsch | [Benutzerhandbuch](dataorcid-chile-user-manual-v2.2-de.pdf) | [Markdown](dataorcid-chile-user-manual-v2.2-de.md) |
 
 All five editions follow the supplied **manual-data-orcid-chile-v1.pdf** reference:
 CINCEL branding, Barlow typography, orange rules and callouts, framed screenshots,
@@ -20,7 +20,7 @@ and contact form are deliberately outside the manual's scope.
 
 New coverage includes background exports, file expiry and cleanup, OAI-PMH
 article selection, metadata mapping, DOI activation, import auditing and undo, private harvesting URLs,
-and help filtered by enabled modules. No administrator or institutional manager
+OAI-ORE PDF harvesting in DSpace, and help filtered by enabled modules. No administrator or institutional manager
 operating instructions are included.
 
 Account welcome emails and password-setting link emails reference these PDFs at
@@ -38,8 +38,8 @@ row so the manual label and account controls remain readable.
 ## Sources and review
 
 - Behavior: application source based on commit `d216e4d`, including the private
-  harvesting access update, version `2.1`, reviewed on
-  September 4, 2026. Primary references are `app/blueprints/`,
+  harvesting access, OAI-ORE, and version `2.2` Help center updates, reviewed on
+  October 14, 2026. Primary references are `app/blueprints/`,
   `app/templates/help/index.html`, `app/templates/oai_pmh/`,
   `app/services/export_jobs.py`, `app/services/module_access.py`, and
   `app/decorators.py`.

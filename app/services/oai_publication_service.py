@@ -2,13 +2,21 @@
 
 from dataclasses import asdict
 import hashlib
+import json
 from xml.etree import ElementTree as ET
 
 from sqlalchemy import func, text
 
 from .. import db
-from ..models import OaiPmhInstitutionConfig, OaiPmhRecordVersion, utc_now
+from ..models import (
+    CanonicalWork,
+    OaiPmhInstitutionConfig,
+    OaiPmhRecordVersion,
+    OpenAlexWorkRawCache,
+    utc_now,
+)
 from .institution_lock import institutional_writer
+from .oai_ore_service import select_ore_files
 
 
 def lock_oai_publication(ror_id, *, shared=False):
@@ -49,6 +57,10 @@ def refresh_oai_publication(ror_id):
         ).all()
     }
     query, included, _ = institutional_work_query(config)
+    query = query.outerjoin(
+        OpenAlexWorkRawCache,
+        OpenAlexWorkRawCache.doi_normalized == CanonicalWork.doi_normalized,
+    ).add_columns(OpenAlexWorkRawCache.raw_json["locations"].label("ore_locations"))
     now = utc_now()
     seen = set()
     events = []
@@ -61,7 +73,8 @@ def refresh_oai_publication(ror_id):
             event_ids.extend(event.id for event in events)
             events.clear()
     for row in query.filter(included.is_(True)).yield_per(500):
-        record = work_from_query_row(row, config)
+        record = work_from_query_row(row[:-1], config)
+        record.ore_files = select_ore_files(row.ore_locations)
         payload = asdict(record)
         # These fields describe processing/review state, not published metadata.
         for key in ("datestamp", "openalex_validation_at", "public_key", "event_id", "is_deleted"):
@@ -69,7 +82,10 @@ def refresh_oai_publication(ror_id):
         metadata = ET.Element("metadata")
         for renderer in (_append_oai_dc_metadata, _append_openaire_metadata, _append_mapped_metadata):
             renderer(metadata, record)
-        digest = hashlib.sha256(ET.tostring(metadata, encoding="utf-8")).hexdigest()
+        # Keep file eligibility inside the immutable publication revision. Changes
+        # to a PDF URL, version or license must also advance the OAI datestamp.
+        ore_payload = json.dumps(record.ore_files, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        digest = hashlib.sha256(ET.tostring(metadata, encoding="utf-8") + b"\0ore:1\0" + ore_payload).hexdigest()
         old = previous.get(record.canonical_key)
         seen.add(record.canonical_key)
         if old and not old.is_deleted and old.content_hash == digest:

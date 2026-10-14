@@ -10,6 +10,7 @@ class HelpCenterTest(unittest.TestCase):
     def setUp(self):
         self.app = create_app({
             "TESTING": True,
+            "APP_VERSION": "2.2",
             "SECRET_KEY": "help-test-secret",
             "SQLALCHEMY_DATABASE_URI": "sqlite://",
             "WTF_CSRF_ENABLED": False,
@@ -95,7 +96,7 @@ class HelpCenterTest(unittest.TestCase):
         contents = [self._help_content(response) for response in responses]
         self.assertTrue(all(content == contents[0] for content in contents[1:]))
         self.assertIn("User and OAI User access", contents[0])
-        self.assertIn("Version 2.1", contents[0])
+        self.assertIn("Version 2.2", contents[0])
         self.assertNotIn('href="/admin/', contents[0])
         self.assertNotIn("Manage accounts and system activity", contents[0])
         self.assertNotIn("Monitor all background jobs", contents[0])
@@ -118,6 +119,8 @@ class HelpCenterTest(unittest.TestCase):
         self.assertNotIn("OpenAlex", content)
         self.assertNotIn("OAI-PMH", content)
         self.assertNotIn("OAI User", content)
+        self.assertNotIn("OAI-ORE", content)
+        self.assertNotIn("DSpace imports metadata but no PDF", content)
         self.assertNotIn('href="/resources"', content)
         self.assertIn("User access and privacy", content)
 
@@ -150,6 +153,58 @@ class HelpCenterTest(unittest.TestCase):
 
         self.assertEqual(403, client.get("/help/").status_code)
         self.assertEqual(403, client.get("/help/topic/getting-started/").status_code)
+
+    def test_release_notes_and_integration_help_explain_ore_and_its_limits(self):
+        client = self._client_for("user@example.test")
+        release = client.get("/help/topic/release-notes/")
+        self.assertEqual(200, release.status_code)
+        content = self._help_content(release)
+        self.assertIn("Version 2.2", content)
+        self.assertIn("OAI-ORE adds resource maps", content)
+        self.assertNotIn("Version 2.1", content)
+        integration = client.get("/help/topic/integrations/")
+        self.assertEqual(200, integration.status_code)
+        content = self._help_content(integration)
+        for term in ("PDF harvesting with OAI-ORE", "Simple Dublin Core", "metadata and bitstream", "cc-by-sa", "metadata-only"):
+            self.assertIn(term, content)
+
+    def test_help_release_heading_follows_the_application_version(self):
+        self.app.config["APP_VERSION"] = "2.3-test"
+        client = self._client_for("user@example.test")
+        response = client.get("/help/topic/release-notes/")
+        self.assertIn("Version 2.3-test", self._help_content(response))
+
+    def test_ore_help_is_translated_in_all_five_languages(self):
+        from pathlib import Path
+        import tempfile
+        from babel.messages.mofile import write_mo
+        from babel.messages.pofile import read_po
+        from app import babel, get_locale
+
+        headings = {
+            "en": ("Version 2.2", "PDF harvesting with OAI-ORE"),
+            "es": ("Versión 2.2", "Recolección de PDF con OAI-ORE"),
+            "fr": ("Version 2.2", "Moissonnage de PDF avec OAI-ORE"),
+            "pt": ("Versão 2.2", "Coleta de PDFs com OAI-ORE"),
+            "de": ("Version 2.2", "PDF-Harvesting mit OAI-ORE"),
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            for language in headings:
+                source = Path(__file__).resolve().parents[1] / f"app/translations/{language}/LC_MESSAGES/messages.po"
+                target = Path(directory) / language / "LC_MESSAGES/messages.mo"
+                target.parent.mkdir(parents=True)
+                with source.open("rb") as handle, target.open("wb") as output:
+                    write_mo(output, read_po(handle, locale=language))
+            self.app.config["BABEL_TRANSLATION_DIRECTORIES"] = directory
+            babel.init_app(self.app, locale_selector=get_locale)
+            client = self._client_for("user@example.test")
+            for language, expected in headings.items():
+                with self.subTest(language=language):
+                    response = client.get(f"/help/topic/release-notes/?lang={language}")
+                    self.assertEqual(200, response.status_code)
+                    content = self._help_content(response)
+                    for heading in expected:
+                        self.assertIn(heading, content)
 
 
 if __name__ == "__main__":

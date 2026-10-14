@@ -1,16 +1,16 @@
-"""Parallel multilingual content for the Data ORCID-Chile 2.1 manuals.
+"""Parallel multilingual content for the Data ORCID-Chile 2.2 manuals.
 
 The audience is limited to User and OAI User. Product behavior is checked
-against the version 2.1 application, including atomic publication and account-access links; the supplied v1 PDF defines style.
+against the version 2.2 application, including OAI-ORE harvesting and account-access links; the supplied v1 PDF defines style.
 """
 
 import json
 from pathlib import Path
 
-SOFTWARE_VERSION = "2.1"
+SOFTWARE_VERSION = "2.2"
 LANGUAGES = ("en", "es", "fr", "pt", "de")
-UPDATED = {"en": "September 2026", "es": "Septiembre de 2026", "fr": "Septembre 2026",
-           "pt": "Setembro de 2026", "de": "September 2026"}
+UPDATED = {"en": "October 2026", "es": "Octubre de 2026", "fr": "Octobre 2026",
+           "pt": "Outubro de 2026", "de": "Oktober 2026"}
 PAGES = []
 
 
@@ -51,8 +51,8 @@ page("purpose", ("1. Propósito y alcance", "1. Purpose and scope"), (
         ["Edit dataorcid mapping", "Read only", "Available"],
         ["Edit own account and password", "Available", "Available"]
     ]), note=(
-        "Las capturas muestran la interfaz de la versión 2.1 con datos ficticios de demostración. Los nombres, ORCID iD, DOI, ROR y direcciones de ejemplo no deben utilizarse como registros reales.",
-        "Screenshots show the version 2.1 interface with fictional demonstration data. Example names, ORCID iDs, DOIs, RORs, and addresses must not be used as real records."), chapter=1)
+        "Las capturas muestran la interfaz de la versión 2.2 con datos ficticios de demostración. Los nombres, ORCID iD, DOI, ROR y direcciones de ejemplo no deben utilizarse como registros reales.",
+        "Screenshots show the version 2.2 interface with fictional demonstration data. Example names, ORCID iDs, DOIs, RORs, and addresses must not be used as real records."), chapter=1)
 
 page("login", ("2. Acceso y navegación", "2. Access and navigation"), (
     ["2.1 Inicio de sesión", "Para ingresar en www.orcid.cl, utiliza el nombre de usuario o correo institucional y la contraseña de tu cuenta. Mantener sesión iniciada es adecuado solamente en un equipo personal o administrado por tu institución.",
@@ -322,11 +322,11 @@ page("oai-articles", ("6.6 Selección de artículos OAI-PMH", "6.6 OAI-PMH artic
            ["Filter and review DOI, title, and affiliations before selecting.", "Apply the action to the intended rows and check their new status.", "Inspect the enabled provider to review the published result."]))
 
 page("oai-metadata", ("6.7 Formatos y mapeo de metadatos", "6.7 Metadata formats and mapping"), (
-    ["El proveedor ofrece tres formatos: oai_dc, oai_openaire y dataorcid. Los dos primeros conservan su estructura estándar. El editor personaliza únicamente el formato dataorcid.",
+    ["El proveedor ofrece oai_dc, oai_openaire, dataorcid y ore. Sólo dataorcid es editable. ORE describe PDF abiertos y reutilizables para recolectores compatibles; no incrusta archivos en el XML.",
      "Con Usuario OAI, selecciona un campo del catálogo y pulsa Agregar campo. Puedes cambiar su nombre de destino u ocultarlo. Título e identificador son obligatorios; los campos ocultos no se emiten.",
      "Guarda el mapeo para aplicar los cambios. Restaurar valores predeterminados vuelve al perfil inicial cuando el control está disponible. Usuario puede consultar el mapeo, pero no editarlo.",
      "La URL base generada y los enlaces de prueba permiten revisar la respuesta del proveedor habilitado. Coordina el formato requerido con quien recibe los metadatos. El mapeo cambia la salida publicada, no los datos originales de ORCID."],
-    ["The provider offers three formats: oai_dc, oai_openaire, and dataorcid. The first two retain their standard structure. The editor customizes only the dataorcid format.",
+    ["The provider offers oai_dc, oai_openaire, dataorcid, and ore. Only dataorcid is editable. ORE describes openly available, reusable PDFs for compatible harvesters; it does not embed files in XML.",
      "With OAI User, select a catalog field and choose Add field. You can change its destination name or hide it. Title and identifier are required; hidden fields are not emitted.",
      "Save mapping applies your changes. Restore defaults returns to the initial profile when the control is available. User can inspect the mapping but cannot edit it.",
      "The generated base URL and trial links let you inspect the enabled provider's response. Coordinate the required format with the metadata recipient. Mapping changes the published output, not the original ORCID data."]),
@@ -357,11 +357,11 @@ page("oai-audit", ("6.9 Auditoría y reversión de cargas", "6.9 Import audit an
 page("oai-access", ("6.10 Acceso de recolección", "6.10 Harvesting access"), (
     ["En Acceso de recolección, Usuario OAI puede registrar la URI de cada repositorio de su institución y generar una URL privada para el recolector. Usuario consulta los repositorios y su estado; las claves y los controles quedan reservados a quienes tienen permiso de edición OAI.",
      "Introduce la dirección HTTP o HTTPS del repositorio, sin credenciales, parámetros ni fragmentos, y pulsa Generar URL privada. Copia la dirección completa. La URI identifica al destinatario; la clave aleatoria de la URL concede el acceso sin depender de la IP o de Cloudflare.",
-     "En DSpace-CRIS, configura la URL privada como OAI Provider, el formato Simple Dublin Core (oai_dc) y la recolección de solo metadatos. Inicia o programa la cosecha en DSpace. No requiere iniciar sesión en DataORCID.",
+     "En DSpace-CRIS, usa la URL privada como OAI Provider y Simple Dublin Core (oai_dc). Elige solo metadatos, o metadatos y archivos para descargar los PDF elegibles mediante ore. Inicia o programa la cosecha en DSpace.",
      "Después de configurar el recolector, activa Permitir recolección solo mediante URL privadas registradas y guarda el modo de acceso. La URL general dejará de funcionar. Revocar acceso bloquea una URL; Generar nueva URL invalida la anterior y exige actualizar el recolector."],
     ["In Harvesting access, OAI User can register each institutional repository URI and generate a private URL for its harvester. User can review repositories and their status; credentials and controls are reserved for accounts with OAI editing permission.",
      "Enter the repository HTTP or HTTPS address without credentials, query parameters, or a fragment, then choose Generate private URL. Copy the complete address. The URI identifies the recipient; the random URL key grants access independently of the IP address or Cloudflare.",
-     "In DSpace-CRIS, configure the private URL as OAI Provider, choose Simple Dublin Core (oai_dc), and harvest metadata only. Start or schedule harvesting in DSpace. No DataORCID sign-in is required.",
+     "In DSpace-CRIS, use the private URL as OAI Provider and Simple Dublin Core (oai_dc). Choose metadata only, or metadata and bitstreams to download eligible PDFs through ore. Start or schedule the harvest in DSpace.",
      "After configuring the harvester, enable Allow harvesting only through registered private URLs and save the access mode. The general URL will stop working. Revoke access blocks one URL; Generate new URL invalidates the old one and requires updating the harvester."]),
     image="oai-access", captions=("Repositorio de demostración con su URL privada de recolección.", "Demonstration repository and its private harvesting URL."),
     note=("Quien conozca una URL privada puede consultar el XML, incluso desde un navegador. Mantenla confidencial. Revocar todas las URL conserva el bloqueo de la URL general mientras el modo restringido esté activo.",
@@ -369,10 +369,10 @@ page("oai-access", ("6.10 Acceso de recolección", "6.10 Harvesting access"), (
 
 page("help", ("7. Centro de ayuda", "7. Help center"), (
     ["El Centro de ayuda se encuentra en Soporte. Incluye búsqueda instantánea y temas sobre primeros pasos, fuentes, flujo de datos, métricas, descargas, diccionario, permisos, integraciones, solución de problemas y notas de versión.",
-     "El contenido acompaña los flujos de Usuario y Usuario OAI. Los temas y enlaces se ajustan a los módulos habilitados; un módulo deshabilitado tampoco aparece documentado dentro de la ayuda activa.",
+     "Las notas de la versión 2.2 explican el soporte OAI-ORE para recolectar PDF y sus límites de disponibilidad y licencia. La ayuda acompaña a Usuario y Usuario OAI y solo muestra temas de los módulos habilitados.",
      "Escribe una palabra como DOI, exportación o acceso abierto para localizar explicaciones. Abre el tema y utiliza sus enlaces para volver a la función correspondiente. Consulta esta ayuda antes de escalar una duda operativa."],
     ["The Help center is under Support. It includes instant search and topics covering first steps, sources, data flow, metrics, downloads, the data dictionary, permissions, integrations, troubleshooting, and release notes.",
-     "Content follows the User and OAI User workflows. Topics and links adapt to enabled modules; a disabled module is also absent from the active help content.",
+     "The version 2.2 notes explain OAI-ORE PDF harvesting and its availability and license limits. Help follows the User and OAI User workflows and only shows topics for enabled modules.",
      "Enter a term such as DOI, export, or open access to locate explanations. Open the topic and use its links to return to the relevant function. Consult this help before escalating an operational question."]),
     image="help", captions=("Buscador y temas del Centro de ayuda.", "Help center search and topics."), chapter=7)
 

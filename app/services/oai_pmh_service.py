@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import re
 import secrets
@@ -25,6 +25,7 @@ from ..models import (
     WorkRecordLink,
     utc_now,
 )
+from .oai_ore_service import ATOM_NS, append_ore_metadata, ore_schema_url
 
 
 OAI_NS = "http://www.openarchives.org/OAI/2.0/"
@@ -119,7 +120,7 @@ DEFAULT_METADATA_MAPPING = {
     for field, target, _group, enabled_by_default, _required in METADATA_FIELD_CATALOG
     if enabled_by_default
 }
-METADATA_PREFIXES = {"oai_dc", "oai_openaire", "dataorcid"}
+METADATA_PREFIXES = {"oai_dc", "oai_openaire", "dataorcid", "ore"}
 MAPPING_TARGET_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.:-]{0,95}$")
 OAI_VERBS = {
     "Identify",
@@ -183,6 +184,7 @@ class InstitutionalWork:
     affiliations: list[dict]
     is_deleted: bool = False
     event_id: int = 0
+    ore_files: list[dict] = field(default_factory=list)
 
     @property
     def displayed_affiliations(self) -> list[dict]:
@@ -460,9 +462,9 @@ def build_oai_response(
         elif verb == "ListSets":
             _build_sets(root, config, params)
         elif verb == "GetRecord":
-            _build_get_record(root, config, params)
+            _build_get_record(root, config, params, base_url)
         else:
-            _build_record_list(root, config, params, verb)
+            _build_record_list(root, config, params, verb, base_url)
     except OaiProtocolError as exc:
         if exc.code in {"badVerb", "badArgument"}:
             request_element.attrib.clear()
@@ -472,6 +474,19 @@ def build_oai_response(
     declaration_end = payload.find(b"?>") + 2
     stylesheet = f'\n<?xml-stylesheet type="text/xsl" href="{stylesheet_url}"?>'.encode("utf-8")
     return payload[:declaration_end] + stylesheet + payload[declaration_end:]
+
+
+def build_ore_resource_map(config, canonical_key: str, base_url: str) -> bytes:
+    """Serve the same published ORE entry without the OAI-PMH envelope."""
+    from .oai_publication_service import ensure_oai_publication, lock_oai_publication
+    ensure_oai_publication(config)
+    lock_oai_publication(config.ror_id, shared=True)
+    record = _provider_record(config, f"oai:dataorcid-chile:{config.public_key}:{canonical_key}")
+    if record.is_deleted:
+        raise OaiProtocolError("idDoesNotExist", "The requested identifier does not exist.")
+    metadata = ET.Element("metadata")
+    append_ore_metadata(metadata, record, base_url)
+    return ET.tostring(metadata[0], encoding="utf-8", xml_declaration=True)
 
 
 def oai_repository_summaries(allowed_rors: list[str] | None = None) -> list[dict]:
@@ -600,7 +615,12 @@ def _validate_request(params, request_element: ET.Element) -> str:
         if key not in {"verb", "resumptionToken"} and values[0] == "":
             raise OaiProtocolError("badArgument", "Empty OAI-PMH arguments are not allowed.")
         if key != "verb" and key in request_attributes:
-            request_element.set(key, values[0])
+            value = values[0]
+            if key in {"from", "until"}:
+                # Echo the effective OAI precision, including for clients that
+                # send fractional seconds as a compatibility extension.
+                _, value = _optional_datestamp(value, lower=key == "from")
+            request_element.set(key, value)
 
     allowed = {
         "Identify": {"verb"},
@@ -649,6 +669,7 @@ def _build_metadata_formats(root, config, params, base_url: str) -> None:
         ("oai_dc", OAI_DC_SCHEMA, OAI_DC_NS),
         ("oai_openaire", OAIRE_SCHEMA, OAIRE_NS),
         ("dataorcid", custom_schema, MAPPED_NS),
+        ("ore", ore_schema_url(base_url), ATOM_NS),
     ):
         metadata_format = ET.SubElement(formats, _oai("metadataFormat"))
         ET.SubElement(metadata_format, _oai("metadataPrefix")).text = prefix
@@ -668,7 +689,7 @@ def _build_sets(root, config, params) -> None:
     ET.SubElement(openaire_set, _oai("setName")).text = "OpenAIRE 4"
 
 
-def _build_get_record(root, config, params) -> None:
+def _build_get_record(root, config, params, base_url: str) -> None:
     identifier = params.get("identifier")
     prefix = params.get("metadataPrefix")
     if not identifier or not prefix:
@@ -677,10 +698,10 @@ def _build_get_record(root, config, params) -> None:
         raise OaiProtocolError("cannotDisseminateFormat", "The requested metadata format is not available.")
     record = _provider_record(config, identifier)
     get_record = ET.SubElement(root, _oai("GetRecord"))
-    _append_record(get_record, record, metadata_prefix=prefix)
+    _append_record(get_record, record, metadata_prefix=prefix, base_url=base_url)
 
 
-def _build_record_list(root, config, params, verb: str) -> None:
+def _build_record_list(root, config, params, verb: str, base_url: str) -> None:
     from ..models import OaiPmhRecordVersion
     from .oai_publication_service import ensure_oai_publication, published_record_query, record_from_publication
     ensure_oai_publication(config)
@@ -778,7 +799,7 @@ def _build_record_list(root, config, params, verb: str) -> None:
     container = ET.SubElement(root, _oai(verb))
     for record in page:
         if verb == "ListRecords":
-            _append_record(container, record, metadata_prefix=metadata_prefix)
+            _append_record(container, record, metadata_prefix=metadata_prefix, base_url=base_url)
         else:
             _append_header(container, record)
 
@@ -806,7 +827,7 @@ def _build_record_list(root, config, params, verb: str) -> None:
             token_element.text = _token_serializer().dumps(next_state)
 
 
-def _append_record(parent, record: InstitutionalWork, metadata_prefix: str) -> None:
+def _append_record(parent, record: InstitutionalWork, metadata_prefix: str, base_url: str) -> None:
     record_element = ET.SubElement(parent, _oai("record"))
     _append_header(record_element, record)
     if record.is_deleted:
@@ -816,6 +837,8 @@ def _append_record(parent, record: InstitutionalWork, metadata_prefix: str) -> N
         _append_oai_dc_metadata(metadata_element, record)
     elif metadata_prefix == "oai_openaire":
         _append_openaire_metadata(metadata_element, record)
+    elif metadata_prefix == "ore":
+        append_ore_metadata(metadata_element, record, base_url)
     else:
         _append_mapped_metadata(metadata_element, record)
 
@@ -1199,20 +1222,28 @@ def _optional_datestamp(value: str | None, *, lower: bool):
         parsed, granularity = _parse_datestamp(value)
     except ValueError as exc:
         raise OaiProtocolError("badArgument", "The request contains an invalid datestamp.") from exc
+    # Compare granularity and persist token bounds after normalization, so
+    # standard, microsecond and nanosecond inputs describe the same interval.
+    normalized = value[:19] + "Z" if granularity == SECOND_GRANULARITY else value
     if granularity == DAY_GRANULARITY and not lower:
         parsed = parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
     elif granularity == SECOND_GRANULARITY and not lower:
         # Database timestamps may carry microseconds while OAI-PMH exposes
         # second-level granularity. Include the complete requested second.
         parsed = parsed.replace(microsecond=999999)
-    return parsed, value
+    return parsed, normalized
 
 
 def _parse_datestamp(value: str) -> tuple[datetime, str]:
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value or ""):
         return datetime.strptime(value, "%Y-%m-%d"), DAY_GRANULARITY
-    if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value or ""):
-        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ"), SECOND_GRANULARITY
+    second_match = re.fullmatch(
+        r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.[0-9]+)?Z", value or ""
+    )
+    if second_match:
+        # DSpace-CRIS may send fractions with up to nanosecond precision.
+        # Discard the fraction before parsing; OAI filters use whole seconds.
+        return datetime.strptime(second_match.group(1), "%Y-%m-%dT%H:%M:%S"), SECOND_GRANULARITY
     raise ValueError("invalid OAI-PMH datestamp")
 
 

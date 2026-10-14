@@ -100,6 +100,7 @@
           <a href="{{ records_url }}" target="_blank" rel="noopener"><i class="fas fa-list mr-1" aria-hidden="true"></i>oai_dc</a>
           <a href="{{ openaire_url }}" target="_blank" rel="noopener"><i class="fas fa-globe-americas mr-1" aria-hidden="true"></i>oai_openaire</a>
           <a href="{{ mapped_url }}" target="_blank" rel="noopener"><i class="fas fa-random mr-1" aria-hidden="true"></i>dataorcid</a>
+          <a href="{{ ore_url }}" target="_blank" rel="noopener"><i class="fas fa-file-pdf mr-1" aria-hidden="true"></i>ore</a>
         </div>
         {% elif not oai_config or not oai_config.provider_enabled %}
         <div class="alert alert-warning mb-0"><i class="fas fa-info-circle mr-2" aria-hidden="true"></i>{{ _('Save and enable the provider before testing this URL.') }}</div>
@@ -113,7 +114,7 @@
         <div class="alert alert-light border mt-3 mb-0">
           <strong>{{ _('Institutional set') }}:</strong> <code>{% if oai_config %}institution:{{ oai_config.public_key }}{% else %}{{ _('Generated after saving') }}{% endif %}</code><br>
           <strong>{{ _('OpenAIRE set') }}:</strong> <code>openaire</code><br>
-          <strong>{{ _('Metadata prefixes') }}:</strong> <code>oai_dc</code>, <code>oai_openaire</code>, <code>dataorcid</code>
+          <strong>{{ _('Metadata prefixes') }}:</strong> <code>oai_dc</code>, <code>oai_openaire</code>, <code>dataorcid</code>, <code>ore</code>
         </div>
       </div>
     </section>
@@ -132,7 +133,8 @@
     {{ format_grid({
       'oai_dc': records_url if oai_config and oai_config.provider_enabled and not oai_config.harvester_access_restricted else none,
       'oai_openaire': openaire_url if oai_config and oai_config.provider_enabled and not oai_config.harvester_access_restricted else none,
-      'dataorcid': mapped_url if oai_config and oai_config.provider_enabled and not oai_config.harvester_access_restricted else none
+      'dataorcid': mapped_url if oai_config and oai_config.provider_enabled and not oai_config.harvester_access_restricted else none,
+      'ore': ore_url if oai_config and oai_config.provider_enabled and not oai_config.harvester_access_restricted else none
     }) }}
   </div>
 </section>

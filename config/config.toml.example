@@ -53,7 +53,7 @@ datasets_dir = "app/datasets"
 # ------------------------------------------------------------
 [app]
 base_url = "http://localhost:5000"
-version = "2.1"
+version = "2.2"
 environment = "development"
 
 [proxy]

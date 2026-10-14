@@ -374,7 +374,7 @@ FIGURE 26. Article selection with OAI User actions.
 
 ## 6.7 Metadata formats and mapping
 
-The provider offers three formats: oai_dc, oai_openaire, and dataorcid. The first two retain their standard structure. The editor customizes only the dataorcid format.
+The provider offers oai_dc, oai_openaire, dataorcid, and ore. Only dataorcid is editable. ORE describes openly available, reusable PDFs for compatible harvesters; it does not embed files in XML.
 
 With OAI User, select a catalog field and choose Add field. You can change its destination name or hide it. Title and identifier are required; hidden fields are not emitted.
 

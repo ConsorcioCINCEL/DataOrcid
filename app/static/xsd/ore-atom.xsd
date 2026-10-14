@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:atom="http://www.w3.org/2005/Atom"
+           targetNamespace="http://www.w3.org/2005/Atom"
+           elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:documentation>
+      Data ORCID-Chile's Atom entry profile for OAI-ORE resource maps.
+      ORE relationships and DSpace bundle annotations are checked by the provider tests.
+    </xs:documentation>
+  </xs:annotation>
+  <xs:complexType name="personType">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="linkType">
+    <xs:attribute name="rel" type="xs:anyURI" use="required"/>
+    <xs:attribute name="href" type="xs:anyURI" use="required"/>
+    <xs:attribute name="type" type="xs:string"/>
+    <xs:attribute name="title" type="xs:string"/>
+  </xs:complexType>
+  <xs:element name="entry">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="id" type="xs:anyURI"/>
+        <xs:element name="title" type="xs:string"/>
+        <xs:element name="updated" type="xs:dateTime"/>
+        <xs:element name="published" type="xs:dateTime"/>
+        <xs:element name="author" type="atom:personType" minOccurs="1" maxOccurs="unbounded"/>
+        <xs:element name="source">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="author" type="atom:personType"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="link" type="atom:linkType" minOccurs="3" maxOccurs="3"/>
+        <xs:element name="category">
+          <xs:complexType>
+            <xs:attribute name="scheme" type="xs:anyURI" use="required"/>
+            <xs:attribute name="term" type="xs:anyURI" use="required"/>
+            <xs:attribute name="label" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="link" type="atom:linkType" minOccurs="0" maxOccurs="1"/>
+        <xs:any namespace="##other" processContents="lax" minOccurs="1" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -16,7 +16,7 @@
   {% if session.get('logged_in') and session.get('is_admin') %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
   {% endif %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css', v=config.get('APP_VERSION', '2.1')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css', v=config.get('APP_VERSION', '2.2')) }}">
   
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
   
@@ -191,7 +191,7 @@
 
   <footer class="main-footer text-sm app-footer">
     <div class="float-right d-none d-sm-block">
-        <b>{{ _('Version') }}</b> {{ config.get('APP_VERSION', '2.1') }}
+        <b>{{ _('Version') }}</b> {{ config.get('APP_VERSION', '2.2') }}
     </div>
     <strong>&copy; 2026 <a href="{{ url_for('main.index') }}">Data ORCID-Chile</a>.</strong>
     
@@ -310,7 +310,7 @@
 {% block scripts %}{% endblock %}
 <script src="{{ url_for('static', filename='js/chart_exports.js') }}"></script>
 {% if logged_in %}
-<script src="{{ url_for('static', filename='js/background_exports.js', v=config.get('APP_VERSION', '2.1')) }}"></script>
+<script src="{{ url_for('static', filename='js/background_exports.js', v=config.get('APP_VERSION', '2.2')) }}"></script>
 {% endif %}
 </body>
 </html>

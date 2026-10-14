@@ -1,4 +1,4 @@
-# Data ORCID-Chile 2.1 🇨🇱
+# Data ORCID-Chile 2.2 🇨🇱
 
 **DataOrcid-Chile** is a scientific production management and monitoring platform designed specifically to meet the needs of the **Chilean Consortium**. This project was developed by **Gastón Olivares** at **Cincel** to enhance the visibility and tracking of research records linked to Chilean institutions.
 
@@ -6,7 +6,12 @@ The platform allows institutions to synchronize, cache, and export data (Researc
 
 Ringgold identifiers in the bundled Chilean university dataset were validated against public ORCID affiliation records whose disambiguation source is `RINGGOLD`. ROR remains the canonical institutional identifier because ORCID no longer updates its Ringgold registry data.
 
-## Version 2.1 highlights
+## Version 2.2 highlights
+
+- OAI-ORE resource maps for harvesting openly available, reusable PDFs in
+  compatible repositories, with metadata-only records retained when no eligible
+  file exists. The Help center and five-language manuals explain DSpace setup
+  and availability and license limits.
 
 - Durable synchronization and export jobs with progress, recovery, retention,
   per-user cleanup, and reuse of equivalent completed exports.
@@ -337,7 +342,7 @@ generated endpoint and receives only the articles authorized for that ROR.
 - Administrator and manager inventory: `/admin/oai-pmh`
 - Public provider per institution: `/oai/<public_key>`
 - Published formats: unqualified Dublin Core (`oai_dc`), OpenAIRE 4
-  (`oai_openaire`), and an institution-mapped profile (`dataorcid`)
+  (`oai_openaire`), an institution-mapped profile (`dataorcid`), and OAI-ORE (`ore`)
 - Verbs: `Identify`, `ListMetadataFormats`, `ListSets`, `GetRecord`,
   `ListIdentifiers`, and `ListRecords`
 - Data source: canonical, deduplicated DataORCID-Chile works
@@ -425,7 +430,16 @@ Provider examples:
 /oai/<public_key>?verb=ListRecords&metadataPrefix=oai_dc
 /oai/<public_key>?verb=ListRecords&metadataPrefix=oai_openaire
 /oai/<public_key>?verb=ListRecords&metadataPrefix=dataorcid
+/oai/<public_key>?verb=ListRecords&metadataPrefix=ore
 ```
+
+For PDF imports, keep Simple Dublin Core as the descriptive metadata format and
+select DSpace's metadata-and-bitstreams harvesting mode. The `ore` format
+describes one reusable, openly available PDF per article when the cached
+OpenAlex locations provide one; files are downloaded by the receiving repository,
+not embedded in XML or hosted by Data ORCID-Chile. See the
+[OAI-ORE guide](docs/oai-ore.md) for eligibility, private URLs, publication refresh,
+and upgrade/testing instructions.
 
 ---
 

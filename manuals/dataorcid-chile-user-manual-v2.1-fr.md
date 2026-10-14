@@ -374,7 +374,7 @@ FIGURE 26. Sélection d’articles avec les actions du profil Utilisateur OAI.
 
 ## 6.7 Formats et correspondance des métadonnées
 
-Le fournisseur propose trois formats : oai_dc, oai_openaire et dataorcid. Les deux premiers conservent leur structure standard. L’éditeur personnalise uniquement le format dataorcid.
+Le fournisseur propose oai_dc, oai_openaire, dataorcid et ore. Seul dataorcid est modifiable. ORE décrit des PDF ouverts et réutilisables pour les moissonneurs compatibles ; il n’intègre pas les fichiers au XML.
 
 Avec Utilisateur OAI, sélectionnez un champ du catalogue puis ajoutez-le. Vous pouvez changer son nom de destination ou le masquer. Le titre et l’identifiant sont obligatoires ; les champs masqués ne sont pas transmis.
 

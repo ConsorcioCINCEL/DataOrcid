@@ -6,6 +6,8 @@ from pathlib import Path
 from flask import current_app, render_template, url_for
 from flask_babel import _, force_locale, get_locale
 
+from .. import APP_VERSION
+
 USER_MANUAL_LANGUAGES = ("en", "es", "fr", "pt", "de")
 
 
@@ -19,7 +21,7 @@ def user_manual_path(language: str) -> Path:
     """Resolve only published language editions, never arbitrary documentation files."""
     if language not in USER_MANUAL_LANGUAGES:
         raise ValueError("Unsupported user manual language.")
-    version = current_app.config.get("APP_VERSION", "2.1")
+    version = current_app.config.get("APP_VERSION", APP_VERSION)
     directory = Path(current_app.config.get("USER_MANUAL_DIRECTORY") or Path(__file__).resolve().parents[2] / "manuals")
     path = directory / f"dataorcid-chile-user-manual-v{version}-{language}.pdf"
     with path.open("rb") as source:

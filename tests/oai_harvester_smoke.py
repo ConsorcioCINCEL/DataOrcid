@@ -23,6 +23,7 @@ from werkzeug.serving import make_server
 
 from app import db
 from app.models import OaiPmhHarvester, OaiPmhInstitutionConfig
+from app.services.oai_ore_service import ATOM_NS, ORE_NS
 from test_oai_pmh import OaiPmhModuleTest
 
 
@@ -69,6 +70,10 @@ def main():
             item = OaiPmhHarvester.query.filter_by(config_id=config.id).one()
             item_id, key = item.id, item.access_key
             db.session.commit()
+        fixture._set_ore_locations([{
+            "pdf_url": "https://documents.example.org/article.pdf", "is_oa": True,
+            "license": "cc-by", "version": "publishedVersion",
+        }])
         public = base + "/oai/" + "a" * 48
         private = public + "/" + key
         assert Sickle(public, timeout=10).Identify().repositoryName
@@ -80,7 +85,7 @@ def main():
 
         client = Sickle(private, timeout=10)
         assert client.Identify().baseURL == private
-        assert {item.metadataPrefix for item in client.ListMetadataFormats()} == {"oai_dc", "oai_openaire", "dataorcid"}
+        assert {item.metadataPrefix for item in client.ListMetadataFormats()} == {"oai_dc", "oai_openaire", "dataorcid", "ore"}
         sets = list(client.ListSets())
         assert sets
         records = list(client.ListRecords(metadataPrefix="oai_dc"))
@@ -91,6 +96,16 @@ def main():
         passed("All six OAI verbs and automatic pagination", records=2, page_size=1)
         assert len(list(Sickle(private, http_method="POST", timeout=10).ListRecords(metadataPrefix="oai_dc"))) == 2
         passed("Form POST harvesting without a DataORCID session", records=2)
+
+        ore_records = list(client.ListRecords(metadataPrefix="ore"))
+        assert len(ore_records) == 2
+        entry = ore_records[0].xml.find(f".//{{{ATOM_NS}}}entry")
+        files = entry.findall(f"{{{ATOM_NS}}}link[@rel='{ORE_NS}aggregates']")
+        assert len(files) == 1 and files[0].get("type") == "application/pdf"
+        resource_url = entry.find(f"{{{ATOM_NS}}}link[@rel='self']").get("href")
+        resource = requests.get(resource_url, timeout=10)
+        assert resource.status_code == 200 and resource.headers["Content-Type"].startswith("application/atom+xml")
+        passed("ORE discovery, pagination and private standalone resource maps", records=2, files=1)
 
         denied(base + "/oai/" + "b" * 48 + "/" + key, 404)
         assert len(list(Sickle(base + "/oai/" + "b" * 48, timeout=10).ListRecords(metadataPrefix="oai_dc"))) == 1
@@ -112,6 +127,7 @@ def main():
         else:
             raise AssertionError("Revoked harvester retrieved the next page")
         denied(public, 403)
+        assert requests.get(resource_url, timeout=10).status_code == 404
         passed("Revocation blocks the next page and keeps the general URL closed", http_status=404)
         change(f"/oai-pmh/access/{item_id}/", action="rotate")
         with fixture.app.app_context():

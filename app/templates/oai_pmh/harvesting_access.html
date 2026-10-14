@@ -68,10 +68,10 @@
       </div>
       <div class="oai-example-links mb-3">
         <a href="{{ harvester_urls[harvester.id] }}?verb=Identify" target="_blank" rel="noopener noreferrer">Identify</a>
-        {% for prefix in ['oai_dc', 'oai_openaire', 'dataorcid'] %}<a href="{{ harvester_urls[harvester.id] }}?verb=ListRecords&amp;metadataPrefix={{ prefix }}" target="_blank" rel="noopener noreferrer">{{ prefix }}</a>{% endfor %}
+        {% for prefix in ['oai_dc', 'oai_openaire', 'dataorcid', 'ore'] %}<a href="{{ harvester_urls[harvester.id] }}?verb=ListRecords&amp;metadataPrefix={{ prefix }}" target="_blank" rel="noopener noreferrer">{{ prefix }}</a>{% endfor %}
       </div>
       {% endif %}
-      {% if harvester.is_enabled %}<p class="text-muted small">{{ _('In DSpace-CRIS, use this private base URL as the OAI Provider, choose Simple Dublin Core (oai_dc), and harvest metadata only. Start or schedule harvesting in DSpace; no DataORCID sign-in is needed.') }}</p>{% endif %}
+      {% if harvester.is_enabled %}<p class="text-muted small">{{ _('In DSpace-CRIS, use this private base URL as the OAI Provider and choose Simple Dublin Core (oai_dc). Harvest metadata only, or metadata and bitstreams to retrieve eligible PDFs through ore. Start or schedule harvesting in DSpace; no DataORCID sign-in is needed.') }}</p>{% endif %}
       <div class="oai-harvester-actions">
         {% for action, label in [('rotate', _('Generate new URL')), ('revoke', _('Revoke access')), ('delete', _('Remove repository'))] %}
         {% if action != 'revoke' or harvester.is_enabled %}

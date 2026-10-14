@@ -8,7 +8,8 @@
   xmlns:datacite="http://datacite.org/schema/kernel-4"
   xmlns:oaire="http://namespace.openaire.eu/schema/oaire/"
   xmlns:mapped="https://dataorcid.cl/ns/mapped-metadata/1.0/"
-  exclude-result-prefixes="oai oai_dc dc datacite oaire mapped">
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  exclude-result-prefixes="oai oai_dc dc datacite oaire mapped atom">
   <xsl:output method="html" encoding="UTF-8" indent="yes" doctype-system="about:legacy-compat"/>
   <xsl:variable name="base" select="normalize-space(/oai:OAI-PMH/oai:request)"/>
 
@@ -24,7 +25,7 @@
         </style>
       </head>
       <body>
-        <header class="brandbar"><div class="brandbar-inner"><div class="brand"><span class="brand-mark">DO</span><span><strong>Data ORCID-Chile</strong><small>{{ _('Institutional research interoperability') }}</small></span></div><span class="protocol-badge">OAI-PMH 2.0 · oai_dc</span></div></header>
+        <header class="brandbar"><div class="brandbar-inner"><div class="brand"><span class="brand-mark">DO</span><span><strong>Data ORCID-Chile</strong><small>{{ _('Institutional research interoperability') }}</small></span></div><span class="protocol-badge">OAI-PMH 2.0<xsl:if test="/oai:OAI-PMH/oai:request/@metadataPrefix"> · <xsl:value-of select="/oai:OAI-PMH/oai:request/@metadataPrefix"/></xsl:if></span></div></header>
         <main class="shell">
           <section class="hero">
             <div><span class="eyebrow">{{ _('Repository for external harvesting') }}</span><h1><xsl:choose><xsl:when test="//oai:repositoryName"><xsl:value-of select="//oai:repositoryName"/></xsl:when><xsl:otherwise>{{ _('OAI-PMH provider') }}</xsl:otherwise></xsl:choose></h1><p>{{ _('Metadata published by DataORCID-Chile for DSpace and other compatible harvesters.') }}</p></div>
@@ -38,6 +39,7 @@
             <a href="{$base}?verb=ListRecords&amp;metadataPrefix=oai_dc">{{ _('Records · DC') }}</a>
             <a href="{$base}?verb=ListRecords&amp;metadataPrefix=oai_openaire">{{ _('Records · OpenAIRE') }}</a>
             <a href="{$base}?verb=ListRecords&amp;metadataPrefix=dataorcid">{{ _('Records · Mapped') }}</a>
+            <a href="{$base}?verb=ListRecords&amp;metadataPrefix=ore">ORE · PDF</a>
           </nav>
 
           <xsl:apply-templates select="/oai:OAI-PMH/oai:error"/>
@@ -100,6 +102,14 @@
       </xsl:if>
       <xsl:if test="oai:metadata/mapped:record">
         <dl class="metadata"><xsl:for-each select="oai:metadata/mapped:record/mapped:field"><xsl:call-template name="metadata-field"><xsl:with-param name="label" select="@name"/></xsl:call-template></xsl:for-each></dl>
+      </xsl:if>
+      <xsl:if test="oai:metadata/atom:entry">
+        <dl class="metadata">
+          <xsl:for-each select="oai:metadata/atom:entry/atom:title"><xsl:call-template name="metadata-field"><xsl:with-param name="label" select="local-name()"/></xsl:call-template></xsl:for-each>
+          <xsl:for-each select="oai:metadata/atom:entry/atom:link[@rel='http://www.openarchives.org/ore/terms/aggregates']">
+            <div class="field"><dt>PDF</dt><dd><a href="{@href}" target="_blank" rel="noopener noreferrer"><xsl:value-of select="@title"/></a></dd></div>
+          </xsl:for-each>
+        </dl>
       </xsl:if>
     </article>
   </xsl:template>

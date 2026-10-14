@@ -374,7 +374,7 @@ ABBILDUNG 26. Artikelauswahl mit den Aktionen für OAI-Nutzer.
 
 ## 6.7 Metadatenformate und Zuordnung
 
-Der Anbieter stellt drei Formate bereit: oai_dc, oai_openaire und dataorcid. Die ersten beiden behalten ihre Standardstruktur. Der Editor passt ausschließlich das Format dataorcid an.
+Der Anbieter stellt oai_dc, oai_openaire, dataorcid und ore bereit. Nur dataorcid ist bearbeitbar. ORE beschreibt frei zugängliche, nachnutzbare PDFs für kompatible Harvester; Dateien werden nicht in XML eingebettet.
 
 Wählen Sie als OAI-Nutzer ein Katalogfeld und fügen Sie es hinzu. Sie können dessen Zielnamen ändern oder es ausblenden. Titel und Kennung sind Pflichtfelder; ausgeblendete Felder werden nicht ausgegeben.
 

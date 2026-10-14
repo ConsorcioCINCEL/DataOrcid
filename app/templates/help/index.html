@@ -69,7 +69,7 @@
         {% if 'roles-governance' in available_topics %}{{ topic_link('roles-governance', 'fas fa-user-shield', _('User access and privacy')) }}{% endif %}
         {% if 'architecture' in available_topics %}{{ topic_link('architecture', 'fas fa-layer-group', _('How the platform works')) }}{% endif %}
         {% if 'troubleshooting' in available_topics %}{{ topic_link('troubleshooting', 'fas fa-life-ring', _('Troubleshooting')) }}{% endif %}
-        {% if 'release-notes' in available_topics %}{{ topic_link('release-notes', 'fas fa-code-branch', _('Version 2.1')) }}{% endif %}
+        {% if 'release-notes' in available_topics %}{{ topic_link('release-notes', 'fas fa-code-branch', _('Version %(version)s', version=config.get('APP_VERSION', '2.2'))) }}{% endif %}
       </nav>
     </aside>
 
@@ -192,6 +192,16 @@
           <article><h3>{{ _('User access in OAI-PMH') }}</h3><p>{{ _('A User can review repository information, articles, mappings, and import history, and export the article audit without changing publication content.') }}</p></article>
           <article><h3>{{ _('OAI User access in OAI-PMH') }}</h3><p>{{ _('An OAI User can also include or exclude articles, import DOI decisions with the provided template, undo the latest active import, and customize the DataORCID field mapping.') }}</p></article><article><h3>{{ _('Harvesting access') }}</h3><p>{{ _('An OAI User can register repository URIs, copy a private URL for each harvester, revoke or replace it, and block the general URL. Anyone with a private URL can read the OAI metadata, including in a browser; keep it confidential.') }}</p></article>{% endif %}
         </div>
+        {% if module_enabled('oai_pmh') %}
+        <div class="help-callout is-info">
+          <i class="fas fa-file-pdf" aria-hidden="true"></i>
+          <div><strong>{{ _('PDF harvesting with OAI-ORE') }}</strong>
+            <p>{{ _('The ore format describes up to one openly available, reusable PDF per article. Compatible harvesters download it from its source; files are not embedded in the OAI-PMH XML or hosted by Data ORCID-Chile.') }}</p>
+            <p>{{ _('In DSpace-CRIS, keep Simple Dublin Core as the descriptive format and choose metadata and bitstream harvesting. DSpace discovers ore automatically from the same provider URL and institutional set.') }}</p>
+            <p>{{ _('Only copies marked as open access with a declared cc-by, cc-by-sa, cc0, or public-domain license are offered. Articles without an eligible PDF remain available as metadata; a remote download can still fail.') }}</p>
+          </div>
+        </div>
+        {% endif %}
         <div class="help-link-grid">
           {% if module_enabled('api_read') %}<a href="{{ url_for('main.integration_pull') }}" class="help-link-card"><i class="fas fa-code" aria-hidden="true"></i><span><strong>{{ _('Read from the API') }}</strong><small>{{ _('Open the public-data request guide.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
           {% if module_enabled('orcid_write') %}<a href="{{ url_for('main.integration_guide') }}" class="help-link-card"><i class="fas fa-terminal" aria-hidden="true"></i><span><strong>{{ _('Write to ORCID') }}</strong><small>{{ _('Open examples and integration downloads.') }}</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
@@ -215,7 +225,8 @@
           <tr><th>{{ _('Diamond Open Access') }}</th><td>{{ _('The native OpenAlex category for an article published in a fully open journal without publication fees for authors.') }}</td><td>{{ _('The platform does not infer this status from another directory.') }}</td></tr>
           <tr><th>{{ _('Green Open Access') }}</th><td>{{ _('The native OpenAlex category for a toll-access publisher page with a free copy in a repository.') }}</td><td>{{ _('Availability can change when source records are refreshed.') }}</td></tr>{% endif %}
           {% if module_enabled('oai_pmh') %}<tr><th>{{ _('OAI-PMH publication decision') }}</th><td>{{ _('The effective inclusion or exclusion of a canonical article in the institutional repository.') }}</td><td>{{ _('A specific article decision can override the repository default and remains institution-scoped.') }}</td></tr>
-          <tr><th>{{ _('Metadata prefix') }}</th><td>{{ _('The OAI-PMH format requested by a harvester, such as oai_dc, oai_openaire, or dataorcid.') }}</td><td>{{ _('Available fields depend on the source metadata and the active DataORCID mapping.') }}</td></tr>{% endif %}
+          <tr><th>{{ _('Metadata prefix') }}</th><td>{{ _('The OAI-PMH format requested by a harvester, such as oai_dc, oai_openaire, dataorcid, or ore.') }}</td><td>{{ _('Available fields depend on the source metadata and the active DataORCID mapping.') }}</td></tr>
+          <tr><th>OAI-ORE</th><td>{{ _('An Atom resource map listing document URLs, file types, and licenses for compatible harvesters.') }}</td><td>{{ _('PDF availability and reuse rights depend on the selected source copy.') }}</td></tr>{% endif %}
         </tbody></table></div>
       </section>
       {% endif %}
@@ -264,6 +275,7 @@
           {% if module_enabled('synchronization') or module_enabled('openalex_enrichment') %}{{ help_issue('sync', _('An update still appears in progress'), _('Wait for the displayed status to change and refresh the page after a few minutes. Avoid repeating the same operation; if the status remains unchanged, report the institution, view, and approximate start time through your support channel.')) }}{% endif %}
           {% if has_exports %}{{ help_issue('export', _('My export is pending, empty, or failed'), _('Keep the floating export notice open while the file is prepared. For an empty file, confirm the filters and that the relevant dataset contains records. For a failed export, report the view, format, filters, and time shown by the notice.')) }}{% endif %}
           {% if module_enabled('oai_pmh') %}{{ help_issue('oai', _('I cannot change an OAI-PMH article or mapping'), _('A standard User has read-only access. Sign in with an OAI User account assigned to the institution when publication selection, DOI imports, or metadata mapping must be changed.')) }}{% endif %}
+          {% if module_enabled('oai_pmh') %}{{ help_issue('ore', _('DSpace imports metadata but no PDF'), _('Check that DSpace is configured to harvest metadata and bitstreams and that the ore response contains a PDF link. Articles without an eligible file remain metadata-only; source servers can also reject or interrupt downloads.')) }}{% endif %}
           {{ help_issue('session', _('A page sends me back to the overview'), _('Your session may have expired or the requested module may no longer be available. Sign in again and use the current menu; contact your support channel if an expected area is still missing.')) }}
         </div>
         {% if module_enabled('resources') %}<div class="help-resource-banner"><div><i class="fas fa-book-open" aria-hidden="true"></i><span><strong>{{ _('ORCID resources and consortium guidance') }}</strong><small>{{ _('External ORCID documentation, member resources, and integration references.') }}</small></span></div><a href="{{ url_for('main.resources') }}" class="btn btn-outline-info">{{ _('Open resources') }}</a></div>{% endif %}
@@ -272,7 +284,7 @@
 
       {% if 'release-notes' in available_topics %}
       <section id="release-notes" class="help-section help-searchable" {% if active_topic != 'release-notes' %}hidden{% endif %}>
-        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-code-branch" aria-hidden="true"></i></span><div><h2>{{ _('Version 2.1') }}</h2><p>{{ _('User-facing capabilities included in this release and available in this installation.') }}</p></div></div>
+        <div class="help-section-heading"><span class="help-section-icon"><i class="fas fa-code-branch" aria-hidden="true"></i></span><div><h2>{{ _('Version %(version)s', version=config.get('APP_VERSION', '2.2')) }}</h2><p>{{ _('User-facing capabilities included in this release and available in this installation.') }}</p></div></div>
         <div class="help-prose"><ul class="help-check-list">
           <li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The overview summarizes the assigned institution and the freshness of its available data.') }}</li>
           {% if module_enabled('researchers') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Researcher discovery combines verified institutional identifiers and preserves relationship evidence.') }}</li>{% endif %}
@@ -286,6 +298,7 @@
           {% if module_enabled('orcid_write') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('The ORCID writing area provides the institutional integration guides and example downloads available on the server.') }}</li>{% endif %}
           {% if module_enabled('affiliation_manager') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('Each account can review or update its Affiliation Manager APP identifier.') }}</li>{% endif %}
           {% if module_enabled('oai_pmh') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OAI-PMH exposes repository status, article selection, metadata formats, audit exports, and traceable DOI imports according to User or OAI User access.') }}</li>{% endif %}
+          {% if module_enabled('oai_pmh') %}<li><i class="fas fa-check" aria-hidden="true"></i>{{ _('OAI-ORE adds resource maps for harvesting reusable, openly available PDFs while preserving metadata-only records when no eligible file exists.') }}</li>{% endif %}
         </ul></div>
         <div class="help-callout is-info"><i class="fas fa-toggle-on" aria-hidden="true"></i><div><strong>{{ _('Documentation follows module availability') }}</strong><p>{{ _('This help center only displays information for areas currently available in the installation. When an area is turned off, its topic, blocks, links, and direct help URL are removed as applicable.') }}</p></div></div>
       </section>

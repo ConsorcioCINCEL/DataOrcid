@@ -54,8 +54,10 @@ from ..services.oai_pmh_service import (
     METADATA_FIELD_CATALOG,
     METADATA_SOURCE_FIELDS,
     MAPPING_TARGET_RE,
+    OaiProtocolError,
     attach_institutional_affiliations,
     build_oai_response,
+    build_ore_resource_map,
     effective_metadata_mapping,
     generate_public_key,
     institutional_work_query,
@@ -123,6 +125,7 @@ def index():
         records_url=f"{provider_url}?verb=ListRecords&metadataPrefix=oai_dc" if provider_url else None,
         openaire_url=f"{provider_url}?verb=ListRecords&metadataPrefix=oai_openaire" if provider_url else None,
         mapped_url=f"{provider_url}?verb=ListRecords&metadataPrefix=dataorcid" if provider_url else None,
+        ore_url=f"{provider_url}?verb=ListRecords&metadataPrefix=ore" if provider_url else None,
         active_tab="configuration",
         can_manage_provider=_can_manage_provider(),
         can_manage_content=_can_manage_oai_content(),
@@ -222,6 +225,9 @@ def metadata_mapping():
         if stored_config and stored_config.provider_enabled and not stored_config.harvester_access_restricted
         else None,
         "dataorcid": f"{provider_url}?verb=ListRecords&metadataPrefix=dataorcid"
+        if stored_config and stored_config.provider_enabled and not stored_config.harvester_access_restricted
+        else None,
+        "ore": f"{provider_url}?verb=ListRecords&metadataPrefix=ore"
         if stored_config and stored_config.provider_enabled and not stored_config.harvester_access_restricted
         else None,
     }
@@ -1335,20 +1341,9 @@ def browser_stylesheet(language: str):
 def provider(public_key: str, harvester_key: str | None):
     """Authorize the requested institution and credential before building metadata."""
     headers = {"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer"}
-    config = OaiPmhInstitutionConfig.query.filter_by(
-        public_key=public_key,
-        provider_enabled=True,
-    ).first()
-    if not config:
-        return Response(_("OAI-PMH repository not found."), status=404, mimetype="text/plain", headers=headers)
-    if harvester_key is not None:
-        harvester = OaiPmhHarvester.query.filter_by(
-            config_id=config.id, access_key=harvester_key, is_enabled=True,
-        ).first()
-        if not harvester:
-            return Response(_("OAI-PMH repository not found."), status=404, mimetype="text/plain", headers=headers)
-    elif config.harvester_access_restricted:
-        return Response(_("A private harvesting URL is required."), status=403, mimetype="text/plain", headers=headers)
+    config, error = _authorized_provider(public_key, harvester_key)
+    if error is not None:
+        return error
 
     params = CombinedMultiDict((request.args, request.form))
     language = str(get_locale())
@@ -1359,6 +1354,43 @@ def provider(public_key: str, harvester_key: str | None):
         stylesheet_url=url_for("oai_pmh.browser_stylesheet", language=language),
     )
     return Response(payload, status=200, content_type="text/xml; charset=utf-8", headers=headers)
+
+
+@bp_oai_pmh.route("/oai/<public_key>/ore/<canonical_key>", defaults={"harvester_key": None})
+@bp_oai_pmh.route("/oai/<public_key>/<harvester_key>/ore/<canonical_key>")
+def ore_resource_map(public_key: str, harvester_key: str | None, canonical_key: str):
+    """Resolve ORE self links with the same institution and credential checks."""
+    headers = {"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer"}
+    config, error = _authorized_provider(public_key, harvester_key)
+    if error is not None:
+        return error
+    try:
+        payload = build_ore_resource_map(
+            config, canonical_key, _provider_url(config.public_key, harvester_key),
+        )
+    except OaiProtocolError:
+        return Response(_("OAI-PMH repository not found."), status=404, mimetype="text/plain", headers=headers)
+    return Response(payload, content_type="application/atom+xml; charset=utf-8", headers=headers)
+
+
+def _authorized_provider(public_key: str, harvester_key: str | None):
+    """Share authorization between OAI-PMH and standalone ORE responses."""
+    headers = {"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer"}
+    config = OaiPmhInstitutionConfig.query.filter_by(
+        public_key=public_key,
+        provider_enabled=True,
+    ).first()
+    if not config:
+        return None, Response(_("OAI-PMH repository not found."), status=404, mimetype="text/plain", headers=headers)
+    if harvester_key is not None:
+        harvester = OaiPmhHarvester.query.filter_by(
+            config_id=config.id, access_key=harvester_key, is_enabled=True,
+        ).first()
+        if not harvester:
+            return None, Response(_("OAI-PMH repository not found."), status=404, mimetype="text/plain", headers=headers)
+    elif config.harvester_access_restricted:
+        return None, Response(_("A private harvesting URL is required."), status=403, mimetype="text/plain", headers=headers)
+    return config, None
 
 
 def _provider_url(public_key: str, harvester_key: str | None = None) -> str:

@@ -111,7 +111,8 @@ class TransactionalEmailTest(unittest.TestCase):
                 self.assertEqual(200, response.status_code)
                 self.assertEqual("application/pdf", response.mimetype)
                 self.assertTrue(response.data.startswith(b"%PDF-"))
-                self.assertIn(f"v2.1-{language}.pdf", response.headers["Content-Disposition"])
+                version = self.app.config["APP_VERSION"]
+                self.assertIn(f"v{version}-{language}.pdf", response.headers["Content-Disposition"])
                 self.assertEqual(304, client.get(f"/manuals/user-guide/{language}.pdf", headers={"If-None-Match":response.headers["ETag"]}).status_code)
                 partial = client.get(f"/manuals/user-guide/{language}.pdf", headers={"Range":"bytes=0-4"})
                 self.assertEqual(206, partial.status_code)

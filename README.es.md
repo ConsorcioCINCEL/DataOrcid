@@ -1,4 +1,4 @@
-# 🧠 Data ORCID-Chile 2.1
+# 🧠 Data ORCID-Chile 2.2
 
 Aplicación **Flask** para consultar, **cachear** y exportar información pública de **ORCID** por institución (**ROR**).  
 Incluye interfaz **AdminLTE 3**, autenticación básica y utilidades de exportación a **CSV/Excel**.
@@ -6,10 +6,15 @@ Incluye interfaz **AdminLTE 3**, autenticación básica y utilidades de exportac
 Los identificadores Ringgold incluidos fueron validados contra afiliaciones públicas de ORCID cuya fuente de desambiguación es `RINGGOLD`. ROR se mantiene como identificador institucional canónico porque ORCID ya no actualiza los datos del registro Ringgold.
 
 > 📄 Proyecto desarrollado por **Gastón Olivares**.  
-> Versión documentada: **2.1 (2026-08-15)**.
+> Versión documentada: **2.2 (2026-10-14)**.
 > Este README describe el comportamiento real del sistema según su código fuente.
 
-## ✨ Novedades de la versión 2.1
+## ✨ Novedades de la versión 2.2
+
+- Mapas de recursos OAI-ORE para recolectar PDF abiertos y reutilizables desde
+  repositorios compatibles, conservando los registros sin archivo elegible como
+  metadatos. El Centro de ayuda y los manuales en cinco idiomas explican la
+  configuración de DSpace y los límites de disponibilidad y licencia.
 
 - Trabajos durables de sincronización y exportación con progreso, recuperación,
   retención, limpieza por usuario y reutilización de exportaciones equivalentes.
@@ -87,7 +92,7 @@ README.md
   - Excel por ORCID (`/download/excel/<orcid_id>`).
   - CSV/Excel masivo desde caché y tablas analíticas.
   - Procesamiento durable en segundo plano, aviso flotante, deduplicación y vencimiento automático.
-- 📡 **OAI-PMH institucional** con formatos `oai_dc`, `oai_openaire` y `dataorcid`.
+- 📡 **OAI-PMH institucional** con formatos `oai_dc`, `oai_openaire`, `dataorcid` y `ore`.
 - ❓ **Centro de ayuda dinámico** para Usuario y Usuario OAI, filtrado por módulos activos.
 - 🧰 **CLI:** migraciones, reconstrucción de cachés, worker durable y limpieza por retención.
 
@@ -374,7 +379,7 @@ recibe únicamente los artículos autorizados para el ROR solicitado.
 - Inventario para administradores y gestores: `/admin/oai-pmh`
 - Proveedor público por institución: `/oai/<clave_publica>`
 - Formatos publicados: Dublin Core no cualificado (`oai_dc`), OpenAIRE 4
-  (`oai_openaire`) y perfil institucional mapeable (`dataorcid`)
+  (`oai_openaire`), perfil institucional mapeable (`dataorcid`) y OAI-ORE (`ore`)
 - Verbos: `Identify`, `ListMetadataFormats`, `ListSets`, `GetRecord`,
   `ListIdentifiers` y `ListRecords`
 - Catálogo fuente: trabajos canónicos y deduplicados de DataORCID-Chile
@@ -457,7 +462,16 @@ Ejemplos de proveedor:
 /oai/<clave_publica>?verb=ListRecords&metadataPrefix=oai_dc
 /oai/<clave_publica>?verb=ListRecords&metadataPrefix=oai_openaire
 /oai/<clave_publica>?verb=ListRecords&metadataPrefix=dataorcid
+/oai/<clave_publica>?verb=ListRecords&metadataPrefix=ore
 ```
+
+Para importar PDF, conserva Simple Dublin Core como formato descriptivo y elige
+la cosecha de metadatos y archivos en DSpace. El formato `ore` describe un PDF
+abierto y reutilizable por artículo cuando las ubicaciones almacenadas de
+OpenAlex ofrecen uno; el repositorio receptor descarga el archivo. No se incrusta
+en el XML ni se aloja en Data ORCID-Chile. Consulta la
+[guía OAI-ORE](docs/oai-ore.md) para conocer las licencias admitidas, las URL
+privadas, la actualización de publicaciones y las pruebas de integración.
 
 ---
 

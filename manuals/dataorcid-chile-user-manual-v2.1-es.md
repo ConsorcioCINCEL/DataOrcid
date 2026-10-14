@@ -374,7 +374,7 @@ FIGURA 26. Selección de artículos con las acciones del perfil Usuario OAI.
 
 ## 6.7 Formatos y mapeo de metadatos
 
-El proveedor ofrece tres formatos: oai_dc, oai_openaire y dataorcid. Los dos primeros conservan su estructura estándar. El editor personaliza únicamente el formato dataorcid.
+El proveedor ofrece oai_dc, oai_openaire, dataorcid y ore. Sólo dataorcid es editable. ORE describe PDF abiertos y reutilizables para recolectores compatibles; no incrusta archivos en el XML.
 
 Con Usuario OAI, selecciona un campo del catálogo y pulsa Agregar campo. Puedes cambiar su nombre de destino u ocultarlo. Título e identificador son obligatorios; los campos ocultos no se emiten.
 

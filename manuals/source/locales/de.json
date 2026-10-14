@@ -48,7 +48,7 @@
         "Verfügbar"
       ]
     ],
-    "note": "Die Abbildungen zeigen die Oberfläche der Version 2.1 mit fiktiven Demonstrationsdaten. Namen, ORCID iDs, DOIs, RORs und Beispieladressen dürfen nicht als echte Datensätze verwendet werden."
+    "note": "Die Abbildungen zeigen die Oberfläche der Version 2.2 mit fiktiven Demonstrationsdaten. Namen, ORCID iDs, DOIs, RORs und Beispieladressen dürfen nicht als echte Datensätze verwendet werden."
   },
   "login": {
     "titles": "2. Zugang und Navigation",
@@ -318,7 +318,7 @@
   "oai-metadata": {
     "titles": "6.7 Metadatenformate und Zuordnung",
     "paragraphs": [
-      "Der Anbieter stellt drei Formate bereit: oai_dc, oai_openaire und dataorcid. Die ersten beiden behalten ihre Standardstruktur. Der Editor passt ausschließlich das Format dataorcid an.",
+      "Der Anbieter stellt oai_dc, oai_openaire, dataorcid und ore bereit. Nur dataorcid ist bearbeitbar. ORE beschreibt frei zugängliche, nachnutzbare PDFs für kompatible Harvester; Dateien werden nicht in XML eingebettet.",
       "Wählen Sie als OAI-Nutzer ein Katalogfeld und fügen Sie es hinzu. Sie können dessen Zielnamen ändern oder es ausblenden. Titel und Kennung sind Pflichtfelder; ausgeblendete Felder werden nicht ausgegeben.",
       "Zuordnung speichern übernimmt Ihre Änderungen. Die Funktion zum Wiederherstellen der Vorgaben setzt das ursprüngliche Profil zurück, sofern sie verfügbar ist. Nutzer können die Zuordnung einsehen, aber nicht bearbeiten.",
       "Die erzeugte Basis-URL und Testlinks zeigen die Antwort des aktivierten Anbieters. Stimmen Sie das erforderliche Format mit dem Metadatenempfänger ab. Die Zuordnung ändert die veröffentlichte Ausgabe, nicht die ursprünglichen ORCID-Daten."
@@ -350,7 +350,7 @@
     "paragraphs": [
       "Unter Zugriff für die Metadatenernte können OAI-Nutzer die URI jedes institutionellen Repositoriums registrieren und eine private URL für dessen Harvester erzeugen. Nutzer sehen Repositorien und Status; Schlüssel und Bedienelemente sind Konten mit OAI-Bearbeitungsrecht vorbehalten.",
       "Geben Sie die HTTP- oder HTTPS-Adresse ohne Zugangsdaten, Abfrageparameter oder Fragment ein und wählen Sie Private URL erzeugen. Kopieren Sie die ganze Adresse. Die URI bezeichnet den Empfänger; der zufällige URL-Schlüssel gewährt Zugriff unabhängig von IP-Adresse oder Cloudflare.",
-      "Tragen Sie in DSpace-CRIS die private URL als OAI Provider ein, wählen Sie Simple Dublin Core (oai_dc) und die Ernte nur von Metadaten. Starten oder planen Sie die Ernte in DSpace. Eine DataORCID-Anmeldung ist nicht erforderlich.",
+      "Tragen Sie in DSpace-CRIS die private URL als OAI Provider ein und wählen Sie Simple Dublin Core (oai_dc). Ernten Sie nur Metadaten oder Metadaten und Dateien für geeignete PDFs über ore. Starten oder planen Sie die Ernte in DSpace.",
       "Aktivieren Sie nach Einrichtung des Harvesters die Beschränkung auf registrierte private URLs und speichern Sie den Zugriffsmodus. Die allgemeine URL funktioniert dann nicht mehr. Ein Widerruf sperrt eine URL; eine neue URL macht die alte ungültig und muss im Harvester ersetzt werden."
     ],
     "captions": "Demonstrationsrepositorium mit privater URL für die Metadatenernte.",
@@ -360,7 +360,7 @@
     "titles": "7. Hilfecenter",
     "paragraphs": [
       "Das Hilfecenter steht unter Hilfe. Es bietet eine Sofortsuche und Themen zu ersten Schritten, Quellen, Datenfluss, Kennzahlen, Downloads, Datenwörterbuch, Berechtigungen, Integrationen, Fehlerbehebung und Versionshinweisen.",
-      "Die Inhalte begleiten die Abläufe für Nutzer und OAI-Nutzer. Themen und Links passen sich den aktivierten Modulen an; ein deaktiviertes Modul erscheint auch nicht in der aktiven Hilfe.",
+      "Die Hinweise zu Version 2.2 erklären die PDF-Ernte über OAI-ORE und ihre Verfügbarkeits- und Lizenzgrenzen. Die Hilfe begleitet Nutzer und OAI-Nutzer und zeigt nur Themen aktivierter Module.",
       "Geben Sie einen Begriff wie DOI, Export oder Open Access ein, um Erklärungen zu finden. Öffnen Sie das Thema und folgen Sie dessen Links zur jeweiligen Funktion. Nutzen Sie diese Hilfe, bevor Sie eine Bedienungsfrage weitergeben."
     ],
     "captions": "Suche und Themen im Hilfecenter."

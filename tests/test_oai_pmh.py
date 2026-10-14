@@ -44,6 +44,7 @@ class OaiPmhModuleTest(unittest.TestCase):
         self.export_root = tempfile.TemporaryDirectory()
         self.app = Flask(
             __name__, template_folder=str(Path(__file__).resolve().parents[1] / "app/templates"),
+            static_folder=str(Path(__file__).resolve().parents[1] / "app/static"),
         )
         self.app.config.update(
             SECRET_KEY="test-key",
@@ -316,6 +317,19 @@ class OaiPmhModuleTest(unittest.TestCase):
             config = OaiPmhInstitutionConfig.query.filter_by(ror_id="01aaa1111").one()
             config.publication_policy = policy
             config.policy_updated_at = utc_now().replace(microsecond=0)
+            db.session.commit()
+
+    def _set_ore_locations(self, locations, doi="10.1234/a", *, publish=True):
+        from app.models import OpenAlexWorkRawCache
+        from app.services.oai_publication_service import refresh_oai_publication
+        with self.app.app_context():
+            raw = OpenAlexWorkRawCache.query.filter_by(doi_normalized=doi).first()
+            if raw is None:
+                raw = OpenAlexWorkRawCache(doi_normalized=doi, status="found")
+                db.session.add(raw)
+            raw.raw_json = {"locations": locations}
+            if publish:
+                refresh_oai_publication("01aaa1111")
             db.session.commit()
 
     @staticmethod
@@ -1046,6 +1060,153 @@ class OaiPmhModuleTest(unittest.TestCase):
         resource_type = root.find(f".//{{{oaire}}}resourceType")
         self.assertEqual("http://purl.org/coar/resource_type/c_6501", resource_type.get("uri"))
         self.assertNotIn(b"Article A2", response.data)
+
+    def test_ore_format_advertises_a_resolvable_atom_schema(self):
+        from app.services.oai_ore_service import ATOM_NS
+        response = self.client.get(f"/oai/{'a' * 48}?verb=ListMetadataFormats")
+        root = ET.fromstring(response.data)
+        formats = {
+            element.findtext(f"{{{OAI_NS}}}metadataPrefix"): element
+            for element in root.findall(f".//{{{OAI_NS}}}metadataFormat")
+        }
+        self.assertEqual({"oai_dc", "oai_openaire", "dataorcid", "ore"}, set(formats))
+        ore = formats["ore"]
+        self.assertEqual(ATOM_NS, ore.findtext(f"{{{OAI_NS}}}metadataNamespace"))
+        schema_url = ore.findtext(f"{{{OAI_NS}}}schema")
+        schema = self.client.get(schema_url)
+        self.assertEqual(200, schema.status_code)
+        etree.XMLSchema(etree.fromstring(schema.data))
+
+    def test_ore_entry_matches_dspace_file_and_bundle_xpaths(self):
+        from app.services.oai_ore_service import ATOM_NS, DSPACE_NS, DCTERMS_NS, ORE_ATOM_NS, ORE_NS, RDF_NS
+        url = "https://repository.example.org/download?id=123&format=pdf"
+        self._set_ore_locations([{
+            "pdf_url": url, "is_oa": True, "license": "cc-by", "version": "acceptedVersion",
+        }])
+        response = self.client.post(f"/oai/{'a' * 48}", data={
+            "verb": "GetRecord", "metadataPrefix": "ore",
+            "identifier": f"oai:dataorcid-chile:{'a' * 48}:{self.key_a}",
+        })
+        root = etree.fromstring(response.data)
+        entry = root.find(f".//{{{ATOM_NS}}}entry")
+        self.assertIsNotNone(entry)
+        schema = etree.XMLSchema(etree.parse(str(Path(__file__).resolve().parents[1] / "app/static/xsd/ore-atom.xsd")))
+        schema.assertValid(entry)
+        namespaces = {"atom": ATOM_NS, "oreatom": ORE_ATOM_NS, "rdf": RDF_NS, "dcterms": DCTERMS_NS}
+        links = entry.xpath("atom:link[@rel=$relation]", namespaces=namespaces, relation=ORE_NS + "aggregates")
+        self.assertEqual(1, len(links))
+        self.assertEqual(url, links[0].get("href"))
+        self.assertEqual("application/pdf", links[0].get("type"))
+        self.assertEqual(f"{self.key_a.replace(':', '-')}.pdf", links[0].get("title"))
+        self.assertTrue(entry.xpath("atom:link[@rel='alternate']/@href", namespaces=namespaces))
+        descriptions = entry.xpath("oreatom:triples/rdf:Description[@rdf:about=$url]", namespaces=namespaces, url=url)
+        self.assertEqual(DSPACE_NS + "DSpaceBitstream", descriptions[0].find(f"{{{RDF_NS}}}type").get(f"{{{RDF_NS}}}resource"))
+        self.assertEqual("ORIGINAL", descriptions[0].findtext(f"{{{DCTERMS_NS}}}description"))
+        self.assertEqual("cc-by", descriptions[0].findtext(f"{{{DCTERMS_NS}}}license"))
+        self_url = entry.xpath("atom:link[@rel='self']/@href", namespaces=namespaces)[0]
+        standalone = self.client.get(self_url)
+        self.assertEqual(200, standalone.status_code)
+        self.assertEqual("application/atom+xml", standalone.mimetype)
+        self.assertEqual(
+            ET.tostring(ET.fromstring(etree.tostring(entry))),
+            ET.tostring(ET.fromstring(standalone.data)),
+        )
+
+    def test_ore_without_an_eligible_pdf_keeps_the_metadata_record(self):
+        from app.services.oai_ore_service import ATOM_NS, ORE_NS
+        self._set_ore_locations([{
+            "pdf_url": "https://publisher.example.org/article.pdf", "is_oa": True, "license": None,
+        }])
+        response = self.client.get(f"/oai/{'a' * 48}?verb=ListRecords&metadataPrefix=ore")
+        root = ET.fromstring(response.data)
+        self.assertIsNone(root.find(f"{{{OAI_NS}}}error"))
+        entry = root.find(f".//{{{ATOM_NS}}}entry")
+        self.assertEqual("Article A", entry.findtext(f"{{{ATOM_NS}}}title"))
+        self.assertFalse(entry.findall(f"{{{ATOM_NS}}}link[@rel='{ORE_NS}aggregates']"))
+        self.assertNotIn(b"publisher.example.org", response.data)
+
+    def test_ore_changes_are_published_once_and_not_read_from_live_cache(self):
+        from app.models import OaiPmhRecordVersion
+        from app.services.oai_publication_service import refresh_oai_publication
+        first_url = "https://repository.example.org/first.pdf"
+        self._set_ore_locations([{"pdf_url": first_url, "is_oa": True, "license": "cc-by"}])
+        params = {"verb": "ListRecords", "metadataPrefix": "ore"}
+        first = self.client.get(f"/oai/{'a' * 48}", query_string=params)
+        self._set_ore_locations([{
+            "pdf_url": "https://repository.example.org/changed.pdf", "is_oa": True, "license": "cc-by",
+        }], publish=False)
+        unchanged = self.client.get(f"/oai/{'a' * 48}", query_string=params)
+        self.assertEqual(
+            ET.tostring(ET.fromstring(first.data).find(f"{{{OAI_NS}}}ListRecords")),
+            ET.tostring(ET.fromstring(unchanged.data).find(f"{{{OAI_NS}}}ListRecords")),
+        )
+        with self.app.app_context():
+            before = OaiPmhRecordVersion.query.count()
+            refresh_oai_publication("01aaa1111")
+            db.session.commit()
+            self.assertEqual(before + 1, OaiPmhRecordVersion.query.count())
+            refresh_oai_publication("01aaa1111")
+            db.session.commit()
+            self.assertEqual(before + 1, OaiPmhRecordVersion.query.count())
+        changed = self.client.get(f"/oai/{'a' * 48}", query_string=params)
+        self.assertIn(b"changed.pdf", changed.data)
+        self.assertNotIn(b"first.pdf", changed.data)
+        self._set_ore_locations([{"pdf_url": first_url, "is_oa": True, "license": None}])
+        self.assertNotIn(first_url.encode(), self.client.get(f"/oai/{'a' * 48}", query_string=params).data)
+
+    def test_ore_pagination_preserves_file_snapshots_and_institution_scope(self):
+        self._set_policy("all")
+        self._set_ore_locations([{"pdf_url": "https://repository.example.org/a.pdf", "is_oa": True, "license": "cc-by"}])
+        self._set_ore_locations([{"pdf_url": "https://repository.example.org/a2.pdf", "is_oa": True, "license": "cc-by"}], doi="10.1234/a2")
+        first = self.client.get(f"/oai/{'a' * 48}", query_string={
+            "verb": "ListRecords", "metadataPrefix": "ore", "until": "2099-01-01T00:00:00.123456789Z",
+        })
+        token = ET.fromstring(first.data).findtext(f".//{{{OAI_NS}}}resumptionToken")
+        self.assertTrue(token)
+        self._set_ore_locations([{"pdf_url": "https://repository.example.org/replaced.pdf", "is_oa": True, "license": "cc-by"}], doi="10.1234/a2")
+        second = self.client.post(f"/oai/{'a' * 48}", data={"verb": "ListRecords", "resumptionToken": token})
+        self.assertIn(b"a2.pdf", second.data)
+        self.assertNotIn(b"replaced.pdf", second.data)
+        self.assertNotIn(b"a2.pdf", self.client.get(f"/oai/{'a' * 48}?verb=ListRecords&metadataPrefix=ore").data)
+        wrong_scope = self.client.get(f"/oai/{'b' * 48}", query_string={"verb": "ListRecords", "resumptionToken": token})
+        self.assertIn(b'code="badResumptionToken"', wrong_scope.data)
+
+    def test_ore_resource_maps_enforce_private_access_revocation_and_withdrawal(self):
+        from app.models import OaiPmhHarvester
+        path = f"/oai/{'a' * 48}/ore/{self.key_a}"
+        self.assertEqual(200, self.client.get(path).status_code)
+        self.assertEqual(404, self.client.get(f"/oai/{'b' * 48}/ore/{self.key_a}").status_code)
+        self.assertEqual(404, self.client.get(f"/oai/{'a' * 48}/ore/invalid").status_code)
+        key = "c" * 64
+        with self.app.app_context():
+            config = OaiPmhInstitutionConfig.query.filter_by(ror_id="01aaa1111").one()
+            config.harvester_access_restricted = True
+            harvester = OaiPmhHarvester(config_id=config.id, base_uri="https://repository.example.org", access_key=key)
+            db.session.add(harvester)
+            db.session.commit()
+            harvester_id = harvester.id
+        self.assertEqual(403, self.client.get(path).status_code)
+        private = self.client.get(f"/oai/{'a' * 48}/{key}/ore/{self.key_a}")
+        self.assertEqual(200, private.status_code)
+        self.assertIn(f"/oai/{'a' * 48}/{key}/ore/".encode(), private.data)
+        self.assertIn("no-store", private.headers["Cache-Control"])
+        self.assertEqual("no-referrer", private.headers["Referrer-Policy"])
+        with self.app.app_context():
+            db.session.get(OaiPmhHarvester, harvester_id).is_enabled = False
+            db.session.commit()
+        self.assertEqual(404, self.client.get(f"/oai/{'a' * 48}/{key}/ore/{self.key_a}").status_code)
+        self._login(self.manager_id, is_manager=True)
+        self.client.post("/oai-pmh/works/publication", data={"action": "exclude", "work_ids": str(self.work_a_id)})
+        with self.app.app_context():
+            config = OaiPmhInstitutionConfig.query.filter_by(ror_id="01aaa1111").one()
+            config.harvester_access_restricted = False
+            db.session.commit()
+        self.assertEqual(404, self.client.get(path).status_code)
+        deleted = self.client.get(f"/oai/{'a' * 48}", query_string={
+            "verb": "GetRecord", "metadataPrefix": "ore", "identifier": f"oai:dataorcid-chile:{'a' * 48}:{self.key_a}",
+        })
+        self.assertIn(b'status="deleted"', deleted.data)
+        self.assertIsNone(ET.fromstring(deleted.data).find(f".//{{{OAI_NS}}}metadata"))
 
     def test_institution_can_save_and_publish_a_custom_metadata_mapping(self):
         self._login(self.manager_id, is_manager=True)

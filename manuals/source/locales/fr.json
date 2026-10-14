@@ -48,7 +48,7 @@
         "Disponible"
       ]
     ],
-    "note": "Les captures présentent l’interface de la version 2.1 avec des données fictives. Les noms, ORCID iD, DOI, ROR et adresses d’exemple ne doivent pas être utilisés comme des références réelles."
+    "note": "Les captures présentent l’interface de la version 2.2 avec des données fictives. Les noms, ORCID iD, DOI, ROR et adresses d’exemple ne doivent pas être utilisés comme des références réelles."
   },
   "login": {
     "titles": "2. Accès et navigation",
@@ -318,7 +318,7 @@
   "oai-metadata": {
     "titles": "6.7 Formats et correspondance des métadonnées",
     "paragraphs": [
-      "Le fournisseur propose trois formats : oai_dc, oai_openaire et dataorcid. Les deux premiers conservent leur structure standard. L’éditeur personnalise uniquement le format dataorcid.",
+      "Le fournisseur propose oai_dc, oai_openaire, dataorcid et ore. Seul dataorcid est modifiable. ORE décrit des PDF ouverts et réutilisables pour les moissonneurs compatibles ; il n’intègre pas les fichiers au XML.",
       "Avec Utilisateur OAI, sélectionnez un champ du catalogue puis ajoutez-le. Vous pouvez changer son nom de destination ou le masquer. Le titre et l’identifiant sont obligatoires ; les champs masqués ne sont pas transmis.",
       "Enregistrer la correspondance applique les modifications. Restaurer les valeurs par défaut revient au profil initial lorsque le bouton est disponible. Utilisateur peut consulter la correspondance, mais pas la modifier.",
       "L’URL de base générée et les liens d’essai permettent d’examiner la réponse du fournisseur activé. Convenez du format requis avec le destinataire des métadonnées. La correspondance modifie la sortie publiée, pas les données ORCID d’origine."
@@ -350,7 +350,7 @@
     "paragraphs": [
       "Dans Accès au moissonnage, Utilisateur OAI peut enregistrer l’URI de chaque dépôt institutionnel et créer une URL privée pour son moissonneur. Utilisateur consulte les dépôts et leur état ; les clés et les commandes sont réservées aux comptes autorisés à modifier OAI.",
       "Saisissez l’adresse HTTP ou HTTPS du dépôt, sans identifiants, paramètres ni fragment, puis choisissez Générer une URL privée. Copiez l’adresse complète. L’URI identifie le destinataire ; la clé aléatoire de l’URL accorde l’accès indépendamment de l’adresse IP ou de Cloudflare.",
-      "Dans DSpace-CRIS, configurez l’URL privée comme OAI Provider, choisissez Simple Dublin Core (oai_dc) et le moissonnage des métadonnées seules. Lancez ou programmez le moissonnage dans DSpace. Aucune connexion à DataORCID n’est requise.",
+      "Dans DSpace-CRIS, utilisez l’URL privée comme OAI Provider et Simple Dublin Core (oai_dc). Choisissez les métadonnées seules, ou les métadonnées et fichiers pour télécharger les PDF éligibles via ore. Lancez ou programmez le moissonnage dans DSpace.",
       "Après configuration du moissonneur, activez la restriction aux URL privées enregistrées et enregistrez le mode d’accès. L’URL générale cesse de fonctionner. Révoquer l’accès bloque une URL ; générer une nouvelle URL invalide l’ancienne et impose de mettre à jour le moissonneur."
     ],
     "captions": "Dépôt de démonstration et son URL privée de moissonnage.",
@@ -360,7 +360,7 @@
     "titles": "7. Centre d’aide",
     "paragraphs": [
       "Le centre d’aide se trouve dans Assistance. Il propose une recherche instantanée et des rubriques sur les premiers pas, les sources, les flux de données, les indicateurs, les téléchargements, le dictionnaire, les permissions, les intégrations, le dépannage et les notes de version.",
-      "Le contenu accompagne les parcours Utilisateur et Utilisateur OAI. Les rubriques et liens s’adaptent aux modules activés ; un module désactivé est également absent de l’aide active.",
+      "Les notes de la version 2.2 expliquent le moissonnage de PDF par OAI-ORE et ses limites de disponibilité et de licence. L’aide accompagne Utilisateur et Utilisateur OAI et ne montre que les rubriques des modules activés.",
       "Saisissez un terme comme DOI, exportation ou libre accès pour trouver des explications. Ouvrez la rubrique et utilisez ses liens pour retrouver la fonction concernée. Consultez cette aide avant de transmettre une question opérationnelle."
     ],
     "captions": "Recherche et rubriques du centre d’aide."

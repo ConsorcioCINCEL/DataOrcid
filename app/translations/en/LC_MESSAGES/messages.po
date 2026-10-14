@@ -12582,3 +12582,56 @@ msgstr "Sent"
 #: app/templates/admin/users.html:267
 msgid "Cancelled"
 msgstr "Cancelled"
+
+#: app/templates/oai_pmh/_format_cards.html
+msgid "OAI-ORE resource maps let compatible harvesters download one reusable, openly available PDF per article. Files remain on their source servers."
+msgstr "OAI-ORE resource maps let compatible harvesters download one reusable, openly available PDF per article. Files remain on their source servers."
+
+#: app/templates/help/index.html
+#, python-format
+msgid "Version %(version)s"
+msgstr "Version %(version)s"
+
+#: app/templates/oai_pmh/harvesting_access.html
+msgid "In DSpace-CRIS, use this private base URL as the OAI Provider and choose Simple Dublin Core (oai_dc). Harvest metadata only, or metadata and bitstreams to retrieve eligible PDFs through ore. Start or schedule harvesting in DSpace; no DataORCID sign-in is needed."
+msgstr "In DSpace-CRIS, use this private base URL as the OAI Provider and choose Simple Dublin Core (oai_dc). Harvest metadata only, or metadata and bitstreams to retrieve eligible PDFs through ore. Start or schedule harvesting in DSpace; no DataORCID sign-in is needed."
+
+#: app/templates/help/index.html
+msgid "PDF harvesting with OAI-ORE"
+msgstr "PDF harvesting with OAI-ORE"
+
+#: app/templates/help/index.html
+msgid "The ore format describes up to one openly available, reusable PDF per article. Compatible harvesters download it from its source; files are not embedded in the OAI-PMH XML or hosted by Data ORCID-Chile."
+msgstr "The ore format describes up to one openly available, reusable PDF per article. Compatible harvesters download it from its source; files are not embedded in the OAI-PMH XML or hosted by Data ORCID-Chile."
+
+#: app/templates/help/index.html
+msgid "In DSpace-CRIS, keep Simple Dublin Core as the descriptive format and choose metadata and bitstream harvesting. DSpace discovers ore automatically from the same provider URL and institutional set."
+msgstr "In DSpace-CRIS, keep Simple Dublin Core as the descriptive format and choose metadata and bitstream harvesting. DSpace discovers ore automatically from the same provider URL and institutional set."
+
+#: app/templates/help/index.html
+msgid "Only copies marked as open access with a declared cc-by, cc-by-sa, cc0, or public-domain license are offered. Articles without an eligible PDF remain available as metadata; a remote download can still fail."
+msgstr "Only copies marked as open access with a declared cc-by, cc-by-sa, cc0, or public-domain license are offered. Articles without an eligible PDF remain available as metadata; a remote download can still fail."
+
+#: app/templates/help/index.html
+msgid "An Atom resource map listing document URLs, file types, and licenses for compatible harvesters."
+msgstr "An Atom resource map listing document URLs, file types, and licenses for compatible harvesters."
+
+#: app/templates/help/index.html
+msgid "PDF availability and reuse rights depend on the selected source copy."
+msgstr "PDF availability and reuse rights depend on the selected source copy."
+
+#: app/templates/help/index.html
+msgid "DSpace imports metadata but no PDF"
+msgstr "DSpace imports metadata but no PDF"
+
+#: app/templates/help/index.html
+msgid "Check that DSpace is configured to harvest metadata and bitstreams and that the ore response contains a PDF link. Articles without an eligible file remain metadata-only; source servers can also reject or interrupt downloads."
+msgstr "Check that DSpace is configured to harvest metadata and bitstreams and that the ore response contains a PDF link. Articles without an eligible file remain metadata-only; source servers can also reject or interrupt downloads."
+
+#: app/templates/help/index.html
+msgid "OAI-ORE adds resource maps for harvesting reusable, openly available PDFs while preserving metadata-only records when no eligible file exists."
+msgstr "OAI-ORE adds resource maps for harvesting reusable, openly available PDFs while preserving metadata-only records when no eligible file exists."
+
+#: app/templates/help/index.html
+msgid "The OAI-PMH format requested by a harvester, such as oai_dc, oai_openaire, dataorcid, or ore."
+msgstr "The OAI-PMH format requested by a harvester, such as oai_dc, oai_openaire, dataorcid, or ore."

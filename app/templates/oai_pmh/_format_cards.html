@@ -3,7 +3,8 @@
   {% set formats = [
     ('oai_dc', 'fa-code', _('Mandatory OAI-PMH Dublin Core format; its element names cannot be renamed without invalidating the standard.'), false),
     ('oai_openaire', 'fa-globe-americas', _('OpenAIRE 4 profile with COAR resource and access vocabularies, suitable as a starting point for ANID and LA Referencia interoperability.'), true),
-    ('dataorcid', 'fa-random', _('Custom profile whose destination names can be adapted to each DSpace or external repository crosswalk.'), false)
+    ('dataorcid', 'fa-random', _('Custom profile whose destination names can be adapted to each DSpace or external repository crosswalk.'), false),
+    ('ore', 'fa-file-pdf', _('OAI-ORE resource maps let compatible harvesters download one reusable, openly available PDF per article. Files remain on their source servers.'), false)
   ] %}
   {% for prefix, icon, description, recommended in formats %}
     {% if format_urls[prefix] %}
